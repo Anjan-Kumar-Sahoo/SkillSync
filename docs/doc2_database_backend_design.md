@@ -1,4 +1,4 @@
-# 📄 DOCUMENT 2: DATABASE + BACKEND DESIGN
+﻿# 📄 DOCUMENT 2: DATABASE + BACKEND DESIGN
 
 ## SkillSync — Database & Microservices Architecture
 
@@ -23,327 +23,20 @@ Each microservice owns its dedicated PostgreSQL database. No cross-service joins
 
 ---
 
-### 2.1.1 Table Definitions
+### 2.1.1 Entity Reference
 
-#### Auth Service — `skillsync_auth`
+| Service | JPA Entities | Database Tables |
+|---|---|---|
+| Auth | `AuthUser`, `RefreshToken` | `auth.users`, `auth.refresh_tokens` |
+| User | `Profile`, `UserSkill` | `users.profiles`, `users.user_skills` |
+| Mentor | `MentorProfile`, `MentorSkill`, `AvailabilitySlot` | `mentors.mentor_profiles`, `mentors.mentor_skills`, `mentors.availability_slots` |
+| Skill | `Skill`, `Category` | `skills.skills`, `skills.categories` |
+| Session | `Session` | `sessions.sessions` |
+| Group | `LearningGroup`, `GroupMember`, `GroupSkill`, `Discussion` | `groups.learning_groups`, `groups.group_members`, `groups.group_skills`, `groups.discussions` |
+| Review | `Review` | `reviews.reviews` |
+| Notification | `Notification` | `notifications.notifications` |
 
-```sql
-CREATE TABLE auth.users (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email           VARCHAR(255) NOT NULL UNIQUE,
-    password_hash   VARCHAR(255) NOT NULL,
-    role            VARCHAR(20) NOT NULL DEFAULT 'ROLE_LEARNER',
-    is_active       BOOLEAN NOT NULL DEFAULT TRUE,
-    is_verified     BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE auth.refresh_tokens (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id         UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    token           VARCHAR(512) NOT NULL UNIQUE,
-    expires_at      TIMESTAMP NOT NULL,
-    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
--- Indexes
-CREATE INDEX idx_users_email ON auth.users(email);
-CREATE INDEX idx_refresh_tokens_user_id ON auth.refresh_tokens(user_id);
-CREATE INDEX idx_refresh_tokens_token ON auth.refresh_tokens(token);
-```
-
-#### User Service — `skillsync_user`
-
-```sql
-CREATE TABLE users.profiles (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id         UUID NOT NULL UNIQUE,  -- References auth.users.id (cross-service)
-    first_name      VARCHAR(100) NOT NULL,
-    last_name       VARCHAR(100) NOT NULL,
-    bio             TEXT,
-    avatar_url      VARCHAR(500),
-    phone           VARCHAR(20),
-    location        VARCHAR(200),
-    profile_complete_pct INT DEFAULT 0,
-    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE users.user_skills (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id         UUID NOT NULL,
-    skill_id        UUID NOT NULL,  -- References skills.skills.id (cross-service)
-    proficiency     VARCHAR(20) DEFAULT 'BEGINNER', -- BEGINNER, INTERMEDIATE, ADVANCED
-    UNIQUE(user_id, skill_id)
-);
-
--- Indexes
-CREATE INDEX idx_profiles_user_id ON users.profiles(user_id);
-CREATE INDEX idx_user_skills_user_id ON users.user_skills(user_id);
-CREATE INDEX idx_user_skills_skill_id ON users.user_skills(skill_id);
-```
-
-#### Mentor Service — `skillsync_mentor`
-
-```sql
-CREATE TABLE mentors.mentor_profiles (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id         UUID NOT NULL UNIQUE,
-    bio             TEXT NOT NULL,
-    experience_years INT NOT NULL DEFAULT 0,
-    hourly_rate     DECIMAL(10,2) NOT NULL,
-    avg_rating      DECIMAL(3,2) DEFAULT 0.00,
-    total_reviews   INT DEFAULT 0,
-    total_sessions  INT DEFAULT 0,
-    status          VARCHAR(20) NOT NULL DEFAULT 'PENDING', -- PENDING, APPROVED, REJECTED, SUSPENDED
-    rejection_reason TEXT,
-    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE mentors.mentor_skills (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    mentor_id       UUID NOT NULL REFERENCES mentors.mentor_profiles(id) ON DELETE CASCADE,
-    skill_id        UUID NOT NULL,
-    UNIQUE(mentor_id, skill_id)
-);
-
-CREATE TABLE mentors.availability_slots (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    mentor_id       UUID NOT NULL REFERENCES mentors.mentor_profiles(id) ON DELETE CASCADE,
-    day_of_week     INT NOT NULL CHECK (day_of_week BETWEEN 0 AND 6), -- 0=Sunday
-    start_time      TIME NOT NULL,
-    end_time        TIME NOT NULL,
-    is_active       BOOLEAN DEFAULT TRUE,
-    CHECK (end_time > start_time)
-);
-
--- Indexes
-CREATE INDEX idx_mentor_profiles_user_id ON mentors.mentor_profiles(user_id);
-CREATE INDEX idx_mentor_profiles_status ON mentors.mentor_profiles(status);
-CREATE INDEX idx_mentor_profiles_rating ON mentors.mentor_profiles(avg_rating DESC);
-CREATE INDEX idx_mentor_profiles_rate ON mentors.mentor_profiles(hourly_rate);
-CREATE INDEX idx_mentor_skills_mentor_id ON mentors.mentor_skills(mentor_id);
-CREATE INDEX idx_mentor_skills_skill_id ON mentors.mentor_skills(skill_id);
-CREATE INDEX idx_availability_mentor_day ON mentors.availability_slots(mentor_id, day_of_week);
-```
-
-#### Skill Service — `skillsync_skill`
-
-```sql
-CREATE TABLE skills.skills (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name            VARCHAR(100) NOT NULL UNIQUE,
-    category        VARCHAR(100) NOT NULL,
-    description     TEXT,
-    is_active       BOOLEAN DEFAULT TRUE,
-    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE skills.categories (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name            VARCHAR(100) NOT NULL UNIQUE,
-    parent_id       UUID REFERENCES skills.categories(id),
-    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
--- Indexes
-CREATE INDEX idx_skills_name ON skills.skills(name);
-CREATE INDEX idx_skills_category ON skills.skills(category);
-CREATE INDEX idx_skills_name_trgm ON skills.skills USING GIN (name gin_trgm_ops); -- Fuzzy search
-```
-
-#### Session Service — `skillsync_session`
-
-```sql
-CREATE TABLE sessions.sessions (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    mentor_id       UUID NOT NULL,
-    learner_id      UUID NOT NULL,
-    topic           VARCHAR(255) NOT NULL,
-    description     TEXT,
-    session_date    TIMESTAMP NOT NULL,
-    duration_minutes INT NOT NULL DEFAULT 60,
-    meeting_link    VARCHAR(500),
-    status          VARCHAR(20) NOT NULL DEFAULT 'REQUESTED',
-    cancel_reason   TEXT,
-    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT chk_status CHECK (status IN ('REQUESTED','ACCEPTED','REJECTED','COMPLETED','CANCELLED')),
-    CONSTRAINT chk_duration CHECK (duration_minutes BETWEEN 15 AND 240)
-);
-
--- Indexes
-CREATE INDEX idx_sessions_mentor_id ON sessions.sessions(mentor_id);
-CREATE INDEX idx_sessions_learner_id ON sessions.sessions(learner_id);
-CREATE INDEX idx_sessions_status ON sessions.sessions(status);
-CREATE INDEX idx_sessions_date ON sessions.sessions(session_date);
-CREATE INDEX idx_sessions_mentor_date ON sessions.sessions(mentor_id, session_date); -- Conflict detection
-```
-
-#### Group Service — `skillsync_group`
-
-```sql
-CREATE TABLE groups.learning_groups (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name            VARCHAR(200) NOT NULL,
-    description     TEXT,
-    max_members     INT DEFAULT 50,
-    created_by      UUID NOT NULL,
-    is_active       BOOLEAN DEFAULT TRUE,
-    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE groups.group_members (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    group_id        UUID NOT NULL REFERENCES groups.learning_groups(id) ON DELETE CASCADE,
-    user_id         UUID NOT NULL,
-    role            VARCHAR(20) NOT NULL DEFAULT 'MEMBER', -- OWNER, ADMIN, MEMBER
-    joined_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(group_id, user_id)
-);
-
-CREATE TABLE groups.group_skills (
-    group_id        UUID NOT NULL REFERENCES groups.learning_groups(id) ON DELETE CASCADE,
-    skill_id        UUID NOT NULL,
-    PRIMARY KEY (group_id, skill_id)
-);
-
-CREATE TABLE groups.discussions (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    group_id        UUID NOT NULL REFERENCES groups.learning_groups(id) ON DELETE CASCADE,
-    user_id         UUID NOT NULL,
-    parent_id       UUID REFERENCES groups.discussions(id),   -- Threaded replies
-    content         TEXT NOT NULL,
-    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
--- Indexes
-CREATE INDEX idx_group_members_group ON groups.group_members(group_id);
-CREATE INDEX idx_group_members_user ON groups.group_members(user_id);
-CREATE INDEX idx_discussions_group ON groups.discussions(group_id);
-CREATE INDEX idx_discussions_parent ON groups.discussions(parent_id);
-CREATE INDEX idx_discussions_created ON groups.discussions(group_id, created_at DESC);
-```
-
-#### Review Service — `skillsync_review`
-
-```sql
-CREATE TABLE reviews.reviews (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    session_id      UUID NOT NULL UNIQUE,  -- One review per session
-    mentor_id       UUID NOT NULL,
-    reviewer_id     UUID NOT NULL,
-    rating          INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
-    comment         TEXT,
-    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
--- Indexes
-CREATE INDEX idx_reviews_mentor_id ON reviews.reviews(mentor_id);
-CREATE INDEX idx_reviews_reviewer_id ON reviews.reviews(reviewer_id);
-CREATE INDEX idx_reviews_session_id ON reviews.reviews(session_id);
-CREATE INDEX idx_reviews_mentor_rating ON reviews.reviews(mentor_id, created_at DESC);
-```
-
-#### Notification Service — `skillsync_notification`
-
-```sql
-CREATE TABLE notifications.notifications (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id         UUID NOT NULL,
-    type            VARCHAR(50) NOT NULL,
-    title           VARCHAR(255) NOT NULL,
-    message         TEXT NOT NULL,
-    data            JSONB,           -- Flexible payload
-    is_read         BOOLEAN DEFAULT FALSE,
-    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
--- Indexes
-CREATE INDEX idx_notifications_user_id ON notifications.notifications(user_id);
-CREATE INDEX idx_notifications_user_unread ON notifications.notifications(user_id, is_read) WHERE is_read = FALSE;
-CREATE INDEX idx_notifications_created ON notifications.notifications(created_at DESC);
-```
-
----
-
-### 2.1.2 ER Diagram
-
-```
-                                    ┌──────────────────┐
-                                    │   categories     │
-                                    ├──────────────────┤
-                                    │ id          (PK) │
-                              ┌────▶│ name             │
-                              │     │ parent_id   (FK) │──┐
-                              │     └──────────────────┘  │
-                              │            ▲              │
-                              │            └──────────────┘ (self-ref)
-                              │
-┌──────────────┐         ┌────┴─────────────┐       ┌──────────────────┐
-│ auth.users   │         │  skills.skills    │       │ mentor_skills    │
-├──────────────┤         ├───────────────────┤       ├──────────────────┤
-│ id      (PK) │         │ id          (PK)  │◀──────│ skill_id    (FK) │
-│ email        │         │ name              │       │ mentor_id   (FK) │──┐
-│ password_hash│         │ category          │       └──────────────────┘  │
-│ role         │         │ description       │                             │
-│ is_active    │         └───────────────────┘                             │
-│ is_verified  │                                                           │
-└──────┬───────┘                                                           │
-       │                                                                   │
-       │ user_id                                                           │
-       ▼                                                                   │
-┌──────────────────┐     ┌──────────────────┐      ┌──────────────────────┤
-│ users.profiles   │     │ mentor_profiles  │◀─────┘                      │
-├──────────────────┤     ├──────────────────┤                              │
-│ id          (PK) │     │ id          (PK) │       ┌──────────────────┐  │
-│ user_id     (FK) │     │ user_id     (FK) │──────▶│availability_slots│  │
-│ first_name       │     │ bio              │       ├──────────────────┤  │
-│ last_name        │     │ experience_years │       │ id          (PK) │  │
-│ bio              │     │ hourly_rate      │       │ mentor_id   (FK) │  │
-│ avatar_url       │     │ avg_rating       │       │ day_of_week      │  │
-└──────────────────┘     │ status           │       │ start_time       │  │
-                         └────────┬─────────┘       │ end_time         │  │
-                                  │                 └──────────────────┘  │
-                                  │                                       │
-             ┌────────────────────┼──────────────────────┐               │
-             │                    │                      │               │
-             ▼                    ▼                      ▼               │
-     ┌──────────────┐    ┌──────────────┐       ┌──────────────┐        │
-     │   sessions   │    │   reviews    │       │notifications │        │
-     ├──────────────┤    ├──────────────┤       ├──────────────┤        │
-     │ id      (PK) │    │ id      (PK) │       │ id      (PK) │        │
-     │ mentor_id    │    │ session_id   │       │ user_id      │        │
-     │ learner_id   │    │ mentor_id    │       │ type         │        │
-     │ topic        │    │ reviewer_id  │       │ title        │        │
-     │ session_date │    │ rating       │       │ message      │        │
-     │ status       │    │ comment      │       │ data (JSONB) │        │
-     └──────────────┘    └──────────────┘       │ is_read      │        │
-                                                └──────────────┘        │
-     ┌──────────────────┐     ┌──────────────────┐                      │
-     │ learning_groups  │     │ group_members    │                      │
-     ├──────────────────┤     ├──────────────────┤                      │
-     │ id          (PK) │◀────│ group_id    (FK) │                      │
-     │ name             │     │ user_id          │                      │
-     │ description      │     │ role             │                      │
-     │ max_members      │     └──────────────────┘                      │
-     │ created_by       │                                               │
-     └────────┬─────────┘     ┌──────────────────┐                      │
-              │               │  discussions     │                      │
-              └──────────────▶├──────────────────┤                      │
-                              │ id          (PK) │                      │
-                              │ group_id    (FK) │                      │
-                              │ user_id          │                      │
-                              │ parent_id   (FK) │ (self-ref, threads)  │
-                              │ content          │                      │
-                              └──────────────────┘                      │
-```
+> All entities use UUID primary keys, `@CreatedDate`/`@LastModifiedDate` audit fields, and Lombok annotations. Full JPA entity definitions are provided under each service's implementation plan below.
 
 ### 2.1.3 Indexing Strategy
 
@@ -426,6 +119,75 @@ public record UserSummary(
 
 ---
 
+
+#### Implementation Plan
+
+**Maven Dependencies**
+- `spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `spring-boot-starter-security`
+- `spring-boot-starter-validation`, `spring-boot-starter-mail`
+- `jjwt-api`, `jjwt-impl`, `jjwt-jackson` (io.jsonwebtoken 0.12.x)
+- `postgresql`, `lombok`, `spring-cloud-starter-netflix-eureka-client`
+
+**Package Structure**
+```
+com.skillsync.auth
+ +-- config/          SecurityConfig, JwtConfig, CorsConfig
+ +-- controller/      AuthController
+ +-- dto/             RegisterRequest, LoginRequest, AuthResponse, etc.
+ +-- entity/          AuthUser, RefreshToken
+ +-- enums/           Role (ROLE_LEARNER, ROLE_MENTOR, ROLE_ADMIN)
+ +-- exception/       (uses skillsync-common GlobalExceptionHandler)
+ +-- repository/      AuthUserRepository, RefreshTokenRepository
+ +-- security/        JwtTokenProvider, JwtAuthenticationFilter, UserDetailsServiceImpl
+ +-- service/         AuthService, EmailVerificationService, PasswordResetService
+```
+
+**JPA Entities**
+
+```java
+@Entity @Table(name = "users", schema = "auth")
+@Data @Builder @NoArgsConstructor @AllArgsConstructor
+public class AuthUser {
+    @Id @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+    @Column(nullable = false, unique = true) private String email;
+    @Column(nullable = false) private String passwordHash;
+    @Enumerated(EnumType.STRING) private Role role;
+    private boolean isActive;
+    private boolean isVerified;
+    @CreatedDate private LocalDateTime createdAt;
+    @LastModifiedDate private LocalDateTime updatedAt;
+}
+
+@Entity @Table(name = "refresh_tokens", schema = "auth")
+public class RefreshToken {
+    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "user_id") private AuthUser user;
+    @Column(nullable = false, unique = true) private String token;
+    private LocalDateTime expiresAt;
+    @CreatedDate private LocalDateTime createdAt;
+}
+```
+
+**Repository Layer**
+
+```java
+public interface AuthUserRepository extends JpaRepository<AuthUser, UUID> {
+    Optional<AuthUser> findByEmail(String email);
+    boolean existsByEmail(String email);
+}
+public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID> {
+    Optional<RefreshToken> findByToken(String token);
+    List<RefreshToken> findByUserOrderByCreatedAtAsc(AuthUser user);
+    void deleteByUser(AuthUser user);
+}
+```
+
+**Service Layer** â€” `AuthService` orchestrates: register (hash password + save user + send verification email), login (validate credentials + generate JWT pair), refresh (validate refresh token + issue new access token), logout (delete refresh token). `JwtTokenProvider` handles all JWT creation/parsing. `UserDetailsServiceImpl` implements Spring Security's `UserDetailsService`.
+
+**Inter-Service**: Auth Service is called BY other services (via Gateway JWT validation) but does NOT call other services via Feign. The Gateway calls `GET /api/auth/validate` internally. Mentor Service calls `PUT /api/auth/users/{id}/role` to update role on approval â€” this is exposed as an INTERNAL endpoint.
+
+
 ### 2.2.2 User Service
 
 **Port**: 8082
@@ -480,6 +242,63 @@ public record AddSkillRequest(
 ```
 
 ---
+
+
+#### Implementation Plan
+
+**Maven Dependencies**
+- `spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `spring-boot-starter-validation`
+- `spring-cloud-starter-openfeign` (for Skill Service calls)
+- `spring-cloud-starter-netflix-eureka-client`
+- `postgresql`, `lombok`, `spring-boot-starter-actuator`
+
+**Package Structure**
+```
+com.skillsync.user
+ +-- config/          WebConfig, FeignConfig
+ +-- controller/      UserController
+ +-- dto/             UpdateProfileRequest, ProfileResponse, AddSkillRequest, SkillSummary
+ +-- entity/          Profile, UserSkill
+ +-- feign/           SkillServiceClient
+ +-- mapper/          ProfileMapper (Entity <-> DTO using MapStruct or manual)
+ +-- repository/      ProfileRepository, UserSkillRepository
+ +-- service/         UserService, AvatarService
+```
+
+**JPA Entities**
+
+```java
+@Entity @Table(name = "profiles", schema = "users")
+public class Profile {
+    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    @Column(nullable = false, unique = true) private UUID userId;
+    private String firstName, lastName, bio, avatarUrl, phone, location;
+    private int profileCompletePct;
+    @CreatedDate private LocalDateTime createdAt;
+    @LastModifiedDate private LocalDateTime updatedAt;
+}
+
+@Entity @Table(name = "user_skills", schema = "users")
+public class UserSkill {
+    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    private UUID userId;
+    private UUID skillId;
+    @Enumerated(EnumType.STRING) private Proficiency proficiency;
+}
+```
+
+**OpenFeign Client**
+
+```java
+@FeignClient(name = "skill-service")
+public interface SkillServiceClient {
+    @GetMapping("/api/skills/{id}")
+    SkillSummary getSkillById(@PathVariable UUID id);
+}
+```
+
+**Service Layer** â€” `UserService`: getProfile (fetch profile + enrich with skills via SkillServiceClient), updateProfile (partial update + recalculate completeness %), addSkill (validate skill exists via Feign, then save UserSkill), removeSkill. `AvatarService`: upload to local/S3 storage, returns URL.
+
 
 ### 2.2.3 Mentor Service
 
@@ -560,6 +379,95 @@ public record AvailabilitySlotRequest(
 
 ---
 
+
+#### Implementation Plan
+
+**Maven Dependencies**
+- `spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `spring-boot-starter-validation`
+- `spring-cloud-starter-openfeign` (calls Auth Service + User Service + Skill Service)
+- `spring-boot-starter-amqp` (RabbitMQ for publishing MENTOR_APPROVED/REJECTED events)
+- `spring-cloud-starter-netflix-eureka-client`, `postgresql`, `lombok`
+
+**Package Structure**
+```
+com.skillsync.mentor
+ +-- config/          RabbitMQConfig, FeignConfig
+ +-- controller/      MentorController
+ +-- dto/             MentorApplicationRequest, MentorSearchRequest, MentorProfileResponse, AvailabilitySlotRequest
+ +-- entity/          MentorProfile, MentorSkill, AvailabilitySlot
+ +-- enums/           MentorStatus (PENDING, APPROVED, REJECTED, SUSPENDED)
+ +-- event/           MentorApprovedEvent, MentorRejectedEvent
+ +-- feign/           AuthServiceClient, UserServiceClient, SkillServiceClient
+ +-- mapper/          MentorMapper
+ +-- repository/      MentorProfileRepository, MentorSkillRepository, AvailabilitySlotRepository
+ +-- service/         MentorService, AvailabilityService, MentorSearchService
+ +-- specification/   MentorSearchSpecification (Spring Data JPA Specifications for dynamic queries)
+```
+
+**JPA Entities**
+
+```java
+@Entity @Table(name = "mentor_profiles", schema = "mentors")
+public class MentorProfile {
+    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    @Column(nullable = false, unique = true) private UUID userId;
+    private String bio;
+    private int experienceYears;
+    private BigDecimal hourlyRate;
+    private double avgRating;
+    private int totalReviews, totalSessions;
+    @Enumerated(EnumType.STRING) private MentorStatus status;
+    private String rejectionReason;
+    @OneToMany(mappedBy = "mentor", cascade = CascadeType.ALL) private List<MentorSkill> skills;
+    @OneToMany(mappedBy = "mentor", cascade = CascadeType.ALL) private List<AvailabilitySlot> slots;
+    @CreatedDate private LocalDateTime createdAt;
+    @LastModifiedDate private LocalDateTime updatedAt;
+}
+
+@Entity @Table(name = "mentor_skills", schema = "mentors")
+public class MentorSkill {
+    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "mentor_id") private MentorProfile mentor;
+    private UUID skillId;
+}
+
+@Entity @Table(name = "availability_slots", schema = "mentors")
+public class AvailabilitySlot {
+    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "mentor_id") private MentorProfile mentor;
+    private int dayOfWeek;
+    private LocalTime startTime, endTime;
+    private boolean isActive;
+}
+```
+
+**OpenFeign Clients**
+
+```java
+@FeignClient(name = "auth-service")
+public interface AuthServiceClient {
+    @PutMapping("/api/auth/users/{id}/role")
+    void updateUserRole(@PathVariable UUID id, @RequestParam String role);
+}
+
+@FeignClient(name = "user-service")
+public interface UserServiceClient {
+    @GetMapping("/api/users/{id}")
+    ProfileResponse getUserProfile(@PathVariable UUID id);
+}
+
+@FeignClient(name = "skill-service")
+public interface SkillServiceClient {
+    @GetMapping("/api/skills/{id}")
+    SkillSummary getSkillById(@PathVariable UUID id);
+}
+```
+
+**Service Layer** â€” `MentorService`: apply (validate role=LEARNER, validate skills via Feign, save PENDING profile), approve (update status + call AuthServiceClient to change role to ROLE_MENTOR + publish MENTOR_APPROVED event), reject (store reason + publish MENTOR_REJECTED event). `MentorSearchService`: uses `MentorSearchSpecification` to build dynamic JPA queries from filter params, enriches results with user profile data via UserServiceClient. `AvailabilityService`: CRUD for time slots with overlap validation.
+
+**RabbitMQ Events Published**: `MENTOR_APPROVED`, `MENTOR_REJECTED` â†’ consumed by Notification Service.
+
+
 ### 2.2.4 Skill Service
 
 **Port**: 8084
@@ -580,6 +488,58 @@ public record AvailabilitySlotRequest(
 | POST | `/api/skills/categories` | ADMIN | Create category |
 
 ---
+
+
+#### Implementation Plan
+
+**Maven Dependencies**
+- `spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `spring-boot-starter-validation`
+- `spring-cloud-starter-netflix-eureka-client`, `postgresql`, `lombok`
+- PostgreSQL `pg_trgm` extension (for fuzzy search via GIN index)
+
+**Package Structure**
+```
+com.skillsync.skill
+ +-- controller/      SkillController, CategoryController
+ +-- dto/             CreateSkillRequest, SkillResponse, SkillSummary, CreateCategoryRequest, CategoryResponse
+ +-- entity/          Skill, Category
+ +-- repository/      SkillRepository, CategoryRepository
+ +-- service/         SkillService, CategoryService
+```
+
+**JPA Entities**
+
+```java
+@Entity @Table(name = "skills", schema = "skills")
+public class Skill {
+    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    @Column(nullable = false, unique = true) private String name;
+    private String category, description;
+    private boolean isActive;
+    @CreatedDate private LocalDateTime createdAt;
+}
+
+@Entity @Table(name = "categories", schema = "skills")
+public class Category {
+    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    @Column(nullable = false, unique = true) private String name;
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "parent_id") private Category parent;
+    @CreatedDate private LocalDateTime createdAt;
+}
+```
+
+**Repository Layer**
+
+```java
+public interface SkillRepository extends JpaRepository<Skill, UUID> {
+    Page<Skill> findByIsActiveTrue(Pageable pageable);
+    @Query(value = "SELECT * FROM skills.skills WHERE name ILIKE %:q% OR similarity(name, :q) > 0.3 ORDER BY similarity(name, :q) DESC", nativeQuery = true)
+    List<Skill> searchByName(@Param("q") String query);
+}
+```
+
+**Service Layer** â€” `SkillService`: CRUD operations, autocomplete search using trigram similarity. `CategoryService`: hierarchical category management. **No Feign clients** â€” Skill Service is a provider, called by User/Mentor/Group services.
+
 
 ### 2.2.5 Session Service
 
@@ -666,6 +626,83 @@ public record SessionFilterRequest(
 
 ---
 
+
+#### Implementation Plan
+
+**Maven Dependencies**
+- `spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `spring-boot-starter-validation`
+- `spring-boot-starter-amqp` (RabbitMQ event publishing)
+- `spring-cloud-starter-openfeign` (calls Mentor Service)
+- `spring-cloud-starter-netflix-eureka-client`, `postgresql`, `lombok`
+
+**Package Structure**
+```
+com.skillsync.session
+ +-- config/          RabbitMQConfig
+ +-- controller/      SessionController
+ +-- dto/             CreateSessionRequest, SessionResponse, RejectSessionRequest, SessionFilterRequest
+ +-- entity/          Session
+ +-- enums/           SessionStatus (REQUESTED, ACCEPTED, REJECTED, COMPLETED, CANCELLED)
+ +-- event/           SessionEvent (with type field for each transition)
+ +-- feign/           MentorServiceClient, UserServiceClient
+ +-- repository/      SessionRepository
+ +-- service/         SessionService, SessionEventPublisher
+```
+
+**JPA Entity**
+
+```java
+@Entity @Table(name = "sessions", schema = "sessions")
+public class Session {
+    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    @Column(nullable = false) private UUID mentorId;
+    @Column(nullable = false) private UUID learnerId;
+    private String topic, description, meetingLink, cancelReason;
+    private LocalDateTime sessionDate;
+    private int durationMinutes;
+    @Enumerated(EnumType.STRING) private SessionStatus status;
+    @CreatedDate private LocalDateTime createdAt;
+    @LastModifiedDate private LocalDateTime updatedAt;
+
+    public boolean isTransitionAllowed(SessionStatus target) {
+        return switch (this.status) {
+            case REQUESTED -> target == ACCEPTED || target == REJECTED || target == CANCELLED;
+            case ACCEPTED  -> target == COMPLETED || target == CANCELLED;
+            default -> false;
+        };
+    }
+}
+```
+
+**OpenFeign Clients**
+
+```java
+@FeignClient(name = "mentor-service")
+public interface MentorServiceClient {
+    @GetMapping("/api/mentors/{id}")
+    MentorProfileResponse getMentorById(@PathVariable UUID id);
+}
+
+@FeignClient(name = "user-service")
+public interface UserServiceClient {
+    @GetMapping("/api/users/{id}")
+    ProfileResponse getUserProfile(@PathVariable UUID id);
+}
+```
+
+**Repository Layer**
+
+```java
+public interface SessionRepository extends JpaRepository<Session, UUID> {
+    List<Session> findByMentorIdAndStatusAndSessionDateBetween(UUID mentorId, SessionStatus status, LocalDateTime start, LocalDateTime end);
+    Page<Session> findByLearnerId(UUID learnerId, Pageable pageable);
+    Page<Session> findByMentorId(UUID mentorId, Pageable pageable);
+}
+```
+
+**Service Layer** â€” `SessionService`: create (validate mentor via Feign + conflict detection query + save REQUESTED + publish event), accept/reject/cancel/complete (validate state transition + update + publish event). `SessionEventPublisher`: publishes typed events to RabbitMQ `session.exchange`.
+
+
 ### 2.2.6 Group Service
 
 **Port**: 8086
@@ -689,6 +726,82 @@ public record SessionFilterRequest(
 | DELETE | `/api/groups/{id}/discussions/{dId}` | OWNER/ADMIN | Delete discussion |
 
 ---
+
+
+#### Implementation Plan
+
+**Maven Dependencies**
+- `spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `spring-boot-starter-validation`
+- `spring-cloud-starter-openfeign` (calls Skill Service, User Service)
+- `spring-cloud-starter-netflix-eureka-client`, `postgresql`, `lombok`
+
+**Package Structure**
+```
+com.skillsync.group
+ +-- controller/      GroupController, DiscussionController
+ +-- dto/             CreateGroupRequest, GroupResponse, GroupMemberResponse, CreateDiscussionRequest, DiscussionResponse
+ +-- entity/          LearningGroup, GroupMember, GroupSkill, Discussion
+ +-- enums/           GroupRole (OWNER, ADMIN, MEMBER)
+ +-- feign/           SkillServiceClient, UserServiceClient
+ +-- repository/      LearningGroupRepository, GroupMemberRepository, GroupSkillRepository, DiscussionRepository
+ +-- service/         GroupService, MembershipService, DiscussionService
+```
+
+**JPA Entities**
+
+```java
+@Entity @Table(name = "learning_groups", schema = "groups")
+public class LearningGroup {
+    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    private String name, description;
+    private int maxMembers;
+    private UUID createdBy;
+    private boolean isActive;
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL) private List<GroupMember> members;
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL) private List<GroupSkill> skills;
+    @CreatedDate private LocalDateTime createdAt;
+    @LastModifiedDate private LocalDateTime updatedAt;
+}
+
+@Entity @Table(name = "group_members", schema = "groups")
+public class GroupMember {
+    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    @ManyToOne @JoinColumn(name = "group_id") private LearningGroup group;
+    private UUID userId;
+    @Enumerated(EnumType.STRING) private GroupRole role;
+    private LocalDateTime joinedAt;
+}
+
+@Entity @Table(name = "discussions", schema = "groups")
+public class Discussion {
+    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    @ManyToOne @JoinColumn(name = "group_id") private LearningGroup group;
+    private UUID userId;
+    @ManyToOne @JoinColumn(name = "parent_id") private Discussion parent;
+    private String content;
+    @CreatedDate private LocalDateTime createdAt;
+    @LastModifiedDate private LocalDateTime updatedAt;
+}
+```
+
+**OpenFeign Clients**
+
+```java
+@FeignClient(name = "skill-service")
+public interface SkillServiceClient {
+    @GetMapping("/api/skills/{id}")
+    SkillSummary getSkillById(@PathVariable UUID id);
+}
+
+@FeignClient(name = "user-service")
+public interface UserServiceClient {
+    @GetMapping("/api/users/{id}")
+    ProfileResponse getUserProfile(@PathVariable UUID id);
+}
+```
+
+**Service Layer** â€” `GroupService`: create (set creator as OWNER), update/delete (validate ownership). `MembershipService`: join (check max members + check not already member), leave (OWNER cannot leave), listMembers (enrich with user profiles via Feign). `DiscussionService`: post (validate membership), getThreaded (fetch by group, ordered by createdAt, nested by parent_id), delete (OWNER/ADMIN only).
+
 
 ### 2.2.7 Review Service
 
@@ -749,6 +862,78 @@ public record MentorRatingSummary(
 
 ---
 
+
+#### Implementation Plan
+
+**Maven Dependencies**
+- `spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `spring-boot-starter-validation`
+- `spring-boot-starter-amqp` (RabbitMQ for REVIEW_SUBMITTED event)
+- `spring-cloud-starter-openfeign` (calls Session Service, User Service)
+- `spring-cloud-starter-netflix-eureka-client`, `postgresql`, `lombok`
+
+**Package Structure**
+```
+com.skillsync.review
+ +-- config/          RabbitMQConfig
+ +-- controller/      ReviewController
+ +-- dto/             CreateReviewRequest, ReviewResponse, MentorRatingSummary
+ +-- entity/          Review
+ +-- event/           ReviewSubmittedEvent
+ +-- feign/           SessionServiceClient, UserServiceClient
+ +-- mapper/          ReviewMapper
+ +-- repository/      ReviewRepository
+ +-- service/         ReviewService, ReviewEventPublisher
+```
+
+**JPA Entity**
+
+```java
+@Entity @Table(name = "reviews", schema = "reviews")
+public class Review {
+    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    @Column(nullable = false, unique = true) private UUID sessionId;
+    @Column(nullable = false) private UUID mentorId;
+    @Column(nullable = false) private UUID reviewerId;
+    private int rating;
+    private String comment;
+    @CreatedDate private LocalDateTime createdAt;
+    @LastModifiedDate private LocalDateTime updatedAt;
+}
+```
+
+**OpenFeign Clients**
+
+```java
+@FeignClient(name = "session-service")
+public interface SessionServiceClient {
+    @GetMapping("/api/sessions/{id}")
+    SessionResponse getSessionById(@PathVariable UUID id);
+}
+
+@FeignClient(name = "user-service")
+public interface UserServiceClient {
+    @GetMapping("/api/users/{id}")
+    ProfileResponse getUserProfile(@PathVariable UUID id);
+}
+```
+
+**Repository Layer**
+
+```java
+public interface ReviewRepository extends JpaRepository<Review, UUID> {
+    Page<Review> findByMentorIdOrderByCreatedAtDesc(UUID mentorId, Pageable pageable);
+    Optional<Review> findBySessionId(UUID sessionId);
+    boolean existsBySessionId(UUID sessionId);
+    @Query("SELECT AVG(r.rating) FROM Review r WHERE r.mentorId = :mentorId")
+    Double calculateAverageRating(@Param("mentorId") UUID mentorId);
+    @Query("SELECT r.rating, COUNT(r) FROM Review r WHERE r.mentorId = :mentorId GROUP BY r.rating")
+    List<Object[]> getRatingDistribution(@Param("mentorId") UUID mentorId);
+}
+```
+
+**Service Layer** â€” `ReviewService`: submitReview (validate session is COMPLETED via Feign + validate reviewer is the learner + check no duplicate + save + publish REVIEW_SUBMITTED event), getMentorReviews (paginated, enriched with reviewer name/avatar via UserServiceClient), calculateRatingSummary. `ReviewEventPublisher`: publishes to `review.exchange` â†’ consumed by Mentor Service (to update avg_rating) and Notification Service.
+
+
 ### 2.2.8 Notification Service
 
 **Port**: 8088
@@ -797,6 +982,67 @@ public void handleMentorApproved(MentorApprovedEvent event) {
 ```
 
 ---
+
+
+#### Implementation Plan
+
+**Maven Dependencies**
+- `spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `spring-boot-starter-validation`
+- `spring-boot-starter-amqp` (RabbitMQ consumer)
+- `spring-boot-starter-websocket` (WebSocket push via STOMP + SockJS)
+- `spring-cloud-starter-netflix-eureka-client`, `postgresql`, `lombok`
+
+**Package Structure**
+```
+com.skillsync.notification
+ +-- config/          RabbitMQConfig, WebSocketConfig (STOMP broker relay)
+ +-- consumer/        SessionEventConsumer, MentorEventConsumer, ReviewEventConsumer
+ +-- controller/      NotificationController
+ +-- dto/             NotificationResponse
+ +-- entity/          Notification
+ +-- repository/      NotificationRepository
+ +-- service/         NotificationService, WebSocketService
+```
+
+**JPA Entity**
+
+```java
+@Entity @Table(name = "notifications", schema = "notifications")
+public class Notification {
+    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    @Column(nullable = false) private UUID userId;
+    private String type, title, message;
+    @Column(columnDefinition = "jsonb") @Convert(converter = JsonbConverter.class)
+    private Map<String, Object> data;
+    private boolean isRead;
+    @CreatedDate private LocalDateTime createdAt;
+}
+```
+
+**Repository Layer**
+
+```java
+public interface NotificationRepository extends JpaRepository<Notification, UUID> {
+    Page<Notification> findByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
+    long countByUserIdAndIsReadFalse(UUID userId);
+    @Modifying @Query("UPDATE Notification n SET n.isRead = true WHERE n.userId = :userId")
+    void markAllAsRead(@Param("userId") UUID userId);
+}
+```
+
+**Service Layer** â€” `NotificationService`: getNotifications (paginated), getUnreadCount, markAsRead, markAllAsRead, deleteNotification, createNotification (called by consumers). `WebSocketService`: pushToUser (sends notification via STOMP to `/user/{userId}/queue/notifications`).
+
+**RabbitMQ Consumers** â€” `SessionEventConsumer`: listens on session.*.queue, creates notifications for:
+- SESSION_REQUESTED â†’ notify mentor
+- SESSION_ACCEPTED/REJECTED â†’ notify learner
+- SESSION_CANCELLED â†’ notify other party
+- SESSION_COMPLETED â†’ notify learner (prompt for review)
+
+`MentorEventConsumer`: listens on mentor.*.queue â†’ MENTOR_APPROVED/REJECTED â†’ notify applicant.
+`ReviewEventConsumer`: listens on review.submitted.queue â†’ notify mentor of new review.
+
+**No OpenFeign Clients** â€” Notification Service is purely event-driven, receives all data it needs via event payloads.
+
 
 ## 2.3 UML Diagrams
 

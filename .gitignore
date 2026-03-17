@@ -1,0 +1,123 @@
+# ============================================================
+#                  SkillSync - .gitignore
+# ============================================================
+
+# ======================== LOGS ==============================
+*.log
+logs/
+*.log.*
+hs_err_pid*.log
+replay_pid*.log
+
+# =================== JAVA / MAVEN ==========================
+target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+*.jar
+*.war
+*.ear
+*.class
+.mvn/wrapper/maven-wrapper.jar
+
+# =================== GRADLE ================================
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+.gradle/
+gradle/
+
+# =================== IDE - ECLIPSE / STS ===================
+.metadata/
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+bin/
+
+# =================== IDE - IntelliJ IDEA ===================
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# =================== IDE - NetBeans ========================
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# =================== IDE - VS Code =========================
+.vscode/
+
+# =================== OS GENERATED ==========================
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Linux
+*~
+.nfs*
+
+# =================== ENVIRONMENT / SECRETS =================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+application-local.yml
+application-local.properties
+application-secret.yml
+application-secret.properties
+
+# =================== NODE / FRONTEND =======================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+dist/
+.next/
+.nuxt/
+.cache/
+.parcel-cache/
+.turbo/
+package-lock.json
+yarn.lock
+
+# =================== DOCKER ================================
+*.pid
+docker-compose.override.yml
+
+# =================== MISC ==================================
+*.swp
+*.swo
+*.bak
+*.tmp
+*.temp
+*.orig
+*.rej
+*.patch
+.sass-cache/
+*.css.map
+*.js.map
+coverage/
+.nyc_output/
+*.pid.lock
