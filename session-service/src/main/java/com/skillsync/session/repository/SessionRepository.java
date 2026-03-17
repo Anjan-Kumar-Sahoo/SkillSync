@@ -1,0 +1,25 @@
+package com.skillsync.session.repository;
+
+import com.skillsync.session.entity.Session;
+import com.skillsync.session.enums.SessionStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Repository
+public interface SessionRepository extends JpaRepository<Session, Long> {
+    Page<Session> findByLearnerId(Long learnerId, Pageable pageable);
+    Page<Session> findByMentorId(Long mentorId, Pageable pageable);
+    Page<Session> findByMentorIdAndStatus(Long mentorId, SessionStatus status, Pageable pageable);
+
+    @Query("SELECT s FROM Session s WHERE s.mentorId = :mentorId AND s.status IN ('REQUESTED','ACCEPTED') " +
+           "AND s.sessionDate < :endTime AND FUNCTION('TIMESTAMPADD', MINUTE, s.durationMinutes, s.sessionDate) > :startTime")
+    List<Session> findConflictingSessions(@Param("mentorId") Long mentorId,
+                                          @Param("startTime") LocalDateTime startTime,
+                                          @Param("endTime") LocalDateTime endTime);
+}
