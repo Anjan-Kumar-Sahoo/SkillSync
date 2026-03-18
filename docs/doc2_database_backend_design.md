@@ -1,4 +1,4 @@
-﻿# 📄 DOCUMENT 2: DATABASE + BACKEND DESIGN
+# 📄 DOCUMENT 2: DATABASE + BACKEND DESIGN
 
 ## SkillSync — Database & Microservices Architecture
 
@@ -27,16 +27,16 @@ Each microservice owns its dedicated PostgreSQL database. No cross-service joins
 
 | Service | JPA Entities | Database Tables |
 |---|---|---|
-| Auth | `AuthUser`, `RefreshToken` | `auth.users`, `auth.refresh_tokens` |
+| Auth | `AuthUser`, `RefreshToken`, `OtpToken` | `auth.users`, `auth.refresh_tokens`, `auth.otp_tokens` |
 | User | `Profile`, `UserSkill` | `users.profiles`, `users.user_skills` |
 | Mentor | `MentorProfile`, `MentorSkill`, `AvailabilitySlot` | `mentors.mentor_profiles`, `mentors.mentor_skills`, `mentors.availability_slots` |
 | Skill | `Skill`, `Category` | `skills.skills`, `skills.categories` |
 | Session | `Session` | `sessions.sessions` |
-| Group | `LearningGroup`, `GroupMember`, `GroupSkill`, `Discussion` | `groups.learning_groups`, `groups.group_members`, `groups.group_skills`, `groups.discussions` |
+| Group | `LearningGroup`, `GroupMember`, `Discussion` | `groups.learning_groups`, `groups.group_members`, `groups.discussions` |
 | Review | `Review` | `reviews.reviews` |
 | Notification | `Notification` | `notifications.notifications` |
 
-> All entities use UUID primary keys, `@CreatedDate`/`@LastModifiedDate` audit fields, and Lombok annotations. Full JPA entity definitions are provided under each service's implementation plan below.
+> All entities use **Long (IDENTITY strategy)** primary keys, `@CreatedDate`/`@LastModifiedDate` audit fields, and Lombok annotations. Full JPA entity definitions are provided under each service's implementation plan below.
 
 ### 2.1.3 Indexing Strategy
 
@@ -82,6 +82,15 @@ public record RegisterRequest(
     @NotBlank @Size(min = 2, max = 100) String lastName
 ) {}
 
+public record VerifyOtpRequest(
+    @NotBlank @Email String email,
+    @NotBlank String otp
+) {}
+
+public record ResendOtpRequest(
+    @NotBlank @Email String email
+) {}
+
 public record LoginRequest(
     @NotBlank @Email String email,
     @NotBlank String password
@@ -101,7 +110,7 @@ public record AuthResponse(
 ) {}
 
 public record UserSummary(
-    UUID id,
+    Long id,
     String email,
     String role,
     String firstName,
@@ -126,20 +135,21 @@ public record UserSummary(
 - `spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `spring-boot-starter-security`
 - `spring-boot-starter-validation`, `spring-boot-starter-mail`
 - `jjwt-api`, `jjwt-impl`, `jjwt-jackson` (io.jsonwebtoken 0.12.x)
+- `springdoc-openapi-starter-webmvc-ui` (Swagger UI)
 - `postgresql`, `lombok`, `spring-cloud-starter-netflix-eureka-client`
 
 **Package Structure**
 ```
 com.skillsync.auth
- +-- config/          SecurityConfig, JwtConfig, CorsConfig
+ +-- config/          SecurityConfig, JwtConfig, CorsConfig, OpenApiConfig
  +-- controller/      AuthController
  +-- dto/             RegisterRequest, LoginRequest, AuthResponse, etc.
- +-- entity/          AuthUser, RefreshToken
+ +-- entity/          AuthUser, RefreshToken, OtpToken
  +-- enums/           Role (ROLE_LEARNER, ROLE_MENTOR, ROLE_ADMIN)
- +-- exception/       (uses skillsync-common GlobalExceptionHandler)
- +-- repository/      AuthUserRepository, RefreshTokenRepository
+ +-- exception/       GlobalExceptionHandler, ResourceNotFoundException
+ +-- repository/      AuthUserRepository, RefreshTokenRepository, OtpTokenRepository
  +-- security/        JwtTokenProvider, JwtAuthenticationFilter, UserDetailsServiceImpl
- +-- service/         AuthService, EmailVerificationService, PasswordResetService
+ +-- service/         AuthService, OtpService, EmailService
 ```
 
 **JPA Entities**
@@ -148,8 +158,8 @@ com.skillsync.auth
 @Entity @Table(name = "users", schema = "auth")
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class AuthUser {
-    @Id @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     @Column(nullable = false, unique = true) private String email;
     @Column(nullable = false) private String passwordHash;
     @Enumerated(EnumType.STRING) private Role role;
@@ -161,10 +171,22 @@ public class AuthUser {
 
 @Entity @Table(name = "refresh_tokens", schema = "auth")
 public class RefreshToken {
-    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "user_id") private AuthUser user;
     @Column(nullable = false, unique = true) private String token;
     private LocalDateTime expiresAt;
+    @CreatedDate private LocalDateTime createdAt;
+}
+
+@Entity @Table(name = "otp_tokens", schema = "auth")
+public class OtpToken {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
+    private Long userId;
+    private String otp;
+    private String email;
+    private LocalDateTime expiresAt;
+    private boolean used;
+    private int attempts;
     @CreatedDate private LocalDateTime createdAt;
 }
 ```
@@ -172,14 +194,18 @@ public class RefreshToken {
 **Repository Layer**
 
 ```java
-public interface AuthUserRepository extends JpaRepository<AuthUser, UUID> {
+public interface AuthUserRepository extends JpaRepository<AuthUser, Long> {
     Optional<AuthUser> findByEmail(String email);
     boolean existsByEmail(String email);
 }
-public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID> {
+public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
     Optional<RefreshToken> findByToken(String token);
     List<RefreshToken> findByUserOrderByCreatedAtAsc(AuthUser user);
     void deleteByUser(AuthUser user);
+}
+public interface OtpTokenRepository extends JpaRepository<OtpToken, Long> {
+    Optional<OtpToken> findTopByEmailAndUsedFalseAndExpiresAtAfterOrderByCreatedAtDesc(String email, LocalDateTime now);
+    void deleteByExpiresAtBefore(LocalDateTime now);
 }
 ```
 
@@ -221,8 +247,8 @@ public record UpdateProfileRequest(
 ) {}
 
 public record ProfileResponse(
-    UUID id,
-    UUID userId,
+    Long id,
+    Long userId,
     String firstName,
     String lastName,
     String email,
@@ -236,7 +262,7 @@ public record ProfileResponse(
 ) {}
 
 public record AddSkillRequest(
-    @NotNull UUID skillId,
+    @NotNull Long skillId,
     @NotBlank String proficiency  // BEGINNER, INTERMEDIATE, ADVANCED
 ) {}
 ```
@@ -250,15 +276,17 @@ public record AddSkillRequest(
 - `spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `spring-boot-starter-validation`
 - `spring-cloud-starter-openfeign` (for Skill Service calls)
 - `spring-cloud-starter-netflix-eureka-client`
+- `springdoc-openapi-starter-webmvc-ui` (Swagger UI)
 - `postgresql`, `lombok`, `spring-boot-starter-actuator`
 
 **Package Structure**
 ```
 com.skillsync.user
- +-- config/          WebConfig, FeignConfig
+ +-- config/          WebConfig, FeignConfig, OpenApiConfig
  +-- controller/      UserController
  +-- dto/             UpdateProfileRequest, ProfileResponse, AddSkillRequest, SkillSummary
  +-- entity/          Profile, UserSkill
+ +-- exception/       GlobalExceptionHandler, ResourceNotFoundException
  +-- feign/           SkillServiceClient
  +-- mapper/          ProfileMapper (Entity <-> DTO using MapStruct or manual)
  +-- repository/      ProfileRepository, UserSkillRepository
@@ -270,8 +298,8 @@ com.skillsync.user
 ```java
 @Entity @Table(name = "profiles", schema = "users")
 public class Profile {
-    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
-    @Column(nullable = false, unique = true) private UUID userId;
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
+    @Column(nullable = false, unique = true) private Long userId;
     private String firstName, lastName, bio, avatarUrl, phone, location;
     private int profileCompletePct;
     @CreatedDate private LocalDateTime createdAt;
@@ -280,9 +308,9 @@ public class Profile {
 
 @Entity @Table(name = "user_skills", schema = "users")
 public class UserSkill {
-    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
-    private UUID userId;
-    private UUID skillId;
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
+    private Long userId;
+    private Long skillId;
     @Enumerated(EnumType.STRING) private Proficiency proficiency;
 }
 ```
@@ -293,7 +321,7 @@ public class UserSkill {
 @FeignClient(name = "skill-service")
 public interface SkillServiceClient {
     @GetMapping("/api/skills/{id}")
-    SkillSummary getSkillById(@PathVariable UUID id);
+    SkillSummary getSkillById(@PathVariable Long id);
 }
 ```
 
@@ -328,11 +356,11 @@ public record MentorApplicationRequest(
     @NotBlank @Size(min = 50, max = 2000) String bio,
     @Min(0) @Max(50) int experienceYears,
     @DecimalMin("5.00") @DecimalMax("500.00") BigDecimal hourlyRate,
-    @NotEmpty @Size(max = 10) List<UUID> skillIds
+    @NotEmpty @Size(max = 10) List<Long> skillIds
 ) {}
 
 public record MentorSearchRequest(
-    UUID skillId,
+    Long skillId,
     @Min(0) @Max(5) Double minRating,
     @Min(0) Integer minExperience,
     @Min(0) Integer maxExperience,
@@ -346,8 +374,8 @@ public record MentorSearchRequest(
 ) {}
 
 public record MentorProfileResponse(
-    UUID id,
-    UUID userId,
+    Long id,
+    Long userId,
     String firstName,
     String lastName,
     String avatarUrl,
@@ -386,17 +414,19 @@ public record AvailabilitySlotRequest(
 - `spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `spring-boot-starter-validation`
 - `spring-cloud-starter-openfeign` (calls Auth Service + User Service + Skill Service)
 - `spring-boot-starter-amqp` (RabbitMQ for publishing MENTOR_APPROVED/REJECTED events)
+- `springdoc-openapi-starter-webmvc-ui` (Swagger UI)
 - `spring-cloud-starter-netflix-eureka-client`, `postgresql`, `lombok`
 
 **Package Structure**
 ```
 com.skillsync.mentor
- +-- config/          RabbitMQConfig, FeignConfig
+ +-- config/          RabbitMQConfig, FeignConfig, OpenApiConfig
  +-- controller/      MentorController
  +-- dto/             MentorApplicationRequest, MentorSearchRequest, MentorProfileResponse, AvailabilitySlotRequest
  +-- entity/          MentorProfile, MentorSkill, AvailabilitySlot
  +-- enums/           MentorStatus (PENDING, APPROVED, REJECTED, SUSPENDED)
  +-- event/           MentorApprovedEvent, MentorRejectedEvent
+ +-- exception/       GlobalExceptionHandler, ResourceNotFoundException
  +-- feign/           AuthServiceClient, UserServiceClient, SkillServiceClient
  +-- mapper/          MentorMapper
  +-- repository/      MentorProfileRepository, MentorSkillRepository, AvailabilitySlotRepository
@@ -409,8 +439,8 @@ com.skillsync.mentor
 ```java
 @Entity @Table(name = "mentor_profiles", schema = "mentors")
 public class MentorProfile {
-    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
-    @Column(nullable = false, unique = true) private UUID userId;
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
+    @Column(nullable = false, unique = true) private Long userId;
     private String bio;
     private int experienceYears;
     private BigDecimal hourlyRate;
@@ -426,14 +456,14 @@ public class MentorProfile {
 
 @Entity @Table(name = "mentor_skills", schema = "mentors")
 public class MentorSkill {
-    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "mentor_id") private MentorProfile mentor;
-    private UUID skillId;
+    private Long skillId;
 }
 
 @Entity @Table(name = "availability_slots", schema = "mentors")
 public class AvailabilitySlot {
-    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "mentor_id") private MentorProfile mentor;
     private int dayOfWeek;
     private LocalTime startTime, endTime;
@@ -447,19 +477,19 @@ public class AvailabilitySlot {
 @FeignClient(name = "auth-service")
 public interface AuthServiceClient {
     @PutMapping("/api/auth/users/{id}/role")
-    void updateUserRole(@PathVariable UUID id, @RequestParam String role);
+    void updateUserRole(@PathVariable Long id, @RequestParam String role);
 }
 
 @FeignClient(name = "user-service")
 public interface UserServiceClient {
     @GetMapping("/api/users/{id}")
-    ProfileResponse getUserProfile(@PathVariable UUID id);
+    ProfileResponse getUserProfile(@PathVariable Long id);
 }
 
 @FeignClient(name = "skill-service")
 public interface SkillServiceClient {
     @GetMapping("/api/skills/{id}")
-    SkillSummary getSkillById(@PathVariable UUID id);
+    SkillSummary getSkillById(@PathVariable Long id);
 }
 ```
 
@@ -495,14 +525,17 @@ public interface SkillServiceClient {
 **Maven Dependencies**
 - `spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `spring-boot-starter-validation`
 - `spring-cloud-starter-netflix-eureka-client`, `postgresql`, `lombok`
+- `springdoc-openapi-starter-webmvc-ui` (Swagger UI)
 - PostgreSQL `pg_trgm` extension (for fuzzy search via GIN index)
 
 **Package Structure**
 ```
 com.skillsync.skill
+ +-- config/          OpenApiConfig
  +-- controller/      SkillController, CategoryController
  +-- dto/             CreateSkillRequest, SkillResponse, SkillSummary, CreateCategoryRequest, CategoryResponse
  +-- entity/          Skill, Category
+ +-- exception/       GlobalExceptionHandler, ResourceNotFoundException
  +-- repository/      SkillRepository, CategoryRepository
  +-- service/         SkillService, CategoryService
 ```
@@ -512,7 +545,7 @@ com.skillsync.skill
 ```java
 @Entity @Table(name = "skills", schema = "skills")
 public class Skill {
-    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @Column(nullable = false, unique = true) private String name;
     private String category, description;
     private boolean isActive;
@@ -521,7 +554,7 @@ public class Skill {
 
 @Entity @Table(name = "categories", schema = "skills")
 public class Category {
-    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @Column(nullable = false, unique = true) private String name;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "parent_id") private Category parent;
     @CreatedDate private LocalDateTime createdAt;
@@ -531,7 +564,7 @@ public class Category {
 **Repository Layer**
 
 ```java
-public interface SkillRepository extends JpaRepository<Skill, UUID> {
+public interface SkillRepository extends JpaRepository<Skill, Long> {
     Page<Skill> findByIsActiveTrue(Pageable pageable);
     @Query(value = "SELECT * FROM skills.skills WHERE name ILIKE %:q% OR similarity(name, :q) > 0.3 ORDER BY similarity(name, :q) DESC", nativeQuery = true)
     List<Skill> searchByName(@Param("q") String query);
@@ -564,7 +597,7 @@ public interface SkillRepository extends JpaRepository<Skill, UUID> {
 
 ```java
 public record CreateSessionRequest(
-    @NotNull UUID mentorId,
+    @NotNull Long mentorId,
     @NotBlank @Size(max = 255) String topic,
     @Size(max = 2000) String description,
     @NotNull @Future LocalDateTime sessionDate,
@@ -572,9 +605,9 @@ public record CreateSessionRequest(
 ) {}
 
 public record SessionResponse(
-    UUID id,
-    UUID mentorId,
-    UUID learnerId,
+    Long id,
+    Long mentorId,
+    Long learnerId,
     String mentorName,
     String learnerName,
     String topic,
@@ -633,17 +666,19 @@ public record SessionFilterRequest(
 - `spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `spring-boot-starter-validation`
 - `spring-boot-starter-amqp` (RabbitMQ event publishing)
 - `spring-cloud-starter-openfeign` (calls Mentor Service)
+- `springdoc-openapi-starter-webmvc-ui` (Swagger UI)
 - `spring-cloud-starter-netflix-eureka-client`, `postgresql`, `lombok`
 
 **Package Structure**
 ```
 com.skillsync.session
- +-- config/          RabbitMQConfig
+ +-- config/          RabbitMQConfig, OpenApiConfig
  +-- controller/      SessionController
  +-- dto/             CreateSessionRequest, SessionResponse, RejectSessionRequest, SessionFilterRequest
  +-- entity/          Session
  +-- enums/           SessionStatus (REQUESTED, ACCEPTED, REJECTED, COMPLETED, CANCELLED)
  +-- event/           SessionEvent (with type field for each transition)
+ +-- exception/       GlobalExceptionHandler, ResourceNotFoundException
  +-- feign/           MentorServiceClient, UserServiceClient
  +-- repository/      SessionRepository
  +-- service/         SessionService, SessionEventPublisher
@@ -654,9 +689,9 @@ com.skillsync.session
 ```java
 @Entity @Table(name = "sessions", schema = "sessions")
 public class Session {
-    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
-    @Column(nullable = false) private UUID mentorId;
-    @Column(nullable = false) private UUID learnerId;
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
+    @Column(nullable = false) private Long mentorId;
+    @Column(nullable = false) private Long learnerId;
     private String topic, description, meetingLink, cancelReason;
     private LocalDateTime sessionDate;
     private int durationMinutes;
@@ -680,23 +715,23 @@ public class Session {
 @FeignClient(name = "mentor-service")
 public interface MentorServiceClient {
     @GetMapping("/api/mentors/{id}")
-    MentorProfileResponse getMentorById(@PathVariable UUID id);
+    MentorProfileResponse getMentorById(@PathVariable Long id);
 }
 
 @FeignClient(name = "user-service")
 public interface UserServiceClient {
     @GetMapping("/api/users/{id}")
-    ProfileResponse getUserProfile(@PathVariable UUID id);
+    ProfileResponse getUserProfile(@PathVariable Long id);
 }
 ```
 
 **Repository Layer**
 
 ```java
-public interface SessionRepository extends JpaRepository<Session, UUID> {
-    List<Session> findByMentorIdAndStatusAndSessionDateBetween(UUID mentorId, SessionStatus status, LocalDateTime start, LocalDateTime end);
-    Page<Session> findByLearnerId(UUID learnerId, Pageable pageable);
-    Page<Session> findByMentorId(UUID mentorId, Pageable pageable);
+public interface SessionRepository extends JpaRepository<Session, Long> {
+    List<Session> findByMentorIdAndStatusAndSessionDateBetween(Long mentorId, SessionStatus status, LocalDateTime start, LocalDateTime end);
+    Page<Session> findByLearnerId(Long learnerId, Pageable pageable);
+    Page<Session> findByMentorId(Long mentorId, Pageable pageable);
 }
 ```
 
@@ -733,15 +768,18 @@ public interface SessionRepository extends JpaRepository<Session, UUID> {
 **Maven Dependencies**
 - `spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `spring-boot-starter-validation`
 - `spring-cloud-starter-openfeign` (calls Skill Service, User Service)
+- `springdoc-openapi-starter-webmvc-ui` (Swagger UI)
 - `spring-cloud-starter-netflix-eureka-client`, `postgresql`, `lombok`
 
 **Package Structure**
 ```
 com.skillsync.group
+ +-- config/          OpenApiConfig
  +-- controller/      GroupController, DiscussionController
  +-- dto/             CreateGroupRequest, GroupResponse, GroupMemberResponse, CreateDiscussionRequest, DiscussionResponse
  +-- entity/          LearningGroup, GroupMember, GroupSkill, Discussion
  +-- enums/           GroupRole (OWNER, ADMIN, MEMBER)
+ +-- exception/       GlobalExceptionHandler, ResourceNotFoundException
  +-- feign/           SkillServiceClient, UserServiceClient
  +-- repository/      LearningGroupRepository, GroupMemberRepository, GroupSkillRepository, DiscussionRepository
  +-- service/         GroupService, MembershipService, DiscussionService
@@ -752,10 +790,10 @@ com.skillsync.group
 ```java
 @Entity @Table(name = "learning_groups", schema = "groups")
 public class LearningGroup {
-    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     private String name, description;
     private int maxMembers;
-    private UUID createdBy;
+    private Long createdBy;
     private boolean isActive;
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL) private List<GroupMember> members;
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL) private List<GroupSkill> skills;
@@ -765,18 +803,18 @@ public class LearningGroup {
 
 @Entity @Table(name = "group_members", schema = "groups")
 public class GroupMember {
-    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @ManyToOne @JoinColumn(name = "group_id") private LearningGroup group;
-    private UUID userId;
+    private Long userId;
     @Enumerated(EnumType.STRING) private GroupRole role;
     private LocalDateTime joinedAt;
 }
 
 @Entity @Table(name = "discussions", schema = "groups")
 public class Discussion {
-    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @ManyToOne @JoinColumn(name = "group_id") private LearningGroup group;
-    private UUID userId;
+    private Long userId;
     @ManyToOne @JoinColumn(name = "parent_id") private Discussion parent;
     private String content;
     @CreatedDate private LocalDateTime createdAt;
@@ -790,13 +828,13 @@ public class Discussion {
 @FeignClient(name = "skill-service")
 public interface SkillServiceClient {
     @GetMapping("/api/skills/{id}")
-    SkillSummary getSkillById(@PathVariable UUID id);
+    SkillSummary getSkillById(@PathVariable Long id);
 }
 
 @FeignClient(name = "user-service")
 public interface UserServiceClient {
     @GetMapping("/api/users/{id}")
-    ProfileResponse getUserProfile(@PathVariable UUID id);
+    ProfileResponse getUserProfile(@PathVariable Long id);
 }
 ```
 
@@ -823,16 +861,16 @@ public interface UserServiceClient {
 
 ```java
 public record CreateReviewRequest(
-    @NotNull UUID sessionId,
+    @NotNull Long sessionId,
     @Min(1) @Max(5) int rating,
     @Size(min = 10, max = 2000) String comment
 ) {}
 
 public record ReviewResponse(
-    UUID id,
-    UUID sessionId,
-    UUID mentorId,
-    UUID reviewerId,
+    Long id,
+    Long sessionId,
+    Long mentorId,
+    Long reviewerId,
     String reviewerName,
     String reviewerAvatar,
     int rating,
@@ -841,7 +879,7 @@ public record ReviewResponse(
 ) {}
 
 public record MentorRatingSummary(
-    UUID mentorId,
+    Long mentorId,
     double averageRating,
     int totalReviews,
     Map<Integer, Integer> ratingDistribution  // {5: 42, 4: 28, 3: 10, 2: 5, 1: 2}
@@ -890,10 +928,10 @@ com.skillsync.review
 ```java
 @Entity @Table(name = "reviews", schema = "reviews")
 public class Review {
-    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
-    @Column(nullable = false, unique = true) private UUID sessionId;
-    @Column(nullable = false) private UUID mentorId;
-    @Column(nullable = false) private UUID reviewerId;
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
+    @Column(nullable = false, unique = true) private Long sessionId;
+    @Column(nullable = false) private Long mentorId;
+    @Column(nullable = false) private Long reviewerId;
     private int rating;
     private String comment;
     @CreatedDate private LocalDateTime createdAt;
@@ -907,27 +945,27 @@ public class Review {
 @FeignClient(name = "session-service")
 public interface SessionServiceClient {
     @GetMapping("/api/sessions/{id}")
-    SessionResponse getSessionById(@PathVariable UUID id);
+    SessionResponse getSessionById(@PathVariable Long id);
 }
 
 @FeignClient(name = "user-service")
 public interface UserServiceClient {
     @GetMapping("/api/users/{id}")
-    ProfileResponse getUserProfile(@PathVariable UUID id);
+    ProfileResponse getUserProfile(@PathVariable Long id);
 }
 ```
 
 **Repository Layer**
 
 ```java
-public interface ReviewRepository extends JpaRepository<Review, UUID> {
-    Page<Review> findByMentorIdOrderByCreatedAtDesc(UUID mentorId, Pageable pageable);
-    Optional<Review> findBySessionId(UUID sessionId);
-    boolean existsBySessionId(UUID sessionId);
+public interface ReviewRepository extends JpaRepository<Review, Long> {
+    Page<Review> findByMentorIdOrderByCreatedAtDesc(Long mentorId, Pageable pageable);
+    Optional<Review> findBySessionId(Long sessionId);
+    boolean existsBySessionId(Long sessionId);
     @Query("SELECT AVG(r.rating) FROM Review r WHERE r.mentorId = :mentorId")
-    Double calculateAverageRating(@Param("mentorId") UUID mentorId);
+    Double calculateAverageRating(@Param("mentorId") Long mentorId);
     @Query("SELECT r.rating, COUNT(r) FROM Review r WHERE r.mentorId = :mentorId GROUP BY r.rating")
-    List<Object[]> getRatingDistribution(@Param("mentorId") UUID mentorId);
+    List<Object[]> getRatingDistribution(@Param("mentorId") Long mentorId);
 }
 ```
 
@@ -1009,8 +1047,8 @@ com.skillsync.notification
 ```java
 @Entity @Table(name = "notifications", schema = "notifications")
 public class Notification {
-    @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
-    @Column(nullable = false) private UUID userId;
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
+    @Column(nullable = false) private Long userId;
     private String type, title, message;
     @Column(columnDefinition = "jsonb") @Convert(converter = JsonbConverter.class)
     private Map<String, Object> data;
@@ -1022,11 +1060,11 @@ public class Notification {
 **Repository Layer**
 
 ```java
-public interface NotificationRepository extends JpaRepository<Notification, UUID> {
-    Page<Notification> findByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
-    long countByUserIdAndIsReadFalse(UUID userId);
+public interface NotificationRepository extends JpaRepository<Notification, Long> {
+    Page<Notification> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+    long countByUserIdAndIsReadFalse(Long userId);
     @Modifying @Query("UPDATE Notification n SET n.isRead = true WHERE n.userId = :userId")
-    void markAllAsRead(@Param("userId") UUID userId);
+    void markAllAsRead(@Param("userId") Long userId);
 }
 ```
 
@@ -1052,9 +1090,9 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
 ┌──────────────────────────────────────────────┐
 │                  Session                      │
 ├──────────────────────────────────────────────┤
-│ - id: UUID                                    │
-│ - mentorId: UUID                              │
-│ - learnerId: UUID                             │
+│ - id: Long                                    │
+│ - mentorId: Long                              │
+│ - learnerId: Long                             │
 │ - topic: String                               │
 │ - description: String                         │
 │ - sessionDate: LocalDateTime                  │

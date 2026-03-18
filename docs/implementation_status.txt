@@ -1,0 +1,100 @@
+================================================================================
+    SKILLSYNC - CROSS-CUTTING CONCERNS IMPLEMENTATION STATUS
+    Generated: 2026-03-18
+================================================================================
+
+1. GLOBAL EXCEPTION HANDLING (@RestControllerAdvice)
+----------------------------------------------------
+[DONE] auth-service     - Enhanced GlobalExceptionHandler + ResourceNotFoundException
+[DONE] user-service     - GlobalExceptionHandler + ResourceNotFoundException
+[DONE] skill-service    - GlobalExceptionHandler + ResourceNotFoundException
+[DONE] session-service  - GlobalExceptionHandler + ResourceNotFoundException
+[DONE] mentor-service   - GlobalExceptionHandler + ResourceNotFoundException
+[DONE] review-service   - GlobalExceptionHandler + ResourceNotFoundException
+[DONE] group-service    - GlobalExceptionHandler + ResourceNotFoundException
+[DONE] notification-service - GlobalExceptionHandler + ResourceNotFoundException
+
+Each handler covers:
+  - ResourceNotFoundException  -> 404 NOT_FOUND
+  - MethodArgumentNotValidException -> 400 VALIDATION_ERROR
+  - RuntimeException -> 400 BAD_REQUEST
+  - Exception (catch-all) -> 500 INTERNAL_ERROR
+
+2. LOGBACK FILE LOGGING
+----------------------------------------------------
+[DONE] auth-service     - logback-spring.xml (logs/auth-service.log)
+[DONE] user-service     - logback-spring.xml (logs/user-service.log)
+[DONE] skill-service    - logback-spring.xml (logs/skill-service.log)
+[DONE] session-service  - logback-spring.xml (logs/session-service.log)
+[DONE] mentor-service   - logback-spring.xml (logs/mentor-service.log)
+[DONE] review-service   - logback-spring.xml (logs/review-service.log)
+[DONE] group-service    - logback-spring.xml (logs/group-service.log)
+[DONE] notification-service - logback-spring.xml (logs/notification-service.log)
+[DONE] api-gateway      - logback-spring.xml (logs/api-gateway.log)
+[DONE] eureka-server    - logback-spring.xml (logs/eureka-server.log)
+[DONE] config-server    - logback-spring.xml (logs/config-server.log)
+
+Config: Console + Rolling File | 10MB max | 30-day history | com.skillsync=DEBUG
+
+3. JUNIT/MOCKITO TEST CLASSES
+----------------------------------------------------
+[DONE] auth-service     - AuthServiceTest (6 tests) + AuthControllerTest (4 tests)
+[DONE] user-service     - UserServiceTest (5 tests) + UserControllerTest (3 tests)
+[DONE] skill-service    - SkillServiceTest (6 tests) + SkillControllerTest (4 tests)
+[DONE] session-service  - SessionServiceTest (5 tests) + SessionControllerTest (2 tests)
+[DONE] mentor-service   - MentorServiceTest (5 tests) + MentorControllerTest (3 tests)
+[DONE] review-service   - ReviewServiceTest (5 tests) + ReviewControllerTest (2 tests)
+[DONE] group-service    - GroupServiceTest (6 tests) + GroupControllerTest (3 tests)
+[DONE] notification-service - NotificationServiceTest (5 tests) + NotificationControllerTest (4 tests)
+
+Total: 16 test classes | ~73 test methods
+
+4. SWAGGER/OPENAPI CONFIG
+----------------------------------------------------
+[DONE] auth-service     - springdoc dependency + OpenApiConfig + SecurityConfig whitelist
+[DONE] user-service     - springdoc dependency + OpenApiConfig
+[DONE] skill-service    - springdoc dependency + OpenApiConfig
+[DONE] session-service  - springdoc dependency + OpenApiConfig
+[DONE] mentor-service   - springdoc dependency + OpenApiConfig
+[DONE] review-service   - springdoc dependency + OpenApiConfig
+[DONE] group-service    - springdoc dependency + OpenApiConfig
+[DONE] notification-service - springdoc dependency + OpenApiConfig
+
+Swagger UI accessible at: http://localhost:{port}/swagger-ui.html
+OpenAPI docs at: http://localhost:{port}/v3/api-docs
+
+================================================================================
+    FILES CREATED / MODIFIED SUMMARY
+================================================================================
+
+NEW FILES CREATED (61 files):
+  - 8x ResourceNotFoundException.java (one per service)
+  - 7x GlobalExceptionHandler.java (user, skill, session, mentor, review, group, notification)
+  - 11x logback-spring.xml (all services)
+  - 8x OpenApiConfig.java (all business services)
+  - 16x Test classes (Service + Controller tests for all 8 services)
+  - 1x docs/implementation_status.txt (this file)
+
+MODIFIED FILES (9 files):
+  - auth-service/GlobalExceptionHandler.java (added ResourceNotFoundException + logging)
+  - auth-service/SecurityConfig.java (whitelisted Swagger paths)
+  - 8x pom.xml (added springdoc-openapi-starter-webmvc-ui v2.8.6)
+
+================================================================================
+    VERIFICATION COMMANDS
+================================================================================
+
+To compile all services:
+  cd f:\SkillSync\auth-service && mvn compile -q
+  cd f:\SkillSync\user-service && mvn compile -q
+  ... (repeat for all services)
+
+To run tests:
+  cd f:\SkillSync\auth-service && mvn test -q
+  cd f:\SkillSync\skill-service && mvn test -q
+  ... (repeat for all services)
+
+To verify Swagger (start any service, then visit):
+  http://localhost:{port}/swagger-ui.html
+
+================================================================================

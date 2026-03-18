@@ -28,6 +28,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
+    private final OtpService otpService;
 
     private static final int MAX_REFRESH_TOKENS = 5;
 
@@ -49,6 +50,9 @@ public class AuthService {
 
         user = authUserRepository.save(user);
         log.info("User registered successfully: {}", user.getEmail());
+
+        // Send OTP for email verification
+        otpService.generateAndSendOtp(user);
 
         return generateAuthResponse(user);
     }

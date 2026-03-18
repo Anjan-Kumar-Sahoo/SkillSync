@@ -1,0 +1,56 @@
+# SkillSync Microservices Project Checklist
+
+## Core Services
+✓ Eureka Server module exists
+✓ API Gateway module exists
+✓ Auth Service module exists
+✓ Notification Service module exists
+✓ User, Mentor, Group, Review, Session, Skill services exist
+✓ Registration logic (part of user/auth-service)
+
+## Architecture & Layers
+✓ Layered structure (Entity, Repository, Service, Controller) in all services
+✓ Global Exception Handling (@RestControllerAdvice)
+✓ Validation annotations on DTOs
+
+## Security
+✓ JWT generation in Auth Service
+✓ JWT validation in API Gateway
+✓ Secure endpoints (except login/register)
+✓ OTP implementation (generation, expiry, validation, email via Notification)
+
+## Logging
+✓ SLF4J logging in all services
+✓ Logback or file logging config (implemented in all services)
+
+## Testing
+✓ JUnit/Mockito test classes for Service/Controller layers (16 classes created)
+
+## DevOps
+✓ Maven build (pom.xml in all modules)
+✓ Git repository structure
+☐ Docker/SonarQube/CI configs (not found)
+
+## API Documentation
+✓ Swagger/OpenAPI config (implemented in all 8 business services)
+
+## Optional Enhancements
+- [ ] Redis for OTP
+- [ ] RabbitMQ/Kafka for async events
+- [ ] Docker Compose
+- [ ] Centralized config server (exists, but verify usage)
+- [ ] Rate limiting for OTP
+
+## Other
+- [ ] No hardcoded values
+- [ ] Proper naming, indentation, comments
+- [ ] End-to-end flow working
+
+---
+
+
+Legend:
+✓ = Present
+☐ = Not found or incomplete
+
+Update this file as you implement features or verify requirements.

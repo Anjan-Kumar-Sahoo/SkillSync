@@ -82,8 +82,8 @@ SkillSync addresses every gap with a purpose-built, microservices-based platform
 ## 1.4 Core Features
 
 ### Feature 1: Authentication & Authorization
-- User registration with email verification
-- Login with JWT access + refresh token pair
+- User registration with **OTP email verification** (JavaMailSender)
+- Login with JWT access + refresh token pair (Verified users only)
 - Token refresh mechanism (access: 15min, refresh: 7 days)
 - Role-based route guards (frontend) + method-level security (backend)
 - Password hashing with BCrypt (strength 12)
@@ -374,6 +374,8 @@ Admin                API Gateway         Mentor Service          RabbitMQ       
 | Messaging | RabbitMQ | Async event-driven communication |
 | Database | PostgreSQL | Per-service relational storage |
 | ORM | Spring Data JPA / Hibernate | Object-relational mapping |
+| Documentation | Swagger / OpenAPI 3.0 | Automated API documentation UI |
+| Logging | Logback / SLF4J | Rolling file and console logging |
 | Build Tool | Maven | Dependency management, build |
 | Containerization | Docker + Docker Compose | Packaging & orchestration |
 | CI/CD | GitHub Actions | Build, test, deploy pipeline |

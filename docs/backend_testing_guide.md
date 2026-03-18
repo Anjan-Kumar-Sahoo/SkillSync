@@ -136,6 +136,18 @@ curl -X POST http://localhost:8080/api/auth/register \
     "firstName": "Anjan",
     "lastName": "Sahoo"
   }'
+
+#### Verify OTP (Check your console/logs for the code)
+```bash
+curl -X POST http://localhost:8080/api/auth/verify-otp \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "learner@test.com",
+    "otp": "123456" 
+  }'
+```
+> [!NOTE]
+> For testing, the OTP is printed in the `auth-service` console logs. In production, check the email.
 ```
 
 **Expected Response** (save the `accessToken`!):
@@ -165,6 +177,8 @@ curl -X POST http://localhost:8080/api/auth/register \
     "firstName": "Anshul",
     "lastName": "Kumar"
   }'
+
+# Also verify OTP for mentor as shown above!
 ```
 
 #### Register Admin User
@@ -588,23 +602,25 @@ curl -X PUT http://localhost:8080/api/notifications/read-all \
 Follow this order for the complete happy path:
 
 ```
-1. Register learner@test.com  → save LEARNER_TOKEN
-2. Register mentor@test.com   → save MENTOR_TOKEN  
-3. Register admin@test.com    → save ADMIN_TOKEN
-4. Promote admin (PUT /api/auth/users/3/role?role=ROLE_ADMIN)
-5. Create 4 skills (Java, Spring Boot, React, Python)
-6. Update learner profile + add skills
-7. Mentor applies (POST /api/mentors/apply)
-8. Admin approves mentor (PUT /api/mentors/1/approve)
-9. Login mentor again (to get updated ROLE_MENTOR token)
-10. Add mentor availability
-11. Learner books session with mentor
-12. Mentor accepts session
-13. Mentor completes session
-14. Learner submits review
-15. Check mentor rating summary
-16. Create a group and post discussions
-17. Check notifications (mentor should have: approval + session request + review alerts)
+1. Register learner@test.com
+2. Verify OTP for learner (check console logs)
+3. Register mentor@test.com
+4. Verify OTP for mentor (check console logs)
+5. Register admin@test.com
+6. Promote admin (PUT /api/auth/users/3/role?role=ROLE_ADMIN)
+7. Create 4 skills (Java, Spring Boot, React, Python)
+8. Update learner profile + add skills
+9. Mentor applies (POST /api/mentors/apply)
+10. Admin approves mentor (PUT /api/mentors/1/approve)
+11. Login mentor again (to get updated ROLE_MENTOR token)
+12. Add mentor availability
+13. Learner books session with mentor
+14. Mentor accepts session
+15. Mentor completes session
+16. Learner submits review
+17. Check mentor rating summary
+18. Create a group and post discussions
+19. Check notifications (mentor should have: approval + session request + review alerts)
 ```
 
 ---

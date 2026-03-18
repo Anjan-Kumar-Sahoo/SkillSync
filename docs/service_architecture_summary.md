@@ -9,7 +9,7 @@
 | 1 | **Eureka Server** | 8761 | `com.skillsync.eurekaserver` | Service discovery, self-preservation disabled for dev |
 | 2 | **Config Server** | 8888 | `com.skillsync.configserver` | Git-backed config (`SkillSync-config` repo), Eureka registered |
 | 3 | **API Gateway** | 8080 | `com.skillsync.apigateway` | JWT validation filter, CORS, routes to all 8 microservices |
-| 4 | **Auth Service** | 8081 | `com.skillsync.auth` | Registration, login, JWT (access + refresh), role management, BCrypt |
+| 4 | **Auth Service** | 8081 | `com.skillsync.auth` | Registration, OTP email verification, login, JWT (access + refresh), role management, BCrypt |
 | 5 | **User Service** | 8082 | `com.skillsync.user` | Profile CRUD, skill tagging, Feign → Skill Service |
 | 6 | **Mentor Service** | 8083 | `com.skillsync.mentor` | Application/approval flow, availability slots, RabbitMQ events |
 | 7 | **Skill Service** | 8084 | `com.skillsync.skill` | Skill catalog CRUD, category management, search |
