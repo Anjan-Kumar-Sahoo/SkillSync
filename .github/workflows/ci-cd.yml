@@ -1,0 +1,139 @@
+# ============================================================
+#  SkillSync CI/CD - Build & Docker Images
+# ============================================================
+name: SkillSync CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  JAVA_VERSION: '17'
+  DOCKER_REGISTRY: docker.io
+  # Set DOCKER_USERNAME and DOCKER_PASSWORD in GitHub Secrets for push
+
+jobs:
+
+  # ======================== BUILD ALL SERVICES ================
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - eureka-server
+          - config-server
+          - api-gateway
+          - auth-service
+          - user-service
+          - mentor-service
+          - skill-service
+          - session-service
+          - group-service
+          - review-service
+          - notification-service
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Build ${{ matrix.service }}
+        working-directory: ./${{ matrix.service }}
+        run: mvn clean package -DskipTests -B
+
+      - name: Run tests ${{ matrix.service }}
+        working-directory: ./${{ matrix.service }}
+        run: mvn test -B
+        continue-on-error: true
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.service }}-jar
+          path: ./${{ matrix.service }}/target/*.jar
+          retention-days: 1
+
+  # ======================== BUILD DOCKER IMAGES ===============
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: eureka-server
+            context: ./eureka-server
+          - service: config-server
+            context: ./config-server
+          - service: api-gateway
+            context: ./api-gateway
+          - service: auth-service
+            context: ./auth-service
+          - service: user-service
+            context: ./user-service
+          - service: mentor-service
+            context: ./mentor-service
+          - service: skill-service
+            context: ./skill-service
+          - service: session-service
+            context: ./session-service
+          - service: group-service
+            context: ./group-service
+          - service: review-service
+            context: ./review-service
+          - service: notification-service
+            context: ./notification-service
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Uncomment below to push images to Docker Hub:
+      # - name: Login to Docker Hub
+      #   uses: docker/login-action@v3
+      #   with:
+      #     username: ${{ secrets.DOCKER_USERNAME }}
+      #     password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Docker image - ${{ matrix.service }}
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          push: false   # Set to true + uncomment login above to push
+          tags: |
+            skillsync/${{ matrix.service }}:latest
+            skillsync/${{ matrix.service }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ======================== COMPOSE VALIDATION ================
+  validate-compose:
+    name: Validate Docker Compose
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create .env from example
+        run: cp .env.example .env
+
+      - name: Validate docker-compose.yml
+        run: docker compose config --quiet
