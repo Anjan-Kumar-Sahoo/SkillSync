@@ -12,10 +12,11 @@ FROM eclipse-temurin:17-jre-alpine
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
-RUN chown appuser:appgroup app.jar
+RUN mkdir -p /app/logs && chmod -R 777 /app/logs
+RUN chown -R appuser:appgroup /app
 USER appuser
 EXPOSE 8761
-ENV JAVA_OPTS=""
+ENV JAVA_OPTS="-Xms256m -Xmx512m"
 HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=5 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8761/actuator/health || exit 1
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

@@ -12,7 +12,8 @@ FROM eclipse-temurin:17-jre-alpine
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
-RUN chown appuser:appgroup app.jar
+RUN mkdir -p /app/logs && chmod -R 777 /app/logs
+RUN chown -R appuser:appgroup /app
 USER appuser
 EXPOSE 8085
 ENV JAVA_OPTS=""
