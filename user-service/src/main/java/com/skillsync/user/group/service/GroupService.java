@@ -4,14 +4,13 @@ import com.skillsync.user.group.dto.*;
 import com.skillsync.user.group.entity.*;
 import com.skillsync.user.group.repository.*;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 
-@Service @RequiredArgsConstructor @Slf4j
+@Service @RequiredArgsConstructor
 public class GroupService {
     private final GroupRepository groupRepository;
     private final GroupMemberRepository memberRepository;

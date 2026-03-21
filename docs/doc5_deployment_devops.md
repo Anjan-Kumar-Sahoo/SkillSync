@@ -1,5 +1,12 @@
 # 📄 DOCUMENT 5: DEPLOYMENT + DEVOPS
 
+> [!IMPORTANT]
+> **Architecture Update (March 2026):** The following services have been merged and are removed from deployment topologies:
+> - **Mentor Service + Group Service → User Service** (port 8082)
+> - **Review Service → Session Service** (port 8085)
+>
+> The original deployment diagrams below reflect the initial 11-service architecture. Real deployments use the current 8-service topology.
+
 ## SkillSync — Infrastructure, Deployment & Operations
 
 ---

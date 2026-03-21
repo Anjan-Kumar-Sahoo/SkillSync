@@ -1,5 +1,12 @@
 # SkillSync Backend — Complete Testing Guide
 
+> [!IMPORTANT]
+> **Architecture Update (March 2026):** The following services have been merged:
+> - **Mentor Service + Group Service → User Service** (port 8082)
+> - **Review Service → Session Service** (port 8085)
+>
+> You no longer need to run or test these standalone services. Their APIs are still available via the API Gateway using the same routes, but they are serviced by the merged backend services.
+
 > **PostgreSQL:** `postgres` / `root` | **RabbitMQ:** `guest` / `guest`
 
 ---

@@ -1,5 +1,12 @@
 # 📄 DOCUMENT 3: FRONTEND DESIGN (REACT + EXCEPTIONS)
 
+> [!IMPORTANT]
+> **Architecture Update (March 2026):** The following backend services have been merged to simplify the architecture:
+> - **Mentor Service + Group Service → User Service** (port 8082)
+> - **Review Service → Session Service** (port 8085)
+>
+> The frontend design remains unchanged as Gateway routes were updated, but keep this in mind when referencing backend services.
+
 ## SkillSync — React Frontend Architecture
 
 ---

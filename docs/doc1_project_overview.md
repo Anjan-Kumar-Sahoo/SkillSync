@@ -1,5 +1,12 @@
 # 📄 DOCUMENT 1: PROJECT OVERVIEW
 
+> [!IMPORTANT]
+> **Architecture Update (March 2026):** The following services have been merged:
+> - **Mentor Service + Group Service → User Service** (port 8082) — mentor onboarding, groups, and user profiles now live in one service
+> - **Review Service → Session Service** (port 8085) — reviews and sessions share the same service and database
+>
+> The original 11-service design below reflects the initial architecture. See `service_architecture_summary.md` for the current 8-service topology.
+
 ## SkillSync — Peer Learning & Mentor Matching Platform
 
 ---
@@ -227,17 +234,17 @@ State Machine:
 ┌────────────────────────────┼────────────────────────────────────────────┐
 │                    SERVICE LAYER                                        │
 │                            │                                            │
-│  ┌────────────┐ ┌──────────┴──┐ ┌─────────────┐ ┌──────────────┐      │
-│  │ Auth       │ │ User        │ │ Mentor      │ │ Skill        │      │
-│  │ Service    │ │ Service     │ │ Service     │ │ Service      │      │
-│  │ :8081      │ │ :8082       │ │ :8083       │ │ :8084        │      │
-│  └─────┬──────┘ └──────┬──────┘ └──────┬──────┘ └──────┬───────┘      │
-│        │               │               │               │               │
-│  ┌─────┴──────┐ ┌──────┴──────┐ ┌──────┴──────┐ ┌──────┴───────┐      │
-│  │ Session    │ │ Group       │ │ Review      │ │ Notification │      │
-│  │ Service    │ │ Service     │ │ Service     │ │ Service      │      │
-│  │ :8085      │ │ :8086       │ │ :8087       │ │ :8088        │      │
-│  └────────────┘ └─────────────┘ └─────────────┘ └──────────────┘      │
+│  ┌────────────┐ ┌──────────────────────┐ ┌──────────────┐              │
+│  │ Auth       │ │ User Service :8082   │ │ Skill        │              │
+│  │ Service    │ │ (+ Mentor + Group)   │ │ Service      │              │
+│  │ :8081      │ └──────────────────────┘ │ :8084        │              │
+│  └────────────┘                          └──────────────┘              │
+│                                                                        │
+│  ┌──────────────────────┐                ┌──────────────┐              │
+│  │ Session Service :8085│                │ Notification │              │
+│  │ (+ Review)           │                │ Service      │              │
+│  └──────────────────────┘                │ :8088        │              │
+│                                          └──────────────┘              │
 │                                                                         │
 │  ┌─────────────────────────────────────────────────────────────────┐    │
 │  │                    Eureka Service Discovery (:8761)              │    │

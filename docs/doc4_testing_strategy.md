@@ -1,5 +1,12 @@
 # 📄 DOCUMENT 4: TESTING STRATEGY
 
+> [!IMPORTANT]
+> **Architecture Update (March 2026):** The backend architecture has been simplified:
+> - **Mentor Service + Group Service → User Service** (port 8082)
+> - **Review Service → Session Service** (port 8085)
+>
+> Testing principles remain the same, but tests for merged services now reside in their new parent service modules. See `service_architecture_summary.md` for details.
+
 ## SkillSync — Comprehensive Testing Plan
 
 ---
