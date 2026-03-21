@@ -1,7 +1,7 @@
-package com.skillsync.review.controller;
+package com.skillsync.session.review.controller;
 
-import com.skillsync.review.dto.*;
-import com.skillsync.review.service.ReviewService;
+import com.skillsync.session.review.dto.*;
+import com.skillsync.session.review.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

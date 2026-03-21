@@ -1,6 +1,6 @@
-package com.skillsync.review.repository;
+package com.skillsync.session.review.repository;
 
-import com.skillsync.review.entity.Review;
+import com.skillsync.session.review.entity.Review;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

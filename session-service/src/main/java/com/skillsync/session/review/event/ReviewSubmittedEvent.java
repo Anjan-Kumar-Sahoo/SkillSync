@@ -1,4 +1,4 @@
-package com.skillsync.review.event;
+package com.skillsync.session.review.event;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

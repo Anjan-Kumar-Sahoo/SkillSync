@@ -1,4 +1,4 @@
-package com.skillsync.review.dto;
+package com.skillsync.session.review.dto;
 
 import jakarta.validation.constraints.*;
 

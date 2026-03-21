@@ -1,4 +1,4 @@
-package com.skillsync.review.entity;
+package com.skillsync.session.review.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

@@ -1,11 +1,13 @@
-package com.skillsync.review.service;
+package com.skillsync.session.review.service;
 
-import com.skillsync.review.config.RabbitMQConfig;
-import com.skillsync.review.dto.*;
-import com.skillsync.review.entity.Review;
-import com.skillsync.review.event.ReviewSubmittedEvent;
-import com.skillsync.review.feign.SessionServiceClient;
-import com.skillsync.review.repository.ReviewRepository;
+import com.skillsync.session.review.dto.*;
+import com.skillsync.session.review.entity.Review;
+import com.skillsync.session.review.event.ReviewSubmittedEvent;
+import com.skillsync.session.review.repository.ReviewRepository;
+import com.skillsync.session.entity.Session;
+import com.skillsync.session.enums.SessionStatus;
+import com.skillsync.session.repository.SessionRepository;
+import com.skillsync.session.review.config.ReviewRabbitMQConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -21,23 +23,26 @@ import java.util.Map;
 @Service @RequiredArgsConstructor @Slf4j
 public class ReviewService {
     private final ReviewRepository reviewRepository;
-    private final SessionServiceClient sessionServiceClient;
+    private final SessionRepository sessionRepository;  // Direct local access — no Feign needed!
     private final RabbitTemplate rabbitTemplate;
 
     @Transactional
     public ReviewResponse submitReview(Long reviewerId, CreateReviewRequest request) {
-        // Validate session
-        Map<String, Object> session = sessionServiceClient.getSessionById(request.sessionId());
-        String status = (String) session.get("status");
-        if (!"COMPLETED".equals(status)) throw new RuntimeException("Can only review completed sessions");
+        // Validate session — now a direct DB call instead of Feign
+        Session session = sessionRepository.findById(request.sessionId())
+                .orElseThrow(() -> new RuntimeException("Session not found: " + request.sessionId()));
 
-        Number learnerIdNum = (Number) session.get("learnerId");
-        if (!reviewerId.equals(learnerIdNum.longValue())) throw new RuntimeException("Only the learner can review");
+        if (session.getStatus() != SessionStatus.COMPLETED) {
+            throw new RuntimeException("Can only review completed sessions");
+        }
+        if (!reviewerId.equals(session.getLearnerId())) {
+            throw new RuntimeException("Only the learner can review");
+        }
+        if (reviewRepository.existsBySessionId(request.sessionId())) {
+            throw new RuntimeException("Session already reviewed");
+        }
 
-        if (reviewRepository.existsBySessionId(request.sessionId())) throw new RuntimeException("Session already reviewed");
-
-        Number mentorIdNum = (Number) session.get("mentorId");
-        Long mentorId = mentorIdNum.longValue();
+        Long mentorId = session.getMentorId();
 
         Review review = Review.builder()
                 .sessionId(request.sessionId()).mentorId(mentorId).reviewerId(reviewerId)
@@ -48,7 +53,7 @@ public class ReviewService {
         Double avgRating = reviewRepository.calculateAverageRating(mentorId);
         long totalReviews = reviewRepository.countByMentorId(mentorId);
         try {
-            rabbitTemplate.convertAndSend(RabbitMQConfig.REVIEW_EXCHANGE, "review.submitted",
+            rabbitTemplate.convertAndSend(ReviewRabbitMQConfig.REVIEW_EXCHANGE, "review.submitted",
                     new ReviewSubmittedEvent(review.getId(), mentorId, request.rating(),
                             avgRating != null ? avgRating : 0.0, (int) totalReviews));
         } catch (Exception e) {

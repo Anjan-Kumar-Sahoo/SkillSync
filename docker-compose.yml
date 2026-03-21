@@ -184,24 +184,7 @@ services:
   # group-service: MERGED into user-service
   # mentor-service: MERGED into user-service
 
-  review-service:
-    build: ./review-service
-    container_name: skillsync-review
-    env_file: .env
-    environment:
-      DB_NAME: skillsync_review
-    depends_on:
-      postgres:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-      config-server:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    networks:
-      - skillsync-net
-    restart: unless-stopped
+  # review-service: MERGED into session-service
 
   notification-service:
     build: ./notification-service

@@ -3,7 +3,7 @@
 > **Branch:** `trail1` | **Base Package:** `com.skillsync` | **ID Type:** Long (all services)
 > **Note:** mentor-service and group-service have been **merged into user-service** (March 2026).
 
-## ✅ 9 Active Services (User + Mentor + Group merged)
+## ✅ 8 Active Services (after merges)
 
 | # | Service | Port | Package | Key Features |
 |---|---------|------|---------|-------------|
@@ -13,12 +13,12 @@
 | 4 | **Auth Service** | 8081 | `com.skillsync.auth` | Registration, OTP email verification, login, JWT (access + refresh), role management, BCrypt |
 | 5 | **User Service** | 8082 | `com.skillsync.user` | Profile CRUD, skill tagging, **mentor onboarding/approval**, **peer learning groups**, Feign → Skill/Auth, RabbitMQ events |
 | 6 | **Skill Service** | 8084 | `com.skillsync.skill` | Skill catalog CRUD, category management, search |
-| 7 | **Session Service** | 8085 | `com.skillsync.session` | Booking, state machine lifecycle, conflict detection, RabbitMQ events |
-| 8 | **Review Service** | 8087 | `com.skillsync.review` | Review submission, rating aggregation, Feign → Session, RabbitMQ events |
-| 9 | **Notification Service** | 8088 | `com.skillsync.notification` | RabbitMQ consumers (session/mentor/review events), WebSocket push, CRUD |
+| 7 | **Session Service** | 8085 | `com.skillsync.session` | Booking, state machine lifecycle, conflict detection, **review submission & rating**, RabbitMQ events |
+| 8 | **Notification Service** | 8088 | `com.skillsync.notification` | RabbitMQ consumers (session/mentor/review events), WebSocket push, CRUD |
 
 > ~~**Mentor Service** (8083)~~ — Merged into User Service
 > ~~**Group Service** (8086)~~ — Merged into User Service
+> ~~**Review Service** (8087)~~ — Merged into Session Service
 
 ## Architecture Layers (per service)
 
@@ -51,11 +51,11 @@ graph TD
     USER -->|Feign| SKILL
     USER -->|Feign| AUTH
     SESSION -->|Feign| USER
-    REVIEW -->|Feign| SESSION
+    REVIEW_MOD["Review module"] -.->|"local call"| SESSION
     
     SESSION -->|RabbitMQ| NOTIF
     USER -->|"RabbitMQ (mentor events)"| NOTIF
-    REVIEW -->|RabbitMQ| NOTIF
+    SESSION -->|"RabbitMQ (review events)"| NOTIF
     
     NOTIF -->|"WebSocket/STOMP"| CLIENT[Frontend]
     
@@ -80,7 +80,7 @@ graph TD
 | `session.exchange` | `session.completed` | Session Service | Notification Service |
 | `mentor.exchange` | `mentor.approved` | User Service (mentor module) | Notification Service |
 | `mentor.exchange` | `mentor.rejected` | User Service (mentor module) | Notification Service |
-| `review.exchange` | `review.submitted` | Review Service | Notification Service, User Service (mentor module) |
+| `review.exchange` | `review.submitted` | Session Service (review module) | Notification Service, User Service (mentor module) |
 
 ## Database Strategy (per service)
 
@@ -89,8 +89,7 @@ graph TD
 | Auth | `skillsync_auth` | `auth` |
 | User (+ Mentor + Group) | `skillsync_user` | `users`, `mentors`, `groups` |
 | Skill | `skillsync_skill` | `skills` |
-| Session | `skillsync_session` | `sessions` |
-| Review | `skillsync_review` | `reviews` |
+| Session (+ Review) | `skillsync_session` | `sessions`, `reviews` |
 | Notification | `skillsync_notification` | `notifications` |
 
 ## Git Commits (trail1 branch)
