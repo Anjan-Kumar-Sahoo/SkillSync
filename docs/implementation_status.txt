@@ -9,9 +9,9 @@
 [DONE] user-service     - GlobalExceptionHandler + ResourceNotFoundException
 [DONE] skill-service    - GlobalExceptionHandler + ResourceNotFoundException
 [DONE] session-service  - GlobalExceptionHandler + ResourceNotFoundException
-[DONE] mentor-service   - GlobalExceptionHandler + ResourceNotFoundException
+[NOTE] mentor-service   - MERGED into user-service (handled by user-service exception handler)
 [DONE] review-service   - GlobalExceptionHandler + ResourceNotFoundException
-[DONE] group-service    - GlobalExceptionHandler + ResourceNotFoundException
+[NOTE] group-service    - MERGED into user-service (handled by user-service exception handler)
 [DONE] notification-service - GlobalExceptionHandler + ResourceNotFoundException
 
 Each handler covers:
@@ -42,9 +42,9 @@ Config: Console + Rolling File | 10MB max | 30-day history | com.skillsync=DEBUG
 [DONE] user-service     - UserServiceTest (5 tests) + UserControllerTest (3 tests)
 [DONE] skill-service    - SkillServiceTest (6 tests) + SkillControllerTest (4 tests)
 [DONE] session-service  - SessionServiceTest (5 tests) + SessionControllerTest (2 tests)
-[DONE] mentor-service   - MentorServiceTest (5 tests) + MentorControllerTest (3 tests)
+[NOTE] mentor-service   - MERGED into user-service (tests need migration)
 [DONE] review-service   - ReviewServiceTest (5 tests) + ReviewControllerTest (2 tests)
-[DONE] group-service    - GroupServiceTest (6 tests) + GroupControllerTest (3 tests)
+[NOTE] group-service    - MERGED into user-service (tests need migration)
 [DONE] notification-service - NotificationServiceTest (5 tests) + NotificationControllerTest (4 tests)
 
 Total: 16 test classes | ~73 test methods

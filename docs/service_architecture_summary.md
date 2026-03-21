@@ -1,22 +1,24 @@
 # SkillSync Backend — Service Architecture Summary
 
-> **Branch:** `trail1` | **Base Package:** `com.skillsync` | **ID Type:** [Long](file:///f:/SkillSync/notification-service/src/main/java/com/skillsync/notification/consumer/ReviewEventConsumer.java#29-33) (all services)
+> **Branch:** `trail1` | **Base Package:** `com.skillsync` | **ID Type:** Long (all services)
+> **Note:** mentor-service and group-service have been **merged into user-service** (March 2026).
 
-## ✅ All 11 Services Created & Pushed
+## ✅ 9 Active Services (User + Mentor + Group merged)
 
 | # | Service | Port | Package | Key Features |
 |---|---------|------|---------|-------------|
 | 1 | **Eureka Server** | 8761 | `com.skillsync.eurekaserver` | Service discovery, self-preservation disabled for dev |
 | 2 | **Config Server** | 8888 | `com.skillsync.configserver` | Git-backed config (`SkillSync-config` repo), Eureka registered |
-| 3 | **API Gateway** | 8080 | `com.skillsync.apigateway` | JWT validation filter, CORS, routes to all 8 microservices |
+| 3 | **API Gateway** | 8080 | `com.skillsync.apigateway` | JWT validation filter, CORS, routes to all microservices |
 | 4 | **Auth Service** | 8081 | `com.skillsync.auth` | Registration, OTP email verification, login, JWT (access + refresh), role management, BCrypt |
-| 5 | **User Service** | 8082 | `com.skillsync.user` | Profile CRUD, skill tagging, Feign → Skill Service |
-| 6 | **Mentor Service** | 8083 | `com.skillsync.mentor` | Application/approval flow, availability slots, RabbitMQ events |
-| 7 | **Skill Service** | 8084 | `com.skillsync.skill` | Skill catalog CRUD, category management, search |
-| 8 | **Session Service** | 8085 | `com.skillsync.session` | Booking, state machine lifecycle, conflict detection, RabbitMQ events |
-| 9 | **Group Service** | 8086 | `com.skillsync.group` | Peer learning groups, membership, threaded discussions |
-| 10 | **Review Service** | 8087 | `com.skillsync.review` | Review submission, rating aggregation, Feign → Session, RabbitMQ events |
-| 11 | **Notification Service** | 8088 | `com.skillsync.notification` | RabbitMQ consumers (session/mentor/review events), WebSocket push, CRUD |
+| 5 | **User Service** | 8082 | `com.skillsync.user` | Profile CRUD, skill tagging, **mentor onboarding/approval**, **peer learning groups**, Feign → Skill/Auth, RabbitMQ events |
+| 6 | **Skill Service** | 8084 | `com.skillsync.skill` | Skill catalog CRUD, category management, search |
+| 7 | **Session Service** | 8085 | `com.skillsync.session` | Booking, state machine lifecycle, conflict detection, RabbitMQ events |
+| 8 | **Review Service** | 8087 | `com.skillsync.review` | Review submission, rating aggregation, Feign → Session, RabbitMQ events |
+| 9 | **Notification Service** | 8088 | `com.skillsync.notification` | RabbitMQ consumers (session/mentor/review events), WebSocket push, CRUD |
+
+> ~~**Mentor Service** (8083)~~ — Merged into User Service
+> ~~**Group Service** (8086)~~ — Merged into User Service
 
 ## Architecture Layers (per service)
 
@@ -39,37 +41,32 @@ security/        → JWT filter, token provider (Auth Service)
 
 ```mermaid
 graph TD
-    GW[API Gateway :8080] -->|routes| AUTH[Auth :8081]
-    GW -->|routes + JWT filter| USER[User :8082]
-    GW -->|routes + JWT filter| MENTOR[Mentor :8083]
-    GW -->|routes| SKILL[Skill :8084]
-    GW -->|routes + JWT filter| SESSION[Session :8085]
-    GW -->|routes + JWT filter| GROUP[Group :8086]
-    GW -->|routes + JWT filter| REVIEW[Review :8087]
-    GW -->|routes + JWT filter| NOTIF[Notification :8088]
+    GW["API Gateway :8080"] -->|routes| AUTH["Auth :8081"]
+    GW -->|"routes + JWT filter<br>/api/users/** + /api/mentors/** + /api/groups/**"| USER["User :8082<br>(+ Mentor + Group)"]
+    GW -->|routes| SKILL["Skill :8084"]
+    GW -->|"routes + JWT filter"| SESSION["Session :8085"]
+    GW -->|"routes + JWT filter"| REVIEW["Review :8087"]
+    GW -->|"routes + JWT filter"| NOTIF["Notification :8088"]
     
     USER -->|Feign| SKILL
-    MENTOR -->|Feign| AUTH
-    MENTOR -->|Feign| SKILL
-    SESSION -->|Feign| MENTOR
+    USER -->|Feign| AUTH
+    SESSION -->|Feign| USER
     REVIEW -->|Feign| SESSION
     
     SESSION -->|RabbitMQ| NOTIF
-    MENTOR -->|RabbitMQ| NOTIF
+    USER -->|"RabbitMQ (mentor events)"| NOTIF
     REVIEW -->|RabbitMQ| NOTIF
     
-    NOTIF -->|WebSocket/STOMP| CLIENT[Frontend]
+    NOTIF -->|"WebSocket/STOMP"| CLIENT[Frontend]
     
-    EUREKA[Eureka :8761] -.->|discovery| GW
+    EUREKA["Eureka :8761"] -.->|discovery| GW
     EUREKA -.->|discovery| AUTH
     EUREKA -.->|discovery| USER
-    EUREKA -.->|discovery| MENTOR
     EUREKA -.->|discovery| SKILL
     EUREKA -.->|discovery| SESSION
-    EUREKA -.->|discovery| GROUP
     EUREKA -.->|discovery| REVIEW
     EUREKA -.->|discovery| NOTIF
-    CONFIG[Config :8888] -.->|config| EUREKA
+    CONFIG["Config :8888"] -.->|config| EUREKA
 ```
 
 ## RabbitMQ Event Topology
@@ -81,20 +78,18 @@ graph TD
 | `session.exchange` | `session.rejected` | Session Service | Notification Service |
 | `session.exchange` | `session.cancelled` | Session Service | Notification Service |
 | `session.exchange` | `session.completed` | Session Service | Notification Service |
-| `mentor.exchange` | `mentor.approved` | Mentor Service | Notification Service |
-| `mentor.exchange` | `mentor.rejected` | Mentor Service | Notification Service |
-| `review.exchange` | `review.submitted` | Review Service | Notification Service, Mentor Service |
+| `mentor.exchange` | `mentor.approved` | User Service (mentor module) | Notification Service |
+| `mentor.exchange` | `mentor.rejected` | User Service (mentor module) | Notification Service |
+| `review.exchange` | `review.submitted` | Review Service | Notification Service, User Service (mentor module) |
 
 ## Database Strategy (per service)
 
-| Service | Database | Schema |
+| Service | Database | Schema(s) |
 |---------|----------|--------|
-| Auth | `skillsync_auth` | [auth](file:///f:/SkillSync/auth-service/src/main/java/com/skillsync/auth/config/SecurityConfig.java#55-59) |
-| User | `skillsync_user` | `users` |
-| Mentor | `skillsync_mentor` | `mentors` |
+| Auth | `skillsync_auth` | `auth` |
+| User (+ Mentor + Group) | `skillsync_user` | `users`, `mentors`, `groups` |
 | Skill | `skillsync_skill` | `skills` |
 | Session | `skillsync_session` | `sessions` |
-| Group | `skillsync_group` | `groups` |
 | Review | `skillsync_review` | `reviews` |
 | Notification | `skillsync_notification` | `notifications` |
 

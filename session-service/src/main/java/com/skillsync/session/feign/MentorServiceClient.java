@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import java.util.Map;
 
-@FeignClient(name = "mentor-service")
+@FeignClient(name = "user-service")
 public interface MentorServiceClient {
     @GetMapping("/api/mentors/{id}")
     Map<String, Object> getMentorById(@PathVariable Long id);

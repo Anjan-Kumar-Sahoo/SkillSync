@@ -139,23 +139,6 @@ services:
         condition: service_healthy
       config-server:
         condition: service_healthy
-    networks:
-      - skillsync-net
-    restart: unless-stopped
-
-  mentor-service:
-    build: ./mentor-service
-    container_name: skillsync-mentor
-    env_file: .env
-    environment:
-      DB_NAME: skillsync_mentor
-    depends_on:
-      postgres:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-      config-server:
-        condition: service_healthy
       rabbitmq:
         condition: service_healthy
     networks:
@@ -198,22 +181,8 @@ services:
       - skillsync-net
     restart: unless-stopped
 
-  group-service:
-    build: ./group-service
-    container_name: skillsync-group
-    env_file: .env
-    environment:
-      DB_NAME: skillsync_group
-    depends_on:
-      postgres:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-      config-server:
-        condition: service_healthy
-    networks:
-      - skillsync-net
-    restart: unless-stopped
+  # group-service: MERGED into user-service
+  # mentor-service: MERGED into user-service
 
   review-service:
     build: ./review-service
