@@ -11,7 +11,9 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Service @RequiredArgsConstructor @Slf4j
+@Service
+@RequiredArgsConstructor
+@Slf4j
 public class SkillService {
     private final SkillRepository skillRepository;
 
@@ -52,6 +54,7 @@ public class SkillService {
     }
 
     private SkillResponse mapToResponse(Skill skill) {
-        return new SkillResponse(skill.getId(), skill.getName(), skill.getCategory(), skill.getDescription(), skill.isActive());
+        return new SkillResponse(skill.getId(), skill.getName(), skill.getCategory(), skill.getDescription(),
+                skill.isActive());
     }
 }

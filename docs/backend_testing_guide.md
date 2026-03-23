@@ -5,57 +5,58 @@
 > - **Mentor Service + Group Service → User Service** (port 8082)
 > - **Review Service → Session Service** (port 8085)
 >
-> You no longer need to run or test these standalone services. Their APIs are still available via the API Gateway using the same routes, but they are serviced by the merged backend services.
-
-> **PostgreSQL:** `postgres` / `root` | **RabbitMQ:** `guest` / `guest`
+> All code is now organized in **flat layered packages** (entity, dto, repository, service, controller) within each service. There are no separate sub-packages for the merged services.
+>
+> **Active services:**
+> | # | Service | Port |
+> |---|---------|------|
+> | 1 | Eureka Server | 8761 |
+> | 2 | Config Server | 8888 |
+> | 3 | API Gateway | 8080 |
+> | 4 | Auth Service | 8081 |
+> | 5 | User Service (includes Mentor & Group) | 8082 |
+> | 6 | Skill Service | 8084 |
+> | 7 | Session Service (includes Review) | 8085 |
+> | 8 | Notification Service | 8088 |
 
 ---
 
 ## 📋 STEP 1: Prerequisites
 
-### 1.1 Create PostgreSQL Databases
+### 1.1 Create PostgreSQL Databases & Schemas
 
 Open **psql** or **pgAdmin** and run:
 
 ```sql
+-- Create databases
 CREATE DATABASE skillsync_auth;
 CREATE DATABASE skillsync_user;
-CREATE DATABASE skillsync_mentor;
 CREATE DATABASE skillsync_skill;
 CREATE DATABASE skillsync_session;
-CREATE DATABASE skillsync_group;
-CREATE DATABASE skillsync_review;
 CREATE DATABASE skillsync_notification;
-```
 
-Also create the schemas inside each database:
-
-```sql
--- Connect to each database and create schema
+-- Create schemas inside each database
 \c skillsync_auth
 CREATE SCHEMA IF NOT EXISTS auth;
 
 \c skillsync_user
 CREATE SCHEMA IF NOT EXISTS users;
-
-\c skillsync_mentor
 CREATE SCHEMA IF NOT EXISTS mentors;
+CREATE SCHEMA IF NOT EXISTS groups;
 
 \c skillsync_skill
 CREATE SCHEMA IF NOT EXISTS skills;
 
 \c skillsync_session
 CREATE SCHEMA IF NOT EXISTS sessions;
-
-\c skillsync_group
-CREATE SCHEMA IF NOT EXISTS groups;
-
-\c skillsync_review
 CREATE SCHEMA IF NOT EXISTS reviews;
 
 \c skillsync_notification
 CREATE SCHEMA IF NOT EXISTS notifications;
 ```
+
+> [!NOTE]
+> If running via Docker, the `init-databases.sql` file handles this automatically on first container start. You only need to run the above when testing locally without Docker.
 
 ### 1.2 Install & Start RabbitMQ
 
@@ -63,58 +64,58 @@ Download from https://www.rabbitmq.com/download.html and start the service.
 Management UI: http://localhost:15672 (guest/guest)
 
 > [!NOTE]
-> If you don't have RabbitMQ, services that use it (Mentor, Session, Review, Notification) will still start but event publishing will fail silently. Auth, User, Skill, and Group services work fine without it.
+> If you don't have RabbitMQ, services that use it (User Service for mentor events, Session Service for session/review events, Notification Service) will still start but event publishing will fail silently. Auth and Skill services work fine without it.
 
 ---
 
-## 📋 STEP 2: Start Services (in order)
+## 📋 STEP 2: Start Services
+
+### Option A — Docker (Recommended)
+
+```powershell
+cd f:\SkillSync
+docker-compose up --build
+```
+
+This starts everything (Postgres, RabbitMQ, all services, Nginx). Wait for all containers to become healthy.  
+Verify: **http://localhost:8761** (Eureka Dashboard — all services should be registered)
+
+### Option B — Local (for development/debugging)
 
 Open **separate terminals** for each service and run:
 
 ```powershell
 # Terminal 1 — Eureka Server (MUST start first, wait until ready)
 cd f:\SkillSync\eureka-server
-.\mvnw spring-boot:run
+mvn spring-boot:run
 
 # Terminal 2 — Config Server
 cd f:\SkillSync\config-server
-.\mvnw spring-boot:run
+mvn spring-boot:run
 
 # Terminal 3 — API Gateway
 cd f:\SkillSync\api-gateway
-.\mvnw spring-boot:run
+mvn spring-boot:run
 
 # Terminal 4 — Auth Service
 cd f:\SkillSync\auth-service
-.\mvnw spring-boot:run
+mvn spring-boot:run
 
-# Terminal 5 — User Service
+# Terminal 5 — User Service (serves User + Mentor + Group APIs)
 cd f:\SkillSync\user-service
-.\mvnw spring-boot:run
+mvn spring-boot:run
 
 # Terminal 6 — Skill Service
 cd f:\SkillSync\skill-service
-.\mvnw spring-boot:run
+mvn spring-boot:run
 
-# Terminal 7 — Mentor Service
-cd f:\SkillSync\mentor-service
-.\mvnw spring-boot:run
-
-# Terminal 8 — Session Service
+# Terminal 7 — Session Service (serves Session + Review APIs)
 cd f:\SkillSync\session-service
-.\mvnw spring-boot:run
+mvn spring-boot:run
 
-# Terminal 9 — Group Service
-cd f:\SkillSync\group-service
-.\mvnw spring-boot:run
-
-# Terminal 10 — Review Service
-cd f:\SkillSync\review-service
-.\mvnw spring-boot:run
-
-# Terminal 11 — Notification Service
+# Terminal 8 — Notification Service
 cd f:\SkillSync\notification-service
-.\mvnw spring-boot:run
+mvn spring-boot:run
 ```
 
 ### Verify Eureka Dashboard
@@ -143,6 +144,7 @@ curl -X POST http://localhost:8080/api/auth/register \
     "firstName": "Anjan",
     "lastName": "Sahoo"
   }'
+```
 
 #### Verify OTP (Check your console/logs for the code)
 ```bash
@@ -155,7 +157,6 @@ curl -X POST http://localhost:8080/api/auth/verify-otp \
 ```
 > [!NOTE]
 > For testing, the OTP is printed in the `auth-service` console logs. In production, check the email.
-```
 
 **Expected Response** (save the `accessToken`!):
 ```json
@@ -202,7 +203,7 @@ curl -X POST http://localhost:8080/api/auth/register \
 
 Then manually promote to admin (direct call to Auth Service):  
 ```bash
-curl -X PUT "http://localhost:8081/api/auth/users/3/role?role=ROLE_ADMIN"
+curl -X PUT "http://localhost:8080/api/auth/users/3/role?role=ROLE_ADMIN"
 ```
 
 #### Login
@@ -327,7 +328,7 @@ curl http://localhost:8080/api/users/1 \
 
 ---
 
-### 🎓 3.4 MENTOR SERVICE
+### 🎓 3.4 MENTOR APIs (served by User Service on port 8082)
 
 #### Apply to Become Mentor (as User 2)
 ```bash
@@ -386,7 +387,7 @@ curl -X POST http://localhost:8080/api/mentors/me/availability \
 
 ---
 
-### 📅 3.5 SESSION SERVICE
+### 📅 3.5 SESSION APIs (served by Session Service on port 8085)
 
 #### Book a Session (Learner books with Mentor)
 ```bash
@@ -398,7 +399,7 @@ curl -X POST http://localhost:8080/api/sessions \
     "mentorId": 2,
     "topic": "Spring Boot Microservices",
     "description": "Want to learn about building microservices with Spring Boot",
-    "sessionDate": "2026-03-20T10:00:00",
+    "sessionDate": "2026-04-01T10:00:00",
     "durationMinutes": 60
   }'
 ```
@@ -452,7 +453,7 @@ curl -X POST http://localhost:8080/api/sessions \
     "mentorId": 2,
     "topic": "React Basics",
     "description": "Want to learn React fundamentals",
-    "sessionDate": "2026-03-21T14:00:00",
+    "sessionDate": "2026-04-02T14:00:00",
     "durationMinutes": 45
   }'
 
@@ -464,7 +465,7 @@ curl -X PUT "http://localhost:8080/api/sessions/2/reject?reason=Schedule%20confl
 
 ---
 
-### ⭐ 3.6 REVIEW SERVICE (Session must be COMPLETED first)
+### ⭐ 3.6 REVIEW APIs (served by Session Service on port 8085 — Session must be COMPLETED first)
 
 #### Submit Review (Learner reviews completed session)
 ```bash
@@ -510,7 +511,7 @@ curl http://localhost:8080/api/reviews/me \
 
 ---
 
-### 👥 3.7 GROUP SERVICE
+### 👥 3.7 GROUP APIs (served by User Service on port 8082)
 
 #### Create a Learning Group
 ```bash
@@ -609,15 +610,15 @@ curl -X PUT http://localhost:8080/api/notifications/read-all \
 Follow this order for the complete happy path:
 
 ```
-1. Register learner@test.com
-2. Verify OTP for learner (check console logs)
-3. Register mentor@test.com
-4. Verify OTP for mentor (check console logs)
-5. Register admin@test.com
-6. Promote admin (PUT /api/auth/users/3/role?role=ROLE_ADMIN)
-7. Create 4 skills (Java, Spring Boot, React, Python)
-8. Update learner profile + add skills
-9. Mentor applies (POST /api/mentors/apply)
+ 1. Register learner@test.com
+ 2. Verify OTP for learner (check console logs)
+ 3. Register mentor@test.com
+ 4. Verify OTP for mentor (check console logs)
+ 5. Register admin@test.com
+ 6. Promote admin (PUT /api/auth/users/3/role?role=ROLE_ADMIN)
+ 7. Create 4 skills (Java, Spring Boot, React, Python)
+ 8. Update learner profile + add skills
+ 9. Mentor applies (POST /api/mentors/apply)
 10. Admin approves mentor (PUT /api/mentors/1/approve)
 11. Login mentor again (to get updated ROLE_MENTOR token)
 12. Add mentor availability
@@ -640,17 +641,18 @@ You can also test services directly (bypassing JWT):
 |---------|-----------|
 | Eureka Dashboard | http://localhost:8761 |
 | Auth Service | http://localhost:8081/api/auth/... |
-| User Service | http://localhost:8082/api/users/... |
-| Mentor Service | http://localhost:8083/api/mentors/... |
+| User Service (User + Mentor + Group APIs) | http://localhost:8082/api/users/... OR /api/mentors/... OR /api/groups/... |
 | Skill Service | http://localhost:8084/api/skills/... |
-| Session Service | http://localhost:8085/api/sessions/... |
-| Group Service | http://localhost:8086/api/groups/... |
-| Review Service | http://localhost:8087/api/reviews/... |
+| Session Service (Session + Review APIs) | http://localhost:8085/api/sessions/... OR /api/reviews/... |
 | Notification Service | http://localhost:8088/api/notifications/... |
 
 When calling direct, pass `X-User-Id` header manually:
 ```bash
 curl http://localhost:8082/api/users/me -H "X-User-Id: 1"
+curl http://localhost:8082/api/mentors/1
+curl http://localhost:8082/api/groups
+curl http://localhost:8085/api/sessions/1
+curl http://localhost:8085/api/reviews/mentor/2/summary
 ```
 
 ---
@@ -663,5 +665,7 @@ curl http://localhost:8082/api/users/me -H "X-User-Id: 1"
 | `Connection refused` to Eureka | Start Eureka Server first and wait 30 seconds |
 | `401 Unauthorized` via Gateway | Check the JWT token is valid and not expired (15 min lifetime) |
 | RabbitMQ connection failed | Make sure RabbitMQ is running on port 5672 |
-| `Table not found` errors | JPA `ddl-auto=update` creates tables automatically, but schemas must exist |
+| `Table not found` errors | JPA `ddl-auto=update` creates tables automatically, but schemas must exist first |
 | Port already in use | Kill the process: `netstat -ano | findstr :PORT` then `taskkill /PID <PID> /F` |
+| Docker: database init fails | Delete the postgres volume (`docker volume rm skillsync_postgres-data`) and rebuild |
+| Docker: service can't reach postgres | Check if healthcheck passed — services wait for `service_healthy` condition |

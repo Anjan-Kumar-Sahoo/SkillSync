@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RabbitMQConfig {
+
+    // ==================== SESSION ====================
     public static final String SESSION_EXCHANGE = "session.exchange";
     public static final String SESSION_REQUESTED_QUEUE = "session.requested.queue";
     public static final String SESSION_ACCEPTED_QUEUE = "session.accepted.queue";
@@ -28,5 +30,14 @@ public class RabbitMQConfig {
     @Bean public Binding cancelledBinding() { return BindingBuilder.bind(sessionCancelledQueue()).to(sessionExchange()).with("session.cancelled"); }
     @Bean public Binding completedBinding() { return BindingBuilder.bind(sessionCompletedQueue()).to(sessionExchange()).with("session.completed"); }
 
+    // ==================== REVIEW ====================
+    public static final String REVIEW_EXCHANGE = "review.exchange";
+    public static final String REVIEW_SUBMITTED_QUEUE = "review.submitted.queue";
+
+    @Bean public TopicExchange reviewExchange() { return new TopicExchange(REVIEW_EXCHANGE, true, false); }
+    @Bean public Queue reviewSubmittedQueue() { return QueueBuilder.durable(REVIEW_SUBMITTED_QUEUE).build(); }
+    @Bean public Binding reviewSubmittedBinding() { return BindingBuilder.bind(reviewSubmittedQueue()).to(reviewExchange()).with("review.submitted"); }
+
+    // ==================== SHARED ====================
     @Bean public MessageConverter jsonMessageConverter() { return new Jackson2JsonMessageConverter(); }
 }
