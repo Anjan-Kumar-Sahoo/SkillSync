@@ -8,8 +8,13 @@
 #    postgres/rabbitmq → eureka → config-server → microservices → gateway → nginx
 #
 #  Exposed Ports:
-#    80   - NGINX (public entry point)
-#    8761 - Eureka Dashboard (debug only, remove in true prod)
+#    80    - NGINX (public entry point)
+#    8080  - API Gateway (Swagger UI: http://localhost:8080/swagger-ui.html)
+#    8761  - Eureka Dashboard (debug only)
+#    15672 - RabbitMQ Management UI (debug only)
+#
+#  NOTE: Individual service ports are NOT exposed.
+#        All traffic goes through the API Gateway.
 # ============================================================
 
 services:
@@ -41,6 +46,9 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "5672:5672"     # AMQP
+      - "15672:15672"   # Management UI (http://localhost:15672)
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
       interval: 15s
@@ -92,6 +100,8 @@ services:
     build: ./api-gateway
     container_name: skillsync-gateway
     env_file: .env
+    ports:
+      - "8080:8080"   # API Gateway — main entry point for Postman
     depends_on:
       eureka-server:
         condition: service_healthy

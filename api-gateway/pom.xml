@@ -83,6 +83,13 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- Swagger UI for reactive Gateway (aggregates all service docs) -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+            <version>2.8.6</version>
+        </dependency>
     </dependencies>
 
     <dependencyManagement>

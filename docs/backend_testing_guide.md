@@ -146,17 +146,19 @@ curl -X POST http://localhost:8080/api/auth/register \
   }'
 ```
 
-#### Verify OTP (Check your console/logs for the code)
+#### Verify OTP (Check the registered email inbox for the OTP)
 ```bash
 curl -X POST http://localhost:8080/api/auth/verify-otp \
   -H "Content-Type: application/json" \
   -d '{
     "email": "learner@test.com",
-    "otp": "123456" 
+    "otp": "<OTP_FROM_EMAIL>" 
   }'
 ```
-> [!NOTE]
-> For testing, the OTP is printed in the `auth-service` console logs. In production, check the email.
+> [!IMPORTANT]
+> **Email verification is mandatory.** The OTP is always sent via real email to the registered address — even during testing. Check the email inbox (including spam/junk folder) for the OTP code. Login will be **blocked** until the email is verified.
+>
+> If you attempt to login without verifying your email, the service will automatically re-send a new OTP and reject the login with a clear error message.
 
 **Expected Response** (save the `accessToken`!):
 ```json
@@ -186,7 +188,17 @@ curl -X POST http://localhost:8080/api/auth/register \
     "lastName": "Kumar"
   }'
 
-# Also verify OTP for mentor as shown above!
+# IMPORTANT: Verify OTP from email inbox before logging in!
+```
+
+#### Verify OTP for Mentor
+```bash
+curl -X POST http://localhost:8080/api/auth/verify-otp \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "email": "mentor@test.com",
+    "otp": "<OTP_FROM_EMAIL>"
+  }'
 ```
 
 #### Register Admin User
@@ -201,12 +213,22 @@ curl -X POST http://localhost:8080/api/auth/register \
   }'
 ```
 
+#### Verify OTP for Admin
+```bash
+curl -X POST http://localhost:8080/api/auth/verify-otp \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@test.com",
+    "otp": "<OTP_FROM_EMAIL>"
+  }'
+```
+
 Then manually promote to admin (direct call to Auth Service):  
 ```bash
 curl -X PUT "http://localhost:8080/api/auth/users/3/role?role=ROLE_ADMIN"
 ```
 
-#### Login
+#### Login (only works AFTER email verification)
 ```bash
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
@@ -215,6 +237,9 @@ curl -X POST http://localhost:8080/api/auth/login \
     "password": "password123"
   }'
 ```
+
+> [!WARNING]
+> Login will fail with `"Email not verified"` error if OTP verification has not been completed. The service will auto-resend a new OTP on each failed login attempt due to unverified email.
 
 #### Refresh Token
 ```bash
@@ -611,11 +636,12 @@ Follow this order for the complete happy path:
 
 ```
  1. Register learner@test.com
- 2. Verify OTP for learner (check console logs)
+ 2. Verify OTP for learner (check EMAIL INBOX — OTP is always sent via real email)
  3. Register mentor@test.com
- 4. Verify OTP for mentor (check console logs)
+ 4. Verify OTP for mentor (check EMAIL INBOX)
  5. Register admin@test.com
- 6. Promote admin (PUT /api/auth/users/3/role?role=ROLE_ADMIN)
+ 6. Verify OTP for admin (check EMAIL INBOX)
+ 7. Promote admin (PUT /api/auth/users/3/role?role=ROLE_ADMIN)
  7. Create 4 skills (Java, Spring Boot, React, Python)
  8. Update learner profile + add skills
  9. Mentor applies (POST /api/mentors/apply)
@@ -633,27 +659,25 @@ Follow this order for the complete happy path:
 
 ---
 
-## 📋 STEP 5: Direct Service Testing (bypass gateway)
+## 📋 STEP 5: Swagger UI (API Gateway — Single Entry Point)
 
-You can also test services directly (bypassing JWT):
+> [!IMPORTANT]
+> Swagger UI is available **only** through the API Gateway. Individual service ports are **not exposed**.
 
-| Service | Direct URL |
-|---------|-----------|
-| Eureka Dashboard | http://localhost:8761 |
-| Auth Service | http://localhost:8081/api/auth/... |
-| User Service (User + Mentor + Group APIs) | http://localhost:8082/api/users/... OR /api/mentors/... OR /api/groups/... |
-| Skill Service | http://localhost:8084/api/skills/... |
-| Session Service (Session + Review APIs) | http://localhost:8085/api/sessions/... OR /api/reviews/... |
-| Notification Service | http://localhost:8088/api/notifications/... |
+Open: **http://localhost:8080/swagger-ui.html**
 
-When calling direct, pass `X-User-Id` header manually:
-```bash
-curl http://localhost:8082/api/users/me -H "X-User-Id: 1"
-curl http://localhost:8082/api/mentors/1
-curl http://localhost:8082/api/groups
-curl http://localhost:8085/api/sessions/1
-curl http://localhost:8085/api/reviews/mentor/2/summary
-```
+Use the **dropdown at the top** to select which service to view/test:
+
+| Dropdown Option | APIs Shown |
+|----------------|-----------|
+| Auth Service | Register, Login, OTP, Token Refresh, Role Update |
+| User Service (Users + Mentors + Groups) | Profiles, Skills, Mentor Application, Groups, Discussions |
+| Skill Service | Skill CRUD, Search |
+| Session Service (Sessions + Reviews) | Session Booking, Accept/Reject/Complete, Reviews, Ratings |
+| Notification Service | Get Notifications, Unread Count, Mark Read |
+
+> [!NOTE]
+> When testing APIs that require authentication, pass the `X-User-Id` header directly (bypass JWT). For APIs needing a JWT token via the Gateway, first call `/api/auth/login` to get a token, then use it in the `Authorization` header as `Bearer <token>`.
 
 ---
 
@@ -669,3 +693,5 @@ curl http://localhost:8085/api/reviews/mentor/2/summary
 | Port already in use | Kill the process: `netstat -ano | findstr :PORT` then `taskkill /PID <PID> /F` |
 | Docker: database init fails | Delete the postgres volume (`docker volume rm skillsync_postgres-data`) and rebuild |
 | Docker: service can't reach postgres | Check if healthcheck passed — services wait for `service_healthy` condition |
+| Swagger UI empty | Ensure all services are registered in Eureka and healthy |
+

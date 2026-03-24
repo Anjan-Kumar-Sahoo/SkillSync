@@ -66,6 +66,14 @@ public class AuthService {
         AuthUser user = authUserRepository.findByEmail(request.email())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        // Email verification is mandatory — block login for unverified users
+        if (!user.isVerified()) {
+            log.warn("Login attempt by unverified user: {}", user.getEmail());
+            // Auto-resend OTP so the user can verify immediately
+            otpService.generateAndSendOtp(user);
+            throw new RuntimeException("Email not verified. A new OTP has been sent to " + user.getEmail() + ". Please verify your email before logging in.");
+        }
+
         log.info("User logged in: {}", user.getEmail());
         return generateAuthResponse(user);
     }
