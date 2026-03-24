@@ -14,7 +14,7 @@
 > | 2 | Config Server | 8888 |
 > | 3 | API Gateway | 8080 |
 > | 4 | Auth Service | 8081 |
-> | 5 | User Service (includes Mentor & Group) | 8082 |
+> | 5 | User Service (includes Mentor, Group & Payment) | 8082 |
 > | 6 | Skill Service | 8084 |
 > | 7 | Session Service (includes Review) | 8085 |
 > | 8 | Notification Service | 8088 |
@@ -630,6 +630,66 @@ curl -X PUT http://localhost:8080/api/notifications/read-all \
 
 ---
 
+### 💳 3.9 PAYMENT APIs (served by User Service on port 8082)
+
+> [!IMPORTANT]
+> Payment uses **Razorpay test credentials** by default. No real money is charged.
+> The create-order endpoint creates a Razorpay order, and the verify endpoint validates the payment signature.
+
+#### Create Payment Order (as Learner — Mentor Fee)
+```bash
+curl -X POST http://localhost:8080/api/payments/create-order \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <LEARNER_ACCESS_TOKEN>" \
+  -H "X-User-Id: 2" \
+  -d '{
+    "type": "MENTOR_FEE",
+    "referenceId": 1
+  }'
+```
+
+**Expected Response:**
+```json
+{
+  "orderId": "order_XXXXXXXXXX",
+  "amount": 900,
+  "currency": "INR",
+  "status": "CREATED",
+  "keyId": "rzp_test_SUxK0KnvPwKuAT"
+}
+```
+
+> [!NOTE]
+> In a real frontend flow, the `orderId` and `keyId` are passed to Razorpay's checkout SDK.
+> The verify endpoint below is called **after** the user completes payment on the frontend.
+
+#### Verify Payment (after Razorpay checkout)
+```bash
+curl -X POST http://localhost:8080/api/payments/verify \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <LEARNER_ACCESS_TOKEN>" \
+  -H "X-User-Id: 2" \
+  -d '{
+    "razorpayOrderId": "order_XXXXXXXXXX",
+    "razorpayPaymentId": "pay_XXXXXXXXXX",
+    "razorpaySignature": "SIGNATURE_FROM_RAZORPAY"
+  }'
+```
+
+#### Get My Payments
+```bash
+curl http://localhost:8080/api/payments/my-payments \
+  -H "Authorization: Bearer <LEARNER_ACCESS_TOKEN>" \
+  -H "X-User-Id: 2"
+```
+
+#### Check Payment Status (inter-service)
+```bash
+curl "http://localhost:8080/api/payments/check?userId=2&type=MENTOR_FEE"
+```
+
+---
+
 ## 📋 STEP 4: End-to-End Flow (Recommended Test Order)
 
 Follow this order for the complete happy path:
@@ -645,16 +705,19 @@ Follow this order for the complete happy path:
  7. Create 4 skills (Java, Spring Boot, React, Python)
  8. Update learner profile + add skills
  9. Mentor applies (POST /api/mentors/apply)
-10. Admin approves mentor (PUT /api/mentors/1/approve)
-11. Login mentor again (to get updated ROLE_MENTOR token)
-12. Add mentor availability
-13. Learner books session with mentor
-14. Mentor accepts session
-15. Mentor completes session
-16. Learner submits review
-17. Check mentor rating summary
-18. Create a group and post discussions
-19. Check notifications (mentor should have: approval + session request + review alerts)
+10. >>> PAY MENTOR FEE (POST /api/payments/create-order with type=MENTOR_FEE)
+11. >>> VERIFY PAYMENT (POST /api/payments/verify -- triggers auto-approval)
+12. OR: Admin approves mentor (PUT /api/mentors/1/approve)
+13. Login mentor again (to get updated ROLE_MENTOR token)
+14. Add mentor availability
+15. Learner books session with mentor
+16. Mentor accepts session
+17. Mentor completes session
+18. Learner submits review
+19. Check mentor rating summary
+20. Create a group and post discussions
+21. Check notifications (mentor should have: approval + session request + review alerts)
+22. Check payment history (GET /api/payments/my-payments)
 ```
 
 ---
@@ -671,7 +734,7 @@ Use the **dropdown at the top** to select which service to view/test:
 | Dropdown Option | APIs Shown |
 |----------------|-----------|
 | Auth Service | Register, Login, OTP, Token Refresh, Role Update |
-| User Service (Users + Mentors + Groups) | Profiles, Skills, Mentor Application, Groups, Discussions |
+| User Service (Users + Mentors + Groups + Payments) | Profiles, Skills, Mentor Apply/Approve, Groups, Discussions, Payment Orders, Verification |
 | Skill Service | Skill CRUD, Search |
 | Session Service (Sessions + Reviews) | Session Booking, Accept/Reject/Complete, Reviews, Ratings |
 | Notification Service | Get Notifications, Unread Count, Mark Read |
@@ -694,4 +757,6 @@ Use the **dropdown at the top** to select which service to view/test:
 | Docker: database init fails | Delete the postgres volume (`docker volume rm skillsync_postgres-data`) and rebuild |
 | Docker: service can't reach postgres | Check if healthcheck passed — services wait for `service_healthy` condition |
 | Swagger UI empty | Ensure all services are registered in Eureka and healthy |
+| Payment create-order fails | Check Razorpay credentials in `application.properties` or env vars |
+| Signature verification fails | Ensure you pass the exact `razorpaySignature` from Razorpay checkout response |
 

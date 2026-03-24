@@ -5,6 +5,8 @@
 > - **Mentor Service + Group Service → User Service** (port 8082) — mentor onboarding, groups, and user profiles now live in one service
 > - **Review Service → Session Service** (port 8085) — reviews and sessions share the same service and database
 >
+> **Payment Integration (March 2026):** Razorpay payment gateway has been integrated into User Service for mentor onboarding fees (₹9) and session booking fees (₹9).
+>
 > The original 11-service design below reflects the initial architecture. See `service_architecture_summary.md` for the current 8-service topology.
 
 ## SkillSync — Peer Learning & Mentor Matching Platform
@@ -107,7 +109,12 @@ Workflow:
   User (ROLE_LEARNER) → Submits Mentor Application
     → Application includes: bio, experience, hourly_rate, skills[], certifications
     → Status: PENDING
-  Admin reviews application
+  User pays ₹9 Mentor Onboarding Fee via Razorpay
+    → Backend creates Razorpay order (amount: 900 paise)
+    → Frontend completes checkout
+    → Backend verifies payment signature
+    → On SUCCESS → triggers mentor approval
+  Admin reviews application (if manual approval required)
     → APPROVED → User gains ROLE_MENTOR, profile activated
     → REJECTED → User notified with rejection reason
 ```
@@ -183,10 +190,39 @@ State Machine:
   - `SESSION_ACCEPTED` / `SESSION_REJECTED` — Learner notified
   - `SESSION_REMINDER` — Both parties, 24h & 1h before
   - `MENTOR_APPROVED` / `MENTOR_REJECTED` — Applicant notified
+  - `PAYMENT_SUCCESS` — User notified of successful payment + business action
+  - `PAYMENT_FAILED` — User notified of payment verification failure
+  - `PAYMENT_COMPENSATED` — User notified when payment succeeded but business action failed
   - `NEW_REVIEW` — Mentor notified of new review
   - `GROUP_JOINED` — Group owner notified
 - Delivery: In-app (WebSocket) + email (future)
 - Read/unread status tracking
+
+### Feature 10: Payment Gateway (Razorpay) with Saga Orchestration
+- Integrated into User Service with **orchestration-based Saga pattern**
+- Two payment use cases:
+  1. **Mentor Onboarding Fee** — ₹9 to apply as mentor
+  2. **Session Booking Fee** — ₹9 to book a session with a mentor
+- **Saga-orchestrated payment flow:**
+  - Backend creates Razorpay order (amount: 900 paise)
+  - Frontend completes checkout via Razorpay SDK
+  - Backend verifies HMAC-SHA256 signature → marks VERIFIED
+  - Saga orchestrator executes business action (mentor approval / session gate)
+  - On success → marks SUCCESS + publishes `payment.success` notification event
+  - On failure → triggers compensation + publishes `payment.compensated` event
+- **Payment status lifecycle:** `CREATED → VERIFIED → SUCCESS_PENDING → SUCCESS / COMPENSATED`
+- **Reference mapping:** Every payment is linked to a business entity via `referenceId` + `referenceType`
+- **Compensation strategy:** Business effects are reversed if saga fails (mentor revert, session gate)
+- **Security:**
+  - userId ALWAYS from JWT header (X-User-Id) — never from request params
+  - Razorpay API key and secret from environment variables
+  - Amount fixed server-side (never trust client-sent amounts)
+  - Signature verification prevents tampering
+  - Ownership validation on all payment queries
+- **Notification events:** payment.success, payment.failed, payment.compensated via RabbitMQ → Notification Service
+- Edge cases: duplicate prevention (per reference), idempotent verification, amount mismatch detection
+
+> **Note:** In a production system at scale, payment would be extracted into a dedicated Payment Microservice using message brokers (Kafka/RabbitMQ) with event-driven choreography or centralized orchestration.
 
 ---
 
@@ -379,6 +415,7 @@ Admin                API Gateway         Mentor Service          RabbitMQ       
 | Backend Services | Spring Boot 3.x | Microservice framework |
 | Security | Spring Security + JWT | Authentication & authorization |
 | Messaging | RabbitMQ | Async event-driven communication |
+| Payment Gateway | Razorpay (Java SDK 1.4.8) | Mentor fee + session booking payments |
 | Database | PostgreSQL | Per-service relational storage |
 | ORM | Spring Data JPA / Hibernate | Object-relational mapping |
 | Documentation | Swagger / OpenAPI 3.0 | Automated API documentation UI |

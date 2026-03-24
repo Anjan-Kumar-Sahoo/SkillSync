@@ -24,6 +24,7 @@
 | **Forms** | React Hook Form + Zod | Performant forms with schema-based validation |
 | **Notifications** | React Hot Toast | Lightweight, customizable toast notifications |
 | **WebSocket** | SockJS + STOMP.js | Real-time notifications from backend |
+| **Payments** | Razorpay Web SDK | Checkout UI for mentor fee & session booking |
 | **Testing** | Jest + React Testing Library | Component & integration testing |
 | **E2E Testing** | Playwright | Cross-browser end-to-end testing |
 | **Build Tool** | Vite | Fast HMR, optimized builds |
@@ -179,6 +180,17 @@ src/
 │   │   └── slices/
 │   │       └── notificationSlice.ts
 │   │
+│   ├── payment/
+│   │   ├── components/
+│   │   │   ├── CheckoutModal.tsx
+│   │   │   └── PaymentHistoryTable.tsx
+│   │   ├── hooks/
+│   │   │   └── useRazorpay.ts
+│   │   ├── services/
+│   │   │   └── paymentApi.ts
+│   │   └── pages/
+│   │       └── PaymentHistoryPage.tsx
+│   │
 │   ├── profile/
 │   │   ├── components/
 │   │   │   ├── ProfileForm.tsx
@@ -303,6 +315,7 @@ export const router = createBrowserRouter([
       { path: '/groups', element: <LazyLoad><GroupListPage /></LazyLoad> },
       { path: '/groups/create', element: <LazyLoad><CreateGroupPage /></LazyLoad> },
       { path: '/groups/:id', element: <LazyLoad><GroupDetailPage /></LazyLoad> },
+      { path: '/payments/history', element: <LazyLoad><PaymentHistoryPage /></LazyLoad> },
     ],
   },
 
@@ -391,14 +404,14 @@ export const RoleGuard = ({ allowedRoles, children }: RoleGuardProps) => {
 |---|---|---|
 | Mentor Discovery | `/mentors` | Search bar, filter sidebar, paginated mentor grid, sort controls |
 | Mentor Profile | `/mentors/:id` | Full profile, skills, availability calendar, reviews, "Book Session" CTA |
-| Mentor Application | `/mentors/apply` | Multi-step form: bio, experience, rate, skills selection |
+| Mentor Application | `/mentors/apply` | Multi-step form: bio, experience, rate, skills selection, **Razorpay payment ($9)** |
 
 ### 3.4.4 Session Screens
 
 | Screen | Route | Description |
 |---|---|---|
 | My Sessions | `/sessions` | Tab-based: Upcoming, Pending, Completed, Cancelled + filter by date range |
-| Book Session Modal | (overlay) | Date picker, time slot selection, topic, description, confirm |
+| Book Session Modal | (overlay) | Date picker, time slot selection, topic, description, confirm, **Razorpay payment ($9)** |
 | Session Detail Modal | (overlay) | Full session info, status, actions (accept/reject/cancel/complete/review) |
 
 ### 3.4.5 Group Screens
@@ -423,6 +436,7 @@ export const RoleGuard = ({ allowedRoles, children }: RoleGuardProps) => {
 | Screen | Route | Description |
 |---|---|---|
 | Profile | `/profile` | Edit profile form, avatar upload, skill management |
+| Payment History | `/payments/history` | Table of past payments (mentor fees, session bookings) |
 | 404 | `*` | "Page not found" with link to dashboard |
 
 ---

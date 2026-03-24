@@ -127,6 +127,43 @@ public class MentorService {
         log.info("Mentor {} rejected", mentorId);
     }
 
+    /**
+     * Compensation method: revert a previously approved mentor back to PENDING.
+     * Used by {@link PaymentSagaOrchestrator} when post-payment business action fails.
+     *
+     * <p>This reverses:</p>
+     * <ul>
+     *   <li>Mentor status: APPROVED → PENDING</li>
+     *   <li>User role: ROLE_MENTOR → ROLE_USER (via auth-service)</li>
+     * </ul>
+     */
+    @Transactional
+    public void revertMentorApproval(Long mentorId) {
+        MentorProfile profile = mentorProfileRepository.findById(mentorId)
+                .orElseThrow(() -> new RuntimeException("Mentor not found for revert: " + mentorId));
+
+        if (profile.getStatus() != MentorStatus.APPROVED) {
+            log.warn("Mentor {} is not in APPROVED status (current: {}), skipping revert",
+                    mentorId, profile.getStatus());
+            return;
+        }
+
+        // Revert mentor status
+        profile.setStatus(MentorStatus.PENDING);
+        mentorProfileRepository.save(profile);
+
+        // Revert user role in Auth Service
+        try {
+            authServiceClient.updateUserRole(profile.getUserId(), "ROLE_USER");
+            log.info("Role reverted to ROLE_USER for userId: {}", profile.getUserId());
+        } catch (Exception e) {
+            log.error("Failed to revert role for userId: {} during compensation", profile.getUserId(), e);
+            // Don't throw — the mentor status is already reverted, role revert is best-effort
+        }
+
+        log.info("Mentor {} approval reverted (compensation)", mentorId);
+    }
+
     @Transactional
     public AvailabilitySlotResponse addAvailability(Long userId, AvailabilitySlotRequest request) {
         MentorProfile profile = mentorProfileRepository.findByUserId(userId)

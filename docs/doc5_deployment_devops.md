@@ -414,6 +414,8 @@ services:
       SPRING_DATASOURCE_USERNAME: skillsync
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-skillsync_dev}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
+      RAZORPAY_API_KEY: ${RAZORPAY_API_KEY}
+      RAZORPAY_API_SECRET: ${RAZORPAY_API_SECRET}
     depends_on:
       postgres:
         condition: service_healthy
@@ -1130,6 +1132,10 @@ JWT_SECRET=your-256-bit-secret-key-here-must-be-at-least-32-chars
 JWT_ACCESS_EXPIRATION=900000         # 15 minutes
 JWT_REFRESH_EXPIRATION=604800000     # 7 days
 
+# ============ RAZORPAY (Payments) ============
+RAZORPAY_API_KEY=rzp_test_your_key_here
+RAZORPAY_API_SECRET=your_razorpay_secret_here
+
 # ============ FRONTEND ============
 VITE_API_BASE_URL=http://localhost:8080
 VITE_WS_URL=http://localhost:8088/ws
@@ -1310,6 +1316,7 @@ groups:
 > - [ ] All environment variables set in production `.env`
 > - [ ] JWT secret is ≥256 bits and securely stored
 > - [ ] Database passwords are strong and rotated
+> - [ ] Razorpay Production API Key/Secret configured
 > - [ ] SSL certificates configured on Nginx
 > - [ ] Rate limiting enabled on API Gateway
 > - [ ] Health checks pass for all services

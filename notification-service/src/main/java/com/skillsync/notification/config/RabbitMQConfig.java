@@ -26,6 +26,12 @@ public class RabbitMQConfig {
     public static final String REVIEW_EXCHANGE = "review.exchange";
     public static final String REVIEW_NOTIFICATION_SUBMITTED_QUEUE = "notification.review.submitted.queue";
 
+    // Payment events (NEW)
+    public static final String PAYMENT_EXCHANGE = "payment.exchange";
+    public static final String PAYMENT_NOTIFICATION_SUCCESS_QUEUE = "notification.payment.success.queue";
+    public static final String PAYMENT_NOTIFICATION_FAILED_QUEUE = "notification.payment.failed.queue";
+    public static final String PAYMENT_NOTIFICATION_COMPENSATED_QUEUE = "notification.payment.compensated.queue";
+
     // Session event queues and bindings (for notification service consumption)
     @Bean public TopicExchange sessionExchange() { return new TopicExchange(SESSION_EXCHANGE, true, false); }
     @Bean public Queue notifSessionRequested() { return QueueBuilder.durable(SESSION_NOTIFICATION_REQUESTED_QUEUE).build(); }
@@ -51,6 +57,15 @@ public class RabbitMQConfig {
     @Bean public TopicExchange reviewExchange() { return new TopicExchange(REVIEW_EXCHANGE, true, false); }
     @Bean public Queue notifReviewSubmitted() { return QueueBuilder.durable(REVIEW_NOTIFICATION_SUBMITTED_QUEUE).build(); }
     @Bean public Binding bindReviewSubmitted() { return BindingBuilder.bind(notifReviewSubmitted()).to(reviewExchange()).with("review.submitted"); }
+
+    // Payment event queues and bindings (NEW)
+    @Bean public TopicExchange paymentExchange() { return new TopicExchange(PAYMENT_EXCHANGE, true, false); }
+    @Bean public Queue notifPaymentSuccess() { return QueueBuilder.durable(PAYMENT_NOTIFICATION_SUCCESS_QUEUE).build(); }
+    @Bean public Queue notifPaymentFailed() { return QueueBuilder.durable(PAYMENT_NOTIFICATION_FAILED_QUEUE).build(); }
+    @Bean public Queue notifPaymentCompensated() { return QueueBuilder.durable(PAYMENT_NOTIFICATION_COMPENSATED_QUEUE).build(); }
+    @Bean public Binding bindPaymentSuccess() { return BindingBuilder.bind(notifPaymentSuccess()).to(paymentExchange()).with("payment.success"); }
+    @Bean public Binding bindPaymentFailed() { return BindingBuilder.bind(notifPaymentFailed()).to(paymentExchange()).with("payment.failed"); }
+    @Bean public Binding bindPaymentCompensated() { return BindingBuilder.bind(notifPaymentCompensated()).to(paymentExchange()).with("payment.compensated"); }
 
     @Bean public MessageConverter jsonMessageConverter() { return new Jackson2JsonMessageConverter(); }
 }

@@ -1035,8 +1035,8 @@ test.describe('Mentor Approval Flow', () => {
 ### Critical Flows (Must Have ≥90% Coverage)
 
 1. **User Registration + Login** — Auth Service + Frontend auth
-2. **Session Booking** — Create → Accept → Complete → Review
-3. **Mentor Approval** — Apply → Admin Review → Approve/Reject
+2. **Session Booking (w/ Payment)** — Book → Razorpay Checkout → Accept → Complete → Review
+3. **Mentor Onboarding** — Apply → Pay Mentor Fee → Auto-Approve / Admin fallback
 4. **Mentor Discovery** — Search with filters, pagination
 5. **Review Submission** — After completed session
 

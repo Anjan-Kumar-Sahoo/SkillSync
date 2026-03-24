@@ -19,6 +19,10 @@
 ✓ Secure endpoints (except login/register)
 ✓ OTP implementation (generation, expiry, validation, email via Notification)
 
+## Payment Gateway
+✓ Razorpay integration for mentor onboarding fee
+✓ Signature verification and post-payment webhook simulation
+
 ## Logging
 ✓ SLF4J logging in all services
 ✓ Logback or file logging config (implemented in all services)

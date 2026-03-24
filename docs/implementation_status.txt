@@ -63,6 +63,13 @@ Total: 16 test classes | ~73 test methods
 Swagger UI accessible at: http://localhost:{port}/swagger-ui.html
 OpenAPI docs at: http://localhost:{port}/v3/api-docs
 
+5. PAYMENT GATEWAY (RAZORPAY)
+----------------------------------------------------
+[DONE] user-service     - Integrated Razorpay for Mentor Fee & Session Booking
+[DONE] user-service     - Idempotent signature verification & post-payment webhook simulation
+
+Includes PaymentService, PaymentController, Payment entity/repository, and RazorpayConfig.
+
 ================================================================================
     FILES CREATED / MODIFIED SUMMARY
 ================================================================================

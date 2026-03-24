@@ -39,7 +39,7 @@ Use the **dropdown at the top-right** to switch between services:
 | Dropdown Option | APIs Shown |
 |----------------|-----------|
 | Auth Service | Register, Login, OTP, Token Refresh, Role Update |
-| User Service (Users + Mentors + Groups) | Profiles, Skills, Mentor Apply/Approve, Groups, Discussions |
+| User Service (Users + Mentors + Groups + Payments) | Profiles, Skills, Mentor Apply/Approve, Groups, Discussions, Payments |
 | Skill Service | Skill CRUD, Search |
 | Session Service (Sessions + Reviews) | Session Booking, Accept/Reject/Complete, Reviews, Ratings |
 | Notification Service | Get Notifications, Unread Count, Mark Read |
@@ -67,15 +67,16 @@ Use the **dropdown at the top-right** to switch between services:
  9. User Service      → PUT /api/users/me (+ Authorization: Bearer <token>)
 10. User Service      → POST /api/users/me/skills
 11. User Service      → POST /api/mentors/apply
-12. User Service      → PUT /api/mentors/1/approve (as admin)
-13. User Service      → POST /api/mentors/me/availability
-14. Session Service   → POST /api/sessions
-15. Session Service   → PUT /api/sessions/1/accept
-16. Session Service   → PUT /api/sessions/1/complete
-17. Session Service   → POST /api/reviews
-18. Notification Svc  → GET /api/notifications
-19. User Service      → POST /api/groups
-20. User Service      → POST /api/groups/1/discussions
+12. User Service      → POST /api/payments/create-order (Pay MENTOR_FEE)
+13. User Service      → POST /api/payments/verify (Verifies + Approves Mentor)
+14. User Service      → POST /api/mentors/me/availability
+15. Session Service   → POST /api/sessions
+16. Session Service   → PUT /api/sessions/1/accept
+17. Session Service   → PUT /api/sessions/1/complete
+18. Session Service   → POST /api/reviews
+19. Notification Svc  → GET /api/notifications
+20. User Service      → POST /api/groups
+21. User Service      → POST /api/groups/1/discussions
 ```
 
 ---
@@ -181,9 +182,9 @@ Login → authenticate → check isVerified → issue JWT + refresh token
 
 ## 4. User Service
 
-**Purpose:** User profiles, mentor applications, groups, discussions. Merged from 3 services.
+**Purpose:** User profiles, mentor applications, groups, discussions, payments. Merged from 3 services.
 
-**3 schemas:** `users`, `mentors`, `groups`
+**3 schemas:** `users`, `mentors`, `groups` (Payments stored in `users.payments`)
 
 ### Entities
 
@@ -372,7 +373,8 @@ All DTOs use Java Records (`record ClassName(fields) {}`):
 4. Create skills → Skill Service saves skill catalog
 5. Update profile → User Service creates Profile
 6. Apply as mentor → User Service creates PENDING MentorProfile
-7. Admin approves → User Service: status=APPROVED
+7. Pay mentor fee → User Service creates Razorpay order, verifies signature
+   → On SUCCESS: User Service sets status=APPROVED
    → Feign call to Auth: role=ROLE_MENTOR
    → RabbitMQ event → Notification Service: "Approved!" push
 8. Book session → Session Service validates + saves REQUESTED session
@@ -397,6 +399,7 @@ All DTOs use Java Records (`record ClassName(fields) {}`):
 | RabbitMQ for async | Notifications don't need sync response |
 | State machine enum | Domain-level enforcement of valid transitions |
 | Soft references (userId as Long) | No cross-DB foreign keys in microservices |
+| Payment inside User Service | Simplifies architecture; avoids separate DB for 1 payment table |
 | @CreatedDate/@LastModifiedDate | Auto timestamp management |
 | Profile completeness % | Gamification (5 fields × 20%) |
 | Builder pattern (Lombok) | Fluent, readable object construction |
@@ -441,6 +444,8 @@ All DTOs use Java Records (`record ClassName(fields) {}`):
 **Q: What does ddl-auto=update do?** A: Hibernate auto-creates/alters tables to match entities. Dev only.
 
 **Q: What is @ControllerAdvice?** A: Global exception handler for all controllers.
+
+**Q: Why Razorpay inside User Service?** A: Creating an entire microservice with its own database just for a small payments table was over-engineering. It was integrated into User Service for simplicity, but can be extracted to a Payment Service using Saga pattern later if the platform scales.
 
 **Q: Builder Pattern?** A: Fluent object construction: `.builder().field(val).build()`. Lombok generates it.
 

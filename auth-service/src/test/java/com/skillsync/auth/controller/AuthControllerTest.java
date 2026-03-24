@@ -12,6 +12,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import com.skillsync.auth.security.JwtTokenProvider;
+import com.skillsync.auth.security.UserDetailsServiceImpl;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -27,6 +29,8 @@ class AuthControllerTest {
 
     @MockitoBean private AuthService authService;
     @MockitoBean private OtpService otpService;
+    @MockitoBean private JwtTokenProvider jwtTokenProvider;
+    @MockitoBean private UserDetailsServiceImpl userDetailsService;
 
     @Test
     @DisplayName("POST /api/auth/register - 201 Created")
