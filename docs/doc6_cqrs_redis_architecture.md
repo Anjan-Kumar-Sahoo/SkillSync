@@ -14,7 +14,9 @@ Traditional (single service):
 
 CQRS (split services):
   Controller → CommandService ──→ Repository → DB  (writes + cache invalidation)
-              QueryService   ──→ Redis → DB        (reads + cache-aside)
+               QueryService   ──→ Redis → DB        (reads + cache-aside)
+  
+  Both Services ──> Mapper ──> DTO (Decoupled mapping logic)
 ```
 
 ### Why CQRS for SkillSync?
@@ -131,6 +133,11 @@ com.skillsync.user
           ├── UserQueryService       ← Cache-aside profile reads
           ├── MentorQueryService     ← Cache-aside mentor reads (search, discovery)
           └── GroupQueryService      ← Cache-aside group reads
+  +-- mapper/
+      ├── UserMapper                 ← Dedicated static mapping methods
+      ├── MentorMapper               ← Dedicated static mapping methods
+      ├── GroupMapper                ← Dedicated static mapping methods
+      └── PaymentMapper              ← Dedicated static mapping methods
 ```
 
 ### Skill Service
@@ -149,6 +156,8 @@ com.skillsync.skill
       │   └── SkillCommandService   ← Skill CRUD + cache invalidation + event publishing
       +-- query/
           └── SkillQueryService     ← Cache-aside skill reads (autocomplete, catalog)
+  +-- mapper/
+      └── SkillMapper               ← Dedicated static mapping methods
 ```
 
 ### Session Service
@@ -165,6 +174,9 @@ com.skillsync.session
       +-- query/
           ├── SessionQueryService   ← Cache-aside session reads
           └── ReviewQueryService    ← Cache-aside review reads (rating summary, distribution)
+  +-- mapper/
+      ├── SessionMapper             ← Dedicated static mapping methods
+      └── ReviewMapper              ← Dedicated static mapping methods
 ```
 
 ### Notification Service
@@ -179,6 +191,8 @@ com.skillsync.notification
       │   └── NotificationCommandService ← Create + push + cache invalidation
       +-- query/
           └── NotificationQueryService   ← Cache-aside unread count
+  +-- mapper/
+      └── NotificationMapper             ← Dedicated static mapping methods
 ```
 
 ---
@@ -368,20 +382,64 @@ GET /actuator/caches      → Registered cache names
 | Cache-Aside over Write-Through | Eventual consistency (brief stale reads) | Short TTLs + aggressive invalidation |
 | Redis over in-process cache | Network hop adds ~1ms latency | Still 10-100x faster than PostgreSQL query |
 | Per-key TTL over global TTL | Configuration complexity | Domain-specific TTLs match data volatility |
-| `KEYS` command for pattern eviction | O(N) scan on large datasets | Acceptable for current scale; migrate to `SCAN` if needed |
+| `SCAN` for pattern eviction | Cursor-based iteration | Used in CacheService.evictByPattern() for safe production use |
 | No caching for Auth Service | Every auth check hits DB | Auth queries are simple PK lookups (fast) |
-| Graceful degradation over fail-fast | Silent cache failures may go unnoticed | Logging + Actuator metrics for alerting |
+| Graceful degradation over fail-fast | Silent cache failures may go unnoticed | Logging + Actuator metrics + Prometheus alerting |
 
 ---
 
-## 6.13 Future Enhancements
+## 6.13 Key Versioning Rules
+
+> [!IMPORTANT]
+> **ALL** cache keys MUST use `CacheService.vKey(...)` to generate versioned keys.
+> Direct string construction of keys is **STRICTLY PROHIBITED**.
+
+### Rules
+
+1. **Always use `CacheService.vKey("domain:entity:id")`** → produces `v1:domain:entity:id`
+2. **Never hardcode the `v1:` prefix** — the version is managed centrally in `CacheService.KEY_VERSION`
+3. **Key format**: `v1:<service-domain>:<entity-type>:<identifier>`
+4. **Pattern eviction**: Use `CacheService.evictByPattern("v1:domain:*")` for bulk eviction
+
+### Current Version
+
+```java
+private static final String KEY_VERSION = "v1";
+```
+
+### Migration
+
+To migrate cache keys to a new version:
+1. Update `KEY_VERSION` in `CacheService.java`
+2. Deploy all services — old keys expire naturally via TTL
+3. No manual Redis flush required
+
+### Audit Status
+
+✅ **All services verified** — No hardcoded cache keys found. All keys use `CacheService.vKey()`.
+
+---
+
+## 6.14 Observability Integration
+
+Cache operations are fully observable via the metrics and tracing stack:
+
+- **Micrometer Counters**: `cache.operations{result=hit|miss|evict|error}` 
+- **Prometheus Endpoint**: `/actuator/prometheus` on all services
+- **Zipkin Tracing**: Cache operations are included in distributed traces
+- **Structured Logging**: All cache operations log with `traceId` and `spanId`
+
+For full details, see **[doc8_observability.md](doc8_observability.md)**.
+
+---
+
+## 6.15 Future Enhancements
 
 1. **Redis Sentinel/Cluster** — For high availability in production
-2. **SCAN-based eviction** — Replace `KEYS` with `SCAN` for pattern-based eviction at scale
-3. **Cache warming** — Pre-populate hot data on service startup
-4. **Read replicas** — Separate Redis read replicas for query-heavy services
-5. **Cache metrics dashboard** — Grafana dashboard for hit/miss ratios and memory usage
-6. **Distributed locking** — Redis-based distributed locks for concurrent write scenarios
+2. **Cache warming** — Pre-populate hot data on service startup
+3. **Read replicas** — Separate Redis read replicas for query-heavy services
+4. **Grafana dashboard** — Real-time cache hit/miss ratios and memory usage via Prometheus
+5. **Distributed locking** — Redis-based distributed locks for concurrent write scenarios
 
 ---
 

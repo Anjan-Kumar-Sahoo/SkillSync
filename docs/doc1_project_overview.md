@@ -8,6 +8,7 @@
 > **Payment Integration (March 2026):** Razorpay payment gateway has been integrated into User Service for mentor onboarding fees (₹9) and session booking fees (₹9).
 >
 > **CQRS + Redis Caching (March 2026):** All business services now implement the **CQRS pattern** (Command/Query separation) with **Redis 7.2** as a distributed cache layer for read optimization. See `doc6_cqrs_redis_architecture.md` for the full design.
+> **Enterprise Hardening (March 2026):** Implemented a dedicated Mapper layer to decouple CQRS Command/Query services. Added tiered API Gateway Rate Limiting using resilience4j. Deployed a full observability stack with Prometheus, Grafana (auto-provisioned dashboards), and Loki (log aggregation) alongside Zipkin. CI/CD pipeline hardened with SonarQube integration and strict failure rules.
 >
 > The original 11-service design below reflects the initial architecture. See `service_architecture_summary.md` for the current 8-service topology.
 

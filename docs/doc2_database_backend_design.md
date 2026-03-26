@@ -4,6 +4,8 @@
 > **CQRS + Redis Caching (March 2026):** All business services (User, Skill, Session, Notification) now implement the **CQRS pattern** with **Redis 7.2** distributed caching. Service layers have been split into `service.command` (write operations + cache invalidation) and `service.query` (read operations + cache-aside). See `doc6_cqrs_redis_architecture.md` for the full design.
 >
 > **Architecture Update (March 2026):** Mentor Service + Group Service → User Service (port 8082). Review Service → Session Service (port 8085).
+>
+> **Enterprise Hardening (March 2026):** Implemented a dedicated Mapper layer to decouple CQRS Command/Query services. Added tiered API Gateway Rate Limiting using resilience4j.
 
 ## SkillSync — Database & Microservices Architecture
 

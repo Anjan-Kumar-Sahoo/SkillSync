@@ -11,11 +11,11 @@
 | 1 | **Eureka Server** | 8761 | `com.skillsync.eurekaserver` | Service discovery, self-preservation disabled for dev |
 | 2 | **Config Server** | 8888 | `com.skillsync.configserver` | Git-backed config (`SkillSync-config` repo), Eureka registered |
 | 3 | **API Gateway** | 8080 | `com.skillsync.apigateway` | JWT validation filter, CORS, routes to all microservices |
-| 4 | **Auth Service** | 8081 | `com.skillsync.auth` | Registration, OTP email verification, login, JWT (access + refresh), role management, BCrypt |
-| 5 | **User Service** | 8082 | `com.skillsync.user` | Profile CRUD, skill tagging, **mentor onboarding/approval**, **peer learning groups**, **Razorpay payment processing** with Saga orchestration (mentor fee + session booking), Feign → Skill/Auth, RabbitMQ events (mentor + payment) |
+| 4 | **Auth Service** | 8081 | `com.skillsync.auth` | Registration with **OTP rollback**, **Password Reset (OTP)**, **Google OAuth**, JWT (access + refresh), Redis cache invalidation, role management, BCrypt |
+| 5 | **User Service** | 8082 | `com.skillsync.user` | Profile CRUD, skill tagging, **mentor onboarding/approval**, **peer learning groups**, **Razorpay payment processing** with Saga orchestration, Feign → Skill/Auth, Redis cache-aside (CQRS) |
 | 6 | **Skill Service** | 8084 | `com.skillsync.skill` | Skill catalog CRUD, category management, search |
-| 7 | **Session Service** | 8085 | `com.skillsync.session` | Booking, state machine lifecycle, conflict detection, **review submission & rating**, RabbitMQ events |
-| 8 | **Notification Service** | 8088 | `com.skillsync.notification` | RabbitMQ consumers (session/mentor/review events), WebSocket push, CRUD |
+| 7 | **Session Service** | 8085 | `com.skillsync.session` | Booking lifecycle, conflict detection, **review submission & rating**, RabbitMQ events |
+| 8 | **Notification Service** | 8088 | `com.skillsync.notification` | RabbitMQ consumers, **WebSocket push + Asynchronous Email**, Thymeleaf templates |
 
 > ~~**Mentor Service** (8083)~~ — Merged into User Service
 > ~~**Group Service** (8086)~~ — Merged into User Service
@@ -62,6 +62,7 @@ graph TD
     SESSION -->|"RabbitMQ (review events)"| NOTIF
     
     NOTIF -->|"WebSocket/STOMP"| CLIENT[Frontend]
+    NOTIF -->|"Async Email"| SMTP[Gmail SMTP]
     
     EUREKA["Eureka :8761"] -.->|discovery| GW
     EUREKA -.->|discovery| AUTH
@@ -124,6 +125,8 @@ graph TD
 - **RabbitMQ** (event-driven messaging + cross-service cache sync)
 - **Razorpay** Java SDK 1.4.8 (payment gateway integration)
 - **WebSocket/STOMP + SockJS** (real-time notifications)
+- **Spring Mail + Thymeleaf** (asynchronous HTML emails)
+- **Google OAuth 2.0** (identity provider integration)
 - **JWT** (jjwt 0.12.6) for authentication
 - **OpenFeign** for inter-service REST calls
 - **Lombok** for boilerplate reduction

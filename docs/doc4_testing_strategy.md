@@ -44,6 +44,7 @@
 
 > [!IMPORTANT]
 > **Implementation Status:** 16 base unit test classes (Service & Controller layers) have been implemented across all 8 business microservices using JUnit 5 and Mockito. All service tests have been updated to test CQRS `CommandService` and `QueryService` classes separately, including cache hit/miss/invalidation verification via mocked `CacheService`.
+> **Mapper Tests:** Pure function `Mapper` classes have been extracted from QueryServices and are exhaustively unit tested without requiring a Spring Context (`MapperTest.java`).
 
 ---
 
@@ -126,6 +127,28 @@ class SkillCommandServiceTest {
 
 > [!TIP]
 > **Key testing pattern:** QueryService tests verify `cacheService.get()` is called first, and `repository.findById()` is only called on cache miss. CommandService tests verify `cacheService.evict()` is called after every write operation.
+
+#### Mapper Layer Testing (Pure Functions)
+
+Mappers are pure functions that translate Entities to DTOs. They do not depend on Spring context and should be tested using simple JUnit tests.
+
+```java
+class MapperTest {
+    @Test
+    @DisplayName("Should map Session to SessionResponse correctly")
+    void sessionMapper_mapsCorrectly() {
+        Session session = new Session();
+        session.setId(1L);
+        session.setStatus(SessionStatus.ACCEPTED);
+        
+        SessionResponse response = SessionMapper.toResponse(session, "Mentor Name", "Learner Name");
+        
+        assertEquals(1L, response.id());
+        assertEquals("ACCEPTED", response.status());
+        assertEquals("Mentor Name", response.mentorName());
+    }
+}
+```
 
 #### Original Service Layer Testing (pre-CQRS reference)
 

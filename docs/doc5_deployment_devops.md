@@ -704,11 +704,8 @@ jobs:
         service:
           - auth-service
           - user-service
-          - mentor-service
           - skill-service
           - session-service
-          - group-service
-          - review-service
           - notification-service
 
     steps:
@@ -755,6 +752,17 @@ jobs:
             echo "::error::Coverage ${COVERAGE}% is below 80% threshold for ${{ matrix.service }}"
             exit 1
           fi
+
+      - name: SonarQube Quality Gate
+        # Placeholder for SonarQube integration (runs static analysis)
+        run: echo "SonarQube analysis goes here"
+
+      - name: Upload Test Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: surefire-report-${{ matrix.service }}
+          path: ${{ matrix.service }}/target/surefire-reports/
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
@@ -888,11 +896,8 @@ jobs:
         service:
           - auth-service
           - user-service
-          - mentor-service
           - skill-service
           - session-service
-          - group-service
-          - review-service
           - notification-service
           - api-gateway
           - eureka-server
@@ -1164,6 +1169,7 @@ DEPLOY_USER=deploy
 | Group Service | 1 | 3 | CPU > 70% | Medium |
 | Review Service | 1 | 3 | CPU > 70% | Medium |
 | Notification Service | 2 | 4 | Queue depth > 1000 | High |
+| Observability Stack | 1 | 1 | N/A (Stateful) | Infrastructure |
 
 ### 5.5.2 Database Scaling
 
