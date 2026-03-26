@@ -5,6 +5,8 @@
 > - **Mentor Service + Group Service → User Service** (port 8082)
 > - **Review Service → Session Service** (port 8085)
 >
+> **CQRS + Redis Caching (March 2026):** All business services now require a **Redis 7.2** instance for distributed caching. The `docker-compose.yml` includes Redis as a service dependency with AOF persistence. See `doc6_cqrs_redis_architecture.md` for details.
+>
 > The original deployment diagrams below reflect the initial 11-service architecture. Real deployments use the current 8-service topology.
 
 ## SkillSync — Infrastructure, Deployment & Operations
@@ -73,12 +75,12 @@
           ┌───────────────┼───────────────┐
           │               │               │
           ▼               ▼               ▼
-   ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
-   │ PostgreSQL  │ │  RabbitMQ   │ │   Eureka    │
-   │ Cluster     │ │  Cluster    │ │   Server    │
-   │ (Primary +  │ │ (Mirrored)  │ │   :8761     │
-   │  Replica)   │ │             │ │             │
-   └─────────────┘ └─────────────┘ └─────────────┘
+    ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+   │ PostgreSQL  │ │  RabbitMQ   │ │   Eureka    │ │   Redis     │
+   │ Cluster     │ │  Cluster    │ │   Server    │ │   7.2       │
+   │ (Primary +  │ │ (Mirrored)  │ │   :8761     │ │   :6379     │
+   │  Replica)   │ │             │ │             │ │ (AOF+LRU)   │
+   └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘
 ```
 
 **Scaling annotations** (×N) show the recommended minimum replica count for production.

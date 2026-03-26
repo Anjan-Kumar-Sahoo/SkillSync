@@ -2,6 +2,7 @@
 
 > **Branch:** `trail1` | **Base Package:** `com.skillsync` | **ID Type:** Long (all services)
 > **Note:** mentor-service and group-service have been **merged into user-service** (March 2026).
+> **CQRS + Redis:** All business services implement **Command/Query separation** with **Redis 7.2** distributed caching (March 2026).
 
 ## ✅ 8 Active Services (after merges)
 
@@ -28,7 +29,10 @@ dto/             → Records (request/response DTOs)
 entity/          → JPA entities with Long IDs + auditing
 enums/           → Status and role enums
 repository/      → Spring Data JPA repositories
-service/         → Business logic
+service/
+  command/       → Write operations + cache invalidation (CQRS)
+  query/         → Read operations + cache-aside (CQRS)
+cache/           → RedisConfig + CacheService (Redis wrapper)
 config/          → Security, RabbitMQ, WebSocket configs
 feign/           → OpenFeign inter-service clients
 event/           → RabbitMQ event DTOs
@@ -82,7 +86,7 @@ graph TD
 | `payment.exchange` | `payment.success` | User Service (saga orchestrator) | Notification Service |
 | `payment.exchange` | `payment.failed` | User Service (payment service) | Notification Service |
 | `payment.exchange` | `payment.compensated` | User Service (saga orchestrator) | Notification Service |
-| `review.exchange` | `review.submitted` | Session Service (review module) | Notification Service, User Service (mentor module) |
+| `review.exchange` | `review.submitted` | Session Service (review module) | Notification Service, User Service (mentor rating cache sync) |
 
 ## Database Strategy (per service)
 
@@ -114,8 +118,10 @@ graph TD
 
 - **Spring Boot** 3.4.4 + **Spring Cloud** 2024.0.1
 - **Java** 17
-- **PostgreSQL** (database-per-service)
-- **RabbitMQ** (event-driven messaging)
+- **PostgreSQL** (database-per-service, source of truth)
+- **Redis** 7.2 (distributed cache, Cache-Aside pattern)
+- **CQRS** (Command/Query Responsibility Segregation)
+- **RabbitMQ** (event-driven messaging + cross-service cache sync)
 - **Razorpay** Java SDK 1.4.8 (payment gateway integration)
 - **WebSocket/STOMP + SockJS** (real-time notifications)
 - **JWT** (jjwt 0.12.6) for authentication

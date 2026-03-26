@@ -1,6 +1,7 @@
 package com.skillsync.notification.controller;
 
-import com.skillsync.notification.service.NotificationService;
+import com.skillsync.notification.service.command.NotificationCommandService;
+import com.skillsync.notification.service.query.NotificationQueryService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,12 +17,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class NotificationControllerTest {
 
     @Autowired private MockMvc mockMvc;
-    @MockitoBean private NotificationService notificationService;
+    @MockitoBean private NotificationCommandService notificationCommandService;
+    @MockitoBean private NotificationQueryService notificationQueryService;
 
     @Test
     @DisplayName("GET /api/notifications/unread/count - returns count")
     void getUnreadCount_shouldReturn200() throws Exception {
-        when(notificationService.getUnreadCount(100L)).thenReturn(5L);
+        when(notificationQueryService.getUnreadCount(100L)).thenReturn(5L);
 
         mockMvc.perform(get("/api/notifications/unread/count").header("X-User-Id", "100"))
                 .andExpect(status().isOk())

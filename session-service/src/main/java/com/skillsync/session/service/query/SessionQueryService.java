@@ -1,0 +1,63 @@
+package com.skillsync.session.service.query;
+
+import com.skillsync.cache.CacheService;
+import com.skillsync.session.dto.*;
+import com.skillsync.session.entity.Session;
+import com.skillsync.session.repository.SessionRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import java.time.Duration;
+
+/**
+ * CQRS Query Service for Session operations.
+ * Cache-aside with stampede + penetration protection (5-minute TTL).
+ */
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class SessionQueryService {
+
+    private final SessionRepository sessionRepository;
+    private final CacheService cacheService;
+
+    @Value("${cache.ttl.session:300}")
+    private long sessionTtl;
+
+    /**
+     * Cache-aside with stampede protection: get session by ID.
+     */
+    public SessionResponse getSessionById(Long id) {
+        String cacheKey = CacheService.vKey("session:" + id);
+
+        return cacheService.getOrLoad(cacheKey, SessionResponse.class,
+                Duration.ofSeconds(sessionTtl), () -> {
+                    Session session = sessionRepository.findById(id).orElse(null);
+                    if (session == null) return null;
+                    return mapToResponse(session);
+                });
+    }
+
+    public Page<SessionResponse> getSessionsByLearner(Long learnerId, Pageable pageable) {
+        return sessionRepository.findByLearnerId(learnerId, pageable)
+                .map(SessionQueryService::mapToResponse);
+    }
+
+    public Page<SessionResponse> getSessionsByMentor(Long mentorId, Pageable pageable) {
+        return sessionRepository.findByMentorId(mentorId, pageable)
+                .map(SessionQueryService::mapToResponse);
+    }
+
+    /**
+     * Shared mapper — also used by SessionCommandService.
+     */
+    public static SessionResponse mapToResponse(Session s) {
+        return new SessionResponse(s.getId(), s.getMentorId(), s.getLearnerId(), s.getTopic(),
+                s.getDescription(), s.getSessionDate(), s.getDurationMinutes(), s.getMeetingLink(),
+                s.getStatus().name(), s.getCancelReason(), s.getCreatedAt());
+    }
+}

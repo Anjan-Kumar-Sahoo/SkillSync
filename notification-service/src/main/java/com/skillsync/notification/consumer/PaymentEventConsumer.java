@@ -1,7 +1,7 @@
 package com.skillsync.notification.consumer;
 
 import com.skillsync.notification.config.RabbitMQConfig;
-import com.skillsync.notification.service.NotificationService;
+import com.skillsync.notification.service.command.NotificationCommandService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -18,7 +18,7 @@ import java.util.Map;
 @Slf4j
 public class PaymentEventConsumer {
 
-    private final NotificationService notificationService;
+    private final NotificationCommandService notificationCommandService;
 
     @RabbitListener(queues = RabbitMQConfig.PAYMENT_NOTIFICATION_SUCCESS_QUEUE)
     public void handlePaymentSuccess(Map<String, Object> event) {
@@ -29,7 +29,7 @@ public class PaymentEventConsumer {
         String title = "Payment Successful! ✅";
         String message = buildSuccessMessage(paymentType, orderId);
 
-        notificationService.createAndPush(userId, "PAYMENT_SUCCESS", title, message);
+        notificationCommandService.createAndPush(userId, "PAYMENT_SUCCESS", title, message);
         log.info("Processed PAYMENT_SUCCESS event for user {}, orderId={}", userId, orderId);
     }
 
@@ -43,7 +43,7 @@ public class PaymentEventConsumer {
         String title = "Payment Failed ❌";
         String message = buildFailedMessage(paymentType, orderId, reason);
 
-        notificationService.createAndPush(userId, "PAYMENT_FAILED", title, message);
+        notificationCommandService.createAndPush(userId, "PAYMENT_FAILED", title, message);
         log.info("Processed PAYMENT_FAILED event for user {}, orderId={}", userId, orderId);
     }
 
@@ -57,7 +57,7 @@ public class PaymentEventConsumer {
         String title = "Payment Issue — Action Required ⚠️";
         String message = buildCompensatedMessage(paymentType, orderId, reason);
 
-        notificationService.createAndPush(userId, "PAYMENT_COMPENSATED", title, message);
+        notificationCommandService.createAndPush(userId, "PAYMENT_COMPENSATED", title, message);
         log.info("Processed PAYMENT_COMPENSATED event for user {}, orderId={}", userId, orderId);
     }
 

@@ -1,5 +1,6 @@
 package com.skillsync.user.service;
 
+import com.skillsync.cache.CacheService;
 import com.skillsync.user.config.RabbitMQConfig;
 import com.skillsync.user.entity.Payment;
 import com.skillsync.user.enums.PaymentStatus;
@@ -7,6 +8,7 @@ import com.skillsync.user.enums.PaymentType;
 import com.skillsync.user.enums.ReferenceType;
 import com.skillsync.user.event.PaymentCompletedEvent;
 import com.skillsync.user.repository.PaymentRepository;
+import com.skillsync.user.service.command.MentorCommandService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -42,8 +44,9 @@ import java.time.LocalDateTime;
 public class PaymentSagaOrchestrator {
 
     private final PaymentRepository paymentRepository;
-    private final MentorService mentorService;
+    private final MentorCommandService mentorCommandService;
     private final RabbitTemplate rabbitTemplate;
+    private final CacheService cacheService;
 
     // ─────────────────────────────────────────────
     //  SAGA ENTRYPOINT
@@ -127,7 +130,7 @@ public class PaymentSagaOrchestrator {
         }
 
         // referenceId = mentorProfileId
-        mentorService.approveMentor(payment.getReferenceId());
+        mentorCommandService.approveMentor(payment.getReferenceId());
 
         log.info("[SAGA:MENTOR] Mentor onboarding completed: mentorId={}, userId={}",
                 payment.getReferenceId(), payment.getUserId());
@@ -197,7 +200,7 @@ public class PaymentSagaOrchestrator {
                 payment.getReferenceId(), payment.getUserId());
 
         try {
-            mentorService.revertMentorApproval(payment.getReferenceId());
+            mentorCommandService.revertMentorApproval(payment.getReferenceId());
             log.info("[COMPENSATION:MENTOR] Successfully reverted mentor approval for mentorId={}",
                     payment.getReferenceId());
         } catch (Exception e) {

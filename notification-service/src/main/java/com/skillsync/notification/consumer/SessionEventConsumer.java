@@ -1,7 +1,7 @@
 package com.skillsync.notification.consumer;
 
 import com.skillsync.notification.config.RabbitMQConfig;
-import com.skillsync.notification.service.NotificationService;
+import com.skillsync.notification.service.command.NotificationCommandService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -14,13 +14,13 @@ import java.util.Map;
 @Slf4j
 public class SessionEventConsumer {
 
-    private final NotificationService notificationService;
+    private final NotificationCommandService notificationCommandService;
 
     @RabbitListener(queues = RabbitMQConfig.SESSION_NOTIFICATION_REQUESTED_QUEUE)
     public void handleSessionRequested(Map<String, Object> event) {
         Long mentorId = toLong(event.get("mentorId"));
         String topic = (String) event.get("topic");
-        notificationService.createAndPush(mentorId, "SESSION_REQUESTED",
+        notificationCommandService.createAndPush(mentorId, "SESSION_REQUESTED",
                 "New Session Request",
                 "You have a new session request for: " + topic);
         log.info("Processed SESSION_REQUESTED event for mentor {}", mentorId);
@@ -30,7 +30,7 @@ public class SessionEventConsumer {
     public void handleSessionAccepted(Map<String, Object> event) {
         Long learnerId = toLong(event.get("learnerId"));
         String topic = (String) event.get("topic");
-        notificationService.createAndPush(learnerId, "SESSION_ACCEPTED",
+        notificationCommandService.createAndPush(learnerId, "SESSION_ACCEPTED",
                 "Session Accepted!",
                 "Your session request for '" + topic + "' has been accepted.");
     }
@@ -39,7 +39,7 @@ public class SessionEventConsumer {
     public void handleSessionRejected(Map<String, Object> event) {
         Long learnerId = toLong(event.get("learnerId"));
         String topic = (String) event.get("topic");
-        notificationService.createAndPush(learnerId, "SESSION_REJECTED",
+        notificationCommandService.createAndPush(learnerId, "SESSION_REJECTED",
                 "Session Rejected",
                 "Your session request for '" + topic + "' has been rejected.");
     }
@@ -50,9 +50,9 @@ public class SessionEventConsumer {
         Long learnerId = toLong(event.get("learnerId"));
         String topic = (String) event.get("topic");
         // Notify both parties
-        notificationService.createAndPush(mentorId, "SESSION_CANCELLED",
+        notificationCommandService.createAndPush(mentorId, "SESSION_CANCELLED",
                 "Session Cancelled", "Session for '" + topic + "' has been cancelled.");
-        notificationService.createAndPush(learnerId, "SESSION_CANCELLED",
+        notificationCommandService.createAndPush(learnerId, "SESSION_CANCELLED",
                 "Session Cancelled", "Session for '" + topic + "' has been cancelled.");
     }
 
@@ -60,7 +60,7 @@ public class SessionEventConsumer {
     public void handleSessionCompleted(Map<String, Object> event) {
         Long learnerId = toLong(event.get("learnerId"));
         String topic = (String) event.get("topic");
-        notificationService.createAndPush(learnerId, "SESSION_COMPLETED",
+        notificationCommandService.createAndPush(learnerId, "SESSION_COMPLETED",
                 "Session Completed!",
                 "Your session '" + topic + "' is complete. Please leave a review!");
     }

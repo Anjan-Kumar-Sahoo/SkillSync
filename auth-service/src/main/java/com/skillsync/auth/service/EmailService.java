@@ -5,6 +5,7 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -31,6 +32,12 @@ public class EmailService {
             helper.setSubject("SkillSync - Email Verification OTP");
             helper.setText(buildOtpHtml(otp, firstName), true);
 
+            // Embed SkillSync logo as inline image
+            ClassPathResource logo = new ClassPathResource("static/SkillSync_LOGO.png");
+            if (logo.exists()) {
+                helper.addInline("skillsync-logo", logo, "image/png");
+            }
+
             mailSender.send(message);
             log.info("OTP email sent to: {}", toEmail);
         } catch (MessagingException e) {
@@ -45,8 +52,12 @@ public class EmailService {
                         padding: 30px; background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%);
                         border-radius: 16px;">
                 <div style="background: white; border-radius: 12px; padding: 30px; text-align: center;">
-                    <h1 style="color: #333; font-size: 24px; margin-bottom: 10px;">
-                        🎓 SkillSync
+                    <div style="margin-bottom: 15px;">
+                        <img src="cid:skillsync-logo" alt="SkillSync" width="120" height="120"
+                             style="display: block; margin: 0 auto; border-radius: 8px;">
+                    </div>
+                    <h1 style="color: #333; font-size: 24px; margin-bottom: 5px; margin-top: 10px;">
+                        SkillSync
                     </h1>
                     <h2 style="color: #555; font-size: 18px; margin-bottom: 20px;">
                         Email Verification
@@ -72,3 +83,4 @@ public class EmailService {
             """.formatted(firstName, otp);
     }
 }
+

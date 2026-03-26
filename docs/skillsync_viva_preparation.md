@@ -20,6 +20,7 @@
 12. [End-to-End Flow](#12-end-to-end-flow)
 13. [Key Design Decisions](#13-key-design-decisions)
 14. [Viva Q&A](#14-viva-qa)
+15. [CQRS + Redis Q&A](#15-cqrs--redis-qa)
 
 ---
 
@@ -101,7 +102,10 @@ Use the **dropdown at the top-right** to switch between services:
 ```
 com.skillsync.<service>/
 ├── controller/   ← REST endpoints (HTTP entry points)
-├── service/      ← Business logic
+├── service/
+│   ├── command/  ← Write operations + cache invalidation (CQRS)
+│   └── query/   ← Read operations + cache-aside from Redis (CQRS)
+├── cache/        ← RedisConfig + CacheService (generic cache wrapper)
 ├── repository/   ← Data access (Spring Data JPA)
 ├── entity/       ← JPA entities (DB tables)
 ├── dto/          ← Data Transfer Objects (Java Records)
@@ -117,7 +121,8 @@ com.skillsync.<service>/
 ### Request Flow
 
 ```
-Client → API Gateway (JWT validation) → Controller → Service → Repository → PostgreSQL
+Read:  Client → Gateway (JWT) → Controller → QueryService → Redis → (miss?) → Repository → PostgreSQL → cache in Redis
+Write: Client → Gateway (JWT) → Controller → CommandService → Repository → PostgreSQL → evict from Redis
 ```
 
 ### Tech Stack
@@ -129,8 +134,10 @@ Client → API Gateway (JWT validation) → Controller → Service → Repositor
 | Eureka | Service discovery |
 | Spring Cloud Config | Centralized config |
 | Spring Data JPA + Hibernate | ORM |
-| PostgreSQL | Database (one per service) |
-| RabbitMQ | Async event messaging |
+| PostgreSQL | Database (one per service, source of truth) |
+| **Redis 7.2** | **Distributed cache (Cache-Aside pattern)** |
+| **CQRS** | **Command/Query separation for read optimization** |
+| RabbitMQ | Async event messaging + cross-service cache sync |
 | WebSocket (STOMP) | Real-time push |
 | OpenFeign | Declarative inter-service HTTP |
 | JWT + BCrypt | Auth & password hashing |
@@ -397,6 +404,10 @@ All DTOs use Java Records (`record ClassName(fields) {}`):
 | Gateway-level auth | Centralized; services just read X-User-Id |
 | Feign for sync calls | When response is needed (role update) |
 | RabbitMQ for async | Notifications don't need sync response |
+| **CQRS pattern** | **Separate read/write for independent optimization and scaling** |
+| **Redis Cache-Aside** | **Read optimization without affecting write correctness** |
+| **Graceful degradation** | **Redis down → fallback to DB, zero data loss** |
+| **Event-driven cache sync** | **Cross-service cache invalidation via RabbitMQ** |
 | State machine enum | Domain-level enforcement of valid transitions |
 | Soft references (userId as Long) | No cross-DB foreign keys in microservices |
 | Payment inside User Service | Simplifies architecture; avoids separate DB for 1 payment table |
@@ -461,3 +472,27 @@ A: Four reasons:
 4. **Encapsulation**: The frontend shouldn't know our internal microservice names. The Gateway hides our architecture.
 
 > **Viva Tip:** For any feature, explain: WHAT it does → WHY we chose it → HOW it works → ALTERNATIVES considered.
+
+---
+
+## 15. CQRS + Redis Q&A
+
+**Q: What is CQRS?** A: Command Query Responsibility Segregation. Separates write operations (CommandService) from read operations (QueryService) into distinct classes for independent optimization.
+
+**Q: Why CQRS?** A: SkillSync is read-heavy (~80% reads). CQRS lets us cache reads aggressively via Redis without affecting write consistency. Each side can be scaled and optimized independently.
+
+**Q: What is Redis used for?** A: Redis is a distributed in-memory cache. We use the Cache-Aside pattern: QueryService checks Redis first, falls back to PostgreSQL on miss, then stores the result in Redis.
+
+**Q: Why Redis over in-process cache (Caffeine)?** A: In-process cache isn't shared across service replicas. With multiple instances behind a load balancer, each would have a different cache. Redis provides a single shared cache.
+
+**Q: What happens if Redis goes down?** A: Graceful degradation. The CacheService wraps all Redis calls in try-catch. On failure, reads fall back to PostgreSQL. Zero data loss because PostgreSQL is the source of truth.
+
+**Q: How does cache invalidation work?** A: CommandService evicts relevant Redis keys after every write (INSERT/UPDATE/DELETE). For cross-service invalidation, we use RabbitMQ events (e.g., `review.submitted` triggers mentor cache eviction in User Service).
+
+**Q: What TTLs do you use?** A: Domain-specific — Skills: 1 hour (rarely change), Sessions: 5 min (state changes frequently), Notifications: 2 min (high poll rate), Users: 10 min (moderate updates).
+
+**Q: Why not cache Auth Service?** A: Security. Passwords, OTPs, JWT tokens, and refresh tokens must never be stored in a shared cache. Auth queries are simple PK lookups and are already fast.
+
+**Q: Cache-Aside vs Write-Through?** A: Cache-Aside gives us explicit control. Write-Through adds latency to every write. Since reads vastly outnumber writes, Cache-Aside is the right choice.
+
+**Q: How do you test caching?** A: Unit tests mock CacheService to verify hit/miss/invalidation. Integration tests use Redis Testcontainers to test the full cache lifecycle (miss → populate → hit → invalidate → miss).

@@ -90,4 +90,23 @@ public class RabbitMQConfig {
     public MessageConverter jsonMessageConverter() {
         return new Jackson2JsonMessageConverter();
     }
+
+    // ─── Review Cache Sync (cross-service) ───
+    public static final String REVIEW_EXCHANGE = "review.exchange";
+    public static final String USER_REVIEW_SUBMITTED_QUEUE = "user.review.submitted.queue";
+
+    @Bean
+    public TopicExchange reviewExchange() {
+        return new TopicExchange(REVIEW_EXCHANGE, true, false);
+    }
+
+    @Bean
+    public Queue userReviewSubmittedQueue() {
+        return QueueBuilder.durable(USER_REVIEW_SUBMITTED_QUEUE).build();
+    }
+
+    @Bean
+    public Binding userReviewSubmittedBinding() {
+        return BindingBuilder.bind(userReviewSubmittedQueue()).to(reviewExchange()).with("review.submitted");
+    }
 }

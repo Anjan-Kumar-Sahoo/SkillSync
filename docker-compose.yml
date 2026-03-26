@@ -59,6 +59,24 @@ services:
       - skillsync-net
     restart: unless-stopped
 
+  redis:
+    image: redis:7.2-alpine
+    container_name: skillsync-redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - skillsync-net
+    restart: unless-stopped
+
   # ======================== DISCOVERY & CONFIG ================
 
   eureka-server:
@@ -137,7 +155,9 @@ services:
     restart: unless-stopped
 
   user-service:
-    build: ./user-service
+    build: 
+      context: .
+      dockerfile: user-service/Dockerfile
     container_name: skillsync-user
     env_file: .env
     environment:
@@ -151,12 +171,16 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - skillsync-net
     restart: unless-stopped
 
   skill-service:
-    build: ./skill-service
+    build: 
+      context: .
+      dockerfile: skill-service/Dockerfile
     container_name: skillsync-skill
     env_file: .env
     environment:
@@ -168,12 +192,18 @@ services:
         condition: service_healthy
       config-server:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - skillsync-net
     restart: unless-stopped
 
   session-service:
-    build: ./session-service
+    build: 
+      context: .
+      dockerfile: session-service/Dockerfile
     container_name: skillsync-session
     env_file: .env
     environment:
@@ -187,6 +217,8 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - skillsync-net
     restart: unless-stopped
@@ -197,7 +229,9 @@ services:
   # review-service: MERGED into session-service
 
   notification-service:
-    build: ./notification-service
+    build: 
+      context: .
+      dockerfile: notification-service/Dockerfile
     container_name: skillsync-notification
     env_file: .env
     environment:
@@ -210,6 +244,8 @@ services:
       config-server:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - skillsync-net
@@ -241,6 +277,8 @@ services:
 
 volumes:
   postgres-data:
+    driver: local
+  redis-data:
     driver: local
 
 networks:

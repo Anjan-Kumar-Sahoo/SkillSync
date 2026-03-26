@@ -33,6 +33,10 @@
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
         <!-- Swagger / OpenAPI -->
         <dependency><groupId>org.springdoc</groupId><artifactId>springdoc-openapi-starter-webmvc-ui</artifactId><version>2.8.6</version></dependency>
+        <!-- Redis Cache (Common) -->
+        <dependency><groupId>com.skillsync</groupId><artifactId>skillsync-cache-common</artifactId><version>0.0.1-SNAPSHOT</version></dependency>
+        <!-- RabbitMQ for event-driven cache sync -->
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-amqp</artifactId></dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>

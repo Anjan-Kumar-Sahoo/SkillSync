@@ -5,6 +5,8 @@
 > - **Mentor Service + Group Service → User Service** (port 8082)
 > - **Review Service → Session Service** (port 8085)
 >
+> **CQRS + Redis Caching (March 2026):** All business services now use the **CQRS pattern** with **Redis 7.2** distributed caching. Unit tests mock `CacheService` to verify cache hit/miss/invalidation behavior. Integration tests include Redis via Testcontainers.
+>
 > Testing principles remain the same, but tests for merged services now reside in their new parent service modules. See `service_architecture_summary.md` for details.
 
 ## SkillSync — Comprehensive Testing Plan
@@ -41,7 +43,7 @@
 | E2E | Playwright | Critical user journeys | 5 core flows |
 
 > [!IMPORTANT]
-> **Implementation Status:** 16 base unit test classes (Service & Controller layers) have been implemented across all 8 business microservices using JUnit 5 and Mockito. These provide the foundation for achieving the 80% line coverage target.
+> **Implementation Status:** 16 base unit test classes (Service & Controller layers) have been implemented across all 8 business microservices using JUnit 5 and Mockito. All service tests have been updated to test CQRS `CommandService` and `QueryService` classes separately, including cache hit/miss/invalidation verification via mocked `CacheService`.
 
 ---
 
@@ -49,7 +51,83 @@
 
 ### 4.2.1 Unit Testing (JUnit 5 + Mockito)
 
-#### Service Layer Testing
+#### CQRS Service Layer Testing — Cache Interactions
+
+With the CQRS refactoring, service tests now verify **cache behavior** in addition to business logic:
+
+```java
+// Example: SkillQueryServiceTest.java — Testing cache-aside pattern
+@ExtendWith(MockitoExtension.class)
+class SkillQueryServiceTest {
+
+    @Mock private SkillRepository skillRepository;
+    @Mock private CacheService cacheService;
+    @InjectMocks private SkillQueryService skillQueryService;
+
+    @Test
+    @DisplayName("Should return cached skill on cache HIT")
+    void getSkillById_CacheHit_ReturnsFromRedis() {
+        Skill cachedSkill = new Skill();
+        cachedSkill.setId(1L);
+        cachedSkill.setName("Java");
+
+        when(cacheService.get("skill:1", Skill.class)).thenReturn(cachedSkill);
+
+        Skill result = skillQueryService.getSkillById(1L);
+
+        assertEquals("Java", result.getName());
+        verify(skillRepository, never()).findById(any());  // DB never called
+        verify(cacheService).get("skill:1", Skill.class);
+    }
+
+    @Test
+    @DisplayName("Should query DB and populate cache on cache MISS")
+    void getSkillById_CacheMiss_QueriesDbAndCaches() {
+        Skill dbSkill = new Skill();
+        dbSkill.setId(1L);
+        dbSkill.setName("Java");
+
+        when(cacheService.get("skill:1", Skill.class)).thenReturn(null);
+        when(skillRepository.findById(1L)).thenReturn(Optional.of(dbSkill));
+
+        Skill result = skillQueryService.getSkillById(1L);
+
+        assertEquals("Java", result.getName());
+        verify(skillRepository).findById(1L);               // DB called
+        verify(cacheService).put(eq("skill:1"), any(), eq(3600L)); // Cached with TTL
+    }
+}
+
+// Example: SkillCommandServiceTest.java — Testing cache invalidation
+@ExtendWith(MockitoExtension.class)
+class SkillCommandServiceTest {
+
+    @Mock private SkillRepository skillRepository;
+    @Mock private CacheService cacheService;
+    @InjectMocks private SkillCommandService skillCommandService;
+
+    @Test
+    @DisplayName("Should invalidate cache after skill update")
+    void updateSkill_InvalidatesCache() {
+        Skill existing = new Skill();
+        existing.setId(1L);
+        existing.setName("Java");
+
+        when(skillRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(skillRepository.save(any())).thenReturn(existing);
+
+        skillCommandService.updateSkill(1L, updateRequest);
+
+        verify(cacheService).evict("skill:1");              // Single key evicted
+        verify(cacheService).evictByPattern("skill:all:*");  // Pattern eviction
+    }
+}
+```
+
+> [!TIP]
+> **Key testing pattern:** QueryService tests verify `cacheService.get()` is called first, and `repository.findById()` is only called on cache miss. CommandService tests verify `cacheService.evict()` is called after every write operation.
+
+#### Original Service Layer Testing (pre-CQRS reference)
 
 ```java
 // SessionServiceTest.java
@@ -480,6 +558,68 @@ class SessionServiceIntegrationTest {
 
         Session completedSession = sessionRepository.findById(sessionId).orElseThrow();
         assertEquals(SessionStatus.COMPLETED, completedSession.getStatus());
+    }
+}
+```
+
+---
+
+### 4.2.3 CQRS Integration Testing with Redis
+
+Integration tests now include a Redis container alongside PostgreSQL and RabbitMQ:
+
+```java
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Testcontainers
+@ActiveProfiles("test")
+class SkillServiceCQRSIntegrationTest {
+
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+
+    @Container
+    static GenericContainer<?> redis = new GenericContainer<>("redis:7.2-alpine")
+        .withExposedPorts(6379);
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+        registry.add("spring.data.redis.host", redis::getHost);
+        registry.add("spring.data.redis.port", () -> redis.getMappedPort(6379));
+    }
+
+    @Autowired private SkillQueryService queryService;
+    @Autowired private SkillCommandService commandService;
+    @Autowired private RedisTemplate<String, Object> redisTemplate;
+
+    @Test
+    @DisplayName("Full cache lifecycle: miss → populate → hit → invalidate → miss")
+    void cacheLifecycle_FullFlow() {
+        // 1. Create a skill (write)
+        commandService.createSkill(new CreateSkillRequest("Java", "Programming", "desc"));
+
+        // 2. First read → cache MISS → populates cache
+        Skill first = queryService.getSkillById(1L);
+        assertNotNull(first);
+
+        // 3. Verify key exists in Redis
+        assertNotNull(redisTemplate.opsForValue().get("skill:1"));
+
+        // 4. Second read → cache HIT (no DB query)
+        Skill second = queryService.getSkillById(1L);
+        assertEquals(first.getName(), second.getName());
+
+        // 5. Update skill → cache INVALIDATED
+        commandService.updateSkill(1L, new UpdateSkillRequest("Java SE", "Programming", "desc"));
+
+        // 6. Verify key removed from Redis
+        assertNull(redisTemplate.opsForValue().get("skill:1"));
+
+        // 7. Next read → cache MISS again → fresh data from DB
+        Skill updated = queryService.getSkillById(1L);
+        assertEquals("Java SE", updated.getName());
     }
 }
 ```

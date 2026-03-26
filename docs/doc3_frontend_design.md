@@ -5,6 +5,8 @@
 > - **Mentor Service + Group Service → User Service** (port 8082)
 > - **Review Service → Session Service** (port 8085)
 >
+> **CQRS + Redis Caching (March 2026):** Backend services now use Redis distributed caching with the CQRS pattern. This is **transparent to the frontend** — API contracts remain identical. The frontend benefits from significantly faster read responses (cached in Redis) with no code changes needed.
+>
 > The frontend design remains unchanged as Gateway routes were updated, but keep this in mind when referencing backend services.
 
 ## SkillSync — React Frontend Architecture

@@ -5,7 +5,9 @@
 > - **Mentor Service + Group Service → User Service** (port 8082)
 > - **Review Service → Session Service** (port 8085)
 >
-> All code is now organized in **flat layered packages** (entity, dto, repository, service, controller) within each service. There are no separate sub-packages for the merged services.
+> **CQRS + Redis Caching (March 2026):** All business services now use Redis 7.2 for distributed caching. Services require a running Redis instance on port 6379. If Redis is unavailable, services fall back to direct PostgreSQL queries with zero data loss.
+>
+> All code is now organized in **layered packages** with CQRS sub-packages (`service.command/`, `service.query/`, `cache/`) within each service.
 >
 > **Active services:**
 > | # | Service | Port |
@@ -65,6 +67,21 @@ Management UI: http://localhost:15672 (guest/guest)
 
 > [!NOTE]
 > If you don't have RabbitMQ, services that use it (User Service for mentor events, Session Service for session/review events, Notification Service) will still start but event publishing will fail silently. Auth and Skill services work fine without it.
+
+### 1.3 Install & Start Redis
+
+**Option A — Docker (Recommended):**
+```powershell
+docker run -d --name skillsync-redis -p 6379:6379 redis:7.2-alpine --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+```
+
+**Option B — Manual install:**
+Download from https://redis.io/download and start the service.
+
+Verify: `redis-cli ping` should return `PONG`
+
+> [!NOTE]
+> If Redis is not running, all services will still start and function correctly. Read operations will fall back to PostgreSQL queries. Cache hit/miss metrics will show 0 hits. This is by design (graceful degradation).
 
 ---
 
@@ -722,7 +739,34 @@ Follow this order for the complete happy path:
 
 ---
 
-## 📋 STEP 5: Swagger UI (API Gateway — Single Entry Point)
+## 📋 STEP 5: Run Unit Tests (CQRS & Redis Validation)
+
+Run the full test suite to guarantee cache correctness, fallback mechanics, and Saga consistency without hitting a live Redis instance.
+
+```bash
+# Run all tests across all services
+mvn test
+```
+
+### Critical Test Coverages You Must Validate:
+
+1. **Cache HIT Tests (`shouldReturnFromCache`)**
+   - Validates that reading an existing key bypasses the PostgreSQL database entirely by verifying `repository.findById()` is called exactly `0` times (`never()`).
+   
+2. **Redis Failure Fallback Tests (`shouldFallbackToDbOnRedisFailure`)**
+   - Injects a `RuntimeException("Redis connection refused")` when `cacheService.get()` is invoked.
+   - Asserts the resilient design: the query seamlessly delegates to the database repository and returns accurate data without throwing 500s.
+
+3. **Event-Driven Cache Invalidation Tests (`ReviewEventCacheSyncConsumerTest`)**
+   - Proves RabbitMQ events reliably trigger cache evictions (e.g., `updateAvgRating()` is invoked on `ReviewSubmittedEvent`).
+
+4. **Saga Consistency Tests (`PaymentSagaOrchestratorTest`)**
+   - Verifies the `SUCCESS` branch approves the mentor and executes cache invalidation via `approveMentor()`.
+   - Verifies the `COMPENSATION` branch reverts the approval and equally executes cache invalidation via `revertMentorApproval()`.
+
+---
+
+## 📋 STEP 6: Swagger UI (API Gateway — Single Entry Point)
 
 > [!IMPORTANT]
 > Swagger UI is available **only** through the API Gateway. Individual service ports are **not exposed**.
@@ -752,6 +796,9 @@ Use the **dropdown at the top** to select which service to view/test:
 | `Connection refused` to Eureka | Start Eureka Server first and wait 30 seconds |
 | `401 Unauthorized` via Gateway | Check the JWT token is valid and not expired (15 min lifetime) |
 | RabbitMQ connection failed | Make sure RabbitMQ is running on port 5672 |
+| Redis connection failed | Make sure Redis is running on port 6379 (`redis-cli ping`) |
+| Cache not working (all misses) | Verify Redis is running and check `application.properties` for `spring.data.redis.host` |
+| Stale data after update | Cache invalidation may be delayed; wait for TTL expiry or verify `evict()` is called |
 | `Table not found` errors | JPA `ddl-auto=update` creates tables automatically, but schemas must exist first |
 | Port already in use | Kill the process: `netstat -ano | findstr :PORT` then `taskkill /PID <PID> /F` |
 | Docker: database init fails | Delete the postgres volume (`docker volume rm skillsync_postgres-data`) and rebuild |

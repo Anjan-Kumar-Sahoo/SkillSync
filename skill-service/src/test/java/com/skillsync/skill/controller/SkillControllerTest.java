@@ -3,7 +3,8 @@ package com.skillsync.skill.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skillsync.skill.dto.CreateSkillRequest;
 import com.skillsync.skill.dto.SkillResponse;
-import com.skillsync.skill.service.SkillService;
+import com.skillsync.skill.service.command.SkillCommandService;
+import com.skillsync.skill.service.query.SkillQueryService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,13 +25,14 @@ class SkillControllerTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
-    @MockitoBean private SkillService skillService;
+    @MockitoBean private SkillCommandService skillCommandService;
+    @MockitoBean private SkillQueryService skillQueryService;
 
     @Test
     @DisplayName("GET /api/skills/{id} - returns skill")
     void getSkillById_shouldReturn200() throws Exception {
         SkillResponse response = new SkillResponse(1L, "Java", "Programming", "Java lang", true);
-        when(skillService.getSkillById(1L)).thenReturn(response);
+        when(skillQueryService.getSkillById(1L)).thenReturn(response);
 
         mockMvc.perform(get("/api/skills/1"))
                 .andExpect(status().isOk())
@@ -42,7 +44,7 @@ class SkillControllerTest {
     void createSkill_shouldReturn201() throws Exception {
         CreateSkillRequest request = new CreateSkillRequest("Java", "Programming", "Java lang");
         SkillResponse response = new SkillResponse(1L, "Java", "Programming", "Java lang", true);
-        when(skillService.createSkill(any())).thenReturn(response);
+        when(skillCommandService.createSkill(any())).thenReturn(response);
 
         mockMvc.perform(post("/api/skills")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -54,7 +56,7 @@ class SkillControllerTest {
     @Test
     @DisplayName("GET /api/skills/search - returns results")
     void searchSkills_shouldReturn200() throws Exception {
-        when(skillService.searchSkills("Java")).thenReturn(List.of(
+        when(skillQueryService.searchSkills("Java")).thenReturn(List.of(
                 new SkillResponse(1L, "Java", "Programming", "Java lang", true)));
 
         mockMvc.perform(get("/api/skills/search").param("q", "Java"))

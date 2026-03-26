@@ -7,6 +7,8 @@
 >
 > **Payment Integration (March 2026):** Razorpay payment gateway has been integrated into User Service for mentor onboarding fees (₹9) and session booking fees (₹9).
 >
+> **CQRS + Redis Caching (March 2026):** All business services now implement the **CQRS pattern** (Command/Query separation) with **Redis 7.2** as a distributed cache layer for read optimization. See `doc6_cqrs_redis_architecture.md` for the full design.
+>
 > The original 11-service design below reflects the initial architecture. See `service_architecture_summary.md` for the current 8-service topology.
 
 ## SkillSync — Peer Learning & Mentor Matching Platform
@@ -23,7 +25,7 @@ SkillSync is a **production-grade, multi-tenant platform** that bridges the gap 
 - **Post-session review & rating** system for quality assurance
 - **Event-driven notifications** for real-time updates
 
-The system is built on a **Spring Boot microservices architecture** with an **API Gateway**, **service discovery**, **event-driven messaging via RabbitMQ**, and a **React + TypeScript** frontend.
+The system is built on a **Spring Boot microservices architecture** with an **API Gateway**, **service discovery**, **event-driven messaging via RabbitMQ**, **CQRS pattern with Redis distributed caching**, and a **React + TypeScript** frontend.
 
 ---
 
@@ -289,6 +291,17 @@ State Machine:
 └─────────────────────────────────────────────────────────────────────────┘
                              │
 ┌────────────────────────────┼────────────────────────────────────────────┐
+│                    CACHING LAYER (Redis 7.2)                            │
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Cache-Aside Pattern: QueryService → Redis → PostgreSQL         │    │
+│  │  CommandService → PostgreSQL write → Redis invalidation         │    │
+│  │  TTLs: Skills 1h | Sessions 5m | Notifications 2m | Users 10m  │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+                             │
+┌────────────────────────────┼────────────────────────────────────────────┐
 │                    DATA & MESSAGING LAYER                               │
 │                                                                         │
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐                  │
@@ -300,7 +313,7 @@ State Machine:
 │                                                                         │
 │  ┌─────────────────────────────────────────────────────────────────┐    │
 │  │                    RabbitMQ Message Broker                        │    │
-│  │  Exchanges: session.exchange, mentor.exchange, notification.*    │    │
+│  │  Exchanges: session, mentor, review, skill, payment              │    │
 │  └─────────────────────────────────────────────────────────────────┘    │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -310,7 +323,7 @@ State Machine:
 
 ## 1.7 Key Workflows
 
-### Workflow 1: Mentor Discovery
+### Workflow 1: Mentor Discovery (with Redis Cache)
 
 ```
 ┌──────────┐     GET /api/mentors/search         ┌──────────────┐
@@ -322,17 +335,21 @@ State Machine:
                                                          │
                                                          ▼
                                                   ┌──────────────┐
-                                                  │   Mentor     │
-                                                  │   Service    │
+                                                  │ User Service │
+                                                  │ (MentorQuery │
+                                                  │    Service)  │
                                                   │              │
                                                   │ 1. Parse     │
                                                   │    filters   │
-                                                  │ 2. Query DB  │
+                                                  │ 2. Check     │
+                                                  │    Redis     │
+                                                  │ 3. MISS →    │
+                                                  │    Query DB  │
                                                   │    (indexed) │
-                                                  │ 3. Join with │
-                                                  │    skills    │
-                                                  │ 4. Paginate  │
-                                                  │ 5. Return    │
+                                                  │ 4. Cache in  │
+                                                  │    Redis     │
+                                                  │ 5. Paginate  │
+                                                  │ 6. Return    │
                                                   └──────────────┘
 ```
 
@@ -415,8 +432,10 @@ Admin                API Gateway         Mentor Service          RabbitMQ       
 | Backend Services | Spring Boot 3.x | Microservice framework |
 | Security | Spring Security + JWT | Authentication & authorization |
 | Messaging | RabbitMQ | Async event-driven communication |
+| Caching | Redis 7.2 | Distributed cache layer (Cache-Aside pattern) |
+| Architecture Pattern | CQRS | Command/Query separation for read optimization |
 | Payment Gateway | Razorpay (Java SDK 1.4.8) | Mentor fee + session booking payments |
-| Database | PostgreSQL | Per-service relational storage |
+| Database | PostgreSQL | Per-service relational storage (Source of Truth) |
 | ORM | Spring Data JPA / Hibernate | Object-relational mapping |
 | Documentation | Swagger / OpenAPI 3.0 | Automated API documentation UI |
 | Logging | Logback / SLF4J | Rolling file and console logging |

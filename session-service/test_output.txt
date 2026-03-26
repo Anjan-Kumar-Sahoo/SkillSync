@@ -1,0 +1,116 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------------< com.skillsync:session-service >--------------------
+[INFO] Building session-service 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ session-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ session-service ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ session-service ---
+[INFO] skip non existing resourceDirectory F:\SkillSync\session-service\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ session-service ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.5.2:test (default-test) @ session-service ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.skillsync.session.controller.SessionControllerTest
+14:27:13.751 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.skillsync.session.controller.SessionControllerTest]: SessionControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+14:27:13.941 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.skillsync.session.SessionServiceApplication for test class com.skillsync.session.controller.SessionControllerTest
+14:27:14.213 [main] INFO org.springframework.boot.devtools.restart.RestartApplicationListener -- Restart disabled due to context in which it is running
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.4)
+
+2026-03-25 14:27:15.602 INFO  [session-service] [main] c.s.s.c.SessionControllerTest - Starting SessionControllerTest using Java 17.0.18 with PID 10568 (started by Anjan in F:\SkillSync\session-service)
+2026-03-25 14:27:15.607 DEBUG [session-service] [main] c.s.s.c.SessionControllerTest - Running with Spring Boot v3.4.4, Spring v6.2.5
+2026-03-25 14:27:15.609 INFO  [session-service] [main] c.s.s.c.SessionControllerTest - No active profile set, falling back to 1 default profile: "default"
+2026-03-25 14:27:15.638 WARN  [session-service] [main] o.s.c.c.c.ConfigServerConfigDataLoader - Could not locate PropertySource ([ConfigServerConfigDataResource@6c15e8c7 uris = array<String>['http://localhost:8888'], optional = true, profiles = 'default']): I/O error on GET request for "http://localhost:8888/session-service/default": Connection refused: getsockopt
+2026-03-25 14:27:15.638 WARN  [session-service] [main] o.s.c.c.c.ConfigServerConfigDataLoader - Could not locate PropertySource ([ConfigServerConfigDataResource@43e1692f uris = array<String>['http://localhost:8888'], optional = true, profiles = 'default']): I/O error on GET request for "http://localhost:8888/session-service/default": Connection refused: getsockopt
+2026-03-25 14:27:15.638 WARN  [session-service] [main] o.s.c.c.c.ConfigServerConfigDataLoader - Could not locate PropertySource ([ConfigServerConfigDataResource@3e7c4815 uris = array<String>['http://localhost:8888'], optional = true, profiles = 'default']): I/O error on GET request for "http://localhost:8888/session-service/default": Connection refused: getsockopt
+2026-03-25 14:27:19.237 INFO  [session-service] [main] c.s.s.c.SessionControllerTest - Started SessionControllerTest in 5.044 seconds (process running for 6.328)
+2026-03-25 14:27:19.436 ERROR [session-service] [main] c.s.s.e.GlobalExceptionHandler - Runtime exception: Session not found: 999
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.027 s -- in com.skillsync.session.controller.SessionControllerTest
+[INFO] Running com.skillsync.session.service.SessionServiceTest
+2026-03-25 14:27:20.297 INFO  [session-service] [main] c.s.s.s.c.SessionCommandService - [CQRS:COMMAND] Session 1 created. Cache invalidated.
+[ERROR] Tests run: 6, Failures: 3, Errors: 0, Skipped: 0, Time elapsed: 0.702 s <<< FAILURE! -- in com.skillsync.session.service.SessionServiceTest
+[ERROR] com.skillsync.session.service.SessionServiceTest.getSessionById_shouldThrowWhenNotFound -- Time elapsed: 0.597 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: Expected java.lang.RuntimeException to be thrown, but nothing was thrown.
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:152)
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:73)
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:35)
+	at org.junit.jupiter.api.Assertions.assertThrows(Assertions.java:3128)
+	at com.skillsync.session.service.SessionServiceTest.getSessionById_shouldThrowWhenNotFound(SessionServiceTest.java:110)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+[ERROR] com.skillsync.session.service.SessionServiceTest.getSessionById_shouldReturnSession -- Time elapsed: 0.009 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: not <null>
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:152)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+	at org.junit.jupiter.api.AssertNotNull.failNull(AssertNotNull.java:49)
+	at org.junit.jupiter.api.AssertNotNull.assertNotNull(AssertNotNull.java:35)
+	at org.junit.jupiter.api.AssertNotNull.assertNotNull(AssertNotNull.java:30)
+	at org.junit.jupiter.api.Assertions.assertNotNull(Assertions.java:304)
+	at com.skillsync.session.service.SessionServiceTest.getSessionById_shouldReturnSession(SessionServiceTest.java:85)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+[ERROR] com.skillsync.session.service.SessionServiceTest.getSessionById_shouldReturnFromCache -- Time elapsed: 0.008 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: not <null>
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:152)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+	at org.junit.jupiter.api.AssertNotNull.failNull(AssertNotNull.java:49)
+	at org.junit.jupiter.api.AssertNotNull.assertNotNull(AssertNotNull.java:35)
+	at org.junit.jupiter.api.AssertNotNull.assertNotNull(AssertNotNull.java:30)
+	at org.junit.jupiter.api.Assertions.assertNotNull(Assertions.java:304)
+	at com.skillsync.session.service.SessionServiceTest.getSessionById_shouldReturnFromCache(SessionServiceTest.java:99)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+[INFO] 
+[INFO] Results:
+[INFO] 
+[ERROR] Failures: 
+[ERROR]   SessionServiceTest.getSessionById_shouldReturnFromCache:99 expected: not <null>
+[ERROR]   SessionServiceTest.getSessionById_shouldReturnSession:85 expected: not <null>
+[ERROR]   SessionServiceTest.getSessionById_shouldThrowWhenNotFound:110 Expected java.lang.RuntimeException to be thrown, but nothing was thrown.
+[INFO] 
+[ERROR] Tests run: 8, Failures: 3, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  10.009 s
+[INFO] Finished at: 2026-03-25T14:27:20+05:30
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.5.2:test (default-test) on project session-service: There are test failures.
+[ERROR] 
+[ERROR] See F:\SkillSync\session-service\target\surefire-reports for the individual test results.
+[ERROR] See dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

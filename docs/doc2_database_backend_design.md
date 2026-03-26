@@ -1,5 +1,10 @@
 # 📄 DOCUMENT 2: DATABASE + BACKEND DESIGN
 
+> [!IMPORTANT]
+> **CQRS + Redis Caching (March 2026):** All business services (User, Skill, Session, Notification) now implement the **CQRS pattern** with **Redis 7.2** distributed caching. Service layers have been split into `service.command` (write operations + cache invalidation) and `service.query` (read operations + cache-aside). See `doc6_cqrs_redis_architecture.md` for the full design.
+>
+> **Architecture Update (March 2026):** Mentor Service + Group Service → User Service (port 8082). Review Service → Session Service (port 8085).
+
 ## SkillSync — Database & Microservices Architecture
 
 ---
@@ -1140,9 +1145,113 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 **No OpenFeign Clients** â€” Notification Service is purely event-driven, receives all data it needs via event payloads.
 
 
-## 2.3 UML Diagrams
+## 2.3 CQRS + Redis Caching Layer
 
-### 2.3.1 Class Diagram — Session Entity
+### 2.3.1 CQRS Service Architecture
+
+All business services follow the **Command Query Responsibility Segregation** pattern. The traditional monolithic `Service` class has been split:
+
+```
+Traditional:                       CQRS:
+  Controller                        Controller
+      │                                 │
+      ▼                            ┌────┴────┐
+   Service                         │         │
+      │                            ▼         ▼
+      ▼                      CommandService  QueryService
+  Repository                  │    │          │    │
+      │                       │    ▼          │    ▼
+      ▼                       │  Repository   │  Redis Cache
+  PostgreSQL                  │    │          │    │ (miss)
+                              │    ▼          │    ▼
+                              │  PostgreSQL   │  Repository
+                              │               │    │
+                              │  evict cache  │    ▼
+                              └──► Redis      │  PostgreSQL
+                                              │    │
+                                              │  store in cache
+                                              └──► Redis
+```
+
+### 2.3.2 Redis Configuration
+
+Each service contains a `cache/` package with:
+
+```java
+// RedisConfig.java — Shared across all cached services
+@Configuration
+public class RedisConfig {
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory) {
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
+        template.setConnectionFactory(factory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
+        return template;
+    }
+}
+
+// CacheService.java — Generic cache wrapper with graceful degradation
+@Service
+public class CacheService {
+    private final RedisTemplate<String, Object> redisTemplate;
+
+    public <T> T get(String key, Class<T> type) {
+        try {
+            Object value = redisTemplate.opsForValue().get(key);
+            return type.cast(value);
+        } catch (Exception e) {
+            log.warn("Redis GET failed: {}", e.getMessage());
+            return null;  // Falls back to DB in QueryService
+        }
+    }
+
+    public void put(String key, Object value, long ttlSeconds) {
+        try {
+            redisTemplate.opsForValue().set(key, value, ttlSeconds, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            log.warn("Redis PUT failed: {}", e.getMessage());
+        }
+    }
+
+    public void evict(String key) { /* ... */ }
+    public void evictByPattern(String pattern) { /* ... */ }
+}
+```
+
+### 2.3.3 Cache Key Namespace & TTL
+
+| Service | Domain | Key Pattern | TTL | Rationale |
+|---------|--------|------------|-----|----------|
+| User | Profile | `user:profile:{userId}` | 10 min | Moderate change frequency |
+| User | Mentor | `user:mentor:{mentorId}` | 10 min | Discovery queries frequent |
+| User | Group | `user:group:{groupId}` | 10 min | Group details rarely change |
+| Skill | Skill | `skill:{skillId}` | 1 hour | Skills almost never change |
+| Session | Session | `session:{sessionId}` | 5 min | State transitions frequent |
+| Session | Review | `review:{reviewId}` | 5 min | Immutable after submission |
+| Notification | Unread | `notification:unread:{userId}` | 2 min | High-frequency frontend polling |
+
+> [!NOTE]
+> **Auth Service is explicitly EXCLUDED** from Redis caching. Passwords, OTPs, JWT tokens, and refresh tokens are never cached.
+
+### 2.3.4 Event-Driven Cache Invalidation
+
+Cross-service cache consistency is maintained via RabbitMQ events:
+
+```
+Session Service → review.submitted event → User Service (ReviewEventCacheSyncConsumer)
+                                            │
+                                            ├─ Update mentor avgRating in DB
+                                            └─ Evict user:mentor:{mentorId} from Redis
+```
+
+---
+
+## 2.4 UML Diagrams
+
+### 2.4.1 Class Diagram — Session Entity
 
 ```
 ┌──────────────────────────────────────────────┐
