@@ -5,12 +5,18 @@
 > - **Mentor Service + Group Service → User Service** (port 8082) — mentor onboarding, groups, and user profiles now live in one service
 > - **Review Service → Session Service** (port 8085) — reviews and sessions share the same service and database
 >
-> **Payment Integration (March 2026):** Razorpay payment gateway has been integrated into User Service for mentor onboarding fees (₹9) and session booking fees (₹9).
+> **Payment Microservice Extraction (March 2026):** Razorpay payment processing has been extracted from User Service into a dedicated **Payment Service** (port 8086) with event-driven Saga orchestration via RabbitMQ. The Saga publishes `payment.business.action` events consumed by User Service to execute business actions (e.g., mentor approval), replacing direct service coupling.
 >
 > **CQRS + Redis Caching (March 2026):** All business services now implement the **CQRS pattern** (Command/Query separation) with **Redis 7.2** as a distributed cache layer for read optimization. See `doc6_cqrs_redis_architecture.md` for the full design.
 > **Enterprise Hardening (March 2026):** Implemented a dedicated Mapper layer to decouple CQRS Command/Query services. Added tiered API Gateway Rate Limiting using resilience4j. Deployed a full observability stack with Prometheus, Grafana (auto-provisioned dashboards), and Loki (log aggregation) alongside Zipkin. CI/CD pipeline hardened with SonarQube integration and strict failure rules.
 >
-> The original 11-service design below reflects the initial architecture. See `service_architecture_summary.md` for the current 8-service topology.
+> 🚀 **Frontend Completed (March 2026):** The React 18 frontend is now fully scaffolded and operational.
+> - **Tech**: React 18, Vite, TypeScript, Tailwind v4
+> - **State Management**: Redux Toolkit for Auth (JWT token persistence), React Query for Data fetching
+> - **Pages Built**: Auth (Login, Register), Learner Dashboard, Mentor Discovery, 
+>   My Sessions (multi-tab mapping), Checkout (Razorpay SDK Flow), and Mentor Dashboard (availability logic).
+>
+> The original 11-service design below reflects the initial architecture. See `service_architecture_summary.md` for the current 9-service topology.
 
 ## SkillSync — Peer Learning & Mentor Matching Platform
 
@@ -201,21 +207,23 @@ State Machine:
 - Delivery: In-app (WebSocket) + email (future)
 - Read/unread status tracking
 
-### Feature 10: Payment Gateway (Razorpay) with Saga Orchestration
-- Integrated into User Service with **orchestration-based Saga pattern**
+### Feature 10: Payment Gateway (Razorpay) — Dedicated Microservice with Event-Driven Saga
+- Runs as a **standalone Payment Service** (port 8086, `com.skillsync.payment`)
 - Two payment use cases:
   1. **Mentor Onboarding Fee** — ₹9 to apply as mentor
   2. **Session Booking Fee** — ₹9 to book a session with a mentor
-- **Saga-orchestrated payment flow:**
-  - Backend creates Razorpay order (amount: 900 paise)
+- **Event-driven Saga orchestration:**
+  - Payment Service creates Razorpay order (amount: 900 paise)
   - Frontend completes checkout via Razorpay SDK
-  - Backend verifies HMAC-SHA256 signature → marks VERIFIED
-  - Saga orchestrator executes business action (mentor approval / session gate)
+  - Payment Service verifies HMAC-SHA256 signature → marks VERIFIED
+  - Saga orchestrator publishes `payment.business.action` event to RabbitMQ
+  - User Service consumes the event and executes business action (mentor approval / session gate)
   - On success → marks SUCCESS + publishes `payment.success` notification event
   - On failure → triggers compensation + publishes `payment.compensated` event
 - **Payment status lifecycle:** `CREATED → VERIFIED → SUCCESS_PENDING → SUCCESS / COMPENSATED`
 - **Reference mapping:** Every payment is linked to a business entity via `referenceId` + `referenceType`
 - **Compensation strategy:** Business effects are reversed if saga fails (mentor revert, session gate)
+- **Decoupling:** Payment Service has ZERO direct dependencies on User Service — all coordination is event-driven via RabbitMQ
 - **Security:**
   - userId ALWAYS from JWT header (X-User-Id) — never from request params
   - Razorpay API key and secret from environment variables
@@ -224,8 +232,6 @@ State Machine:
   - Ownership validation on all payment queries
 - **Notification events:** payment.success, payment.failed, payment.compensated via RabbitMQ → Notification Service
 - Edge cases: duplicate prevention (per reference), idempotent verification, amount mismatch detection
-
-> **Note:** In a production system at scale, payment would be extracted into a dedicated Payment Microservice using message brokers (Kafka/RabbitMQ) with event-driven choreography or centralized orchestration.
 
 ---
 
@@ -279,11 +285,11 @@ State Machine:
 │  │ :8081      │ └──────────────────────┘ │ :8084        │              │
 │  └────────────┘                          └──────────────┘              │
 │                                                                        │
-│  ┌──────────────────────┐                ┌──────────────┐              │
-│  │ Session Service :8085│                │ Notification │              │
-│  │ (+ Review)           │                │ Service      │              │
-│  └──────────────────────┘                │ :8088        │              │
-│                                          └──────────────┘              │
+│  ┌──────────────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │ Session Service :8085│  │ Payment      │  │ Notification │          │
+│  │ (+ Review)           │  │ Service      │  │ Service      │          │
+│  └──────────────────────┘  │ :8086        │  │ :8088        │          │
+│                            └──────────────┘  └──────────────┘          │
 │                                                                         │
 │  ┌─────────────────────────────────────────────────────────────────┐    │
 │  │                    Eureka Service Discovery (:8761)              │    │
@@ -315,6 +321,7 @@ State Machine:
 │  ┌─────────────────────────────────────────────────────────────────┐    │
 │  │                    RabbitMQ Message Broker                        │    │
 │  │  Exchanges: session, mentor, review, skill, payment              │    │
+│  │  Saga Events: payment.business.action (Payment → User Service)   │    │
 │  └─────────────────────────────────────────────────────────────────┘    │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘

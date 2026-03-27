@@ -1,7 +1,7 @@
-# Payment System Upgrade — Production-Grade Saga Pattern
+# Payment System Upgrade — Dedicated Microservice with Event-Driven Saga
 
 > [!IMPORTANT]
-> All changes compile successfully. ✅ Build verified with `mvn compile`.
+> **Extraction (March 2026):** Payment has been extracted from User Service into a dedicated **Payment Service** (port 8086, `com.skillsync.payment`) with event-driven Saga orchestration via RabbitMQ. All changes compile and test successfully. ✅ Build verified: 12 payment-service tests pass, 16 user-service tests pass.
 
 ---
 
@@ -9,10 +9,10 @@
 
 ```mermaid
 graph TD
-    A["Client / Frontend"] -->|"POST /api/payments/create-order"| B["PaymentController"]
+    A["Client / Frontend"] -->|"POST /api/payments/create-order"| B["PaymentController (payment-service)"]
     B -->|"X-User-Id from JWT"| C["PaymentService"]
     C -->|"Create Razorpay Order"| D["Razorpay API"]
-    C -->|"Save Payment (CREATED)"| E["PaymentRepository"]
+    C -->|"Save Payment (CREATED)"| E["PaymentRepository (skillsync_payment)"]
     
     A -->|"POST /api/payments/verify"| B
     C -->|"Verify Signature"| D
@@ -20,12 +20,13 @@ graph TD
     C -->|"Delegate"| F["PaymentSagaOrchestrator"]
     
     F -->|"Mark SUCCESS_PENDING"| E
-    F -->|"MENTOR_FEE"| G["MentorService.approveMentor()"]
-    F -->|"SESSION_BOOKING"| H["Session Gate (external)"]
+    F -->|"Publish Event"| MQ["RabbitMQ (payment.business.action)"]
+    MQ -->|"Consume"| PEC["PaymentEventConsumer (user-service)"]
+    PEC -->|"MENTOR_FEE"| G["MentorCommandService.approveMentor()"]
+    PEC -->|"SESSION_BOOKING"| H["Session Gate (external)"]
     
     F -->|"Success"| I["Mark SUCCESS ✅"]
     F -->|"Failure"| J["Compensation"]
-    J -->|"Revert mentor"| K["MentorService.revertMentorApproval()"]
     J -->|"Mark COMPENSATED"| E
 ```
 
@@ -60,10 +61,10 @@ stateDiagram-v2
 
 | File | Purpose |
 |------|---------|
-| [ReferenceType.java](file:///f:/SkillSync/user-service/src/main/java/com/skillsync/user/enums/ReferenceType.java) | Enum: `MENTOR_ONBOARDING`, `SESSION_BOOKING` — classifies business context |
-| [PaymentSagaOrchestrator.java](file:///f:/SkillSync/user-service/src/main/java/com/skillsync/user/service/PaymentSagaOrchestrator.java) | Saga orchestration: state transitions, business actions, compensation, notification events |
-| [PaymentCompletedEvent.java](file:///f:/SkillSync/user-service/src/main/java/com/skillsync/user/event/PaymentCompletedEvent.java) | RabbitMQ event DTO for payment lifecycle notifications |
-| [PaymentEventConsumer.java](file:///f:/SkillSync/notification-service/src/main/java/com/skillsync/notification/consumer/PaymentEventConsumer.java) | Notification service consumer for payment.success/failed/compensated events |
+| [PaymentServiceApplication.java](file:///f:/SkillSync/payment-service/src/main/java/com/skillsync/payment/PaymentServiceApplication.java) | Spring Boot entry point for payment-service |
+| [PaymentSagaOrchestrator.java](file:///f:/SkillSync/payment-service/src/main/java/com/skillsync/payment/service/PaymentSagaOrchestrator.java) | Event-driven Saga orchestration — publishes `payment.business.action` to RabbitMQ |
+| [PaymentEventConsumer.java](file:///f:/SkillSync/user-service/src/main/java/com/skillsync/user/consumer/PaymentEventConsumer.java) | User Service consumer — handles `payment.business.action` events → triggers mentor approval |
+| [PaymentCompletedEvent.java](file:///f:/SkillSync/payment-service/src/main/java/com/skillsync/payment/event/PaymentCompletedEvent.java) | RabbitMQ event DTO for payment lifecycle notifications |
 
 ### Modified Files
 
@@ -183,10 +184,11 @@ Supports per-error HTTP status codes (400, 401, 403, 404, 409, 500).
 - Missing header returns `401 UNAUTHORIZED`.
 - Cross-user access attempts return `403 FORBIDDEN`.
 
-### 5. Future-Ready
-- [PaymentSagaOrchestrator](file:///f:/SkillSync/user-service/src/main/java/com/skillsync/user/service/PaymentSagaOrchestrator.java#36-224) is a separate `@Component` — easy to extract into a standalone service.
-- Business actions are modular methods — easy to add new payment types.
-- In a distributed system, the orchestrator would use Kafka/RabbitMQ events instead of direct method calls.
+### 5. Event-Driven Decoupling
+- Payment Service **does not import or depend on** User Service — all coordination is via RabbitMQ `payment.business.action` events.
+- `PaymentSagaOrchestrator` publishes events; `PaymentEventConsumer` in User Service consumes them.
+- Business actions are modular — easy to add new payment types.
+- This replaces the old direct method call coupling (`MentorService.approveMentor()`) with message-based coordination.
 
 ### 6. Payment Notifications
 - Payment events (`payment.success`, `payment.failed`, `payment.compensated`) are published to RabbitMQ `payment.exchange`.
@@ -211,13 +213,8 @@ Supports per-error HTTP status codes (400, 401, 403, 404, 409, 500).
 
 ---
 
-## Database Migration Note
+## Database Note
 
 > [!WARNING]
-> The `payments` table has schema changes. Since `spring.jpa.hibernate.ddl-auto=update` is configured, Hibernate will auto-apply:
-> - `status` column width: 10 → 20 characters
-> - `referenceId` column: now `NOT NULL`
-> - New column: `reference_type` (`VARCHAR(30)`, `NOT NULL`)
-> - New column: `compensation_reason` (`VARCHAR(500)`)
->
-> **If existing data has NULL referenceId values**, you may need a migration script before deploying.
+> The `payments` table now lives in a **dedicated database** (`skillsync_payment`, schema: `payments`). The old `users.payments` table in `skillsync_user` is no longer used and should be dropped after data migration.
+> `spring.jpa.hibernate.ddl-auto=update` is configured, so Hibernate will auto-create the table in the new database.

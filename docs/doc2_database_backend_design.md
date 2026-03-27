@@ -26,6 +26,7 @@ Each microservice owns its dedicated PostgreSQL database. No cross-service joins
 | Session Service | `skillsync_session` | `sessions` |
 | Group Service | `skillsync_group` | `groups` |
 | Review Service | `skillsync_review` | `reviews` |
+| Payment Service | `skillsync_payment` | `payments` |
 | Notification Service | `skillsync_notification` | `notifications` |
 
 ---
@@ -35,7 +36,7 @@ Each microservice owns its dedicated PostgreSQL database. No cross-service joins
 | Service | JPA Entities | Database Tables |
 |---|---|---|
 | Auth | `AuthUser`, `RefreshToken`, `OtpToken` | `auth.users`, `auth.refresh_tokens`, `auth.otp_tokens` |
-| User | `Profile`, `UserSkill`, `Payment` | `users.profiles`, `users.user_skills`, `users.payments` |
+| User | `Profile`, `UserSkill` | `users.profiles`, `users.user_skills` |
 | Mentor | `MentorProfile`, `MentorSkill`, `AvailabilitySlot` | `mentors.mentor_profiles`, `mentors.mentor_skills`, `mentors.availability_slots` |
 | Skill | `Skill`, `Category` | `skills.skills`, `skills.categories` |
 | Session | `Session` | `sessions.sessions` |
@@ -289,21 +290,23 @@ public record AddSkillRequest(
 **Package Structure**
 ```
 com.skillsync.user
- +-- config/          JpaAuditingConfig, OpenApiConfig, RabbitMQConfig, RazorpayConfig
- +-- controller/      UserController, MentorController, GroupController, PaymentController
- +-- dto/             UpdateProfileRequest, ProfileResponse, AddSkillRequest, SkillSummary,
-                      CreateOrderRequest, CreateOrderResponse, VerifyPaymentRequest, PaymentResponse
+ +-- config/          JpaAuditingConfig, OpenApiConfig, RabbitMQConfig
+ +-- controller/      UserController, MentorController, GroupController
+ +-- dto/             UpdateProfileRequest, ProfileResponse, AddSkillRequest, SkillSummary
  +-- entity/          Profile, UserSkill, MentorProfile, MentorSkill, AvailabilitySlot,
-                      LearningGroup, GroupMember, Discussion, Payment
- +-- enums/           MentorStatus, PaymentType, PaymentStatus, ReferenceType
- +-- exception/       GlobalExceptionHandler, ResourceNotFoundException, PaymentException
+                      LearningGroup, GroupMember, Discussion
+ +-- enums/           MentorStatus
+ +-- exception/       GlobalExceptionHandler, ResourceNotFoundException
  +-- feign/           SkillServiceClient, AuthServiceClient
- +-- event/           MentorApprovedEvent, MentorRejectedEvent, PaymentCompletedEvent
+ +-- event/           MentorApprovedEvent, MentorRejectedEvent
+ +-- consumer/        PaymentEventConsumer (consumes payment.business.action events)
  +-- repository/      ProfileRepository, UserSkillRepository, MentorProfileRepository,
                       AvailabilitySlotRepository, GroupRepository, GroupMemberRepository,
-                      DiscussionRepository, PaymentRepository
- +-- service/         UserService, MentorService, GroupService, PaymentService, PaymentSagaOrchestrator
+                      DiscussionRepository
+ +-- service/         UserService, MentorService, GroupService
 ```
+
+> **Note:** Payment processing has been extracted to a dedicated **Payment Service** (port 8086). See [payment_implementation.md](file:///f:/SkillSync/docs/payment_implementation.md) for full details.
 
 **JPA Entities**
 
@@ -339,58 +342,9 @@ public interface SkillServiceClient {
 
 **Service Layer** -- `UserService`: getProfile (fetch profile + enrich with skills via SkillServiceClient), updateProfile (partial update + recalculate completeness %), addSkill (validate skill exists via Feign, then save UserSkill), removeSkill.
 
-#### Payment Gateway (Razorpay) -- Integrated in User Service
+#### Event Consumption — Payment Business Actions
 
-> **Architecture Note:** Payment is implemented inside User Service for simplicity. In a production system at scale, this would be extracted into a dedicated Payment Microservice using the Saga Pattern.
-
-**Maven Dependency:** `com.razorpay:razorpay-java:1.4.8`
-
-**API Endpoints**
-
-| Method | Path | Role | Description |
-|---|---|---|---|
-| POST | `/api/payments/create-order` | AUTHENTICATED | Create Razorpay order (900 paise) |
-| POST | `/api/payments/verify` | AUTHENTICATED | Verify payment signature + trigger post-payment actions |
-| GET | `/api/payments/my-payments` | AUTHENTICATED | User payment history (newest first) |
-| GET | `/api/payments/order/{orderId}` | AUTHENTICATED | Get payment by Razorpay orderId |
-| GET | `/api/payments/check?type=` | INTERNAL | Inter-service payment verification (X-User-Id header) |
-
-**Payment Entity**
-
-```java
-@Entity @Table(name = "payments", schema = "users")
-public class Payment {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
-    @Column(nullable = false) private Long userId;
-    @Enumerated(EnumType.STRING) private PaymentType type;     // MENTOR_FEE, SESSION_BOOKING
-    @Column(nullable = false) private Integer amount;           // in paise (900 = Rs.9)
-    @Column(nullable = false, unique = true) private String razorpayOrderId;
-    private String razorpayPaymentId;
-    @Enumerated(EnumType.STRING) @Column(length = 20) private PaymentStatus status;
-            // CREATED, VERIFIED, SUCCESS_PENDING, SUCCESS, FAILED, COMPENSATED
-    @Column(nullable = false) private Long referenceId;         // business entity ID
-    @Enumerated(EnumType.STRING) @Column(length = 30) private ReferenceType referenceType;
-            // MENTOR_ONBOARDING, SESSION_BOOKING
-    @Column(length = 500) private String compensationReason;    // reason if COMPENSATED
-    @CreatedDate private LocalDateTime createdAt;
-    private LocalDateTime completedAt;
-}
-```
-
-**Payment Enums:** `PaymentType` (MENTOR_FEE, SESSION_BOOKING), `PaymentStatus` (CREATED, VERIFIED, SUCCESS_PENDING, SUCCESS, FAILED, COMPENSATED), `ReferenceType` (MENTOR_ONBOARDING, SESSION_BOOKING)
-
-**Business Logic (`PaymentService` + `PaymentSagaOrchestrator`):**
-- `createOrder`: Validates reference mapping, prevents duplicate payments per reference, calls Razorpay Orders API, saves Payment with status=CREATED
-- `verifyPayment`: Validates ownership, idempotency (returns for SUCCESS/COMPENSATED), HMAC-SHA256 signature, amount, marks VERIFIED, delegates to saga
-- **Saga Orchestration** (`PaymentSagaOrchestrator`):
-  - Marks SUCCESS_PENDING → executes business action → SUCCESS or COMPENSATED
-  - Business actions: MENTOR_FEE → `MentorService.approveMentor()`, SESSION_BOOKING → payment gate for session-service
-  - Compensation: MENTOR_FEE → `MentorService.revertMentorApproval()`, SESSION_BOOKING → log for manual cleanup
-  - Publishes `payment.success`, `payment.failed`, `payment.compensated` events to RabbitMQ → consumed by Notification Service
-- Error codes: `DUPLICATE_PAYMENT`, `ORDER_NOT_FOUND`, `SIGNATURE_INVALID`, `AMOUNT_MISMATCH`, `UNAUTHORIZED_ACCESS`, `PAYMENT_ALREADY_FAILED`, `INVALID_REFERENCE`
-- **Security:** userId ALWAYS from JWT header (X-User-Id), never from request params
-
-**Configuration:** `RazorpayConfig` creates `RazorpayClient` bean from env vars `RAZORPAY_API_KEY` / `RAZORPAY_API_SECRET`.
+> **Architecture Note:** Payment processing has been extracted to a dedicated **Payment Service** (port 8086). User Service now consumes `payment.business.action` events via RabbitMQ (`PaymentEventConsumer`) to execute post-payment business logic (e.g., mentor approval). See [payment_implementation.md](file:///f:/SkillSync/docs/payment_implementation.md).
 
 
 ### 2.2.3 Mentor Service

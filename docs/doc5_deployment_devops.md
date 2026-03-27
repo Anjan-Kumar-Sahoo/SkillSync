@@ -5,9 +5,11 @@
 > - **Mentor Service + Group Service → User Service** (port 8082)
 > - **Review Service → Session Service** (port 8085)
 >
+> **Payment Extraction (March 2026):** Payment has been extracted from User Service into a dedicated **Payment Service** (port 8086) with its own database (`skillsync_payment`).
+>
 > **CQRS + Redis Caching (March 2026):** All business services now require a **Redis 7.2** instance for distributed caching. The `docker-compose.yml` includes Redis as a service dependency with AOF persistence. See `doc6_cqrs_redis_architecture.md` for details.
 >
-> The original deployment diagrams below reflect the initial 11-service architecture. Real deployments use the current 8-service topology.
+> The original deployment diagrams below reflect the initial 11-service architecture. Real deployments use the current 9-service topology.
 
 ## SkillSync — Infrastructure, Deployment & Operations
 
@@ -286,11 +288,9 @@ services:
       POSTGRES_MULTIPLE_DATABASES: >
         skillsync_auth,
         skillsync_user,
-        skillsync_mentor,
+        skillsync_payment,
         skillsync_skill,
         skillsync_session,
-        skillsync_group,
-        skillsync_review,
         skillsync_notification
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -415,28 +415,32 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/skillsync_user
       SPRING_DATASOURCE_USERNAME: skillsync
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-skillsync_dev}
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-skillsync}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASS:-skillsync_dev}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
-      RAZORPAY_API_KEY: ${RAZORPAY_API_KEY}
-      RAZORPAY_API_SECRET: ${RAZORPAY_API_SECRET}
     depends_on:
       postgres:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
     networks:
       - skillsync-network
 
-  mentor-service:
+  payment-service:
     build:
       context: .
       dockerfile: Dockerfile.service
       args:
-        SERVICE_NAME: mentor-service
-    container_name: skillsync-mentor
+        SERVICE_NAME: payment-service
+    container_name: skillsync-payment
     environment:
-      SERVER_PORT: 8083
+      SERVER_PORT: 8086
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/skillsync_mentor
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/skillsync_payment
       SPRING_DATASOURCE_USERNAME: skillsync
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-skillsync_dev}
       SPRING_RABBITMQ_HOST: rabbitmq
@@ -444,6 +448,8 @@ services:
       SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-skillsync}
       SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASS:-skillsync_dev}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
+      RAZORPAY_API_KEY: ${RAZORPAY_API_KEY}
+      RAZORPAY_API_SECRET: ${RAZORPAY_API_SECRET}
     depends_on:
       postgres:
         condition: service_healthy
@@ -487,56 +493,6 @@ services:
       SERVER_PORT: 8085
       SPRING_PROFILES_ACTIVE: docker
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/skillsync_session
-      SPRING_DATASOURCE_USERNAME: skillsync
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-skillsync_dev}
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-skillsync}
-      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASS:-skillsync_dev}
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
-    depends_on:
-      postgres:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-    networks:
-      - skillsync-network
-
-  group-service:
-    build:
-      context: .
-      dockerfile: Dockerfile.service
-      args:
-        SERVICE_NAME: group-service
-    container_name: skillsync-group
-    environment:
-      SERVER_PORT: 8086
-      SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/skillsync_group
-      SPRING_DATASOURCE_USERNAME: skillsync
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-skillsync_dev}
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
-    depends_on:
-      postgres:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-    networks:
-      - skillsync-network
-
-  review-service:
-    build:
-      context: .
-      dockerfile: Dockerfile.service
-      args:
-        SERVICE_NAME: review-service
-    container_name: skillsync-review
-    environment:
-      SERVER_PORT: 8087
-      SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/skillsync_review
       SPRING_DATASOURCE_USERNAME: skillsync
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-skillsync_dev}
       SPRING_RABBITMQ_HOST: rabbitmq
@@ -704,6 +660,7 @@ jobs:
         service:
           - auth-service
           - user-service
+          - payment-service
           - skill-service
           - session-service
           - notification-service

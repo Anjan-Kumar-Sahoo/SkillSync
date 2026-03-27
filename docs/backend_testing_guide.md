@@ -16,10 +16,11 @@
 > | 2 | Config Server | 8888 |
 > | 3 | API Gateway | 8080 |
 > | 4 | Auth Service | 8081 |
-> | 5 | User Service (includes Mentor, Group & Payment) | 8082 |
-> | 6 | Skill Service | 8084 |
-> | 7 | Session Service (includes Review) | 8085 |
-> | 8 | Notification Service | 8088 |
+> | 5 | User Service (includes Mentor & Group) | 8082 |
+> | 6 | Payment Service | 8086 |
+> | 7 | Skill Service | 8084 |
+> | 8 | Session Service (includes Review) | 8085 |
+> | 9 | Notification Service | 8088 |
 
 ---
 
@@ -36,6 +37,7 @@ CREATE DATABASE skillsync_user;
 CREATE DATABASE skillsync_skill;
 CREATE DATABASE skillsync_session;
 CREATE DATABASE skillsync_notification;
+CREATE DATABASE skillsync_payment;
 
 -- Create schemas inside each database
 \c skillsync_auth
@@ -55,6 +57,9 @@ CREATE SCHEMA IF NOT EXISTS reviews;
 
 \c skillsync_notification
 CREATE SCHEMA IF NOT EXISTS notifications;
+
+\c skillsync_payment
+CREATE SCHEMA IF NOT EXISTS payments;
 ```
 
 > [!NOTE]
@@ -130,7 +135,11 @@ mvn spring-boot:run
 cd f:\SkillSync\session-service
 mvn spring-boot:run
 
-# Terminal 8 — Notification Service
+# Terminal 8 — Payment Service
+cd f:\SkillSync\payment-service
+mvn spring-boot:run
+
+# Terminal 9 — Notification Service
 cd f:\SkillSync\notification-service
 mvn spring-boot:run
 ```
@@ -647,7 +656,7 @@ curl -X PUT http://localhost:8080/api/notifications/read-all \
 
 ---
 
-### 💳 3.9 PAYMENT APIs (served by User Service on port 8082)
+### 💳 3.9 PAYMENT APIs (served by Payment Service on port 8086)
 
 > [!IMPORTANT]
 > Payment uses **Razorpay test credentials** by default. No real money is charged.
@@ -661,7 +670,8 @@ curl -X POST http://localhost:8080/api/payments/create-order \
   -H "X-User-Id: 2" \
   -d '{
     "type": "MENTOR_FEE",
-    "referenceId": 1
+    "referenceId": 1,
+    "referenceType": "MENTOR_ONBOARDING"
   }'
 ```
 
@@ -702,7 +712,8 @@ curl http://localhost:8080/api/payments/my-payments \
 
 #### Check Payment Status (inter-service)
 ```bash
-curl "http://localhost:8080/api/payments/check?userId=2&type=MENTOR_FEE"
+curl "http://localhost:8080/api/payments/check?type=MENTOR_FEE" \
+  -H "X-User-Id: 2"
 ```
 
 ---
@@ -722,8 +733,8 @@ Follow this order for the complete happy path:
  7. Create 4 skills (Java, Spring Boot, React, Python)
  8. Update learner profile + add skills
  9. Mentor applies (POST /api/mentors/apply)
-10. >>> PAY MENTOR FEE (POST /api/payments/create-order with type=MENTOR_FEE)
-11. >>> VERIFY PAYMENT (POST /api/payments/verify -- triggers auto-approval)
+10. >>> PAY MENTOR FEE (POST /api/payments/create-order with type=MENTOR_FEE) — now served by Payment Service
+11. >>> VERIFY PAYMENT (POST /api/payments/verify -- publishes event → User Service approves mentor)
 12. OR: Admin approves mentor (PUT /api/mentors/1/approve)
 13. Login mentor again (to get updated ROLE_MENTOR token)
 14. Add mentor availability
@@ -734,7 +745,7 @@ Follow this order for the complete happy path:
 19. Check mentor rating summary
 20. Create a group and post discussions
 21. Check notifications (mentor should have: approval + session request + review alerts)
-22. Check payment history (GET /api/payments/my-payments)
+22. Check payment history (GET /api/payments/my-payments) — served by Payment Service
 ```
 
 ---
@@ -760,9 +771,9 @@ mvn test
 3. **Event-Driven Cache Invalidation Tests (`ReviewEventCacheSyncConsumerTest`)**
    - Proves RabbitMQ events reliably trigger cache evictions (e.g., `updateAvgRating()` is invoked on `ReviewSubmittedEvent`).
 
-4. **Saga Consistency Tests (`PaymentSagaOrchestratorTest`)**
-   - Verifies the `SUCCESS` branch approves the mentor and executes cache invalidation via `approveMentor()`.
-   - Verifies the `COMPENSATION` branch reverts the approval and equally executes cache invalidation via `revertMentorApproval()`.
+4. **Saga Consistency Tests (`PaymentSagaOrchestratorTest`)** — in payment-service
+   - Verifies the `SUCCESS` branch publishes `payment.business.action` event via RabbitMQ.
+   - Verifies the `COMPENSATION` branch marks payment as COMPENSATED and publishes compensation event.
 
 ---
 
@@ -778,7 +789,8 @@ Use the **dropdown at the top** to select which service to view/test:
 | Dropdown Option | APIs Shown |
 |----------------|-----------|
 | Auth Service | Register, Login, OTP, Token Refresh, Role Update |
-| User Service (Users + Mentors + Groups + Payments) | Profiles, Skills, Mentor Apply/Approve, Groups, Discussions, Payment Orders, Verification |
+| User Service (Users + Mentors + Groups) | Profiles, Skills, Mentor Apply/Approve, Groups, Discussions |
+| Payment Service | Create Order, Verify Payment, Payment History |
 | Skill Service | Skill CRUD, Search |
 | Session Service (Sessions + Reviews) | Session Booking, Accept/Reject/Complete, Reviews, Ratings |
 | Notification Service | Get Notifications, Unread Count, Mark Read |
@@ -804,6 +816,6 @@ Use the **dropdown at the top** to select which service to view/test:
 | Docker: database init fails | Delete the postgres volume (`docker volume rm skillsync_postgres-data`) and rebuild |
 | Docker: service can't reach postgres | Check if healthcheck passed — services wait for `service_healthy` condition |
 | Swagger UI empty | Ensure all services are registered in Eureka and healthy |
-| Payment create-order fails | Check Razorpay credentials in `application.properties` or env vars |
+| Payment create-order fails | Check Razorpay credentials in payment-service `application.properties` or env vars |
 | Signature verification fails | Ensure you pass the exact `razorpaySignature` from Razorpay checkout response |
 

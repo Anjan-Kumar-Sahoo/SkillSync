@@ -5,9 +5,13 @@
 > - **Mentor Service + Group Service → User Service** (port 8082)
 > - **Review Service → Session Service** (port 8085)
 >
-> **CQRS + Redis Caching (March 2026):** Backend services now use Redis distributed caching with the CQRS pattern. This is **transparent to the frontend** — API contracts remain identical. The frontend benefits from significantly faster read responses (cached in Redis) with no code changes needed.
+> **CQRS + Redis Caching (March 2026):** Backend services now use Redis distributed caching with the CQRS pattern.
 >
-> The frontend design remains unchanged as Gateway routes were updated, but keep this in mind when referencing backend services.
+> 🚀 **Frontend Completed (March 2026):** The React 18 frontend is now fully scaffolded and operational.
+> - **Tech**: React 18, Vite, TypeScript, Tailwind v4
+> - **State Management**: Redux Toolkit for Auth (JWT token persistence), React Query for Data fetching
+> - **Pages Built**: Auth (Login, Register), Learner Dashboard, Mentor Discovery, 
+>   My Sessions (multi-tab mapping), Checkout (Razorpay SDK Flow), and Mentor Dashboard (availability logic).
 
 ## SkillSync — React Frontend Architecture
 

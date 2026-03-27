@@ -1,5 +1,10 @@
 # ============================================================
-#  SkillSync CI/CD - Build & Docker Images
+#  SkillSync CI/CD Pipeline (Production-Grade)
+#  - Build shared library first (skillsync-cache-common)
+#  - Build & test all services in parallel
+#  - Code quality analysis (SonarQube)
+#  - Docker build with semantic versioning
+#  - Compose validation
 # ============================================================
 name: SkillSync CI/CD
 
@@ -12,14 +17,40 @@ on:
 env:
   JAVA_VERSION: '17'
   DOCKER_REGISTRY: docker.io
-  # Set DOCKER_USERNAME and DOCKER_PASSWORD in GitHub Secrets for push
 
 jobs:
 
-  # ======================== BUILD ALL SERVICES ================
-  build:
-    name: Build & Test
+  # ======================== BUILD SHARED LIBRARY ===============
+  build-cache-common:
+    name: Build Cache Common Library
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Build & Install skillsync-cache-common
+        working-directory: ./skillsync-cache-common
+        run: mvn clean install -DskipTests -B
+
+      - name: Upload cache-common artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cache-common-jar
+          path: ~/.m2/repository/com/skillsync/skillsync-cache-common/
+          retention-days: 1
+
+  # ======================== BUILD & TEST ALL SERVICES ==========
+  build-and-test:
+    name: Build & Test - ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    needs: build-cache-common
     strategy:
       fail-fast: false
       matrix:
@@ -29,11 +60,8 @@ jobs:
           - api-gateway
           - auth-service
           - user-service
-          - mentor-service
           - skill-service
           - session-service
-          - group-service
-          - review-service
           - notification-service
 
     steps:
@@ -47,14 +75,28 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           cache: maven
 
+      - name: Download cache-common
+        uses: actions/download-artifact@v4
+        with:
+          name: cache-common-jar
+          path: ~/.m2/repository/com/skillsync/skillsync-cache-common/
+
       - name: Build ${{ matrix.service }}
         working-directory: ./${{ matrix.service }}
         run: mvn clean package -DskipTests -B
 
-      - name: Run tests ${{ matrix.service }}
+      - name: Run Unit Tests - ${{ matrix.service }}
         working-directory: ./${{ matrix.service }}
         run: mvn test -B
-        continue-on-error: true
+        # FAIL pipeline on test failure (no continue-on-error)
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.service }}
+          path: ./${{ matrix.service }}/target/surefire-reports/
+          retention-days: 7
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
@@ -63,11 +105,45 @@ jobs:
           path: ./${{ matrix.service }}/target/*.jar
           retention-days: 1
 
+  # ======================== CODE QUALITY (SonarQube) ===========
+  code-quality:
+    name: Code Quality Analysis
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      # Uncomment when SonarQube is configured:
+      # - name: SonarQube Analysis
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      #     SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      #   run: |
+      #     mvn -B verify sonar:sonar \
+      #       -Dsonar.projectKey=skillsync \
+      #       -Dsonar.host.url=$SONAR_HOST_URL \
+      #       -Dsonar.login=$SONAR_TOKEN
+
+      - name: Quality Gate Placeholder
+        run: echo "SonarQube analysis would run here. Configure SONAR_TOKEN and SONAR_HOST_URL secrets."
+
   # ======================== BUILD DOCKER IMAGES ===============
   docker:
-    name: Docker Build
+    name: Docker Build - ${{ matrix.service }}
     runs-on: ubuntu-latest
-    needs: build
+    needs: build-and-test
     if: github.ref == 'refs/heads/main'
 
     strategy:
@@ -76,26 +152,28 @@ jobs:
         include:
           - service: eureka-server
             context: ./eureka-server
+            dockerfile: ./eureka-server/Dockerfile
           - service: config-server
             context: ./config-server
+            dockerfile: ./config-server/Dockerfile
           - service: api-gateway
             context: ./api-gateway
+            dockerfile: ./api-gateway/Dockerfile
           - service: auth-service
             context: ./auth-service
+            dockerfile: ./auth-service/Dockerfile
           - service: user-service
-            context: ./user-service
-          - service: mentor-service
-            context: ./mentor-service
+            context: .
+            dockerfile: ./user-service/Dockerfile
           - service: skill-service
-            context: ./skill-service
+            context: .
+            dockerfile: ./skill-service/Dockerfile
           - service: session-service
-            context: ./session-service
-          - service: group-service
-            context: ./group-service
-          - service: review-service
-            context: ./review-service
+            context: .
+            dockerfile: ./session-service/Dockerfile
           - service: notification-service
-            context: ./notification-service
+            context: .
+            dockerfile: ./notification-service/Dockerfile
 
     steps:
       - name: Checkout code
@@ -104,7 +182,13 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Uncomment below to push images to Docker Hub:
+      - name: Generate version tag
+        id: version
+        run: |
+          VERSION=$(date +%Y%m%d)-${GITHUB_SHA::7}
+          echo "tag=${VERSION}" >> $GITHUB_OUTPUT
+
+      # Uncomment to push images to Docker Hub:
       # - name: Login to Docker Hub
       #   uses: docker/login-action@v3
       #   with:
@@ -115,10 +199,11 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.context }}
-          push: false   # Set to true + uncomment login above to push
+          file: ${{ matrix.dockerfile }}
+          push: false  # Set to true + uncomment login above to push
           tags: |
             skillsync/${{ matrix.service }}:latest
-            skillsync/${{ matrix.service }}:${{ github.sha }}
+            skillsync/${{ matrix.service }}:${{ steps.version.outputs.tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -126,7 +211,7 @@ jobs:
   validate-compose:
     name: Validate Docker Compose
     runs-on: ubuntu-latest
-    needs: build
+    needs: build-and-test
 
     steps:
       - name: Checkout code

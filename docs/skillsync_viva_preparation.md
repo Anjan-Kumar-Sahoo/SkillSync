@@ -40,7 +40,8 @@ Use the **dropdown at the top-right** to switch between services:
 | Dropdown Option | APIs Shown |
 |----------------|-----------|
 | Auth Service | Register, Login, OTP, Token Refresh, Role Update |
-| User Service (Users + Mentors + Groups + Payments) | Profiles, Skills, Mentor Apply/Approve, Groups, Discussions, Payments |
+| User Service (Users + Mentors + Groups) | Profiles, Skills, Mentor Apply/Approve, Groups, Discussions |
+| Payment Service | Create Order, Verify Payment, Payment History |
 | Skill Service | Skill CRUD, Search |
 | Session Service (Sessions + Reviews) | Session Booking, Accept/Reject/Complete, Reviews, Ratings |
 | Notification Service | Get Notifications, Unread Count, Mark Read |
@@ -68,8 +69,8 @@ Use the **dropdown at the top-right** to switch between services:
  9. User Service      → PUT /api/users/me (+ Authorization: Bearer <token>)
 10. User Service      → POST /api/users/me/skills
 11. User Service      → POST /api/mentors/apply
-12. User Service      → POST /api/payments/create-order (Pay MENTOR_FEE)
-13. User Service      → POST /api/payments/verify (Verifies + Approves Mentor)
+12. Payment Service   → POST /api/payments/create-order (Pay MENTOR_FEE)
+13. Payment Service   → POST /api/payments/verify (Verifies → publishes event → User Service approves mentor)
 14. User Service      → POST /api/mentors/me/availability
 15. Session Service   → POST /api/sessions
 16. Session Service   → PUT /api/sessions/1/accept
@@ -93,9 +94,10 @@ Use the **dropdown at the top-right** to switch between services:
 | 3 | API Gateway | 8080 | — |
 | 4 | Auth Service | 8081 | skillsync_auth |
 | 5 | User Service | 8082 | skillsync_user |
-| 6 | Skill Service | 8084 | skillsync_skill |
-| 7 | Session Service | 8085 | skillsync_session |
-| 8 | Notification Service | 8088 | skillsync_notification |
+| 6 | Payment Service | 8086 | skillsync_payment |
+| 7 | Skill Service | 8084 | skillsync_skill |
+| 8 | Session Service | 8085 | skillsync_session |
+| 9 | Notification Service | 8088 | skillsync_notification |
 
 ### Layered Package Structure (per service)
 
@@ -189,9 +191,11 @@ Login → authenticate → check isVerified → issue JWT + refresh token
 
 ## 4. User Service
 
-**Purpose:** User profiles, mentor applications, groups, discussions, payments. Merged from 3 services.
+**Purpose:** User profiles, mentor applications, groups, discussions. Merged from 3 services.
 
-**3 schemas:** `users`, `mentors`, `groups` (Payments stored in `users.payments`)
+**3 schemas:** `users`, `mentors`, `groups`
+
+> **Note:** Payment processing has been extracted to a dedicated **Payment Service** (port 8086). User Service consumes `payment.business.action` events via RabbitMQ to trigger business actions.
 
 ### Entities
 
@@ -380,8 +384,9 @@ All DTOs use Java Records (`record ClassName(fields) {}`):
 4. Create skills → Skill Service saves skill catalog
 5. Update profile → User Service creates Profile
 6. Apply as mentor → User Service creates PENDING MentorProfile
-7. Pay mentor fee → User Service creates Razorpay order, verifies signature
-   → On SUCCESS: User Service sets status=APPROVED
+7. Pay mentor fee → Payment Service creates Razorpay order, verifies signature
+   → On SUCCESS: Payment Service publishes payment.business.action event
+   → User Service consumes event → sets status=APPROVED
    → Feign call to Auth: role=ROLE_MENTOR
    → RabbitMQ event → Notification Service: "Approved!" push
 8. Book session → Session Service validates + saves REQUESTED session
@@ -410,7 +415,8 @@ All DTOs use Java Records (`record ClassName(fields) {}`):
 | **Event-driven cache sync** | **Cross-service cache invalidation via RabbitMQ** |
 | State machine enum | Domain-level enforcement of valid transitions |
 | Soft references (userId as Long) | No cross-DB foreign keys in microservices |
-| Payment inside User Service | Simplifies architecture; avoids separate DB for 1 payment table |
+| Payment as dedicated service | **Separation of Concerns:** payment logic, Razorpay SDK, and saga orchestration are isolated in their own service with event-driven coordination |
+| Event-driven Saga | Payment → RabbitMQ → User Service decouples payment lifecycle from business actions, enabling independent deployment/scaling |
 | @CreatedDate/@LastModifiedDate | Auto timestamp management |
 | Profile completeness % | Gamification (5 fields × 20%) |
 | Builder pattern (Lombok) | Fluent, readable object construction |
@@ -456,7 +462,9 @@ All DTOs use Java Records (`record ClassName(fields) {}`):
 
 **Q: What is @ControllerAdvice?** A: Global exception handler for all controllers.
 
-**Q: Why Razorpay inside User Service?** A: Creating an entire microservice with its own database just for a small payments table was over-engineering. It was integrated into User Service for simplicity, but can be extracted to a Payment Service using Saga pattern later if the platform scales.
+**Q: Why was Payment extracted into its own service?** A: To enforce **Separation of Concerns**. Payment/Razorpay integration, saga orchestration, and the Payment entity are now isolated. Communication is event-driven via RabbitMQ (`payment.business.action` events consumed by User Service), enabling independent deployment, scaling, and testing.
+
+**Q: How does the event-driven Saga work?** A: After payment verification, the Saga Orchestrator publishes a `payment.business.action` event to RabbitMQ. User Service's `PaymentEventConsumer` listens on `payment.business.action.queue` and calls `MentorCommandService.approveMentor()`. This replaces the old direct Feign/import coupling.
 
 **Q: Builder Pattern?** A: Fluent object construction: `.builder().field(val).build()`. Lombok generates it.
 
@@ -496,3 +504,21 @@ A: Four reasons:
 **Q: Cache-Aside vs Write-Through?** A: Cache-Aside gives us explicit control. Write-Through adds latency to every write. Since reads vastly outnumber writes, Cache-Aside is the right choice.
 
 **Q: How do you test caching?** A: Unit tests mock CacheService to verify hit/miss/invalidation. Integration tests use Redis Testcontainers to test the full cache lifecycle (miss → populate → hit → invalidate → miss).
+
+---
+
+## 16. Frontend & React Q&A
+
+**Q: Why React 18 instead of Angular/Vue?** A: React offers a massive ecosystem, concurrent rendering features, and integrates perfectly with our chosen stack (TypeScript, Redux Toolkit, TanStack Query). The component-based atomic design suits our complex dashboards well.
+
+**Q: What is Redux Toolkit used for?** A: Global client state. Specifically, we use it for keeping track of the Auth State (JWT, refresh token, user role) globally across all components and Router guards.
+
+**Q: Why use TanStack Query alongside Redux?** A: Redux is for synchronous client state (Auth, UI toggles). TanStack Query (React Query) is meant for asynchronous **server state**. It automatically handles caching, background refetching, pagination variables, and loading/error states for our API endpoints, removing hundreds of lines of boilerplate.
+
+**Q: How do you handle JWT Tokens on the frontend?** A: We use an Axios interceptor. The `request` interceptor injects the Bearer token natively. The `response` interceptor watches for 401 Unauthorized errors.
+
+**Q: How does the Silent Token Refresh work?** A: If a 401 is thrown, the Axios interceptor pauses all outgoing API requests into a queue, calls the `/api/auth/refresh` endpoint using the persisted refresh token, updates the Redux store, and then replays the queued requests. This creates a seamless, uninterrupted UX.
+
+**Q: How did you implement Razorpay on the frontend?** A: When a user books a session, we first hit `/api/payments/order` to get an order ID asynchronously. Then we instantiate `new window.Razorpay(options)` which opens the official checkout modal over our app. Upon capturing the `razorpay_signature` in the success handler, we send it to our backend to natively link payment success to the session booking.
+
+**Q: How do you protect routes?** A: We use React Router v6 with custom Wrapper Guards (`AuthGuard`, `GuestGuard`, `RoleGuard`). These evaluate the Redux state before rendering children. If unauthorized, they trigger a `<Navigate to="/login" replace />`.

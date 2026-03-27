@@ -70,6 +70,17 @@ OpenAPI docs at: http://localhost:{port}/v3/api-docs
 
 Includes PaymentService, PaymentController, Payment entity/repository, and RazorpayConfig.
 
+7. FRONTEND REACT APPLICATIION
+----------------------------------------------------
+[DONE] Scaffolding - React 18, Vite, TypeScript, Tailwind v4
+[DONE] State Management - Redux Toolkit (Auth slice)
+[DONE] Data Fetching - TanStack Query v5 + Axios Interceptors (silent refresh, retry logic)
+[DONE] Routing - React Router v6 with Role/Auth Guards
+[DONE] Auth Pages - Login, Register, OTP Verify, Password setups
+[DONE] Learner Experience - Dashboard, Mentor Discovery, Sessions mapping, Review Modal
+[DONE] Mentor Experience - Stats Dashboard, Availability Engine (ISO format), Request Action Center
+[DONE] Payment Flow - Complex Razorpay modal orchestrating local session generation, banking window, and backend signature verification mapping.
+
 ================================================================================
     FILES CREATED / MODIFIED SUMMARY
 ================================================================================
