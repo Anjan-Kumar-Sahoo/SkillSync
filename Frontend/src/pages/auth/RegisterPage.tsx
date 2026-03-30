@@ -19,8 +19,9 @@ const RegisterPage = () => {
       showToast({ message: 'Registration successful. Please verify your email.' });
       navigate('/verify-otp', { state: { email: variables.email } });
     },
-    onError: () => {
-      showToast({ message: 'Registration failed. Try again.', type: 'error' });
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Registration failed. Try again.';
+      showToast({ message, type: 'error' });
     }
   });
 
@@ -44,8 +45,15 @@ const RegisterPage = () => {
 
   return (
     <div className="flex flex-col items-center">
-      <img src={logo} alt="SkillSync" className="w-20 h-20 mb-4 hover:scale-105 transition duration-300" onError={(e: any) => { e.target.src = 'https://via.placeholder.com/80?text=Logo'; }} />
-      <h1 className="text-3xl font-extrabold tracking-tight text-on-surface mb-8">SkillSync</h1>
+      <div className="flex items-center gap-3 mb-6 group transition-all">
+        <img 
+          src={logo} 
+          alt="SkillSync Logo" 
+          className="w-12 h-12 object-contain hover:scale-110 transition duration-500" 
+          onError={(e: any) => { e.target.src = 'https://via.placeholder.com/48?text=S'; }} 
+        />
+        <h1 className="text-4xl font-black tracking-tighter text-on-surface text-center">SkillSync</h1>
+      </div>
 
       <div className="w-full bg-surface-container-lowest p-8 md:p-10 rounded-xl shadow-sm border border-outline-variant/15 transition-all">
         <h2 className="text-xl font-bold text-on-surface mb-6">Create your account</h2>

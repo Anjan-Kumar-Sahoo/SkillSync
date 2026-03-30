@@ -8,6 +8,7 @@ import com.skillsync.notification.service.command.NotificationCommandService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -20,6 +21,9 @@ public class SessionEventConsumer {
     private final NotificationCommandService notificationCommandService;
     private final EmailService emailService;
     private final AuthServiceClient authServiceClient;
+
+    @Value("${app.base-url:http://localhost}")
+    private String appBaseUrl;
 
     @RabbitListener(queues = RabbitMQConfig.SESSION_NOTIFICATION_REQUESTED_QUEUE)
     public void handleSessionRequested(Map<String, Object> event) {
@@ -46,7 +50,7 @@ public class SessionEventConsumer {
             emailService.sendEmail(user.email(), "SkillSync Session Accepted!", "session-booked",
                     Map.of("recipientName", user.firstName(),
                             "message", "Your session request for '" + topic + "' has been accepted by the mentor.",
-                            "actionUrl", "http://localhost/learner/sessions",
+                            "actionUrl", appBaseUrl + "/learner/sessions",
                             "actionText", "View Sessions"));
         } catch (Exception e) {
             log.error("Failed to send session accepted email to learner {}: {}", learnerId, e.getMessage());

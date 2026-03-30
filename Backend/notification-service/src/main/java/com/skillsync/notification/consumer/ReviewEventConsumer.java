@@ -8,6 +8,7 @@ import com.skillsync.notification.service.command.NotificationCommandService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -20,6 +21,9 @@ public class ReviewEventConsumer {
     private final NotificationCommandService notificationCommandService;
     private final EmailService emailService;
     private final AuthServiceClient authServiceClient;
+
+    @Value("${app.base-url:http://localhost}")
+    private String appBaseUrl;
 
     @RabbitListener(queues = RabbitMQConfig.REVIEW_NOTIFICATION_SUBMITTED_QUEUE)
     public void handleReviewSubmitted(Map<String, Object> event) {
@@ -39,7 +43,7 @@ public class ReviewEventConsumer {
                             "sessionTitle", "Recent Mentorship Session",
                             "rating", rating + ".0",
                             "comment", comment,
-                            "actionUrl", "http://localhost/mentor/profile"));
+                            "actionUrl", appBaseUrl + "/mentor/profile"));
         } catch (Exception e) {
             log.error("Failed to send review email to mentor {}: {}", mentorId, e.getMessage());
         }

@@ -8,6 +8,7 @@ import com.skillsync.notification.service.command.NotificationCommandService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -21,6 +22,9 @@ public class MentorEventConsumer {
     private final EmailService emailService;
     private final AuthServiceClient authServiceClient;
 
+    @Value("${app.base-url:http://localhost}")
+    private String appBaseUrl;
+
     @RabbitListener(queues = RabbitMQConfig.MENTOR_NOTIFICATION_APPROVED_QUEUE)
     public void handleMentorApproved(Map<String, Object> event) {
         Long userId = toLong(event.get("userId"));
@@ -32,7 +36,7 @@ public class MentorEventConsumer {
             UserSummary user = authServiceClient.getUserById(userId);
             emailService.sendEmail(user.email(), "Welcome to SkillSync Mentors!", "mentor-approved",
                     Map.of("recipientName", user.firstName(),
-                            "actionUrl", "http://localhost/mentor/dashboard"));
+                            "actionUrl", appBaseUrl + "/mentor/dashboard"));
         } catch (Exception e) {
             log.error("Failed to send mentor approval email to user {}: {}", userId, e.getMessage());
         }

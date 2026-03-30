@@ -1,0 +1,11 @@
+feat: deploy CI/CD pipeline and configure EC2 production environment
+
+What was changed & Why:
+- CI/CD Pipeline: Updated GitHub Actions workflow (`ci-cd.yml`) to include SonarCloud tests, build matrix path fixes, Docker Hub image push, and automated deployment to EC2 via SSH.
+- Code Coverage: Added `jacoco-maven-plugin` to all backend service `pom.xml` files to generate SonarCloud test coverage reports.
+- Memory Management: Implemented memory limits (`deploy.resources.limits.memory`) for all Docker Compose services to prevent OOM errors on the AWS EC2 instance.
+- Environment & CORS Config: Updated `.env` and `.env.example` to support EC2 public IP (`54.80.14.232`) for CORS and email callbacks, and added `DOCKERHUB_USERNAME`.
+- Nginx Configuration: Switched `server_name` to wildcard (`_`) allowing Nginx to handle external traffic from the public EC2 address.
+- Email Callbacks: Replaced hardcoded `localhost` URLs in `Mentor`, `Payment`, `Review`, and `Session` event consumers with dynamic `app.base-url` properties.
+- Authentication: Whitelisted OAuth login endpoints in `SecurityConfig` and refactored `AuthService` to seamlessly verify users during Google OAuth login.
+- Artifacts Cleanup: Removed debug output files (`out.txt`, `compile.txt`) and updated related documentation.

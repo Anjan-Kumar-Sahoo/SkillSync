@@ -3,12 +3,14 @@ import { useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import { useGoogleLogin } from '@react-oauth/google';
 import { setCredentials } from '../../store/slices/authSlice';
 import api from '../../services/axios';
 import { useToast } from '../../components/ui/Toast';
 import logo from '../../assets/skillsync-logo.png';
 
 const LoginPage = () => {
+  // ... existing form hooks ...
   const { register, handleSubmit, formState: { errors } } = useForm();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -40,8 +42,9 @@ const LoginPage = () => {
       else if (role === 'ROLE_MENTOR') navigate('/mentor');
       else navigate('/learner');
     },
-    onError: () => {
-      showToast({ message: 'Invalid credentials. Please try again.', type: 'error' });
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Invalid credentials. Please try again.';
+      showToast({ message, type: 'error' });
     }
   });
 
@@ -65,8 +68,9 @@ const LoginPage = () => {
         else navigate('/learner');
       }
     },
-    onError: () => {
-      showToast({ message: 'OAuth login failed.', type: 'error' });
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'OAuth login failed.';
+      showToast({ message, type: 'error' });
     }
   });
 
@@ -74,23 +78,47 @@ const LoginPage = () => {
     loginMutation.mutate(data);
   };
 
-  const handleGoogleLogin = () => {
-    // Mock Google Profile for Viva Demo
-    const mockProfile = {
-      provider: 'google',
-      providerId: 'google-12345',
-      email: 'demo@google.com',
-      firstName: 'Demo',
-      lastName: 'User'
-    };
-    oauthMutation.mutate(mockProfile);
-  };
+  const handleGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        // Since we're using the Implicit Flow with useGoogleLogin, 
+        // we can either get user info from an ID token (if available) 
+        // or by calling Google's userInfo endpoint using the access_token.
+        
+        const userInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        }).then(res => res.json());
+
+        const profile = {
+          provider: 'google',
+          providerId: `google-${userInfo.sub}`,
+          email: userInfo.email,
+          firstName: userInfo.given_name,
+          lastName: userInfo.family_name
+        };
+
+        oauthMutation.mutate(profile);
+      } catch (err) {
+        showToast({ message: 'Failed to fetch Google profile.', type: 'error' });
+      }
+    },
+    onError: () => {
+      showToast({ message: 'Google Login failed.', type: 'error' });
+    }
+  });
 
   return (
     <div className="flex flex-col items-center">
-      <img src={logo} alt="SkillSync" className="w-20 h-20 mb-4 hover:scale-105 transition duration-300" onError={(e: any) => { e.target.src = 'https://via.placeholder.com/80?text=Logo'; }} />
-      <h1 className="text-3xl font-extrabold tracking-tight text-on-surface mb-2">SkillSync</h1>
-      <p className="text-sm text-on-surface-variant font-medium mb-8 text-center px-4">Accelerate your growth through expert mentorship.</p>
+      <div className="flex items-center gap-3 mb-4 group transition-all">
+        <img 
+          src={logo} 
+          alt="SkillSync Logo" 
+          className="w-12 h-12 object-contain hover:scale-110 transition duration-500" 
+          onError={(e: any) => { e.target.src = 'https://via.placeholder.com/48?text=S'; }} 
+        />
+        <h1 className="text-4xl font-black tracking-tighter text-on-surface">SkillSync</h1>
+      </div>
+      <p className="text-sm text-on-surface-variant font-medium mb-8 text-center px-4 max-w-xs">Connecting ambition with expertise, one sync at a time.</p>
 
       <div className="w-full bg-surface-container-lowest p-8 md:p-10 rounded-xl shadow-sm border border-outline-variant/15 transition-all">
         <h2 className="text-xl font-bold text-on-surface mb-6">Welcome back</h2>
@@ -148,7 +176,7 @@ const LoginPage = () => {
         </div>
 
         <button 
-          onClick={handleGoogleLogin} 
+          onClick={() => handleGoogleLogin()} 
           disabled={oauthMutation.isPending}
           className="mt-6 flex items-center justify-center w-full h-12 bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-bold rounded-xl shadow-sm border border-outline-variant/30 transition-all duration-200"
         >

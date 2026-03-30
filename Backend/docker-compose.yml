@@ -28,6 +28,10 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: skillsync-postgres
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -47,6 +51,10 @@ services:
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     container_name: skillsync-rabbitmq
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
@@ -66,6 +74,10 @@ services:
   redis:
     image: redis:7.2-alpine
     container_name: skillsync-redis
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     ports:
       - "6379:6379"
@@ -84,6 +96,10 @@ services:
   zipkin:
     image: openzipkin/zipkin:latest
     container_name: skillsync-zipkin
+    deploy:
+      resources:
+        limits:
+          memory: 384M
     ports:
       - "9411:9411"   # Zipkin UI (http://localhost:9411)
     environment:
@@ -102,6 +118,10 @@ services:
   prometheus:
     image: prom/prometheus:v2.51.0
     container_name: skillsync-prometheus
+    deploy:
+      resources:
+        limits:
+          memory: 384M
     ports:
       - "9090:9090"   # Prometheus UI (http://localhost:9090)
     volumes:
@@ -126,6 +146,10 @@ services:
   grafana:
     image: grafana/grafana:10.4.0
     container_name: skillsync-grafana
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     ports:
       - "3000:3000"   # Grafana UI (http://localhost:3000)
     environment:
@@ -153,6 +177,10 @@ services:
   loki:
     image: grafana/loki:2.9.4
     container_name: skillsync-loki
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     ports:
       - "3100:3100"   # Loki API
     volumes:
@@ -172,8 +200,12 @@ services:
   # ======================== DISCOVERY & CONFIG ================
 
   eureka-server:
-    build: ./eureka-server
+    image: ${DOCKERHUB_USERNAME}/eureka-server:latest
     container_name: skillsync-eureka
+    deploy:
+      resources:
+        limits:
+          memory: 384M
     env_file: .env
     ports:
       - "8761:8761"   # Exposed for debug dashboard — remove in true production
@@ -188,8 +220,12 @@ services:
     restart: unless-stopped
 
   config-server:
-    build: ./config-server
+    image: ${DOCKERHUB_USERNAME}/config-server:latest
     container_name: skillsync-config
+    deploy:
+      resources:
+        limits:
+          memory: 384M
     env_file: .env
     depends_on:
       eureka-server:
@@ -207,8 +243,12 @@ services:
   # ======================== API GATEWAY =======================
 
   api-gateway:
-    build: ./api-gateway
+    image: ${DOCKERHUB_USERNAME}/api-gateway:latest
     container_name: skillsync-gateway
+    deploy:
+      resources:
+        limits:
+          memory: 384M
     env_file: .env
     ports:
       - "8080:8080"   # API Gateway — main entry point for Postman
@@ -230,10 +270,12 @@ services:
   # ======================== MICROSERVICES =====================
 
   auth-service:
-    build: 
-      context: .
-      dockerfile: auth-service/Dockerfile
+    image: ${DOCKERHUB_USERNAME}/auth-service:latest
     container_name: skillsync-auth
+    deploy:
+      resources:
+        limits:
+          memory: 448M
     env_file: .env
     environment:
       DB_NAME: skillsync_auth
@@ -249,10 +291,12 @@ services:
     restart: unless-stopped
 
   user-service:
-    build: 
-      context: .
-      dockerfile: user-service/Dockerfile
+    image: ${DOCKERHUB_USERNAME}/user-service:latest
     container_name: skillsync-user
+    deploy:
+      resources:
+        limits:
+          memory: 448M
     env_file: .env
     environment:
       DB_NAME: skillsync_user
@@ -272,10 +316,12 @@ services:
     restart: unless-stopped
 
   skill-service:
-    build: 
-      context: .
-      dockerfile: skill-service/Dockerfile
+    image: ${DOCKERHUB_USERNAME}/skill-service:latest
     container_name: skillsync-skill
+    deploy:
+      resources:
+        limits:
+          memory: 448M
     env_file: .env
     environment:
       DB_NAME: skillsync_skill
@@ -295,10 +341,12 @@ services:
     restart: unless-stopped
 
   session-service:
-    build: 
-      context: .
-      dockerfile: session-service/Dockerfile
+    image: ${DOCKERHUB_USERNAME}/session-service:latest
     container_name: skillsync-session
+    deploy:
+      resources:
+        limits:
+          memory: 448M
     env_file: .env
     environment:
       DB_NAME: skillsync_session
@@ -323,10 +371,12 @@ services:
   # review-service: MERGED into session-service
 
   notification-service:
-    build: 
-      context: .
-      dockerfile: notification-service/Dockerfile
+    image: ${DOCKERHUB_USERNAME}/notification-service:latest
     container_name: skillsync-notification
+    deploy:
+      resources:
+        limits:
+          memory: 448M
     env_file: .env
     environment:
       DB_NAME: skillsync_notification
@@ -346,10 +396,12 @@ services:
     restart: unless-stopped
 
   payment-service:
-    build: 
-      context: .
-      dockerfile: payment-service/Dockerfile
+    image: ${DOCKERHUB_USERNAME}/payment-service:latest
     container_name: skillsync-payment
+    deploy:
+      resources:
+        limits:
+          memory: 448M
     env_file: .env
     environment:
       DB_NAME: skillsync_payment
@@ -371,10 +423,12 @@ services:
   # ======================== FRONTEND ==========================
 
   frontend:
-    build: 
-      context: ../Frontend
-      dockerfile: Dockerfile
+    image: ${DOCKERHUB_USERNAME}/frontend:latest
     container_name: skillsync-frontend
+    deploy:
+      resources:
+        limits:
+          memory: 128M
     networks:
       - skillsync-net
     restart: unless-stopped
@@ -387,6 +441,10 @@ services:
   nginx:
     image: nginx:1.25-alpine
     container_name: skillsync-nginx
+    deploy:
+      resources:
+        limits:
+          memory: 64M
     ports:
       - "80:80"
     volumes:

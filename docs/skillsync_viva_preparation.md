@@ -20,7 +20,8 @@
 12. [End-to-End Flow](#12-end-to-end-flow)
 13. [Key Design Decisions](#13-key-design-decisions)
 14. [Viva Q&A](#14-viva-qa)
-15. [CQRS + Redis Q&A](#15-cqrs--redis-qa)
+15. [CQRS + Redis (Cache Details)](#15-cqrs--redis-cache-details)
+16. [Frontend & React Q&A](#16-frontend--react-qa)
 
 ---
 
@@ -483,31 +484,83 @@ A: Four reasons:
 
 ---
 
-## 15. CQRS + Redis Q&A
+## 15. CQRS + Redis (Cache Details)
 
-**Q: What is CQRS?** A: Command Query Responsibility Segregation. Separates write operations (CommandService) from read operations (QueryService) into distinct classes for independent optimization.
+### 🧩 Why CQRS?
+**Command Query Responsibility Segregation** separates operations that **change state** (Commands) from those that **read state** (Queries).
+- **Command side**: Optimizes for write performance, consistency, and execution of business logic (PostgreSQL).
+- **Query side**: Optimizes for read performance using indexed searches and aggressive Redis caching.
+- **Benefit**: SkillSync is read-heavy (~80:20 ratio). CQRS allows us to scale the Query side independently and apply complex caching logic without complicating the write logic.
 
-**Q: Why CQRS?** A: SkillSync is read-heavy (~80% reads). CQRS lets us cache reads aggressively via Redis without affecting write consistency. Each side can be scaled and optimized independently.
+### 🏢 The 3 Cache Layers
 
-**Q: What is Redis used for?** A: Redis is a distributed in-memory cache. We use the Cache-Aside pattern: QueryService checks Redis first, falls back to PostgreSQL on miss, then stores the result in Redis.
+| Layer | Type | Implementation | Purpose |
+|-------|------|----------------|---------|
+| **L1** | **In-Memory Application** | `ConcurrentHashMap` + `ReentrantLock` | **Stampede Protection**: Prevents multiple threads from hitting the DB at once for the same missing key. |
+| **L2** | **Distributed Cache** | **Redis 7.2** (In-Memory) | **Global Shared Cache**: High-speed data sharing across all microservice instances. |
+| **L3** | **Persistence** | **PostgreSQL** | **Source of Truth**: Used as fallback during a cache miss or if Redis is unavailable. |
 
-**Q: Why Redis over in-process cache (Caffeine)?** A: In-process cache isn't shared across service replicas. With multiple instances behind a load balancer, each would have a different cache. Redis provides a single shared cache.
+### 🛠️ How we use Caching — Scenarios
 
-**Q: What happens if Redis goes down?** A: Graceful degradation. The CacheService wraps all Redis calls in try-catch. On failure, reads fall back to PostgreSQL. Zero data loss because PostgreSQL is the source of truth.
+1.  **Cache-Aside (Lazy Loading)**:
+    - `QueryService.getOrLoad()`: Application checks Redis → (miss?) → gets from PostgreSQL → updates Redis → returns.
+2.  **Explicit Invalidation (Write-through Eviction)**:
+    - `CommandService.save/delete()`: Main operation updates PostgreSQL → `cacheService.evict(key)` or `evictByPattern(pattern)`.
+3.  **Cross-Service Cache Sync (Event-Driven)**:
+    - **Scenario**: A review is submitted in `Session Service`.
+    - **Sync**: `Session Service` publishes `review.submitted` event → `User Service` consumes it → updates Mentor's `avgRating` in DB → **evicts** Mentor's profile from Redis. This ensures the profile reflects the latest rating immediately across services.
 
-**Q: How does cache invalidation work?** A: CommandService evicts relevant Redis keys after every write (INSERT/UPDATE/DELETE). For cross-service invalidation, we use RabbitMQ events (e.g., `review.submitted` triggers mentor cache eviction in User Service).
+### 🛡️ Cache Safety Strategies
 
-**Q: What TTLs do you use?** A: Domain-specific — Skills: 1 hour (rarely change), Sessions: 5 min (state changes frequently), Notifications: 2 min (high poll rate), Users: 10 min (moderate updates).
-
-**Q: Why not cache Auth Service?** A: Security. Passwords, OTPs, JWT tokens, and refresh tokens must never be stored in a shared cache. Auth queries are simple PK lookups and are already fast.
-
-**Q: Cache-Aside vs Write-Through?** A: Cache-Aside gives us explicit control. Write-Through adds latency to every write. Since reads vastly outnumber writes, Cache-Aside is the right choice.
-
-**Q: How do you test caching?** A: Unit tests mock CacheService to verify hit/miss/invalidation. Integration tests use Redis Testcontainers to test the full cache lifecycle (miss → populate → hit → invalidate → miss).
+| Strategy | Purpose | Implementation |
+|----------|---------|----------------|
+| **Stampede Protection** | Avoids overwhelming DB on popular key expiration | `ReentrantLock` in `CacheService` blocks redundant DB hits. |
+| **Penetration Protection** | Avoids DB hits for non-existent keys (e.g., searching for missing ID) | **Null Sentinel**: Caches a `__NULL__` string for 60 seconds. |
+| **Stampede/Penetration Combo** | `getOrLoad` combined logic | Ensures only 1 thread loads and non-existent IDs are also stopped. |
+| **Key Versioning** | Avoids "poisoning" cache during schema updates | Prefixing all keys with `v1:` (e.g., `v1:user:profile:100`). |
+| **Graceful Degradation** | Prevents service crash if Redis fails | Try-catch blocks wrap all Redis operations; fallback to DB. |
 
 ---
 
-## 16. Frontend & React Q&A
+## 16. CQRS + Redis Q&A (Viva Questions)
+
+**Q: What is the main reason for using Redis in SkillSync?**  
+A: To reduce database load and latency for read-heavy operations like viewing mentor profiles, fetching skills, and getting recent notifications.
+
+**Q: Explain the "Cache-Aside" pattern.**  
+A: It means the *application* is responsible for reading/writing the cache. The app first tries to read from the cache; if it misses, it reads from the DB and manually updates the cache for future requests.
+
+**Q: What happens if 1000 users request a mentor profile at the exact moment the cache expires?**  
+A: This is called a **Cache Stampede**. We handle this using **Stampede Protection** (locking) in `CacheService`. Only the first request is allowed to hit the DB; others wait for the lock and then read from the newly refreshed cache.
+
+**Q: How do you prevent hitting the DB repeatedly for a Skill ID that doesn't exist?**  
+A: This is **Cache Penetration**. We handle it using a **Null Sentinel**. If the DB returns null, we store a special string (`__NULL__`) in Redis with a short TTL. Subsequent requests for that non-existent ID read the sentinel from the cache instead of hitting the DB.
+
+**Q: Why not use Hibernate L1/L2 cache instead of a custom Redis wrapper?**  
+A: Hibernate cache is limited to a single JVM. In a microservices environment, we need a **distributed cache** (Redis) that is shared across all instances to maintain consistency.
+
+**Q: How do you handle cache consistency when data changes?**  
+A: We use **Eventual Consistency** with **Explicit Eviction**. Every command (Write) explicitly calls `evict()` in the same transaction or immediately after. For cross-service changes (like ratings), we use **RabbitMQ events** to trigger evictions in other services.
+
+**Q: Why use `SCAN` instead of `KEYS` to find keys to delete?**  
+A: The `KEYS` command is blocking and can freeze Redis in production. `SCAN` is an iterative, non-blocking command that allows us to find and delete keys without affecting performance.
+
+**Q: What is a "Versioned Key"?**  
+A: We prefix keys with `v1:`. If we change the DTO structure in a new deployment, we can update the prefix to `v2:`. This prevents the new code from reading incompatible data cached by the old version.
+
+**Q: Is Redis used for session management or just data caching?**  
+A: In SkillSync, it's used for **data caching** (Profiles, Skills, etc.) and potentially for **rate limiting** or **OTP storage** (though OTPs are in Postgres for durability in this current version). Session info is in Postgres for persistence.
+
+**Q: Can you explain the TTL (Time-To-Live) strategy you chose?**  
+A: We use **layered TTLs** based on data volatility:
+- **Skills**: 1 hour (rarely changes).
+- **Mentor Profiles**: 10 mins (changes occasionally).
+- **Session Status**: 5 mins (high frequency updates).
+- **Null Sentinels**: 1 min (short duration to prevent abuse).
+
+---
+
+## 17. Frontend & React Q&A
 
 **Q: Why React 18 instead of Angular/Vue?** A: React offers a massive ecosystem, concurrent rendering features, and integrates perfectly with our chosen stack (TypeScript, Redux Toolkit, TanStack Query). The component-based atomic design suits our complex dashboards well.
 

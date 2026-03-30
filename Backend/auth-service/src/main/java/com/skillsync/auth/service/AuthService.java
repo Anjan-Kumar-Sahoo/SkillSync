@@ -172,10 +172,10 @@ public class AuthService {
             log.info("OAuth new user created: {} via {}", user.getEmail(), request.provider());
         } else {
             // === EXISTING USER ===
-            // Block unverified local users from hijacking via OAuth
+            // Mark user as verified if they weren't already (OAuth provider has verified the email)
             if (!user.isVerified()) {
-                log.warn("OAuth login blocked for unverified user: {}", user.getEmail());
-                throw new RuntimeException("Account exists but email is not verified. Please verify your email first.");
+                user.setVerified(true);
+                log.info("OAuth login verified previously unverified user: {}", user.getEmail());
             }
 
             // Link OAuth provider if user existed but was local-only

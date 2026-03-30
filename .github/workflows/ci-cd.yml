@@ -36,7 +36,7 @@ jobs:
           cache: maven
 
       - name: Build & Install skillsync-cache-common
-        working-directory: ./skillsync-cache-common
+        working-directory: ./Backend/skillsync-cache-common
         run: mvn clean install -DskipTests -B
 
       - name: Upload cache-common artifact
@@ -82,11 +82,11 @@ jobs:
           path: ~/.m2/repository/com/skillsync/skillsync-cache-common/
 
       - name: Build ${{ matrix.service }}
-        working-directory: ./${{ matrix.service }}
+        working-directory: ./Backend/${{ matrix.service }}
         run: mvn clean package -DskipTests -B
 
       - name: Run Unit Tests - ${{ matrix.service }}
-        working-directory: ./${{ matrix.service }}
+        working-directory: ./Backend/${{ matrix.service }}
         run: mvn test -B
         # FAIL pipeline on test failure (no continue-on-error)
 
@@ -95,14 +95,14 @@ jobs:
         if: always()
         with:
           name: test-results-${{ matrix.service }}
-          path: ./${{ matrix.service }}/target/surefire-reports/
+          path: ./Backend/${{ matrix.service }}/target/surefire-reports/
           retention-days: 7
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.service }}-jar
-          path: ./${{ matrix.service }}/target/*.jar
+          path: ./Backend/${{ matrix.service }}/target/*.jar
           retention-days: 1
 
   # ======================== CODE QUALITY (SonarQube) ===========
@@ -151,29 +151,34 @@ jobs:
       matrix:
         include:
           - service: eureka-server
-            context: ./eureka-server
-            dockerfile: ./eureka-server/Dockerfile
+            context: ./Backend/eureka-server
+            dockerfile: ./Backend/eureka-server/Dockerfile
           - service: config-server
-            context: ./config-server
-            dockerfile: ./config-server/Dockerfile
+            context: ./Backend/config-server
+            dockerfile: ./Backend/config-server/Dockerfile
           - service: api-gateway
-            context: ./api-gateway
-            dockerfile: ./api-gateway/Dockerfile
+            context: ./Backend/api-gateway
+            dockerfile: ./Backend/api-gateway/Dockerfile
           - service: auth-service
-            context: ./auth-service
-            dockerfile: ./auth-service/Dockerfile
+            context: ./Backend
+            dockerfile: ./Backend/auth-service/Dockerfile
           - service: user-service
-            context: .
-            dockerfile: ./user-service/Dockerfile
+            context: ./Backend
+            dockerfile: ./Backend/user-service/Dockerfile
           - service: skill-service
-            context: .
-            dockerfile: ./skill-service/Dockerfile
+            context: ./Backend
+            dockerfile: ./Backend/skill-service/Dockerfile
           - service: session-service
-            context: .
-            dockerfile: ./session-service/Dockerfile
+            context: ./Backend
+            dockerfile: ./Backend/session-service/Dockerfile
           - service: notification-service
-            context: .
-            dockerfile: ./notification-service/Dockerfile
+            context: ./Backend
+            dockerfile: ./Backend/notification-service/Dockerfile
+          - service: frontend
+            context: ./Frontend
+            dockerfile: ./Frontend/Dockerfile
+            build_args: |
+              VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
 
     steps:
       - name: Checkout code
@@ -188,22 +193,22 @@ jobs:
           VERSION=$(date +%Y%m%d)-${GITHUB_SHA::7}
           echo "tag=${VERSION}" >> $GITHUB_OUTPUT
 
-      # Uncomment to push images to Docker Hub:
-      # - name: Login to Docker Hub
-      #   uses: docker/login-action@v3
-      #   with:
-      #     username: ${{ secrets.DOCKER_USERNAME }}
-      #     password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build Docker image - ${{ matrix.service }}
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
-          push: false  # Set to true + uncomment login above to push
+          push: ${{ github.ref == 'refs/heads/main' }}  # Only push on main
           tags: |
-            skillsync/${{ matrix.service }}:latest
-            skillsync/${{ matrix.service }}:${{ steps.version.outputs.tag }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.service }}:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.service }}:${{ steps.version.outputs.tag }}
+          build-args: ${{ matrix.build_args }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -221,4 +226,91 @@ jobs:
         run: cp .env.example .env
 
       - name: Validate docker-compose.yml
+        working-directory: ./Backend
         run: docker compose config --quiet
+
+  # ======================== CODE QUALITY (SonarCloud) ===========
+  code-quality:
+    name: Code Quality - ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - auth-service
+          - user-service
+          - skill-service
+          - session-service
+          - notification-service
+          - payment-service
+          - api-gateway
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Download cache-common
+        uses: actions/download-artifact@v4
+        with:
+          name: cache-common-jar
+          path: ~/.m2/repository/com/skillsync/skillsync-cache-common/
+
+      - name: SonarCloud Scan - ${{ matrix.service }}
+        working-directory: ./Backend/${{ matrix.service }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          mvn -B verify sonar:sonar \
+            -Dsonar.projectKey=SkillSync_${{ matrix.service }} \
+            -Dsonar.organization=skillsync-github \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+
+  # ======================== DEPLOY TO EC2 =====================
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    needs: [docker, validate-compose, code-quality]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Copy docker-compose and nginx config
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "Backend/docker-compose.yml,Backend/nginx/nginx.conf,Backend/.env.example,Backend/init-databases.sql,Backend/monitoring/**"
+          target: "~/SkillSync"
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/SkillSync/Backend
+            # Create .env if it doesn't exist
+            if [ ! -f .env ]; then cp .env.example .env; fi
+            # Pull latest images
+            docker compose pull
+            # Start/Update containers
+            docker compose up -d --remove-orphans
+            # Cleanup old images
+            docker image prune -f

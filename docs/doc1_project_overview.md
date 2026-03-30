@@ -303,7 +303,6 @@ State Machine:
 │  ┌─────────────────────────────────────────────────────────────────┐    │
 │  │  Cache-Aside Pattern: QueryService → Redis → PostgreSQL         │    │
 │  │  CommandService → PostgreSQL write → Redis invalidation         │    │
-│  │  TTLs: Skills 1h | Sessions 5m | Notifications 2m | Users 10m  │    │
 │  └─────────────────────────────────────────────────────────────────┘    │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘

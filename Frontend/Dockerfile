@@ -8,6 +8,11 @@ RUN npm ci
 
 # Copy the rest of the code and build
 COPY . .
+
+# Accept the Google Client ID build var from docker-compose
+ARG VITE_GOOGLE_CLIENT_ID
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
+
 RUN npm run build
 
 # Serve Stage
