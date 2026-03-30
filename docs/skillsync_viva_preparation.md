@@ -70,8 +70,9 @@ Use the **dropdown at the top-right** to switch between services:
  9. User Service      → PUT /api/users/me (+ Authorization: Bearer <token>)
 10. User Service      → POST /api/users/me/skills
 11. User Service      → POST /api/mentors/apply
-12. Payment Service   → POST /api/payments/create-order (Pay MENTOR_FEE)
-13. Payment Service   → POST /api/payments/verify (Verifies → publishes event → User Service approves mentor)
+12. Session Service   → POST /api/sessions (book session)
+13. Payment Service   → POST /api/payments/create-order (Pay SESSION_BOOKING)
+14. Payment Service   → POST /api/payments/verify (Verifies → publishes event)
 14. User Service      → POST /api/mentors/me/availability
 15. Session Service   → POST /api/sessions
 16. Session Service   → PUT /api/sessions/1/accept

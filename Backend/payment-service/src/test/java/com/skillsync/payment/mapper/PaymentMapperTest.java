@@ -23,13 +23,13 @@ class PaymentMapperTest {
         LocalDateTime now = LocalDateTime.now();
         Payment payment = Payment.builder()
                 .id(1L).userId(100L)
-                .type(PaymentType.MENTOR_FEE)
+                .type(PaymentType.SESSION_BOOKING)
                 .amount(900)
                 .razorpayOrderId("order_123")
                 .razorpayPaymentId("pay_456")
                 .status(PaymentStatus.SUCCESS)
                 .referenceId(10L)
-                .referenceType(ReferenceType.MENTOR_ONBOARDING)
+                .referenceType(ReferenceType.SESSION_BOOKING)
                 .createdAt(now)
                 .completedAt(now.plusMinutes(1))
                 .build();
@@ -38,13 +38,13 @@ class PaymentMapperTest {
 
         assertEquals(1L, response.id());
         assertEquals(100L, response.userId());
-        assertEquals("MENTOR_FEE", response.type());
+        assertEquals("SESSION_BOOKING", response.type());
         assertEquals(900, response.amount());
         assertEquals("order_123", response.razorpayOrderId());
         assertEquals("pay_456", response.razorpayPaymentId());
         assertEquals("SUCCESS", response.status());
         assertEquals(10L, response.referenceId());
-        assertEquals("MENTOR_ONBOARDING", response.referenceType());
+        assertEquals("SESSION_BOOKING", response.referenceType());
         assertNull(response.compensationReason());
         assertEquals(now, response.createdAt());
         assertEquals(now.plusMinutes(1), response.completedAt());
@@ -72,12 +72,12 @@ class PaymentMapperTest {
     void mapPayment_compensated() {
         Payment payment = Payment.builder()
                 .id(3L).userId(300L)
-                .type(PaymentType.MENTOR_FEE)
+                .type(PaymentType.SESSION_BOOKING)
                 .amount(900)
                 .razorpayOrderId("order_789")
                 .status(PaymentStatus.COMPENSATED)
                 .referenceId(20L)
-                .referenceType(ReferenceType.MENTOR_ONBOARDING)
+                .referenceType(ReferenceType.SESSION_BOOKING)
                 .compensationReason("Business action failed: Mentor not found")
                 .completedAt(LocalDateTime.now())
                 .build();

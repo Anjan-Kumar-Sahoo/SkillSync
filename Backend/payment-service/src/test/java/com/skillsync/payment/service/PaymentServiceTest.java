@@ -36,11 +36,11 @@ class PaymentServiceTest {
     void getUserPayments_shouldReturnPayments() {
         Payment payment = Payment.builder()
                 .id(1L).userId(100L)
-                .type(PaymentType.MENTOR_FEE)
+                .type(PaymentType.SESSION_BOOKING)
                 .amount(900).status(PaymentStatus.SUCCESS)
                 .razorpayOrderId("order_123")
                 .referenceId(10L)
-                .referenceType(ReferenceType.MENTOR_ONBOARDING)
+                .referenceType(ReferenceType.SESSION_BOOKING)
                 .build();
 
         when(paymentRepository.findByUserIdOrderByCreatedAtDesc(100L))
@@ -49,7 +49,7 @@ class PaymentServiceTest {
         var result = paymentService.getUserPayments(100L);
 
         assertEquals(1, result.size());
-        assertEquals("MENTOR_FEE", result.get(0).type());
+        assertEquals("SESSION_BOOKING", result.get(0).type());
     }
 
     @Test
@@ -57,11 +57,11 @@ class PaymentServiceTest {
     void getPaymentByOrderId_validOwner_shouldReturn() {
         Payment payment = Payment.builder()
                 .id(1L).userId(100L)
-                .type(PaymentType.MENTOR_FEE).amount(900)
+                .type(PaymentType.SESSION_BOOKING).amount(900)
                 .razorpayOrderId("order_123")
                 .status(PaymentStatus.SUCCESS)
                 .referenceId(10L)
-                .referenceType(ReferenceType.MENTOR_ONBOARDING)
+                .referenceType(ReferenceType.SESSION_BOOKING)
                 .build();
 
         when(paymentRepository.findByRazorpayOrderId("order_123"))
@@ -77,10 +77,10 @@ class PaymentServiceTest {
     void getPaymentByOrderId_wrongUser_shouldThrow() {
         Payment payment = Payment.builder()
                 .id(1L).userId(100L)
-                .type(PaymentType.MENTOR_FEE).amount(900)
+                .type(PaymentType.SESSION_BOOKING).amount(900)
                 .razorpayOrderId("order_123")
                 .status(PaymentStatus.SUCCESS)
-                .referenceId(10L).referenceType(ReferenceType.MENTOR_ONBOARDING)
+                .referenceId(10L).referenceType(ReferenceType.SESSION_BOOKING)
                 .build();
 
         when(paymentRepository.findByRazorpayOrderId("order_123"))
@@ -93,18 +93,18 @@ class PaymentServiceTest {
     @Test
     @DisplayName("hasSuccessfulPayment - should return true when exists")
     void hasSuccessfulPayment_exists_shouldReturnTrue() {
-        when(paymentRepository.findByUserIdAndTypeAndStatus(100L, PaymentType.MENTOR_FEE, PaymentStatus.SUCCESS))
+        when(paymentRepository.findByUserIdAndTypeAndStatus(100L, PaymentType.SESSION_BOOKING, PaymentStatus.SUCCESS))
                 .thenReturn(List.of(Payment.builder().build()));
 
-        assertTrue(paymentService.hasSuccessfulPayment(100L, PaymentType.MENTOR_FEE));
+        assertTrue(paymentService.hasSuccessfulPayment(100L, PaymentType.SESSION_BOOKING));
     }
 
     @Test
     @DisplayName("hasSuccessfulPayment - should return false when not exists")
     void hasSuccessfulPayment_notExists_shouldReturnFalse() {
-        when(paymentRepository.findByUserIdAndTypeAndStatus(100L, PaymentType.MENTOR_FEE, PaymentStatus.SUCCESS))
+        when(paymentRepository.findByUserIdAndTypeAndStatus(100L, PaymentType.SESSION_BOOKING, PaymentStatus.SUCCESS))
                 .thenReturn(List.of());
 
-        assertFalse(paymentService.hasSuccessfulPayment(100L, PaymentType.MENTOR_FEE));
+        assertFalse(paymentService.hasSuccessfulPayment(100L, PaymentType.SESSION_BOOKING));
     }
 }

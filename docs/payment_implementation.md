@@ -46,9 +46,9 @@ Payment Service (port 8086)                               User Service (port 808
 ### Enums
 | File | Purpose |
 |------|---------|
-| [PaymentType.java](file:///f:/SkillSync/payment-service/src/main/java/com/skillsync/payment/enums/PaymentType.java) | `MENTOR_FEE`, `SESSION_BOOKING` |
+| [PaymentType.java](file:///f:/SkillSync/payment-service/src/main/java/com/skillsync/payment/enums/PaymentType.java) | `SESSION_BOOKING` |
 | [PaymentStatus.java](file:///f:/SkillSync/payment-service/src/main/java/com/skillsync/payment/enums/PaymentStatus.java) | `CREATED`, `VERIFIED`, `SUCCESS_PENDING`, `SUCCESS`, `FAILED`, `COMPENSATED` |
-| [ReferenceType.java](file:///f:/SkillSync/payment-service/src/main/java/com/skillsync/payment/enums/ReferenceType.java) | `MENTOR_ONBOARDING`, `SESSION_BOOKING` |
+| [ReferenceType.java](file:///f:/SkillSync/payment-service/src/main/java/com/skillsync/payment/enums/ReferenceType.java) | `SESSION_BOOKING` |
 
 ### Entity & Repository
 | File | Purpose |
@@ -216,7 +216,6 @@ stateDiagram-v2
 
 | Edge Case | Handling |
 |-----------|----------|
-| Duplicate mentor fee payment | Blocked at order creation — checks for existing SUCCESS payment |
 | Duplicate reference payment | Blocked — checks for active (CREATED/VERIFIED/SUCCESS_PENDING) payments on same reference |
 | Duplicate verification request | Idempotent — returns existing state for SUCCESS/COMPENSATED/SUCCESS_PENDING |
 | Invalid signature | Marks FAILED, publishes payment.failed event, returns `SIGNATURE_INVALID` |

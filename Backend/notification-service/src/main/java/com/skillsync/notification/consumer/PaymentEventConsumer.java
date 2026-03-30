@@ -87,8 +87,6 @@ public class PaymentEventConsumer {
 
     private String buildSuccessMessage(String paymentType, String orderId) {
         return switch (paymentType) {
-            case "MENTOR_FEE" -> "Your mentor onboarding fee has been processed successfully. " +
-                    "Your mentor profile is now active! (Order: " + orderId + ")";
             case "SESSION_BOOKING" -> "Your session booking payment was successful. " +
                     "You can now proceed with your session. (Order: " + orderId + ")";
             default -> "Your payment of ₹9 was successful. (Order: " + orderId + ")";
@@ -97,7 +95,6 @@ public class PaymentEventConsumer {
 
     private String buildFailedMessage(String paymentType, String orderId, String reason) {
         String base = switch (paymentType) {
-            case "MENTOR_FEE" -> "Your mentor onboarding fee payment could not be verified.";
             case "SESSION_BOOKING" -> "Your session booking payment could not be verified.";
             default -> "Your payment could not be verified.";
         };
@@ -106,8 +103,6 @@ public class PaymentEventConsumer {
 
     private String buildCompensatedMessage(String paymentType, String orderId, String reason) {
         String base = switch (paymentType) {
-            case "MENTOR_FEE" -> "Your mentor onboarding payment was received, but we encountered " +
-                    "an issue processing your mentor activation.";
             case "SESSION_BOOKING" -> "Your session booking payment was received, but we encountered " +
                     "an issue completing your booking.";
             default -> "Your payment was received, but a processing issue occurred.";

@@ -669,9 +669,9 @@ curl -X POST http://localhost:8080/api/payments/create-order \
   -H "Authorization: Bearer <LEARNER_ACCESS_TOKEN>" \
   -H "X-User-Id: 2" \
   -d '{
-    "type": "MENTOR_FEE",
+    "type": "SESSION_BOOKING",
     "referenceId": 1,
-    "referenceType": "MENTOR_ONBOARDING"
+    "referenceType": "SESSION_BOOKING"
   }'
 ```
 
@@ -712,7 +712,7 @@ curl http://localhost:8080/api/payments/my-payments \
 
 #### Check Payment Status (inter-service)
 ```bash
-curl "http://localhost:8080/api/payments/check?type=MENTOR_FEE" \
+curl "http://localhost:8080/api/payments/check?type=SESSION_BOOKING" \
   -H "X-User-Id: 2"
 ```
 
@@ -733,9 +733,9 @@ Follow this order for the complete happy path:
  7. Create 4 skills (Java, Spring Boot, React, Python)
  8. Update learner profile + add skills
  9. Mentor applies (POST /api/mentors/apply)
-10. >>> PAY MENTOR FEE (POST /api/payments/create-order with type=MENTOR_FEE) — now served by Payment Service
-11. >>> VERIFY PAYMENT (POST /api/payments/verify -- publishes event → User Service approves mentor)
-12. OR: Admin approves mentor (PUT /api/mentors/1/approve)
+10. Admin approves mentor (PUT /api/mentors/1/approve)
+11. (Optional) Book a session and pay for SESSION_BOOKING via Payment Service
+12. >>> VERIFY PAYMENT (POST /api/payments/verify -- publishes event)
 13. Login mentor again (to get updated ROLE_MENTOR token)
 14. Add mentor availability
 15. Learner books session with mentor

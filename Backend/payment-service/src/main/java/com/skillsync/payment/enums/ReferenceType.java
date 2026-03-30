@@ -6,9 +6,6 @@ package com.skillsync.payment.enums;
  */
 public enum ReferenceType {
 
-    /** Payment for mentor onboarding fee — referenceId = mentorProfileId */
-    MENTOR_ONBOARDING,
-
     /** Payment for booking a session — referenceId = sessionRequestId or mentorId */
     SESSION_BOOKING
 }

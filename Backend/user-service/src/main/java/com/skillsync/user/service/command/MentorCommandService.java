@@ -47,7 +47,7 @@ public class MentorCommandService {
                 .experienceYears(request.experienceYears())
                 .hourlyRate(request.hourlyRate())
                 .avgRating(0.0).totalReviews(0).totalSessions(0)
-                .status(MentorStatus.PENDING)
+                .status(MentorStatus.APPROVED)
                 .skills(new ArrayList<>()).slots(new ArrayList<>())
                 .build();
 
@@ -60,8 +60,18 @@ public class MentorCommandService {
         }
         profile = mentorProfileRepository.save(profile);
 
+        try {
+            authServiceClient.updateUserRole(profile.getUserId(), "ROLE_MENTOR");
+        } catch (Exception e) {
+            log.error("Failed to update role for userId: {}", profile.getUserId(), e);
+        }
+
+        rabbitTemplate.convertAndSend(RabbitMQConfig.MENTOR_EXCHANGE, "mentor.approved",
+                new MentorApprovedEvent(profile.getId(), profile.getUserId(), null));
+
         cacheService.evictByPattern(CacheService.vKey("user:mentor:pending:*"));
-        log.info("[CQRS:COMMAND] Mentor application submitted for userId: {}. Cache invalidated.", userId);
+        invalidateMentorCaches(profile.getId(), profile.getUserId());
+        log.info("[CQRS:COMMAND] Mentor application auto-approved for userId: {}. Cache invalidated.", userId);
         return MentorMapper.toResponse(profile);
     }
 
@@ -103,31 +113,7 @@ public class MentorCommandService {
         log.info("[CQRS:COMMAND] Mentor {} rejected. Cache invalidated.", mentorId);
     }
 
-    @Transactional
-    public void revertMentorApproval(Long mentorId) {
-        MentorProfile profile = mentorProfileRepository.findById(mentorId)
-                .orElseThrow(() -> new RuntimeException("Mentor not found for revert: " + mentorId));
 
-        if (profile.getStatus() != MentorStatus.APPROVED) {
-            log.warn("Mentor {} is not in APPROVED status (current: {}), skipping revert",
-                    mentorId, profile.getStatus());
-            return;
-        }
-
-        profile.setStatus(MentorStatus.PENDING);
-        mentorProfileRepository.save(profile);
-
-        try {
-            authServiceClient.updateUserRole(profile.getUserId(), "ROLE_USER");
-            log.info("Role reverted to ROLE_USER for userId: {}", profile.getUserId());
-        } catch (Exception e) {
-            log.error("Failed to revert role for userId: {} during compensation", profile.getUserId(), e);
-        }
-
-        // Invalidate caches on compensation
-        invalidateMentorCaches(mentorId, profile.getUserId());
-        log.info("[CQRS:COMMAND] Mentor {} approval reverted (compensation). Cache invalidated.", mentorId);
-    }
 
     @Transactional
     public AvailabilitySlotResponse addAvailability(Long userId, AvailabilitySlotRequest request) {

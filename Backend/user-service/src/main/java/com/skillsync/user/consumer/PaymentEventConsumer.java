@@ -2,7 +2,6 @@ package com.skillsync.user.consumer;
 
 import com.skillsync.user.entity.ProcessedEvent;
 import com.skillsync.user.repository.ProcessedEventRepository;
-import com.skillsync.user.service.command.MentorCommandService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -31,7 +30,6 @@ import java.util.Map;
 @Slf4j
 public class PaymentEventConsumer {
 
-    private final MentorCommandService mentorCommandService;
     private final ProcessedEventRepository processedEventRepository;
 
     @RabbitListener(queues = "payment.business.action.v1.queue")
@@ -54,7 +52,6 @@ public class PaymentEventConsumer {
 
         // ── Process Business Action ──
         switch (paymentType) {
-            case "MENTOR_FEE" -> executeMentorOnboarding(referenceId, userId);
             case "SESSION_BOOKING" -> executeSessionBooking(referenceId, userId);
             default -> log.warn("[PAYMENT-CONSUMER] Unknown payment type: {}", paymentType);
         }
@@ -72,20 +69,7 @@ public class PaymentEventConsumer {
                 eventId, orderId);
     }
 
-    private void executeMentorOnboarding(Long referenceId, Long userId) {
-        log.info("[PAYMENT-CONSUMER:MENTOR] Triggering mentor onboarding for userId={}, referenceId={}",
-                userId, referenceId);
 
-        if (referenceId == null) {
-            log.error("[PAYMENT-CONSUMER:MENTOR] referenceId (mentorProfileId) is null for userId={}", userId);
-            return;
-        }
-
-        mentorCommandService.approveMentor(referenceId);
-
-        log.info("[PAYMENT-CONSUMER:MENTOR] Mentor onboarding completed: mentorId={}, userId={}",
-                referenceId, userId);
-    }
 
     private void executeSessionBooking(Long referenceId, Long userId) {
         log.info("[PAYMENT-CONSUMER:SESSION] Session booking payment processed for userId={}, referenceId={}",

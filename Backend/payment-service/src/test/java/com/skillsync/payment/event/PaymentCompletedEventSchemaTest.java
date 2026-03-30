@@ -27,11 +27,11 @@ class PaymentCompletedEventSchemaTest {
                     "timestamp": "2026-03-27T10:00:00",
                     "userId": 42,
                     "orderId": "order_test_123",
-                    "paymentType": "MENTOR_FEE",
+                    "paymentType": "SESSION_BOOKING",
                     "status": "SUCCESS",
                     "amount": 900,
                     "referenceId": 10,
-                    "referenceType": "MENTOR_ONBOARDING",
+                    "referenceType": "SESSION_BOOKING",
                     "currency": "INR",
                     "unknownFutureField": "should be ignored"
                 }
@@ -56,7 +56,7 @@ class PaymentCompletedEventSchemaTest {
                     "version": "1",
                     "userId": 42,
                     "orderId": "order_min",
-                    "paymentType": "MENTOR_FEE",
+                    "paymentType": "SESSION_BOOKING",
                     "status": "SUCCESS",
                     "amount": 900
                 }
@@ -76,8 +76,8 @@ class PaymentCompletedEventSchemaTest {
     void roundtrip_preservesFields() throws Exception {
         PaymentCompletedEvent original = new PaymentCompletedEvent(
                 "rt-001", "1", "2026-03-27T10:00:00",
-                42L, "order_rt", "MENTOR_FEE", "SUCCESS",
-                900, 10L, "MENTOR_ONBOARDING", null
+                42L, "order_rt", "SESSION_BOOKING", "SUCCESS",
+                900, 10L, "SESSION_BOOKING", null
         );
 
         String json = mapper.writeValueAsString(original);

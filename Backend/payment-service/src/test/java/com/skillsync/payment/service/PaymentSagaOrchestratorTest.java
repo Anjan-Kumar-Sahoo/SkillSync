@@ -52,13 +52,13 @@ class PaymentSagaOrchestratorTest {
         verifiedPayment = Payment.builder()
                 .id(1L)
                 .userId(42L)
-                .type(PaymentType.MENTOR_FEE)
+                .type(PaymentType.SESSION_BOOKING)
                 .amount(900)
                 .razorpayOrderId("order_test_123")
                 .razorpayPaymentId("pay_test_456")
                 .status(PaymentStatus.VERIFIED)
                 .referenceId(10L)
-                .referenceType(ReferenceType.MENTOR_ONBOARDING)
+                .referenceType(ReferenceType.SESSION_BOOKING)
                 .build();
     }
 

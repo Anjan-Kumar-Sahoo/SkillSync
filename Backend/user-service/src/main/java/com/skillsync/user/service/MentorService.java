@@ -47,7 +47,7 @@ public class MentorService {
                 .avgRating(0.0)
                 .totalReviews(0)
                 .totalSessions(0)
-                .status(MentorStatus.PENDING)
+                .status(MentorStatus.APPROVED)
                 .skills(new ArrayList<>())
                 .slots(new ArrayList<>())
                 .build();
@@ -64,7 +64,16 @@ public class MentorService {
         }
         profile = mentorProfileRepository.save(profile);
 
-        log.info("Mentor application submitted for userId: {}", userId);
+        try {
+            authServiceClient.updateUserRole(profile.getUserId(), "ROLE_MENTOR");
+        } catch (Exception e) {
+            log.error("Failed to update role for userId: {}", profile.getUserId(), e);
+        }
+
+        rabbitTemplate.convertAndSend(RabbitMQConfig.MENTOR_EXCHANGE, "mentor.approved",
+                new MentorApprovedEvent(profile.getId(), profile.getUserId(), null));
+
+        log.info("Mentor application auto-approved for userId: {}", userId);
         return mapToResponse(profile);
     }
 
@@ -127,42 +136,7 @@ public class MentorService {
         log.info("Mentor {} rejected", mentorId);
     }
 
-    /**
-     * Compensation method: revert a previously approved mentor back to PENDING.
-     * Used by {@link PaymentSagaOrchestrator} when post-payment business action fails.
-     *
-     * <p>This reverses:</p>
-     * <ul>
-     *   <li>Mentor status: APPROVED → PENDING</li>
-     *   <li>User role: ROLE_MENTOR → ROLE_USER (via auth-service)</li>
-     * </ul>
-     */
-    @Transactional
-    public void revertMentorApproval(Long mentorId) {
-        MentorProfile profile = mentorProfileRepository.findById(mentorId)
-                .orElseThrow(() -> new RuntimeException("Mentor not found for revert: " + mentorId));
 
-        if (profile.getStatus() != MentorStatus.APPROVED) {
-            log.warn("Mentor {} is not in APPROVED status (current: {}), skipping revert",
-                    mentorId, profile.getStatus());
-            return;
-        }
-
-        // Revert mentor status
-        profile.setStatus(MentorStatus.PENDING);
-        mentorProfileRepository.save(profile);
-
-        // Revert user role in Auth Service
-        try {
-            authServiceClient.updateUserRole(profile.getUserId(), "ROLE_USER");
-            log.info("Role reverted to ROLE_USER for userId: {}", profile.getUserId());
-        } catch (Exception e) {
-            log.error("Failed to revert role for userId: {} during compensation", profile.getUserId(), e);
-            // Don't throw — the mentor status is already reverted, role revert is best-effort
-        }
-
-        log.info("Mentor {} approval reverted (compensation)", mentorId);
-    }
 
     @Transactional
     public AvailabilitySlotResponse addAvailability(Long userId, AvailabilitySlotRequest request) {

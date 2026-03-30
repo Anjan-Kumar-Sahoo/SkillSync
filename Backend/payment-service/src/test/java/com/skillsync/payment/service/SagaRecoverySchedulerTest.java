@@ -75,10 +75,10 @@ class SagaRecoverySchedulerTest {
                 .build();
 
         Payment payment = Payment.builder()
-                .id(10L).userId(42L).type(PaymentType.MENTOR_FEE)
+                .id(10L).userId(42L).type(PaymentType.SESSION_BOOKING)
                 .amount(900).razorpayOrderId("order_123")
                 .status(PaymentStatus.SUCCESS_PENDING)
-                .referenceId(5L).referenceType(ReferenceType.MENTOR_ONBOARDING)
+                .referenceId(5L).referenceType(ReferenceType.SESSION_BOOKING)
                 .build();
 
         when(sagaStateRepository.findStaleSagas(eq(PaymentStatus.SUCCESS_PENDING), any()))
@@ -103,10 +103,10 @@ class SagaRecoverySchedulerTest {
                 .build();
 
         Payment payment = Payment.builder()
-                .id(10L).userId(42L).type(PaymentType.MENTOR_FEE)
+                .id(10L).userId(42L).type(PaymentType.SESSION_BOOKING)
                 .amount(900).razorpayOrderId("order_123")
                 .status(PaymentStatus.SUCCESS_PENDING)
-                .referenceId(5L).referenceType(ReferenceType.MENTOR_ONBOARDING)
+                .referenceId(5L).referenceType(ReferenceType.SESSION_BOOKING)
                 .build();
 
         when(sagaStateRepository.findStaleSagas(eq(PaymentStatus.SUCCESS_PENDING), any()))

@@ -22,7 +22,6 @@ graph TD
     F -->|"Mark SUCCESS_PENDING"| E
     F -->|"Publish Event"| MQ["RabbitMQ (payment.business.action)"]
     MQ -->|"Consume"| PEC["PaymentEventConsumer (user-service)"]
-    PEC -->|"MENTOR_FEE"| G["MentorCommandService.approveMentor()"]
     PEC -->|"SESSION_BOOKING"| H["Session Gate (external)"]
     
     F -->|"Success"| I["Mark SUCCESS ✅"]
