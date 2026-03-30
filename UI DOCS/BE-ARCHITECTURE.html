@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillSync Backend Architecture</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-gray-50 text-gray-800 antialiased p-4 md:p-10">
+    <div class="max-w-7xl mx-auto space-y-20">
+        
+        <!-- Hero Section -->
+        <div class="text-center space-y-6 pt-10">
+            <h1 class="text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-600 tracking-tight">SkillSync Backend Architecture</h1>
+            <p class="text-xl text-gray-500 max-w-3xl mx-auto leading-relaxed">A comprehensive, deep-dive into the highly available, fault-tolerant, and eventual consistent microservices topology of the SkillSync platform.</p>
+        </div>
+
+        <!-- System Flow Control Diagram -->
+        <section class="bg-white rounded-3xl p-6 md:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
+            <h2 class="text-3xl font-bold mb-10 text-gray-800 flex items-center border-b pb-4">
+                <span class="mr-4">🚀</span> Global Flow Control Diagram
+            </h2>
+            
+            <div class="flex flex-col items-center w-full relative space-y-4">
+                
+                <!-- Client -->
+                <div class="w-full max-w-sm bg-gradient-to-r from-gray-800 to-gray-900 text-white rounded-xl p-4 shadow-lg flex items-center justify-between border border-gray-700 z-10">
+                    <div class="font-bold text-lg">🌐 Client Application</div>
+                    <div class="text-xs bg-gray-700 px-2 py-1 rounded">React SPA</div>
+                </div>
+
+                <div class="flex flex-col items-center text-blue-500 font-bold">
+                    <span>HTTPS / REST / JSON</span>
+                    <span>↓</span>
+                </div>
+
+                <!-- API Gateway -->
+                <div class="w-full max-w-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl p-6 shadow-xl border border-blue-500 z-10 flex flex-col items-center">
+                    <div class="font-bold text-2xl mb-2 text-center">🛡️ API Gateway (Port 8080) / Nginx</div>
+                    <p class="text-blue-100 text-sm mb-4 text-center">Global entry point. Handles rate limiting, CORS, and JWT Authorization.</p>
+                    <div class="bg-blue-800/50 p-3 rounded-lg w-full text-xs font-mono">
+                        Rule: Extract `Bearer <Token>`, Validate Signature → Inject `X-User-Id` Header
+                    </div>
+                </div>
+
+                <div class="flex justify-center items-center text-blue-500 font-bold w-full my-4">
+                    <span>↓ Internal Network Routing ↓</span>
+                </div>
+
+                <!-- Services Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+                    
+                    <!-- Auth -->
+                    <div class="bg-white border-2 border-indigo-100 rounded-2xl p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden group hover:border-indigo-400 transition-colors">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-indigo-500"></div>
+                        <span class="text-4xl mb-4 mt-2">🔐</span>
+                        <h3 class="font-bold text-xl text-gray-800 mb-2">Auth Service</h3>
+                        <p class="text-sm text-gray-500 mb-4">Registration, Login, OTP Email Verification, JWT Issue/Refresh.</p>
+                        <div class="mt-auto bg-gray-50 w-full py-2 rounded-lg text-xs font-mono text-gray-500 border border-gray-200">Port 8081 | DB: skillsync_auth</div>
+                    </div>
+
+                    <!-- User -->
+                    <div class="bg-white border-2 border-green-100 rounded-2xl p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden group hover:border-green-400 transition-colors">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-green-500"></div>
+                        <span class="text-4xl mb-4 mt-2">🧑‍🏫</span>
+                        <h3 class="font-bold text-xl text-gray-800 mb-2">User Service</h3>
+                        <p class="text-sm text-gray-500 mb-4">Profile Mgmt, Mentor Applications, Mentor Approvals, Study Groups.</p>
+                        <div class="mt-auto bg-gray-50 w-full py-2 rounded-lg text-xs font-mono text-gray-500 border border-gray-200">Port 8082 | DB: skillsync_user</div>
+                    </div>
+
+                    <!-- Session -->
+                    <div class="bg-white border-2 border-purple-100 rounded-2xl p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden group hover:border-purple-400 transition-colors">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-purple-500"></div>
+                        <span class="text-4xl mb-4 mt-2">📅</span>
+                        <h3 class="font-bold text-xl text-gray-800 mb-2">Session Service</h3>
+                        <p class="text-sm text-gray-500 mb-4">Session Booking, Availability, Peer Reviews, Rating Aggregation.</p>
+                        <div class="mt-auto bg-gray-50 w-full py-2 rounded-lg text-xs font-mono text-gray-500 border border-gray-200">Port 8085 | DB: skillsync_session</div>
+                    </div>
+
+                    <!-- Payment -->
+                    <div class="bg-white border-2 border-emerald-100 rounded-2xl p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden group hover:border-emerald-400 transition-colors">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-emerald-500"></div>
+                        <span class="text-4xl mb-4 mt-2">💳</span>
+                        <h3 class="font-bold text-xl text-gray-800 mb-2">Payment Service</h3>
+                        <p class="text-sm text-gray-500 mb-4">Razorpay Orders, Verification, Saga Orchestration, Outbox Tables.</p>
+                        <div class="mt-auto bg-gray-50 w-full py-2 rounded-lg text-xs font-mono text-gray-500 border border-gray-200">Port 8086 | DB: skillsync_payment</div>
+                    </div>
+
+                    <!-- Skill -->
+                    <div class="bg-white border-2 border-amber-100 rounded-2xl p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden group hover:border-amber-400 transition-colors">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-amber-500"></div>
+                        <span class="text-4xl mb-4 mt-2">📚</span>
+                        <h3 class="font-bold text-xl text-gray-800 mb-2">Skill Service</h3>
+                        <p class="text-sm text-gray-500 mb-4">Skill Master Data, Categories, Search Autocomplete.</p>
+                        <div class="mt-auto bg-gray-50 w-full py-2 rounded-lg text-xs font-mono text-gray-500 border border-gray-200">Port 8084 | DB: skillsync_skill</div>
+                    </div>
+
+                    <!-- Notification -->
+                    <div class="bg-white border-2 border-rose-100 rounded-2xl p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden group hover:border-rose-400 transition-colors">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-rose-500"></div>
+                        <span class="text-4xl mb-4 mt-2">🔔</span>
+                        <h3 class="font-bold text-xl text-gray-800 mb-2">Notification Service</h3>
+                        <p class="text-sm text-gray-500 mb-4">Real-time alerts, Email queuing, In-app inbox management.</p>
+                        <div class="mt-auto bg-gray-50 w-full py-2 rounded-lg text-xs font-mono text-gray-500 border border-gray-200">Port 8088 | DB: skillsync_notification</div>
+                    </div>
+
+                    <!-- Observability -->
+                    <div class="bg-gray-900 border-2 border-teal-500 rounded-2xl p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden group hover:border-teal-300 transition-colors col-span-1 md:col-span-2 lg:col-span-1">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-teal-400"></div>
+                        <span class="text-4xl mb-4 mt-2">📊</span>
+                        <h3 class="font-bold text-xl text-white mb-2">Observability Services</h3>
+                        <p class="text-sm text-gray-400 mb-4">Prometheus (Metrics), Grafana (Dashboards), and Zipkin (Distributed Tracing).</p>
+                        <div class="mt-auto bg-gray-800 w-full py-2 rounded-lg text-xs font-mono text-teal-300 border border-teal-800">Ports 9090 / 3000 / 9411</div>
+                    </div>
+
+                </div>
+
+                <div class="flex flex-col items-center text-orange-500 font-bold my-4 w-full">
+                    <span>↕ Asynchronous Event Publishing / Consuming ↕</span>
+                </div>
+
+                <!-- Message Broker -->
+                <div class="w-full bg-gradient-to-r from-orange-500 to-rose-500 text-white rounded-2xl p-6 shadow-xl border border-orange-400 z-10 flex justify-between items-center text-left">
+                    <div>
+                        <div class="font-bold text-2xl mb-1">🐰 RabbitMQ Event Bus</div>
+                        <p class="text-orange-100 text-sm">Decouples domain boundaries. Exchanges route domain events (e.g., `payment.success.v1`) to specific queues. Guaranteed delivery with Dead Letter Queues (DLQ).</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Global Entity Relationship (ER) Diagram -->
+        <section class="bg-white rounded-3xl p-6 md:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
+            <h2 class="text-3xl font-bold mb-4 text-gray-800 flex items-center">
+                <span class="mr-4">🗄️</span> Global Database Schemas (ER Model)
+            </h2>
+            <p class="text-gray-500 mb-10">SkillSync follows the <strong>Database-per-Service</strong> pattern strictly. Foreign keys across distinct service boundaries are logical (soft references) rather than physical database constraints.</p>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                
+                <!-- Auth Service DB -->
+                <div class="border border-indigo-200 bg-indigo-50/30 rounded-2xl overflow-hidden shadow-sm">
+                    <div class="bg-indigo-100 px-6 py-4 border-b border-indigo-200 font-bold text-indigo-900 flex justify-between">
+                        <span>Database: skillsync_auth</span>
+                        <span class="text-xs font-mono bg-indigo-200 px-2 py-1 rounded">PostgreSQL</span>
+                    </div>
+                    <div class="p-6">
+                        <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <div class="bg-gray-800 text-white px-4 py-2 text-sm font-bold flex justify-between rounded-t-lg">
+                                <span>Table: auth.users</span>
+                            </div>
+                            <table class="w-full text-sm text-left">
+                                <tr class="border-b border-gray-100 bg-yellow-50/50"><td class="py-2 px-4 font-mono font-bold w-32">id</td><td class="py-2 px-4 text-gray-500">BIGINT (PK)</td></tr>
+                                <tr class="border-b border-gray-100"><td class="py-2 px-4 font-mono">email</td><td class="py-2 px-4 text-gray-500">VARCHAR (Unique)</td></tr>
+                                <tr class="border-b border-gray-100"><td class="py-2 px-4 font-mono">password</td><td class="py-2 px-4 text-gray-500">VARCHAR</td></tr>
+                                <tr class="border-b border-gray-100"><td class="py-2 px-4 font-mono">role</td><td class="py-2 px-4 text-gray-500">VARCHAR (LEARNER, MENTOR)</td></tr>
+                                <tr><td class="py-2 px-4 font-mono">is_verified</td><td class="py-2 px-4 text-gray-500">BOOLEAN</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Service DB -->
+                <div class="border border-green-200 bg-green-50/30 rounded-2xl overflow-hidden shadow-sm">
+                    <div class="bg-green-100 px-6 py-4 border-b border-green-200 font-bold text-green-900 flex justify-between">
+                        <span>Database: skillsync_user</span>
+                        <span class="text-xs font-mono bg-green-200 px-2 py-1 rounded">PostgreSQL</span>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <div class="bg-gray-800 text-white px-4 py-2 text-sm font-bold flex justify-between rounded-t-lg">
+                                <span>Table: users.profiles</span>
+                            </div>
+                            <table class="w-full text-sm text-left">
+                                <tr class="border-b border-gray-100 bg-yellow-50/50"><td class="py-2 px-4 font-mono font-bold w-32">user_id</td><td class="py-2 px-4 text-gray-500">BIGINT (PK)</td></tr>
+                                <tr class="border-b border-gray-100"><td class="py-2 px-4 font-mono">first_name</td><td class="py-2 px-4 text-gray-500">VARCHAR</td></tr>
+                                <tr class="border-b border-gray-100"><td class="py-2 px-4 font-mono">last_name</td><td class="py-2 px-4 text-gray-500">VARCHAR</td></tr>
+                                <tr><td class="py-2 px-4 font-mono">bio</td><td class="py-2 px-4 text-gray-500">TEXT</td></tr>
+                            </table>
+                        </div>
+
+                        <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <div class="bg-gray-800 text-white px-4 py-2 text-sm font-bold flex justify-between rounded-t-lg">
+                                <span>Table: mentors.mentor_profiles</span>
+                            </div>
+                            <table class="w-full text-sm text-left">
+                                <tr class="border-b border-gray-100 bg-yellow-50/50"><td class="py-2 px-4 font-mono font-bold w-32">id</td><td class="py-2 px-4 text-gray-500">BIGINT (PK)</td></tr>
+                                <tr class="border-b border-gray-100 bg-blue-50/50"><td class="py-2 px-4 font-mono">user_id</td><td class="py-2 px-4 text-blue-600">BIGINT (Logical FK -> profiles)</td></tr>
+                                <tr class="border-b border-gray-100"><td class="py-2 px-4 font-mono">experience_years</td><td class="py-2 px-4 text-gray-500">INT</td></tr>
+                                <tr><td class="py-2 px-4 font-mono">status</td><td class="py-2 px-4 text-gray-500">VARCHAR (PENDING, APPROVED)</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Session Service DB -->
+                <div class="border border-purple-200 bg-purple-50/30 rounded-2xl overflow-hidden shadow-sm">
+                    <div class="bg-purple-100 px-6 py-4 border-b border-purple-200 font-bold text-purple-900 flex justify-between">
+                        <span>Database: skillsync_session</span>
+                        <span class="text-xs font-mono bg-purple-200 px-2 py-1 rounded">PostgreSQL</span>
+                    </div>
+                    <div class="p-6">
+                        <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <div class="bg-gray-800 text-white px-4 py-2 text-sm font-bold flex justify-between rounded-t-lg">
+                                <span>Table: sessions.session_requests</span>
+                            </div>
+                            <table class="w-full text-sm text-left">
+                                <tr class="border-b border-gray-100 bg-yellow-50/50"><td class="py-2 px-4 font-mono font-bold w-32">id</td><td class="py-2 px-4 text-gray-500">BIGINT (PK)</td></tr>
+                                <tr class="border-b border-gray-100 bg-blue-50/50"><td class="py-2 px-4 font-mono">learner_id</td><td class="py-2 px-4 text-blue-600">BIGINT (Logical FK)</td></tr>
+                                <tr class="border-b border-gray-100 bg-blue-50/50"><td class="py-2 px-4 font-mono">mentor_id</td><td class="py-2 px-4 text-blue-600">BIGINT (Logical FK)</td></tr>
+                                <tr class="border-b border-gray-100"><td class="py-2 px-4 font-mono">topic</td><td class="py-2 px-4 text-gray-500">VARCHAR</td></tr>
+                                <tr class="border-b border-gray-100"><td class="py-2 px-4 font-mono">session_date</td><td class="py-2 px-4 text-gray-500">TIMESTAMP</td></tr>
+                                <tr><td class="py-2 px-4 font-mono">status</td><td class="py-2 px-4 text-gray-500">VARCHAR (PENDING, ACCEPTED, COMPLETED)</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Service DB -->
+                <div class="border border-emerald-200 bg-emerald-50/30 rounded-2xl overflow-hidden shadow-sm">
+                    <div class="bg-emerald-100 px-6 py-4 border-b border-emerald-200 font-bold text-emerald-900 flex justify-between">
+                        <span>Database: skillsync_payment</span>
+                        <span class="text-xs font-mono bg-emerald-200 px-2 py-1 rounded">PostgreSQL</span>
+                    </div>
+                    <div class="p-6">
+                        <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <div class="bg-gray-800 text-white px-4 py-2 text-sm font-bold flex justify-between rounded-t-lg">
+                                <span>Table: payments.payments</span>
+                            </div>
+                            <table class="w-full text-sm text-left">
+                                <tr class="border-b border-gray-100 bg-yellow-50/50"><td class="py-2 px-4 font-mono font-bold w-32">id</td><td class="py-2 px-4 text-gray-500">BIGINT (PK)</td></tr>
+                                <tr class="border-b border-gray-100 bg-blue-50/50"><td class="py-2 px-4 font-mono">user_id</td><td class="py-2 px-4 text-blue-600">BIGINT (Logical FK)</td></tr>
+                                <tr class="border-b border-gray-100"><td class="py-2 px-4 font-mono">amount</td><td class="py-2 px-4 text-gray-500">INT (Paise)</td></tr>
+                                <tr class="border-b border-gray-100"><td class="py-2 px-4 font-mono">razorpay_order_id</td><td class="py-2 px-4 text-gray-500">VARCHAR</td></tr>
+                                <tr class="border-b border-gray-100"><td class="py-2 px-4 font-mono">status</td><td class="py-2 px-4 text-gray-500">VARCHAR (CREATED, VERIFIED, SUCCESS)</td></tr>
+                                <tr><td class="py-2 px-4 font-mono">reference_id</td><td class="py-2 px-4 text-gray-500">BIGINT (E.g. session_id)</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Structural Deep Dive & CQRS -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div class="bg-white rounded-3xl p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800 flex items-center">
+                    <span class="mr-3">🔄</span> CQRS Read/Write Separation
+                </h2>
+                <div class="space-y-6">
+                    <div class="p-5 bg-gray-50 border border-gray-200 rounded-2xl shadow-sm relative overflow-hidden">
+                        <div class="absolute left-0 top-0 h-full w-2 bg-blue-500"></div>
+                        <h4 class="font-bold text-blue-800 text-lg">Command Flow (Mutations)</h4>
+                        <p class="text-sm text-gray-600 mt-2">POST, PUT, DELETE requests always hit the primary PostgreSQL instance. If a record updates, the CommandService automatically calls the Redis Cache Manager to evict (<code>@CacheEvict</code>) the stale record keys, guaranteeing eventual consistency.</p>
+                    </div>
+                    <div class="p-5 bg-gray-50 border border-gray-200 rounded-2xl shadow-sm relative overflow-hidden">
+                        <div class="absolute left-0 top-0 h-full w-2 bg-emerald-500"></div>
+                        <h4 class="font-bold text-emerald-800 text-lg">Query Flow (Cache-Aside)</h4>
+                        <p class="text-sm text-gray-600 mt-2">GET requests prioritize the Redis Cache layer (<code>@Cacheable</code>). The system employs advanced resilient failovers: if Redis crashes or is evicted, the QueryService gracefully catches the timeout, queries PostgreSQL synchronously, and returns the response seamlessly to the client.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Infrastructure Decisions -->
+            <div class="bg-white rounded-3xl p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800 flex items-center">
+                    <span class="mr-3">⚡</span> Fault Tolerance Architecture
+                </h2>
+                <ul class="space-y-6">
+                    <li class="flex items-start bg-gray-50 p-4 rounded-xl border border-gray-100">
+                        <div class="bg-purple-100 text-purple-600 p-3 rounded-lg mr-4 text-xl">🛡️</div>
+                        <div>
+                            <strong class="block text-gray-800 text-lg">Resilience4j Circuit Breakers</strong>
+                            <p class="text-sm text-gray-500 mt-1">External calls (like Razorpay API interactions or synchronous Feign requests) are wrapped in Circuit Breakers. If failure rates exceed 50%, the circuit trips to OPEN, instantly rejecting requests to protect cascading thread pool exhaustion.</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start bg-gray-50 p-4 rounded-xl border border-gray-100">
+                        <div class="bg-amber-100 text-amber-600 p-3 rounded-lg mr-4 text-xl">📡</div>
+                        <div>
+                            <strong class="block text-gray-800 text-lg">Eureka Service Discovery</strong>
+                            <p class="text-sm text-gray-500 mt-1">Hardcoded IPs are non-existent. The Gateway delegates load balancing dynamically by pulling healthy instance registries from Eureka Server. Dead nodes are automatically delisted.</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start bg-gray-50 p-4 rounded-xl border border-gray-100">
+                        <div class="bg-sky-100 text-sky-600 p-3 rounded-lg mr-4 text-xl">⚙️</div>
+                        <div>
+                            <strong class="block text-gray-800 text-lg">Centralized Config Server</strong>
+                            <p class="text-sm text-gray-500 mt-1">Spring Cloud Config serves properties to all instances asynchronously at runtime, enabling zero-downtime credential rotations.</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start bg-gray-50 p-4 rounded-xl border border-gray-100">
+                        <div class="bg-teal-100 text-teal-600 p-3 rounded-lg mr-4 text-xl">📊</div>
+                        <div>
+                            <strong class="block text-gray-800 text-lg">Monitoring & Distributed Tracing</strong>
+                            <p class="text-sm text-gray-500 mt-1">Every isolated microservice automatically streams span logs to <b>Zipkin</b> via Micrometer. The correlation IDs (`traceId`) injected at the API Gateway allow visualizing the entire hop-by-hop journey of a request across the cluster. Performance metrics (Memory/GC) are actively scraped by <b>Prometheus</b> and visualized on custom <b>Grafana</b> dashboards to catch high latency anomalies early.</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <div class="mt-20 border-t border-gray-200 pt-8 text-center text-sm text-gray-400 font-medium">
+            Ensure all project documentation is updated whenever system changes are made, and add new sections if required.
+        </div>
+    </div>
+</body>
+</html>

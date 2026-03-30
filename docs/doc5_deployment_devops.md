@@ -1,5 +1,16 @@
 # 📄 DOCUMENT 5: DEPLOYMENT + DEVOPS
 
+> [!IMPORTANT]
+> **Architecture Update (March 2026):** The following services have been merged and are removed from deployment topologies:
+> - **Mentor Service + Group Service → User Service** (port 8082)
+> - **Review Service → Session Service** (port 8085)
+>
+> **Payment Extraction (March 2026):** Payment has been extracted from User Service into a dedicated **Payment Service** (port 8086) with its own database (`skillsync_payment`).
+>
+> **CQRS + Redis Caching (March 2026):** All business services now require a **Redis 7.2** instance for distributed caching. The `docker-compose.yml` includes Redis as a service dependency with AOF persistence. See `doc6_cqrs_redis_architecture.md` for details.
+>
+> The original deployment diagrams below reflect the initial 11-service architecture. Real deployments use the current 9-service topology.
+
 ## SkillSync — Infrastructure, Deployment & Operations
 
 ---
@@ -66,12 +77,12 @@
           ┌───────────────┼───────────────┐
           │               │               │
           ▼               ▼               ▼
-   ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
-   │ PostgreSQL  │ │  RabbitMQ   │ │   Eureka    │
-   │ Cluster     │ │  Cluster    │ │   Server    │
-   │ (Primary +  │ │ (Mirrored)  │ │   :8761     │
-   │  Replica)   │ │             │ │             │
-   └─────────────┘ └─────────────┘ └─────────────┘
+    ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+   │ PostgreSQL  │ │  RabbitMQ   │ │   Eureka    │ │   Redis     │
+   │ Cluster     │ │  Cluster    │ │   Server    │ │   7.2       │
+   │ (Primary +  │ │ (Mirrored)  │ │   :8761     │ │   :6379     │
+   │  Replica)   │ │             │ │             │ │ (AOF+LRU)   │
+   └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘
 ```
 
 **Scaling annotations** (×N) show the recommended minimum replica count for production.
@@ -277,11 +288,9 @@ services:
       POSTGRES_MULTIPLE_DATABASES: >
         skillsync_auth,
         skillsync_user,
-        skillsync_mentor,
+        skillsync_payment,
         skillsync_skill,
         skillsync_session,
-        skillsync_group,
-        skillsync_review,
         skillsync_notification
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -406,26 +415,32 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/skillsync_user
       SPRING_DATASOURCE_USERNAME: skillsync
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-skillsync_dev}
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-skillsync}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASS:-skillsync_dev}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
     depends_on:
       postgres:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
     networks:
       - skillsync-network
 
-  mentor-service:
+  payment-service:
     build:
       context: .
       dockerfile: Dockerfile.service
       args:
-        SERVICE_NAME: mentor-service
-    container_name: skillsync-mentor
+        SERVICE_NAME: payment-service
+    container_name: skillsync-payment
     environment:
-      SERVER_PORT: 8083
+      SERVER_PORT: 8086
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/skillsync_mentor
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/skillsync_payment
       SPRING_DATASOURCE_USERNAME: skillsync
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-skillsync_dev}
       SPRING_RABBITMQ_HOST: rabbitmq
@@ -433,6 +448,8 @@ services:
       SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-skillsync}
       SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASS:-skillsync_dev}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
+      RAZORPAY_API_KEY: ${RAZORPAY_API_KEY}
+      RAZORPAY_API_SECRET: ${RAZORPAY_API_SECRET}
     depends_on:
       postgres:
         condition: service_healthy
@@ -476,56 +493,6 @@ services:
       SERVER_PORT: 8085
       SPRING_PROFILES_ACTIVE: docker
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/skillsync_session
-      SPRING_DATASOURCE_USERNAME: skillsync
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-skillsync_dev}
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-skillsync}
-      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASS:-skillsync_dev}
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
-    depends_on:
-      postgres:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-    networks:
-      - skillsync-network
-
-  group-service:
-    build:
-      context: .
-      dockerfile: Dockerfile.service
-      args:
-        SERVICE_NAME: group-service
-    container_name: skillsync-group
-    environment:
-      SERVER_PORT: 8086
-      SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/skillsync_group
-      SPRING_DATASOURCE_USERNAME: skillsync
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-skillsync_dev}
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
-    depends_on:
-      postgres:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-    networks:
-      - skillsync-network
-
-  review-service:
-    build:
-      context: .
-      dockerfile: Dockerfile.service
-      args:
-        SERVICE_NAME: review-service
-    container_name: skillsync-review
-    environment:
-      SERVER_PORT: 8087
-      SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/skillsync_review
       SPRING_DATASOURCE_USERNAME: skillsync
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-skillsync_dev}
       SPRING_RABBITMQ_HOST: rabbitmq
@@ -693,11 +660,9 @@ jobs:
         service:
           - auth-service
           - user-service
-          - mentor-service
+          - payment-service
           - skill-service
           - session-service
-          - group-service
-          - review-service
           - notification-service
 
     steps:
@@ -744,6 +709,17 @@ jobs:
             echo "::error::Coverage ${COVERAGE}% is below 80% threshold for ${{ matrix.service }}"
             exit 1
           fi
+
+      - name: SonarQube Quality Gate
+        # Placeholder for SonarQube integration (runs static analysis)
+        run: echo "SonarQube analysis goes here"
+
+      - name: Upload Test Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: surefire-report-${{ matrix.service }}
+          path: ${{ matrix.service }}/target/surefire-reports/
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
@@ -877,11 +853,8 @@ jobs:
         service:
           - auth-service
           - user-service
-          - mentor-service
           - skill-service
           - session-service
-          - group-service
-          - review-service
           - notification-service
           - api-gateway
           - eureka-server
@@ -1123,6 +1096,10 @@ JWT_SECRET=your-256-bit-secret-key-here-must-be-at-least-32-chars
 JWT_ACCESS_EXPIRATION=900000         # 15 minutes
 JWT_REFRESH_EXPIRATION=604800000     # 7 days
 
+# ============ RAZORPAY (Payments) ============
+RAZORPAY_API_KEY=rzp_test_your_key_here
+RAZORPAY_API_SECRET=your_razorpay_secret_here
+
 # ============ FRONTEND ============
 VITE_API_BASE_URL=http://localhost:8080
 VITE_WS_URL=http://localhost:8088/ws
@@ -1149,6 +1126,7 @@ DEPLOY_USER=deploy
 | Group Service | 1 | 3 | CPU > 70% | Medium |
 | Review Service | 1 | 3 | CPU > 70% | Medium |
 | Notification Service | 2 | 4 | Queue depth > 1000 | High |
+| Observability Stack | 1 | 1 | N/A (Stateful) | Infrastructure |
 
 ### 5.5.2 Database Scaling
 
@@ -1303,6 +1281,7 @@ groups:
 > - [ ] All environment variables set in production `.env`
 > - [ ] JWT secret is ≥256 bits and securely stored
 > - [ ] Database passwords are strong and rotated
+> - [ ] Razorpay Production API Key/Secret configured
 > - [ ] SSL certificates configured on Nginx
 > - [ ] Rate limiting enabled on API Gateway
 > - [ ] Health checks pass for all services

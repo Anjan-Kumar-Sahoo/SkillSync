@@ -1,5 +1,14 @@
 # 📄 DOCUMENT 4: TESTING STRATEGY
 
+> [!IMPORTANT]
+> **Architecture Update (March 2026):** The backend architecture has been simplified:
+> - **Mentor Service + Group Service → User Service** (port 8082)
+> - **Review Service → Session Service** (port 8085)
+>
+> **CQRS + Redis Caching (March 2026):** All business services now use the **CQRS pattern** with **Redis 7.2** distributed caching. Unit tests mock `CacheService` to verify cache hit/miss/invalidation behavior. Integration tests include Redis via Testcontainers.
+>
+> Testing principles remain the same, but tests for merged services now reside in their new parent service modules. See `service_architecture_summary.md` for details.
+
 ## SkillSync — Comprehensive Testing Plan
 
 ---
@@ -33,13 +42,115 @@
 | Frontend Component | Jest + RTL | Molecule/organism rendering | All user-facing components |
 | E2E | Playwright | Critical user journeys | 5 core flows |
 
+> [!IMPORTANT]
+> **Implementation Status:** 16 base unit test classes (Service & Controller layers) have been implemented across all 8 business microservices using JUnit 5 and Mockito. All service tests have been updated to test CQRS `CommandService` and `QueryService` classes separately, including cache hit/miss/invalidation verification via mocked `CacheService`.
+> **Mapper Tests:** Pure function `Mapper` classes have been extracted from QueryServices and are exhaustively unit tested without requiring a Spring Context (`MapperTest.java`).
+
 ---
 
 ## 4.2 Backend Testing
 
 ### 4.2.1 Unit Testing (JUnit 5 + Mockito)
 
-#### Service Layer Testing
+#### CQRS Service Layer Testing — Cache Interactions
+
+With the CQRS refactoring, service tests now verify **cache behavior** in addition to business logic:
+
+```java
+// Example: SkillQueryServiceTest.java — Testing cache-aside pattern
+@ExtendWith(MockitoExtension.class)
+class SkillQueryServiceTest {
+
+    @Mock private SkillRepository skillRepository;
+    @Mock private CacheService cacheService;
+    @InjectMocks private SkillQueryService skillQueryService;
+
+    @Test
+    @DisplayName("Should return cached skill on cache HIT")
+    void getSkillById_CacheHit_ReturnsFromRedis() {
+        Skill cachedSkill = new Skill();
+        cachedSkill.setId(1L);
+        cachedSkill.setName("Java");
+
+        when(cacheService.get("skill:1", Skill.class)).thenReturn(cachedSkill);
+
+        Skill result = skillQueryService.getSkillById(1L);
+
+        assertEquals("Java", result.getName());
+        verify(skillRepository, never()).findById(any());  // DB never called
+        verify(cacheService).get("skill:1", Skill.class);
+    }
+
+    @Test
+    @DisplayName("Should query DB and populate cache on cache MISS")
+    void getSkillById_CacheMiss_QueriesDbAndCaches() {
+        Skill dbSkill = new Skill();
+        dbSkill.setId(1L);
+        dbSkill.setName("Java");
+
+        when(cacheService.get("skill:1", Skill.class)).thenReturn(null);
+        when(skillRepository.findById(1L)).thenReturn(Optional.of(dbSkill));
+
+        Skill result = skillQueryService.getSkillById(1L);
+
+        assertEquals("Java", result.getName());
+        verify(skillRepository).findById(1L);               // DB called
+        verify(cacheService).put(eq("skill:1"), any(), eq(3600L)); // Cached with TTL
+    }
+}
+
+// Example: SkillCommandServiceTest.java — Testing cache invalidation
+@ExtendWith(MockitoExtension.class)
+class SkillCommandServiceTest {
+
+    @Mock private SkillRepository skillRepository;
+    @Mock private CacheService cacheService;
+    @InjectMocks private SkillCommandService skillCommandService;
+
+    @Test
+    @DisplayName("Should invalidate cache after skill update")
+    void updateSkill_InvalidatesCache() {
+        Skill existing = new Skill();
+        existing.setId(1L);
+        existing.setName("Java");
+
+        when(skillRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(skillRepository.save(any())).thenReturn(existing);
+
+        skillCommandService.updateSkill(1L, updateRequest);
+
+        verify(cacheService).evict("skill:1");              // Single key evicted
+        verify(cacheService).evictByPattern("skill:all:*");  // Pattern eviction
+    }
+}
+```
+
+> [!TIP]
+> **Key testing pattern:** QueryService tests verify `cacheService.get()` is called first, and `repository.findById()` is only called on cache miss. CommandService tests verify `cacheService.evict()` is called after every write operation.
+
+#### Mapper Layer Testing (Pure Functions)
+
+Mappers are pure functions that translate Entities to DTOs. They do not depend on Spring context and should be tested using simple JUnit tests.
+
+```java
+class MapperTest {
+    @Test
+    @DisplayName("Should map Session to SessionResponse correctly")
+    void sessionMapper_mapsCorrectly() {
+        Session session = new Session();
+        session.setId(1L);
+        session.setStatus(SessionStatus.ACCEPTED);
+        
+        SessionResponse response = SessionMapper.toResponse(session, "Mentor Name", "Learner Name");
+        
+        assertEquals(1L, response.id());
+        assertEquals("ACCEPTED", response.status());
+        assertEquals("Mentor Name", response.mentorName());
+    }
+}
+```
+
+#### Original Service Layer Testing (pre-CQRS reference)
 
 ```java
 // SessionServiceTest.java
@@ -58,8 +169,8 @@ class SessionServiceTest {
     @DisplayName("Should create session when mentor is available and approved")
     void createSession_Success() {
         // Arrange
-        UUID learnerId = UUID.randomUUID();
-        UUID mentorId = UUID.randomUUID();
+        Long learnerId = 1L;
+        Long mentorId = 1L;
         LocalDateTime sessionDate = LocalDateTime.now().plusDays(2);
 
         CreateSessionRequest request = new CreateSessionRequest(
@@ -67,7 +178,7 @@ class SessionServiceTest {
         );
 
         MentorProfileResponse mentor = new MentorProfileResponse(
-            mentorId, UUID.randomUUID(), "John", "Doe", null,
+            mentorId, 1L, "John", "Doe", null,
             "Expert", 5, BigDecimal.valueOf(50), 4.5, 10, 20,
             "APPROVED", List.of(), List.of()
         );
@@ -79,7 +190,7 @@ class SessionServiceTest {
         when(sessionRepository.save(any(Session.class))).thenAnswer(
             invocation -> {
                 Session s = invocation.getArgument(0);
-                s.setId(UUID.randomUUID());
+                s.setId(1L);
                 return s;
             }
         );
@@ -102,8 +213,8 @@ class SessionServiceTest {
     @Test
     @DisplayName("Should throw exception when mentor is not approved")
     void createSession_MentorNotApproved_ThrowsException() {
-        UUID learnerId = UUID.randomUUID();
-        UUID mentorId = UUID.randomUUID();
+        Long learnerId = 1L;
+        Long mentorId = 1L;
 
         CreateSessionRequest request = new CreateSessionRequest(
             mentorId, "Topic", "Desc",
@@ -111,7 +222,7 @@ class SessionServiceTest {
         );
 
         MentorProfileResponse mentor = new MentorProfileResponse(
-            mentorId, UUID.randomUUID(), "John", "Doe", null,
+            mentorId, 1L, "John", "Doe", null,
             "Bio", 5, BigDecimal.valueOf(50), 0, 0, 0,
             "PENDING", List.of(), List.of()  // NOT APPROVED
         );
@@ -132,8 +243,8 @@ class SessionServiceTest {
     @Test
     @DisplayName("Should throw exception when time slot conflicts with existing session")
     void createSession_ConflictingSession_ThrowsException() {
-        UUID learnerId = UUID.randomUUID();
-        UUID mentorId = UUID.randomUUID();
+        Long learnerId = 1L;
+        Long mentorId = 1L;
         LocalDateTime sessionDate = LocalDateTime.now().plusDays(2);
 
         CreateSessionRequest request = new CreateSessionRequest(
@@ -141,13 +252,13 @@ class SessionServiceTest {
         );
 
         MentorProfileResponse mentor = new MentorProfileResponse(
-            mentorId, UUID.randomUUID(), "John", "Doe", null,
+            mentorId, 1L, "John", "Doe", null,
             "Bio", 5, BigDecimal.valueOf(50), 4.5, 10, 20,
             "APPROVED", List.of(), List.of()
         );
 
         Session conflicting = new Session();
-        conflicting.setId(UUID.randomUUID());
+        conflicting.setId(1L);
 
         when(mentorServiceClient.getMentorById(mentorId)).thenReturn(mentor);
         when(sessionRepository.findConflictingSessions(
@@ -164,12 +275,12 @@ class SessionServiceTest {
     @Test
     @DisplayName("Should accept session that is in REQUESTED state")
     void acceptSession_FromRequested_Success() {
-        UUID sessionId = UUID.randomUUID();
-        UUID mentorUserId = UUID.randomUUID();
+        Long sessionId = 1L;
+        Long mentorUserId = 1L;
         
         Session session = new Session();
         session.setId(sessionId);
-        session.setMentorId(UUID.randomUUID());
+        session.setMentorId(1L);
         session.setStatus(SessionStatus.REQUESTED);
 
         when(sessionRepository.findById(sessionId)).thenReturn(Optional.of(session));
@@ -184,7 +295,7 @@ class SessionServiceTest {
     @Test
     @DisplayName("Should not allow accepting an already completed session")
     void acceptSession_FromCompleted_ThrowsException() {
-        UUID sessionId = UUID.randomUUID();
+        Long sessionId = 1L;
         
         Session session = new Session();
         session.setId(sessionId);
@@ -193,19 +304,19 @@ class SessionServiceTest {
         when(sessionRepository.findById(sessionId)).thenReturn(Optional.of(session));
 
         assertThrows(InvalidStateTransitionException.class,
-            () -> sessionService.acceptSession(sessionId, UUID.randomUUID())
+            () -> sessionService.acceptSession(sessionId, 1L)
         );
     }
 
     @Test
     @DisplayName("Should throw ResourceNotFoundException for non-existent session")
     void acceptSession_NotFound_ThrowsException() {
-        UUID sessionId = UUID.randomUUID();
+        Long sessionId = 1L;
 
         when(sessionRepository.findById(sessionId)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
-            () -> sessionService.acceptSession(sessionId, UUID.randomUUID())
+            () -> sessionService.acceptSession(sessionId, 1L)
         );
     }
 
@@ -214,10 +325,10 @@ class SessionServiceTest {
     @Test
     @DisplayName("Should not allow learner to book their own mentor profile")
     void createSession_SelfBooking_ThrowsException() {
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
 
         MentorProfileResponse mentor = new MentorProfileResponse(
-            UUID.randomUUID(), userId /* same user */, "Self", "Mentor", null,
+            1L, userId /* same user */, "Self", "Mentor", null,
             "Bio", 5, BigDecimal.valueOf(50), 4.5, 10, 20,
             "APPROVED", List.of(), List.of()
         );
@@ -264,12 +375,12 @@ class SessionRepositoryTest {
     @Test
     @DisplayName("Should find conflicting sessions for a mentor in the same time window")
     void findConflictingSessions_ReturnsConflicts() {
-        UUID mentorId = UUID.randomUUID();
+        Long mentorId = 1L;
         LocalDateTime sessionDate = LocalDateTime.of(2026, 4, 1, 10, 0);
 
         Session existing = new Session();
         existing.setMentorId(mentorId);
-        existing.setLearnerId(UUID.randomUUID());
+        existing.setLearnerId(1L);
         existing.setTopic("Existing Session");
         existing.setSessionDate(sessionDate);
         existing.setDurationMinutes(60);
@@ -291,7 +402,7 @@ class SessionRepositoryTest {
     @Test
     @DisplayName("Should return empty list when no conflicts exist")
     void findConflictingSessions_NoConflicts_ReturnsEmpty() {
-        UUID mentorId = UUID.randomUUID();
+        Long mentorId = 1L;
 
         List<Session> conflicts = sessionRepository.findConflictingSessions(
             mentorId,
@@ -321,12 +432,12 @@ class SessionControllerTest {
     @WithMockUser(roles = "LEARNER")
     void createSession_ValidRequest_Returns201() throws Exception {
         CreateSessionRequest request = new CreateSessionRequest(
-            UUID.randomUUID(), "Java Basics", "Learn OOP",
+            1L, "Java Basics", "Learn OOP",
             LocalDateTime.now().plusDays(2), 60
         );
 
         SessionResponse response = new SessionResponse(
-            UUID.randomUUID(), request.mentorId(), UUID.randomUUID(),
+            1L, request.mentorId(), 1L,
             "Mentor", "Learner", request.topic(), request.description(),
             request.sessionDate(), 60, null, "REQUESTED", null,
             LocalDateTime.now(), LocalDateTime.now()
@@ -368,7 +479,7 @@ class SessionControllerTest {
     @WithMockUser(roles = "MENTOR")
     void createSession_WrongRole_Returns403() throws Exception {
         CreateSessionRequest request = new CreateSessionRequest(
-            UUID.randomUUID(), "Topic", null,
+            1L, "Topic", null,
             LocalDateTime.now().plusDays(2), 60
         );
 
@@ -382,7 +493,7 @@ class SessionControllerTest {
     @DisplayName("PUT /api/sessions/{id}/accept - returns 409 for invalid state transition")
     @WithMockUser(roles = "MENTOR")
     void acceptSession_InvalidTransition_Returns422() throws Exception {
-        UUID sessionId = UUID.randomUUID();
+        Long sessionId = 1L;
 
         when(sessionService.acceptSession(eq(sessionId), any()))
             .thenThrow(new InvalidStateTransitionException("COMPLETED", "ACCEPTED"));
@@ -430,7 +541,7 @@ class SessionServiceIntegrationTest {
         headers.setBearerAuth(generateTestJwt("ROLE_LEARNER"));
 
         CreateSessionRequest createReq = new CreateSessionRequest(
-            UUID.randomUUID(), "Integration Test", null,
+            1L, "Integration Test", null,
             LocalDateTime.now().plusDays(2), 60
         );
 
@@ -441,7 +552,7 @@ class SessionServiceIntegrationTest {
         );
 
         assertEquals(HttpStatus.CREATED, createResp.getStatusCode());
-        UUID sessionId = createResp.getBody().id();
+        Long sessionId = createResp.getBody().id();
 
         // 2. Accept session (as mentor)
         HttpHeaders mentorHeaders = new HttpHeaders();
@@ -470,6 +581,68 @@ class SessionServiceIntegrationTest {
 
         Session completedSession = sessionRepository.findById(sessionId).orElseThrow();
         assertEquals(SessionStatus.COMPLETED, completedSession.getStatus());
+    }
+}
+```
+
+---
+
+### 4.2.3 CQRS Integration Testing with Redis
+
+Integration tests now include a Redis container alongside PostgreSQL and RabbitMQ:
+
+```java
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Testcontainers
+@ActiveProfiles("test")
+class SkillServiceCQRSIntegrationTest {
+
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+
+    @Container
+    static GenericContainer<?> redis = new GenericContainer<>("redis:7.2-alpine")
+        .withExposedPorts(6379);
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+        registry.add("spring.data.redis.host", redis::getHost);
+        registry.add("spring.data.redis.port", () -> redis.getMappedPort(6379));
+    }
+
+    @Autowired private SkillQueryService queryService;
+    @Autowired private SkillCommandService commandService;
+    @Autowired private RedisTemplate<String, Object> redisTemplate;
+
+    @Test
+    @DisplayName("Full cache lifecycle: miss → populate → hit → invalidate → miss")
+    void cacheLifecycle_FullFlow() {
+        // 1. Create a skill (write)
+        commandService.createSkill(new CreateSkillRequest("Java", "Programming", "desc"));
+
+        // 2. First read → cache MISS → populates cache
+        Skill first = queryService.getSkillById(1L);
+        assertNotNull(first);
+
+        // 3. Verify key exists in Redis
+        assertNotNull(redisTemplate.opsForValue().get("skill:1"));
+
+        // 4. Second read → cache HIT (no DB query)
+        Skill second = queryService.getSkillById(1L);
+        assertEquals(first.getName(), second.getName());
+
+        // 5. Update skill → cache INVALIDATED
+        commandService.updateSkill(1L, new UpdateSkillRequest("Java SE", "Programming", "desc"));
+
+        // 6. Verify key removed from Redis
+        assertNull(redisTemplate.opsForValue().get("skill:1"));
+
+        // 7. Next read → cache MISS again → fresh data from DB
+        Skill updated = queryService.getSkillById(1L);
+        assertEquals("Java SE", updated.getName());
     }
 }
 ```
@@ -1025,8 +1198,8 @@ test.describe('Mentor Approval Flow', () => {
 ### Critical Flows (Must Have ≥90% Coverage)
 
 1. **User Registration + Login** — Auth Service + Frontend auth
-2. **Session Booking** — Create → Accept → Complete → Review
-3. **Mentor Approval** — Apply → Admin Review → Approve/Reject
+2. **Session Booking (w/ Payment)** — Book → Razorpay Checkout → Accept → Complete → Review
+3. **Mentor Onboarding** — Apply → Pay Mentor Fee → Auto-Approve / Admin fallback
 4. **Mentor Discovery** — Search with filters, pagination
 5. **Review Submission** — After completed session
 
@@ -1041,9 +1214,9 @@ public class TestDataFactory {
 
     public static Session createSession(SessionStatus status) {
         Session session = new Session();
-        session.setId(UUID.randomUUID());
-        session.setMentorId(UUID.randomUUID());
-        session.setLearnerId(UUID.randomUUID());
+        session.setId(1L);
+        session.setMentorId(1L);
+        session.setLearnerId(1L);
         session.setTopic("Test Topic");
         session.setSessionDate(LocalDateTime.now().plusDays(2));
         session.setDurationMinutes(60);
@@ -1055,18 +1228,18 @@ public class TestDataFactory {
 
     public static MentorProfileResponse createApprovedMentor() {
         return new MentorProfileResponse(
-            UUID.randomUUID(), UUID.randomUUID(),
+            1L, 1L,
             "Test", "Mentor", null, "Expert developer",
             10, BigDecimal.valueOf(75), 4.8, 50, 100,
             "APPROVED",
-            List.of(new SkillSummary(UUID.randomUUID(), "Java", "Programming")),
+            List.of(new SkillSummary(1L, "Java", "Programming")),
             List.of()
         );
     }
 
     public static String generateTestJwt(String role) {
         return Jwts.builder()
-            .setSubject(UUID.randomUUID().toString())
+            .setSubject(1L.toString())
             .claim("role", role)
             .setIssuedAt(new Date())
             .setExpiration(new Date(System.currentTimeMillis() + 900000))
@@ -1081,8 +1254,8 @@ public class TestDataFactory {
 ```typescript
 // test/factories.ts
 export const createMockMentor = (overrides?: Partial<MentorProfileResponse>): MentorProfileResponse => ({
-  id: crypto.randomUUID(),
-  userId: crypto.randomUUID(),
+  id: 123456789L,
+  userId: 123456789L,
   firstName: 'Test',
   lastName: 'Mentor',
   avatarUrl: null,
@@ -1093,15 +1266,15 @@ export const createMockMentor = (overrides?: Partial<MentorProfileResponse>): Me
   totalReviews: 50,
   totalSessions: 100,
   status: 'APPROVED',
-  skills: [{ id: crypto.randomUUID(), name: 'React', category: 'Frontend' }],
+  skills: [{ id: 123456789L, name: 'React', category: 'Frontend' }],
   availability: [],
   ...overrides,
 });
 
 export const createMockSession = (overrides?: Partial<SessionResponse>): SessionResponse => ({
-  id: crypto.randomUUID(),
-  mentorId: crypto.randomUUID(),
-  learnerId: crypto.randomUUID(),
+  id: 123456789L,
+  mentorId: 123456789L,
+  learnerId: 123456789L,
   mentorName: 'Test Mentor',
   learnerName: 'Test Learner',
   topic: 'Test Session',

@@ -1,5 +1,23 @@
 # 📄 DOCUMENT 1: PROJECT OVERVIEW
 
+> [!IMPORTANT]
+> **Architecture Update (March 2026):** The following services have been merged:
+> - **Mentor Service + Group Service → User Service** (port 8082) — mentor onboarding, groups, and user profiles now live in one service
+> - **Review Service → Session Service** (port 8085) — reviews and sessions share the same service and database
+>
+> **Payment Microservice Extraction (March 2026):** Razorpay payment processing has been extracted from User Service into a dedicated **Payment Service** (port 8086) with event-driven Saga orchestration via RabbitMQ. The Saga publishes `payment.business.action` events consumed by User Service to execute business actions (e.g., mentor approval), replacing direct service coupling.
+>
+> **CQRS + Redis Caching (March 2026):** All business services now implement the **CQRS pattern** (Command/Query separation) with **Redis 7.2** as a distributed cache layer for read optimization. See `doc6_cqrs_redis_architecture.md` for the full design.
+> **Enterprise Hardening (March 2026):** Implemented a dedicated Mapper layer to decouple CQRS Command/Query services. Added tiered API Gateway Rate Limiting using resilience4j. Deployed a full observability stack with Prometheus, Grafana (auto-provisioned dashboards), and Loki (log aggregation) alongside Zipkin. CI/CD pipeline hardened with SonarQube integration and strict failure rules.
+>
+> 🚀 **Frontend Completed (March 2026):** The React 18 frontend is now fully scaffolded and operational.
+> - **Tech**: React 18, Vite, TypeScript, Tailwind v4
+> - **State Management**: Redux Toolkit for Auth (JWT token persistence), React Query for Data fetching
+> - **Pages Built**: Auth (Login, Register), Learner Dashboard, Mentor Discovery, 
+>   My Sessions (multi-tab mapping), Checkout (Razorpay SDK Flow), and Mentor Dashboard (availability logic).
+>
+> The original 11-service design below reflects the initial architecture. See `service_architecture_summary.md` for the current 9-service topology.
+
 ## SkillSync — Peer Learning & Mentor Matching Platform
 
 ---
@@ -14,7 +32,7 @@ SkillSync is a **production-grade, multi-tenant platform** that bridges the gap 
 - **Post-session review & rating** system for quality assurance
 - **Event-driven notifications** for real-time updates
 
-The system is built on a **Spring Boot microservices architecture** with an **API Gateway**, **service discovery**, **event-driven messaging via RabbitMQ**, and a **React + TypeScript** frontend.
+The system is built on a **Spring Boot microservices architecture** with an **API Gateway**, **service discovery**, **event-driven messaging via RabbitMQ**, **CQRS pattern with Redis distributed caching**, and a **React + TypeScript** frontend.
 
 ---
 
@@ -82,8 +100,8 @@ SkillSync addresses every gap with a purpose-built, microservices-based platform
 ## 1.4 Core Features
 
 ### Feature 1: Authentication & Authorization
-- User registration with email verification
-- Login with JWT access + refresh token pair
+- User registration with **OTP email verification** (JavaMailSender)
+- Login with JWT access + refresh token pair (Verified users only)
 - Token refresh mechanism (access: 15min, refresh: 7 days)
 - Role-based route guards (frontend) + method-level security (backend)
 - Password hashing with BCrypt (strength 12)
@@ -100,7 +118,12 @@ Workflow:
   User (ROLE_LEARNER) → Submits Mentor Application
     → Application includes: bio, experience, hourly_rate, skills[], certifications
     → Status: PENDING
-  Admin reviews application
+  User pays ₹9 Mentor Onboarding Fee via Razorpay
+    → Backend creates Razorpay order (amount: 900 paise)
+    → Frontend completes checkout
+    → Backend verifies payment signature
+    → On SUCCESS → triggers mentor approval
+  Admin reviews application (if manual approval required)
     → APPROVED → User gains ROLE_MENTOR, profile activated
     → REJECTED → User notified with rejection reason
 ```
@@ -176,10 +199,39 @@ State Machine:
   - `SESSION_ACCEPTED` / `SESSION_REJECTED` — Learner notified
   - `SESSION_REMINDER` — Both parties, 24h & 1h before
   - `MENTOR_APPROVED` / `MENTOR_REJECTED` — Applicant notified
+  - `PAYMENT_SUCCESS` — User notified of successful payment + business action
+  - `PAYMENT_FAILED` — User notified of payment verification failure
+  - `PAYMENT_COMPENSATED` — User notified when payment succeeded but business action failed
   - `NEW_REVIEW` — Mentor notified of new review
   - `GROUP_JOINED` — Group owner notified
 - Delivery: In-app (WebSocket) + email (future)
 - Read/unread status tracking
+
+### Feature 10: Payment Gateway (Razorpay) — Dedicated Microservice with Event-Driven Saga
+- Runs as a **standalone Payment Service** (port 8086, `com.skillsync.payment`)
+- Two payment use cases:
+  1. **Mentor Onboarding Fee** — ₹9 to apply as mentor
+  2. **Session Booking Fee** — ₹9 to book a session with a mentor
+- **Event-driven Saga orchestration:**
+  - Payment Service creates Razorpay order (amount: 900 paise)
+  - Frontend completes checkout via Razorpay SDK
+  - Payment Service verifies HMAC-SHA256 signature → marks VERIFIED
+  - Saga orchestrator publishes `payment.business.action` event to RabbitMQ
+  - User Service consumes the event and executes business action (mentor approval / session gate)
+  - On success → marks SUCCESS + publishes `payment.success` notification event
+  - On failure → triggers compensation + publishes `payment.compensated` event
+- **Payment status lifecycle:** `CREATED → VERIFIED → SUCCESS_PENDING → SUCCESS / COMPENSATED`
+- **Reference mapping:** Every payment is linked to a business entity via `referenceId` + `referenceType`
+- **Compensation strategy:** Business effects are reversed if saga fails (mentor revert, session gate)
+- **Decoupling:** Payment Service has ZERO direct dependencies on User Service — all coordination is event-driven via RabbitMQ
+- **Security:**
+  - userId ALWAYS from JWT header (X-User-Id) — never from request params
+  - Razorpay API key and secret from environment variables
+  - Amount fixed server-side (never trust client-sent amounts)
+  - Signature verification prevents tampering
+  - Ownership validation on all payment queries
+- **Notification events:** payment.success, payment.failed, payment.compensated via RabbitMQ → Notification Service
+- Edge cases: duplicate prevention (per reference), idempotent verification, amount mismatch detection
 
 ---
 
@@ -227,20 +279,30 @@ State Machine:
 ┌────────────────────────────┼────────────────────────────────────────────┐
 │                    SERVICE LAYER                                        │
 │                            │                                            │
-│  ┌────────────┐ ┌──────────┴──┐ ┌─────────────┐ ┌──────────────┐      │
-│  │ Auth       │ │ User        │ │ Mentor      │ │ Skill        │      │
-│  │ Service    │ │ Service     │ │ Service     │ │ Service      │      │
-│  │ :8081      │ │ :8082       │ │ :8083       │ │ :8084        │      │
-│  └─────┬──────┘ └──────┬──────┘ └──────┬──────┘ └──────┬───────┘      │
-│        │               │               │               │               │
-│  ┌─────┴──────┐ ┌──────┴──────┐ ┌──────┴──────┐ ┌──────┴───────┐      │
-│  │ Session    │ │ Group       │ │ Review      │ │ Notification │      │
-│  │ Service    │ │ Service     │ │ Service     │ │ Service      │      │
-│  │ :8085      │ │ :8086       │ │ :8087       │ │ :8088        │      │
-│  └────────────┘ └─────────────┘ └─────────────┘ └──────────────┘      │
+│  ┌────────────┐ ┌──────────────────────┐ ┌──────────────┐              │
+│  │ Auth       │ │ User Service :8082   │ │ Skill        │              │
+│  │ Service    │ │ (+ Mentor + Group)   │ │ Service      │              │
+│  │ :8081      │ └──────────────────────┘ │ :8084        │              │
+│  └────────────┘                          └──────────────┘              │
+│                                                                        │
+│  ┌──────────────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │ Session Service :8085│  │ Payment      │  │ Notification │          │
+│  │ (+ Review)           │  │ Service      │  │ Service      │          │
+│  └──────────────────────┘  │ :8086        │  │ :8088        │          │
+│                            └──────────────┘  └──────────────┘          │
 │                                                                         │
 │  ┌─────────────────────────────────────────────────────────────────┐    │
 │  │                    Eureka Service Discovery (:8761)              │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+                             │
+┌────────────────────────────┼────────────────────────────────────────────┐
+│                    CACHING LAYER (Redis 7.2)                            │
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  Cache-Aside Pattern: QueryService → Redis → PostgreSQL         │    │
+│  │  CommandService → PostgreSQL write → Redis invalidation         │    │
 │  └─────────────────────────────────────────────────────────────────┘    │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -257,7 +319,8 @@ State Machine:
 │                                                                         │
 │  ┌─────────────────────────────────────────────────────────────────┐    │
 │  │                    RabbitMQ Message Broker                        │    │
-│  │  Exchanges: session.exchange, mentor.exchange, notification.*    │    │
+│  │  Exchanges: session, mentor, review, skill, payment              │    │
+│  │  Saga Events: payment.business.action (Payment → User Service)   │    │
 │  └─────────────────────────────────────────────────────────────────┘    │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -267,7 +330,7 @@ State Machine:
 
 ## 1.7 Key Workflows
 
-### Workflow 1: Mentor Discovery
+### Workflow 1: Mentor Discovery (with Redis Cache)
 
 ```
 ┌──────────┐     GET /api/mentors/search         ┌──────────────┐
@@ -279,17 +342,21 @@ State Machine:
                                                          │
                                                          ▼
                                                   ┌──────────────┐
-                                                  │   Mentor     │
-                                                  │   Service    │
+                                                  │ User Service │
+                                                  │ (MentorQuery │
+                                                  │    Service)  │
                                                   │              │
                                                   │ 1. Parse     │
                                                   │    filters   │
-                                                  │ 2. Query DB  │
+                                                  │ 2. Check     │
+                                                  │    Redis     │
+                                                  │ 3. MISS →    │
+                                                  │    Query DB  │
                                                   │    (indexed) │
-                                                  │ 3. Join with │
-                                                  │    skills    │
-                                                  │ 4. Paginate  │
-                                                  │ 5. Return    │
+                                                  │ 4. Cache in  │
+                                                  │    Redis     │
+                                                  │ 5. Paginate  │
+                                                  │ 6. Return    │
                                                   └──────────────┘
 ```
 
@@ -372,8 +439,13 @@ Admin                API Gateway         Mentor Service          RabbitMQ       
 | Backend Services | Spring Boot 3.x | Microservice framework |
 | Security | Spring Security + JWT | Authentication & authorization |
 | Messaging | RabbitMQ | Async event-driven communication |
-| Database | PostgreSQL | Per-service relational storage |
+| Caching | Redis 7.2 | Distributed cache layer (Cache-Aside pattern) |
+| Architecture Pattern | CQRS | Command/Query separation for read optimization |
+| Payment Gateway | Razorpay (Java SDK 1.4.8) | Mentor fee + session booking payments |
+| Database | PostgreSQL | Per-service relational storage (Source of Truth) |
 | ORM | Spring Data JPA / Hibernate | Object-relational mapping |
+| Documentation | Swagger / OpenAPI 3.0 | Automated API documentation UI |
+| Logging | Logback / SLF4J | Rolling file and console logging |
 | Build Tool | Maven | Dependency management, build |
 | Containerization | Docker + Docker Compose | Packaging & orchestration |
 | CI/CD | GitHub Actions | Build, test, deploy pipeline |

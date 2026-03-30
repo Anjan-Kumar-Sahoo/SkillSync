@@ -1,0 +1,9 @@
+refactor(payment): remove legacy MENTOR_FEE saga
+
+Removed all architectural dependencies, payload parameters, and logic branches related to the MENTOR_FEE payment type. Mentor approvals are now natively resolved locally without payment blocks.
+
+- PaymentType & ReferenceType: Removed MENTOR_FEE enums.
+- PaymentService: Exhaustive switch statement coverage updated to exclude mentor fees, simplifying validation.
+- MentorService: Application flow decoupled from Razorpay confirmation webhooks. 
+- Unit Tests: Standardized SagaRecovery, Schema, Mapper, and Service test suites to pass exclusively on SESSION_BOOKING schemas.
+- Docs: Transitioned to robust presentation-grade HTML architecture documentation while clearing out legacy txt scratchpads.
