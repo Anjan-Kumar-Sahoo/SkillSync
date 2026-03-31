@@ -63,6 +63,7 @@ jobs:
           - skill-service
           - session-service
           - notification-service
+          - payment-service
 
     steps:
       - name: Checkout code
