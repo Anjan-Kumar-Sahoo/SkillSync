@@ -107,39 +107,6 @@ jobs:
           path: ./Backend/${{ matrix.service }}/target/*.jar
           retention-days: 1
 
-  # ======================== CODE QUALITY (SonarQube) ===========
-  code-quality:
-    name: Code Quality Analysis
-    runs-on: ubuntu-latest
-    needs: build-and-test
-    if: github.event_name == 'pull_request'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up JDK ${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: ${{ env.JAVA_VERSION }}
-          cache: maven
-
-      # Uncomment when SonarQube is configured:
-      # - name: SonarQube Analysis
-      #   env:
-      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      #     SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-      #   run: |
-      #     mvn -B verify sonar:sonar \
-      #       -Dsonar.projectKey=skillsync \
-      #       -Dsonar.host.url=$SONAR_HOST_URL \
-      #       -Dsonar.login=$SONAR_TOKEN
-
-      - name: Quality Gate Placeholder
-        run: echo "SonarQube analysis would run here. Configure SONAR_TOKEN and SONAR_HOST_URL secrets."
 
   # ======================== BUILD DOCKER IMAGES ===============
   docker:
@@ -192,8 +159,6 @@ jobs:
             tag: frontend
             context: ./Frontend
             dockerfile: ./Frontend/Dockerfile
-            build_args: |
-              VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
 
     steps:
       - name: Checkout code
@@ -217,7 +182,9 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/skillsync:${{ matrix.tag }}-latest
             ${{ secrets.DOCKER_USERNAME }}/skillsync:${{ matrix.tag }}-${{ github.sha }}
-          build-args: ${{ matrix.build_args }}
+          build-args: |
+            ${{ matrix.build_args }}
+            VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
