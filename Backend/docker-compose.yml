@@ -212,9 +212,9 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8761/actuator/health || exit 1"]
       interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
     networks:
       - skillsync-net
     restart: unless-stopped
@@ -233,9 +233,9 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8888/actuator/health || exit 1"]
       interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 40s
+      timeout: 10s
+      retries: 10
+      start_period: 80s
     networks:
       - skillsync-net
     restart: unless-stopped
@@ -260,9 +260,9 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
       interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 100s
     networks:
       - skillsync-net
     restart: unless-stopped
