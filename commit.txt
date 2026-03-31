@@ -1,0 +1,7 @@
+feat(infra): decouple frontend for production and add seed data
+
+- Update .env with production CORS origins (Vercel/Custom Domain) and AWS IP 100.54.215.190.
+- Remove frontend service from docker-compose.yml for separate hosting.
+- Configure Nginx to proxy API Gateway directly at the root path.
+- Add insert-data.sql for manual database seeding of initial users.
+- Revert temporary Java service logic to maintain data-only approach.

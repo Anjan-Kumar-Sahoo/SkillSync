@@ -420,21 +420,6 @@ services:
       - skillsync-net
     restart: unless-stopped
 
-  # ======================== FRONTEND ==========================
-
-  frontend:
-    image: ${DOCKERHUB_USERNAME}/frontend:latest
-    container_name: skillsync-frontend
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-    networks:
-      - skillsync-net
-    restart: unless-stopped
-    depends_on:
-      api-gateway:
-        condition: service_healthy
 
   # ======================== NGINX REVERSE PROXY ===============
 
@@ -452,8 +437,6 @@ services:
     depends_on:
       api-gateway:
         condition: service_healthy
-      frontend:
-        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost/actuator/health || exit 1"]
       interval: 15s

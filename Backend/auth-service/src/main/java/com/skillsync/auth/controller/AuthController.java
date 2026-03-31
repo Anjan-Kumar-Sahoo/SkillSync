@@ -83,7 +83,8 @@ public class AuthController {
     @PostMapping("/setup-password")
     public ResponseEntity<Map<String, String>> setupPassword(@Valid @RequestBody SetupPasswordRequest request) {
         authService.setupPassword(request);
-        return ResponseEntity.ok(Map.of("message", "Password set successfully. You can now login with email and password."));
+        return ResponseEntity
+                .ok(Map.of("message", "Password set successfully. You can now login with email and password."));
     }
 
     @PutMapping("/users/{id}/role")

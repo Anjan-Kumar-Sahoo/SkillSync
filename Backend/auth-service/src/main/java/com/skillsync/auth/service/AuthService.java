@@ -64,8 +64,7 @@ public class AuthService {
     @Transactional
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password())
-        );
+                new UsernamePasswordAuthenticationToken(request.email(), request.password()));
 
         AuthUser user = authUserRepository.findByEmail(request.email())
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -75,7 +74,8 @@ public class AuthService {
             log.warn("Login attempt by unverified user: {}", user.getEmail());
             // Auto-resend OTP so the user can verify immediately
             otpService.generateAndSendOtp(user, OtpType.REGISTRATION);
-            throw new RuntimeException("Email not verified. A new OTP has been sent to " + user.getEmail() + ". Please verify your email before logging in.");
+            throw new RuntimeException("Email not verified. A new OTP has been sent to " + user.getEmail()
+                    + ". Please verify your email before logging in.");
         }
 
         log.info("User logged in: {}", user.getEmail());
@@ -172,7 +172,8 @@ public class AuthService {
             log.info("OAuth new user created: {} via {}", user.getEmail(), request.provider());
         } else {
             // === EXISTING USER ===
-            // Mark user as verified if they weren't already (OAuth provider has verified the email)
+            // Mark user as verified if they weren't already (OAuth provider has verified
+            // the email)
             if (!user.isVerified()) {
                 user.setVerified(true);
                 log.info("OAuth login verified previously unverified user: {}", user.getEmail());
@@ -262,16 +263,14 @@ public class AuthService {
                 user.getEmail(),
                 user.getRole().name(),
                 user.getFirstName(),
-                user.getLastName()
-        );
+                user.getLastName());
 
         return new AuthResponse(
                 accessToken,
                 refreshTokenStr,
                 jwtTokenProvider.getAccessExpiration() / 1000,
                 "Bearer",
-                userSummary
-        );
+                userSummary);
     }
 
     public UserSummary getUserById(Long userId) {
@@ -282,7 +281,6 @@ public class AuthService {
                 user.getEmail(),
                 user.getRole().name(),
                 user.getFirstName(),
-                user.getLastName()
-        );
+                user.getLastName());
     }
 }
