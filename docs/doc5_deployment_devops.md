@@ -620,6 +620,14 @@ All images are pushed to the unified Docker Hub repository `aksahoo1097/skillsyn
 - `:tag` (e.g., `:auth`) — always points to the latest main-branch build; used by `docker compose pull` on EC2.
 - `:tag-<sha>` — immutable; enables rollback to any specific commit.
 
+> [!CAUTION]
+> **CI/CD ↔ docker-compose Tag Sync (Critical)**
+> The `docker-compose.yml` image tags **must exactly match** what the CI/CD pipeline pushes. A previous mismatch caused production failures:
+> - CI/CD pushed: `skillsync:session` ← correct
+> - docker-compose used: `skillsync:session-latest` ← **wrong, image not found on EC2**
+>
+> **Rule:** Never append `-latest` to the service tag. The CI/CD pushes bare tags (`:auth`, `:eureka`, etc.) which already represent the latest build. If you need to pin a version, use the SHA tag (`:auth-a1b2c3d`).
+
 ### 5.3.4 Secrets Handling (Critical Fix)
 
 > [!WARNING]

@@ -67,3 +67,21 @@ scrape_configs:
     relabel_configs:
       - target_label: service
         replacement: 'payment-service'
+
+  # ======================== Eureka Server ======================
+  - job_name: 'eureka-server'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['eureka-server:8761']
+    relabel_configs:
+      - target_label: service
+        replacement: 'eureka-server'
+
+  # ======================== Config Server ======================
+  - job_name: 'config-server'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['config-server:8888']
+    relabel_configs:
+      - target_label: service
+        replacement: 'config-server'
