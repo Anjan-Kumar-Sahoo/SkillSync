@@ -232,8 +232,8 @@ class AuthServiceTest {
         }
 
         @Test
-        @DisplayName("OAuth - Unverified user → blocked from OAuth login")
-        void oauth_unverifiedUser_shouldBeBlocked() {
+        @DisplayName("OAuth - Unverified user → auto-verify and allow login")
+        void oauth_unverifiedUser_shouldBeVerifiedAndLoggedIn() {
             OAuthRequest request = new OAuthRequest(
                     "unverified@example.com", "Unverified", "User", "google", "google-id-789");
 
@@ -245,12 +245,20 @@ class AuthServiceTest {
                     .thenReturn(Optional.empty());
             when(authUserRepository.findByEmail("unverified@example.com"))
                     .thenReturn(Optional.of(unverifiedUser));
+            
+            // Mock token generation for successful login
+            when(jwtTokenProvider.generateAccessToken(anyLong(), anyString(), anyString())).thenReturn("accessToken");
+            when(jwtTokenProvider.generateRefreshToken(anyLong())).thenReturn("refreshToken");
+            when(jwtTokenProvider.getAccessExpiration()).thenReturn(3600000L);
+            when(refreshTokenRepository.findByUserOrderByCreatedAtAsc(any())).thenReturn(Collections.emptyList());
 
-            RuntimeException ex = assertThrows(RuntimeException.class,
-                    () -> authService.loginWithOAuth(request));
+            OAuthResponse response = authService.loginWithOAuth(request);
 
-            assertTrue(ex.getMessage().contains("not verified"));
-            verify(authUserRepository, never()).save(any(AuthUser.class));
+            assertNotNull(response);
+            assertTrue(unverifiedUser.isVerified(), "OAuth login should auto-verify the user");
+            assertEquals("accessToken", response.accessToken());
+            // Should NOT create new user but MIGHT save existing user if provider was null
+            verify(authUserRepository).save(unverifiedUser);
         }
 
         @Test
