@@ -10,7 +10,7 @@ name: SkillSync CI/CD
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -201,27 +201,21 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Generate version tag
-        id: version
-        run: |
-          VERSION=$(date +%Y%m%d)-${GITHUB_SHA::7}
-          echo "tag=${VERSION}" >> $GITHUB_OUTPUT
-
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build Docker image - ${{ matrix.service }}
+      - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
-          push: ${{ github.ref == 'refs/heads/main' }}  # Only push on main
+          push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/skillsync:${{ matrix.tag }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/skillsync:${{ matrix.tag }}-${{ steps.version.outputs.tag }}
+            ${{ secrets.DOCKER_USERNAME }}/skillsync:${{ matrix.tag }}-latest
+            ${{ secrets.DOCKER_USERNAME }}/skillsync:${{ matrix.tag }}-${{ github.sha }}
           build-args: ${{ matrix.build_args }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -316,15 +310,17 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
+          username: ${{ secrets.EC2_USER || 'ubuntu' }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/SkillSync/Backend
-            # Create .env if it doesn't exist
+            # Pull latest code from GitHub
+            git pull origin main
+            # Create .env if it doesn't exist (using defaults from example)
             if [ ! -f .env ]; then cp .env.example .env; fi
-            # Pull latest images
+            # Pull latest Docker images from Hub
             docker compose pull
-            # Start/Update containers
+            # Start/Restart services with new images
             docker compose up -d --remove-orphans
-            # Cleanup old images
+            # Cleanup unused dangling images to save disk space
             docker image prune -f

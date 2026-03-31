@@ -200,7 +200,7 @@ services:
   # ======================== DISCOVERY & CONFIG ================
 
   eureka-server:
-    image: ${DOCKERHUB_USERNAME}/skillsync:eureka
+    image: ${DOCKERHUB_USERNAME}/skillsync:eureka-latest
     container_name: skillsync-eureka
     deploy:
       resources:
@@ -220,7 +220,7 @@ services:
     restart: unless-stopped
 
   config-server:
-    image: ${DOCKERHUB_USERNAME}/skillsync:config
+    image: ${DOCKERHUB_USERNAME}/skillsync:config-latest
     container_name: skillsync-config
     deploy:
       resources:
@@ -243,7 +243,7 @@ services:
   # ======================== API GATEWAY =======================
 
   api-gateway:
-    image: ${DOCKERHUB_USERNAME}/skillsync:gateway
+    image: ${DOCKERHUB_USERNAME}/skillsync:gateway-latest
     container_name: skillsync-gateway
     deploy:
       resources:
@@ -270,7 +270,7 @@ services:
   # ======================== MICROSERVICES =====================
 
   auth-service:
-    image: ${DOCKERHUB_USERNAME}/skillsync:auth
+    image: ${DOCKERHUB_USERNAME}/skillsync:auth-latest
     container_name: skillsync-auth
     deploy:
       resources:
@@ -291,7 +291,7 @@ services:
     restart: unless-stopped
 
   user-service:
-    image: ${DOCKERHUB_USERNAME}/skillsync:user
+    image: ${DOCKERHUB_USERNAME}/skillsync:user-latest
     container_name: skillsync-user
     deploy:
       resources:
@@ -316,7 +316,7 @@ services:
     restart: unless-stopped
 
   skill-service:
-    image: ${DOCKERHUB_USERNAME}/skillsync:skill
+    image: ${DOCKERHUB_USERNAME}/skillsync:skill-latest
     container_name: skillsync-skill
     deploy:
       resources:
@@ -341,7 +341,7 @@ services:
     restart: unless-stopped
 
   session-service:
-    image: ${DOCKERHUB_USERNAME}/skillsync:session
+    image: ${DOCKERHUB_USERNAME}/skillsync:session-latest
     container_name: skillsync-session
     deploy:
       resources:
@@ -371,7 +371,7 @@ services:
   # review-service: MERGED into session-service
 
   notification-service:
-    image: ${DOCKERHUB_USERNAME}/skillsync:notification
+    image: ${DOCKERHUB_USERNAME}/skillsync:notification-latest
     container_name: skillsync-notification
     deploy:
       resources:
@@ -396,7 +396,7 @@ services:
     restart: unless-stopped
 
   payment-service:
-    image: ${DOCKERHUB_USERNAME}/skillsync:payment
+    image: ${DOCKERHUB_USERNAME}/skillsync:payment-latest
     container_name: skillsync-payment
     deploy:
       resources:

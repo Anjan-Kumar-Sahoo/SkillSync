@@ -4,7 +4,7 @@ SkillSync is a production-grade, distributed microservices platform designed to 
 
 ## 🏗️ System Architecture
 
-SkillSync utilizes an API Gateway for routing and authentication, and delegates business domains to 6 distinct Spring Boot microservices via an Event-Driven architecture powered by RabbitMQ. 
+SkillSync utilizes an API Gateway for routing and authentication, and delegates business domains to 9 distinct Spring Boot microservices via an Event-Driven architecture powered by RabbitMQ. 
 
 ```mermaid
 graph TD
@@ -17,6 +17,8 @@ graph TD
     GW -->|REST/JWT| Session[Session Service :8085]
     GW -->|REST/JWT| Payment[Payment Service :8086]
     GW -->|REST/JWT| Notif[Notification :8088]
+    GW -->|REST/JWT| Config[Config Server :8888]
+    GW -->|REST/JWT| Eureka[Eureka Server :8761]
 
     User -.->|Event| RabbitMQ
     Payment -.->|Event| RabbitMQ
@@ -50,9 +52,9 @@ graph TD
 - **Styling:** Tailwind CSS
 
 ### Infrastructure & DevOps
-- **Deployment:** AWS EC2, Nginx Reverse Proxy
-- **Containerization:** Docker & Docker Compose
-- **CI/CD:** GitHub Actions (Automated build, test, multi-stage deployments)
+- **Deployment:** AWS EC2 (t3.large), Nginx (SSL & Reverse Proxy)
+- **Containerization:** Docker & Docker Compose (Single-Repo Hub Strategy)
+- **CI/CD:** GitHub Actions (Build matrix: 9 services; Automated tags: `:latest`, `:${{ github.sha }}`; Automated EC2 deployment)
 
 ## 💡 Key Architectural Patterns
 

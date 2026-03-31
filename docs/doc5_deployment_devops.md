@@ -91,56 +91,22 @@
 
 ## 5.2 Docker Setup
 
-### 5.2.1 Dockerfile — Spring Boot Microservice (Multi-stage)
+### 5.2.1 Dockerfile — Microservice Strategy
+
+SkillSync uses standardized multi-stage Dockerfiles. Key requirements include:
+- **Build Context:** Services depending on `skillsync-cache-common` use `./Backend` as the context to copy shared resources.
+- **Image Strategy:** Unified repository (`aksahoo1097/skillsync`) using service-specific tags with versioning (latest/SHA).
 
 ```dockerfile
-# Dockerfile.service
-# Stage 1: Build
-FROM maven:3.9-eclipse-temurin-21-alpine AS builder
-
+# Example from auth-service/Dockerfile
+FROM maven:3.9-eclipse-temurin-17-alpine AS build
 WORKDIR /app
-
-# Copy parent POM and common module first (layer caching)
-COPY pom.xml .
-COPY skillsync-common/pom.xml ./skillsync-common/
-COPY skillsync-common/src ./skillsync-common/src
-
-# Copy service-specific POM and source
-ARG SERVICE_NAME
-COPY ${SERVICE_NAME}/pom.xml ./${SERVICE_NAME}/
-COPY ${SERVICE_NAME}/src ./${SERVICE_NAME}/src
-
-# Build only the target service (skip tests in CI — run separately)
-RUN mvn clean package -pl ${SERVICE_NAME} -am -DskipTests \
-    -Dmaven.repo.local=/app/.m2
-
-# Stage 2: Runtime
-FROM eclipse-temurin:21-jre-alpine
-
-RUN addgroup -S spring && adduser -S spring -G spring
-
-ARG SERVICE_NAME
-WORKDIR /app
-
-# Copy built artifact
-COPY --from=builder /app/${SERVICE_NAME}/target/*.jar app.jar
-
-# Security: Run as non-root
-USER spring:spring
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-    CMD wget -qO- http://localhost:${SERVER_PORT}/actuator/health || exit 1
-
-# JVM tuning for containers
-ENV JAVA_OPTS="-XX:+UseContainerSupport \
-    -XX:MaxRAMPercentage=75.0 \
-    -XX:InitialRAMPercentage=50.0 \
-    -Djava.security.egd=file:/dev/./urandom"
-
-EXPOSE ${SERVER_PORT}
-
-ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS} -jar app.jar"]
+COPY skillsync-cache-common ./skillsync-cache-common
+RUN mvn -f skillsync-cache-common/pom.xml clean install -DskipTests
+COPY auth-service/pom.xml ./auth-service/
+COPY auth-service/src ./auth-service/src
+RUN mvn -f auth-service/pom.xml package -DskipTests
+...
 ```
 
 ### 5.2.2 Dockerfile — React Frontend (Multi-stage)
@@ -603,11 +569,14 @@ fi
 
 ## 5.3 CI/CD Pipeline (GitHub Actions)
 
-### 5.3.1 Complete Pipeline
+### 5.3.1 Pipeline Integration
+The SkillSync pipeline (`.github/workflows/ci-cd.yml`) automates build, test, and deployment to AWS.
 
-```yaml
-# .github/workflows/ci-cd.yml
-name: SkillSync CI/CD Pipeline
+**Key Features:**
+- **Matrix Parallelism:** Builds and tests all 9 services concurrently.
+- **Docker Hub Push:** Tags images as `latest` and `SHA` (e.g., `aksahoo1097/skillsync:auth-latest`).
+- **EC2 Auto-Deploy:** Pulls latest images and restarts containers via SSH.
+- **SonarCloud Integration:** Continuous quality analysis for all business domains.
 
 on:
   push:
