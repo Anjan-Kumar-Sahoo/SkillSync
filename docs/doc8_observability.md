@@ -40,6 +40,9 @@ Zipkin is a distributed tracing system that helps track requests as they flow ac
 - Session Service
 - Skill Service
 - Notification Service
+- Payment Service
+- Eureka Server
+- Config Server
 
 ### Docker Setup (Zipkin, Prometheus, Grafana, Loki)
 
@@ -187,7 +190,17 @@ scrape_configs:
   - job_name: 'skillsync-services'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['api-gateway:8080', 'auth-service:8081', 'user-service:8082', 'skill-service:8084', 'session-service:8085', 'notification-service:8088']
+      - targets: [
+          'api-gateway:8080', 
+          'auth-service:8081', 
+          'user-service:8082', 
+          'skill-service:8084', 
+          'session-service:8085', 
+          'notification-service:8088',
+          'payment-service:8086',
+          'eureka-server:8761',
+          'config-server:8888'
+        ]
 ```
 
 ---
@@ -246,6 +259,9 @@ ZIPKIN_HOST=zipkin
 | Skill Service | 8084 | ✅ | ✅ |
 | Session Service | 8085 | ✅ | ✅ |
 | Notification Service | 8088 | ✅ | ✅ |
+| Payment Service | 8086 | ✅ | ✅ |
+| Eureka Server | 8761 | ✅ | ✅ |
+| Config Server | 8888 | ✅ | ✅ |
 
 ---
 

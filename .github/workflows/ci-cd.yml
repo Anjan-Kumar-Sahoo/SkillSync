@@ -209,7 +209,7 @@ jobs:
     name: Code Quality - ${{ matrix.service }}
     runs-on: ubuntu-latest
     needs: build-and-test
-    if: (github.ref == 'refs/heads/main' || github.event_name == 'pull_request') && secrets.SONAR_TOKEN != ''
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
     strategy:
       fail-fast: false
       matrix:
@@ -242,6 +242,7 @@ jobs:
           path: ~/.m2/repository/com/skillsync/skillsync-cache-common/
 
       - name: SonarCloud Scan - ${{ matrix.service }}
+        if: secrets.SONAR_TOKEN != ''
         working-directory: ./Backend/${{ matrix.service }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
