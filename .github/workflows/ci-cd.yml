@@ -63,6 +63,7 @@ jobs:
           - skill-service
           - session-service
           - notification-service
+          - payment-service
 
     steps:
       - name: Checkout code
@@ -151,30 +152,43 @@ jobs:
       matrix:
         include:
           - service: eureka-server
+            tag: eureka
             context: ./Backend/eureka-server
             dockerfile: ./Backend/eureka-server/Dockerfile
           - service: config-server
+            tag: config
             context: ./Backend/config-server
             dockerfile: ./Backend/config-server/Dockerfile
           - service: api-gateway
+            tag: gateway
             context: ./Backend/api-gateway
             dockerfile: ./Backend/api-gateway/Dockerfile
           - service: auth-service
+            tag: auth
             context: ./Backend
             dockerfile: ./Backend/auth-service/Dockerfile
           - service: user-service
+            tag: user
             context: ./Backend
             dockerfile: ./Backend/user-service/Dockerfile
           - service: skill-service
+            tag: skill
             context: ./Backend
             dockerfile: ./Backend/skill-service/Dockerfile
           - service: session-service
+            tag: session
             context: ./Backend
             dockerfile: ./Backend/session-service/Dockerfile
           - service: notification-service
+            tag: notification
             context: ./Backend
             dockerfile: ./Backend/notification-service/Dockerfile
+          - service: payment-service
+            tag: payment
+            context: ./Backend
+            dockerfile: ./Backend/payment-service/Dockerfile
           - service: frontend
+            tag: frontend
             context: ./Frontend
             dockerfile: ./Frontend/Dockerfile
             build_args: |
@@ -206,8 +220,8 @@ jobs:
           file: ${{ matrix.dockerfile }}
           push: ${{ github.ref == 'refs/heads/main' }}  # Only push on main
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.service }}:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.service }}:${{ steps.version.outputs.tag }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/skillsync:${{ matrix.tag }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/skillsync:${{ matrix.tag }}-${{ steps.version.outputs.tag }}
           build-args: ${{ matrix.build_args }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
