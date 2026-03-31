@@ -569,372 +569,101 @@ fi
 
 ## 5.3 CI/CD Pipeline (GitHub Actions)
 
-### 5.3.1 Pipeline Integration
-The SkillSync pipeline (`.github/workflows/ci-cd.yml`) automates build, test, and deployment to AWS.
+### 5.3.1 Pipeline Overview
+
+The SkillSync pipeline (`.github/workflows/ci-cd.yml`) automates the full build → test → containerize → deploy lifecycle.
+
+```
+┌──────────────┐    ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐    ┌────────────────┐    ┌──────────────┐
+│  Stage 1     │    │  Stage 2         │    │  Stage 3         │    │  Stage 4         │    │  Stage 5       │    │  Stage 6     │
+│  Build       │───▶│  Build & Test    │───▶│  Docker Build    │───▶│  Compose         │───▶│  Code Quality  │───▶│  Deploy      │
+│  Cache       │    │  All 9 Services  │    │  & Push to       │    │  Validation      │    │  SonarCloud    │    │  to EC2      │
+│  Common      │    │  (Matrix)        │    │  Docker Hub      │    │                  │    │  (Conditional) │    │  via SSH     │
+└──────────────┘    └──────────────────┘    └──────────────────┘    └──────────────────┘    └────────────────┘    └──────────────┘
+```
 
 **Key Features:**
-- **Matrix Parallelism:** Builds and tests all 9 services concurrently.
-- **Docker Hub Push:** Tags images as `latest` and `SHA` (e.g., `aksahoo1097/skillsync:auth-latest`).
-- **EC2 Auto-Deploy:** Pulls latest images and restarts containers via SSH.
-- **SonarCloud Integration:** Continuous quality analysis for all business domains.
+- **Matrix Parallelism:** Builds and tests all 9 services concurrently using GitHub Actions matrix strategy.
+- **Docker Hub Push:** Uses a bash loop to build all images in a single job with dual tagging.
+- **EC2 Auto-Deploy:** Copies compose files via SCP, then pulls/restarts via SSH.
+- **SonarCloud Integration:** Conditional code quality analysis (safe when token is not configured).
+- **Secrets Safety:** All `secrets.*` references are wrapped in `${{ }}` expressions to avoid GitHub Actions parse errors.
 
+### 5.3.2 Trigger Configuration
+
+```yaml
 on:
   push:
-    branches: [main, develop]
+    branches: [main]        # Full pipeline: build → test → Docker → deploy
   pull_request:
-    branches: [main]
+    branches: [main]        # Build + test only (no Docker push / deploy)
+  workflow_dispatch:         # Manual trigger via GitHub UI
+```
 
+### 5.3.3 Docker Tagging Strategy
+
+All images are pushed to the unified Docker Hub repository `aksahoo1097/skillsync` with service-specific tag prefixes:
+
+| Service | Docker Tag (latest) | Docker Tag (SHA) |
+|---|---|---|
+| eureka-server | `aksahoo1097/skillsync:eureka` | `aksahoo1097/skillsync:eureka-<sha>` |
+| config-server | `aksahoo1097/skillsync:config` | `aksahoo1097/skillsync:config-<sha>` |
+| api-gateway | `aksahoo1097/skillsync:gateway` | `aksahoo1097/skillsync:gateway-<sha>` |
+| auth-service | `aksahoo1097/skillsync:auth` | `aksahoo1097/skillsync:auth-<sha>` |
+| user-service | `aksahoo1097/skillsync:user` | `aksahoo1097/skillsync:user-<sha>` |
+| skill-service | `aksahoo1097/skillsync:skill` | `aksahoo1097/skillsync:skill-<sha>` |
+| session-service | `aksahoo1097/skillsync:session` | `aksahoo1097/skillsync:session-<sha>` |
+| payment-service | `aksahoo1097/skillsync:payment` | `aksahoo1097/skillsync:payment-<sha>` |
+| notification-service | `aksahoo1097/skillsync:notification` | `aksahoo1097/skillsync:notification-<sha>` |
+
+**Why dual tags?**
+- `:tag` (e.g., `:auth`) — always points to the latest main-branch build; used by `docker compose pull` on EC2.
+- `:tag-<sha>` — immutable; enables rollback to any specific commit.
+
+### 5.3.4 Secrets Handling (Critical Fix)
+
+> [!WARNING]
+> GitHub Actions does **not** allow bare `secrets.*` references in `if:` conditionals.
+> Using `if: secrets.SONAR_TOKEN != ''` causes: **"Unrecognized named-value: 'secrets'"**
+
+**Correct pattern:**
+```yaml
+# 1. Map the secret to a job-level env var
 env:
-  JAVA_VERSION: '21'
-  NODE_VERSION: '20'
-  DOCKER_REGISTRY: ghcr.io
-  IMAGE_PREFIX: ${{ github.repository_owner }}/skillsync
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-jobs:
-  # ============================================
-  # STAGE 1: BACKEND BUILD + TEST
-  # ============================================
+# 2. Use the env var in conditionals (wrapped in ${{ }})
+steps:
+  - name: SonarCloud Scan
+    if: ${{ env.SONAR_TOKEN != '' }}   # ✅ Safe
+    run: mvn sonar:sonar ...
+```
 
-  backend-build:
-    name: Backend Build & Test
-    runs-on: ubuntu-latest
-    
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: skillsync_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U test"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+### 5.3.5 Required GitHub Secrets
 
-      rabbitmq:
-        image: rabbitmq:3.12-management-alpine
-        ports:
-          - 5672:5672
-        options: >-
-          --health-cmd "rabbitmq-diagnostics check_running"
-          --health-interval 30s
-          --health-timeout 10s
-          --health-retries 5
+| Secret | Purpose |
+|---|---|
+| `DOCKER_USERNAME` | Docker Hub login username |
+| `DOCKER_PASSWORD` | Docker Hub login password/token |
+| `EC2_HOST` | EC2 instance public IP or hostname |
+| `EC2_SSH_KEY` | Private SSH key for EC2 access |
+| `SONAR_TOKEN` | SonarCloud authentication (optional) |
+| `VITE_GOOGLE_CLIENT_ID` | Google OAuth client ID for frontend |
 
-    strategy:
-      matrix:
-        service:
-          - auth-service
-          - user-service
-          - payment-service
-          - skill-service
-          - session-service
-          - notification-service
+### 5.3.6 EC2 Deployment Steps
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+The deploy job runs **only** on pushes to `main` after Docker images are pushed:
 
-      - name: Setup Java ${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v4
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: 'temurin'
-          cache: 'maven'
+```bash
+# 1. SCP: Copy latest compose/config files to EC2
+scp Backend/docker-compose.yml Backend/nginx/ Backend/.env.example → ~/SkillSync/
 
-      - name: Build common module
-        run: mvn install -pl skillsync-common -DskipTests
-
-      - name: Run tests for ${{ matrix.service }}
-        run: |
-          mvn test -pl ${{ matrix.service }} -am \
-            -Dspring.profiles.active=test \
-            -Dspring.datasource.url=jdbc:postgresql://localhost:5432/skillsync_test \
-            -Dspring.datasource.username=test \
-            -Dspring.datasource.password=test
-
-      - name: Generate coverage report
-        run: mvn jacoco:report -pl ${{ matrix.service }}
-
-      - name: Check coverage threshold (80%)
-        run: |
-          COVERAGE=$(python3 -c "
-          import xml.etree.ElementTree as ET
-          tree = ET.parse('${{ matrix.service }}/target/site/jacoco/jacoco.xml')
-          root = tree.getroot()
-          for counter in root.findall('.//counter[@type=\"LINE\"]'):
-              missed = int(counter.get('missed', 0))
-              covered = int(counter.get('covered', 0))
-              total = missed + covered
-              if total > 0:
-                  print(f'{covered * 100 // total}')
-                  break
-          ")
-          echo "Coverage: ${COVERAGE}%"
-          if [ "${COVERAGE}" -lt 80 ]; then
-            echo "::error::Coverage ${COVERAGE}% is below 80% threshold for ${{ matrix.service }}"
-            exit 1
-          fi
-
-      - name: SonarQube Quality Gate
-        # Placeholder for SonarQube integration (runs static analysis)
-        run: echo "SonarQube analysis goes here"
-
-      - name: Upload Test Report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: surefire-report-${{ matrix.service }}
-          path: ${{ matrix.service }}/target/surefire-reports/
-
-      - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-${{ matrix.service }}
-          path: ${{ matrix.service }}/target/site/jacoco/
-
-      - name: Build JAR
-        run: mvn package -pl ${{ matrix.service }} -am -DskipTests
-
-      - name: Upload JAR artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: jar-${{ matrix.service }}
-          path: ${{ matrix.service }}/target/*.jar
-
-  # ============================================
-  # STAGE 2: FRONTEND BUILD + TEST
-  # ============================================
-
-  frontend-build:
-    name: Frontend Build & Test
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        run: cd frontend && npm ci
-
-      - name: Lint
-        run: cd frontend && npm run lint
-
-      - name: Type check
-        run: cd frontend && npm run type-check
-
-      - name: Unit tests with coverage
-        run: cd frontend && npm run test -- --coverage --watchAll=false --ci
-
-      - name: Check coverage threshold (75%)
-        run: |
-          cd frontend
-          COVERAGE=$(node -e "
-            const report = require('./coverage/coverage-summary.json');
-            console.log(Math.round(report.total.lines.pct));
-          ")
-          echo "Coverage: ${COVERAGE}%"
-          if [ "${COVERAGE}" -lt 75 ]; then
-            echo "::error::Frontend coverage ${COVERAGE}% is below 75% threshold"
-            exit 1
-          fi
-
-      - name: Build production bundle
-        run: cd frontend && npm run build
-        env:
-          VITE_API_BASE_URL: ${{ vars.API_BASE_URL }}
-          VITE_WS_URL: ${{ vars.WS_URL }}
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-build
-          path: frontend/dist/
-
-  # ============================================
-  # STAGE 3: E2E TESTS
-  # ============================================
-
-  e2e-tests:
-    name: E2E Tests
-    runs-on: ubuntu-latest
-    needs: [backend-build, frontend-build]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Install Playwright
-        run: cd frontend && npm ci && npx playwright install --with-deps
-
-      - name: Start services with Docker Compose
-        run: docker compose -f docker-compose.test.yml up -d --wait
-        timeout-minutes: 5
-
-      - name: Run E2E tests
-        run: cd frontend && npx playwright test
-        env:
-          PLAYWRIGHT_BASE_URL: http://localhost:3000
-
-      - name: Upload Playwright report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report
-          path: frontend/playwright-report/
-
-      - name: Stop services
-        if: always()
-        run: docker compose -f docker-compose.test.yml down -v
-
-  # ============================================
-  # STAGE 4: BUILD & PUSH DOCKER IMAGES
-  # ============================================
-
-  docker-build:
-    name: Build & Push Docker Images
-    runs-on: ubuntu-latest
-    needs: [backend-build, frontend-build]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
-
-    permissions:
-      contents: read
-      packages: write
-
-    strategy:
-      matrix:
-        service:
-          - auth-service
-          - user-service
-          - skill-service
-          - session-service
-          - notification-service
-          - api-gateway
-          - eureka-server
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.DOCKER_REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Determine tag
-        id: tag
-        run: |
-          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            echo "tag=latest" >> $GITHUB_OUTPUT
-            echo "env=production" >> $GITHUB_OUTPUT
-          else
-            echo "tag=develop" >> $GITHUB_OUTPUT
-            echo "env=staging" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Build and push ${{ matrix.service }}
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: Dockerfile.service
-          push: true
-          tags: |
-            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:${{ steps.tag.outputs.tag }}
-            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:${{ github.sha }}
-          build-args: |
-            SERVICE_NAME=${{ matrix.service }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  docker-build-frontend:
-    name: Build & Push Frontend Image
-    runs-on: ubuntu-latest
-    needs: [frontend-build]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
-
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.DOCKER_REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push frontend
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          file: ./frontend/Dockerfile.frontend
-          push: true
-          tags: |
-            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${{ github.sha }}
-          build-args: |
-            VITE_API_BASE_URL=${{ vars.API_BASE_URL }}
-            VITE_WS_URL=${{ vars.WS_URL }}
-
-  # ============================================
-  # STAGE 5: DEPLOY
-  # ============================================
-
-  deploy:
-    name: Deploy to ${{ needs.docker-build.outputs.env || 'staging' }}
-    runs-on: ubuntu-latest
-    needs: [docker-build, docker-build-frontend, e2e-tests]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    environment: production
-
-    steps:
-      - name: Deploy to production server
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: |
-            cd /opt/skillsync
-            
-            # Pull latest images
-            docker compose pull
-            
-            # Rolling update (zero downtime)
-            docker compose up -d --remove-orphans
-            
-            # Wait for health checks
-            sleep 30
-            
-            # Verify services are healthy
-            docker compose ps --filter "health=healthy" | grep -c "healthy"
-            
-            # Prune old images
-            docker image prune -f
+# 2. SSH: Pull and restart
+cd ~/SkillSync/Backend
+git pull origin main                    # Get latest compose config
+docker compose pull                     # Pull new images from Docker Hub
+docker compose up -d --remove-orphans   # Restart with new images
+docker image prune -f                   # Cleanup old images
 ```
 
 ---

@@ -1,10 +1,10 @@
 # ============================================================
-#  SkillSync CI/CD Pipeline (Production-Grade)
-#  - Build shared library first (skillsync-cache-common)
-#  - Build & test all services in parallel
-#  - Code quality analysis (SonarQube)
-#  - Docker build with semantic versioning
-#  - Compose validation
+#  SkillSync CI/CD Pipeline
+#  - Build shared library (skillsync-cache-common)
+#  - Build & test all microservices in parallel (matrix)
+#  - Code quality analysis (SonarCloud) — conditional
+#  - Docker build + push to Docker Hub (latest + SHA tags)
+#  - Deploy to AWS EC2 via SSH
 # ============================================================
 name: SkillSync CI/CD
 
@@ -18,13 +18,15 @@ on:
 env:
   JAVA_VERSION: '17'
   DOCKER_REGISTRY: docker.io
+  DOCKER_REPO: aksahoo1097/skillsync
 
 jobs:
 
-  # ======================== BUILD SHARED LIBRARY ===============
+  # ======================== STAGE 1: BUILD SHARED LIBRARY =====
   build-cache-common:
     name: Build Cache Common Library
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -47,11 +49,12 @@ jobs:
           path: ~/.m2/repository/com/skillsync/skillsync-cache-common/
           retention-days: 1
 
-  # ======================== BUILD & TEST ALL SERVICES ==========
+  # ======================== STAGE 2: BUILD & TEST ALL SERVICES =
   build-and-test:
     name: Build & Test - ${{ matrix.service }}
     runs-on: ubuntu-latest
     needs: build-cache-common
+
     strategy:
       fail-fast: false
       matrix:
@@ -90,7 +93,6 @@ jobs:
       - name: Run Unit Tests - ${{ matrix.service }}
         working-directory: ./Backend/${{ matrix.service }}
         run: mvn test -B
-        # FAIL pipeline on test failure (no continue-on-error)
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
@@ -107,58 +109,12 @@ jobs:
           path: ./Backend/${{ matrix.service }}/target/*.jar
           retention-days: 1
 
-
-  # ======================== BUILD DOCKER IMAGES ===============
+  # ======================== STAGE 3: DOCKER BUILD & PUSH =======
   docker:
-    name: Docker Build - ${{ matrix.service }}
+    name: Docker Build & Push
     runs-on: ubuntu-latest
     needs: build-and-test
-    if: github.ref == 'refs/heads/main'
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - service: eureka-server
-            tag: eureka
-            context: ./Backend/eureka-server
-            dockerfile: ./Backend/eureka-server/Dockerfile
-          - service: config-server
-            tag: config
-            context: ./Backend/config-server
-            dockerfile: ./Backend/config-server/Dockerfile
-          - service: api-gateway
-            tag: gateway
-            context: ./Backend/api-gateway
-            dockerfile: ./Backend/api-gateway/Dockerfile
-          - service: auth-service
-            tag: auth
-            context: ./Backend
-            dockerfile: ./Backend/auth-service/Dockerfile
-          - service: user-service
-            tag: user
-            context: ./Backend
-            dockerfile: ./Backend/user-service/Dockerfile
-          - service: skill-service
-            tag: skill
-            context: ./Backend
-            dockerfile: ./Backend/skill-service/Dockerfile
-          - service: session-service
-            tag: session
-            context: ./Backend
-            dockerfile: ./Backend/session-service/Dockerfile
-          - service: notification-service
-            tag: notification
-            context: ./Backend
-            dockerfile: ./Backend/notification-service/Dockerfile
-          - service: payment-service
-            tag: payment
-            context: ./Backend
-            dockerfile: ./Backend/payment-service/Dockerfile
-          - service: frontend
-            tag: frontend
-            context: ./Frontend
-            dockerfile: ./Frontend/Dockerfile
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
       - name: Checkout code
@@ -173,22 +129,55 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and Push Docker Image
-        uses: docker/build-push-action@v5
-        with:
-          context: ${{ matrix.context }}
-          file: ${{ matrix.dockerfile }}
-          push: true
-          tags: |
-            aksahoo1097/skillsync:${{ matrix.tag }}-latest
-            aksahoo1097/skillsync:${{ matrix.tag }}-${{ github.sha }}
-          build-args: |
-            ${{ matrix.build_args }}
-            VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Build and Push All Service Images
+        run: |
+          # Define service-name → Docker tag mapping
+          declare -A SERVICE_MAP=(
+            [eureka-server]=eureka
+            [config-server]=config
+            [api-gateway]=gateway
+            [auth-service]=auth
+            [user-service]=user
+            [skill-service]=skill
+            [session-service]=session
+            [payment-service]=payment
+            [notification-service]=notification
+          )
 
-  # ======================== COMPOSE VALIDATION ================
+          COMMIT_SHA="${{ github.sha }}"
+          REPO="${{ env.DOCKER_REPO }}"
+
+          for svc in eureka-server config-server api-gateway auth-service user-service skill-service session-service payment-service notification-service; do
+            TAG="${SERVICE_MAP[$svc]}"
+            echo "============================================"
+            echo "Building: $svc → $REPO:$TAG"
+            echo "============================================"
+
+            # Determine build context: services with cache-common dependency
+            # need the full ./Backend context; standalone services use their own dir
+            case "$svc" in
+              eureka-server|config-server|api-gateway)
+                CONTEXT="./Backend/$svc"
+                DOCKERFILE="./Backend/$svc/Dockerfile"
+                ;;
+              *)
+                CONTEXT="./Backend"
+                DOCKERFILE="./Backend/$svc/Dockerfile"
+                ;;
+            esac
+
+            docker buildx build \
+              --platform linux/amd64 \
+              --file "$DOCKERFILE" \
+              --tag "$REPO:$TAG" \
+              --tag "$REPO:$TAG-$COMMIT_SHA" \
+              --push \
+              "$CONTEXT"
+
+            echo "✅ Pushed: $REPO:$TAG and $REPO:$TAG-$COMMIT_SHA"
+          done
+
+  # ======================== STAGE 4: COMPOSE VALIDATION ========
   validate-compose:
     name: Validate Docker Compose
     runs-on: ubuntu-latest
@@ -198,18 +187,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Create .env for validation
+      - name: Validate compose file
         run: |
           cd Backend
-          cp .env.example .env
+          if [ -f .env.example ]; then
+            cp .env.example .env
+          fi
           docker compose config --quiet
 
-  # ======================== CODE QUALITY (SonarCloud) ===========
+  # ======================== STAGE 5: CODE QUALITY (SonarCloud) =
   code-quality:
     name: Code Quality - ${{ matrix.service }}
     runs-on: ubuntu-latest
     needs: build-and-test
-    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+    if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'pull_request' }}
+
+    # ✅ FIX: Map secret to env var, then use env var in conditionals
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
     strategy:
       fail-fast: false
       matrix:
@@ -241,8 +237,9 @@ jobs:
           name: cache-common-jar
           path: ~/.m2/repository/com/skillsync/skillsync-cache-common/
 
+      # ✅ FIX: Use ${{ env.SONAR_TOKEN != '' }} instead of bare secrets reference
       - name: SonarCloud Scan - ${{ matrix.service }}
-        if: secrets.SONAR_TOKEN != ''
+        if: ${{ env.SONAR_TOKEN != '' }}
         working-directory: ./Backend/${{ matrix.service }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -254,18 +251,22 @@ jobs:
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
 
-  # ======================== DEPLOY TO EC2 =====================
+      - name: Skip SonarCloud (token not configured)
+        if: ${{ env.SONAR_TOKEN == '' }}
+        run: echo "⚠️ SONAR_TOKEN not set — skipping SonarCloud analysis"
+
+  # ======================== STAGE 6: DEPLOY TO EC2 =============
   deploy:
     name: Deploy to EC2
     runs-on: ubuntu-latest
     needs: [docker, validate-compose, code-quality]
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Copy docker-compose and nginx config
+      - name: Copy deployment files to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -278,17 +279,27 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER || 'ubuntu' }}
+          username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/SkillSync/Backend
+
             # Pull latest code from GitHub
             git pull origin main
-            # Create .env if it doesn't exist (using defaults from example)
-            if [ ! -f .env ]; then cp .env.example .env; fi
+
+            # Create .env from example if it doesn't exist
+            if [ ! -f .env ]; then
+              cp .env.example .env
+              echo "⚠️ Created .env from .env.example — verify secrets!"
+            fi
+
             # Pull latest Docker images from Hub
             docker compose pull
+
             # Start/Restart services with new images
             docker compose up -d --remove-orphans
+
             # Cleanup unused dangling images to save disk space
             docker image prune -f
+
+            echo "✅ Deployment complete!"
