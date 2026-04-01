@@ -9,7 +9,14 @@
 >
 > **CQRS + Redis Caching (March 2026):** All business services now require a **Redis 7.2** instance for distributed caching. The `docker-compose.yml` includes Redis as a service dependency with AOF persistence. See `doc6_cqrs_redis_architecture.md` for details.
 >
+> **EC2 Incident Fix (April 2026):** Gateway and NGINX health/routing stabilization is documented in `doc9_ec2_gateway_nginx_incident_fix.md` with exact diagnosis and validation commands.
+>
 > The original deployment diagrams below reflect the initial 11-service architecture. Real deployments use the current 9-service topology.
+
+Runtime naming convention for container DNS:
+- Prefer explicit `skillsync-*` hostnames for cross-container calls.
+- Keep Compose network aliases for both logical service names and `skillsync-*` names.
+- Use `skillsync-gateway:8080` as the NGINX upstream target.
 
 ## SkillSync — Infrastructure, Deployment & Operations
 

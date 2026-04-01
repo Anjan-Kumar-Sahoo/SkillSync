@@ -81,6 +81,8 @@ Comprehensive presentation-grade HTML visual documentation can be found in the `
 - [`FE-ARCHITECTURE.html`](file:///f:/SkillSync/UI%20DOCS/FE-ARCHITECTURE.html) — Component hierarchy and Data synchronization loops
 
 > For extensive backend API testing patterns via curl/Postman along with DB initializations, view [`docs/backend_testing_guide.md`](docs/backend_testing_guide.md).
+>
+> For gateway and NGINX production incident diagnosis and verified fixes, view [`docs/doc9_ec2_gateway_nginx_incident_fix.md`](docs/doc9_ec2_gateway_nginx_incident_fix.md).
 
 ## 🚀 Getting Started
 

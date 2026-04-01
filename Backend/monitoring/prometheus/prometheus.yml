@@ -9,7 +9,7 @@ scrape_configs:
   - job_name: 'api-gateway'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['api-gateway:8080']
+      - targets: ['skillsync-gateway:8080']
     relabel_configs:
       - target_label: service
         replacement: 'api-gateway'
@@ -18,7 +18,7 @@ scrape_configs:
   - job_name: 'auth-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['auth-service:8081']
+      - targets: ['skillsync-auth:8081']
     relabel_configs:
       - target_label: service
         replacement: 'auth-service'
@@ -27,7 +27,7 @@ scrape_configs:
   - job_name: 'user-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['user-service:8082']
+      - targets: ['skillsync-user:8082']
     relabel_configs:
       - target_label: service
         replacement: 'user-service'
@@ -36,7 +36,7 @@ scrape_configs:
   - job_name: 'skill-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['skill-service:8084']
+      - targets: ['skillsync-skill:8084']
     relabel_configs:
       - target_label: service
         replacement: 'skill-service'
@@ -45,7 +45,7 @@ scrape_configs:
   - job_name: 'session-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['session-service:8085']
+      - targets: ['skillsync-session:8085']
     relabel_configs:
       - target_label: service
         replacement: 'session-service'
@@ -54,7 +54,7 @@ scrape_configs:
   - job_name: 'notification-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['notification-service:8088']
+      - targets: ['skillsync-notification:8088']
     relabel_configs:
       - target_label: service
         replacement: 'notification-service'
@@ -63,7 +63,7 @@ scrape_configs:
   - job_name: 'payment-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['payment-service:8086']
+      - targets: ['skillsync-payment:8086']
     relabel_configs:
       - target_label: service
         replacement: 'payment-service'
@@ -72,7 +72,7 @@ scrape_configs:
   - job_name: 'eureka-server'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['eureka-server:8761']
+      - targets: ['skillsync-eureka:8761']
     relabel_configs:
       - target_label: service
         replacement: 'eureka-server'
@@ -81,7 +81,7 @@ scrape_configs:
   - job_name: 'config-server'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['config-server:8888']
+      - targets: ['skillsync-config:8888']
     relabel_configs:
       - target_label: service
         replacement: 'config-server'

@@ -216,7 +216,10 @@ services:
       retries: 10
       start_period: 60s
     networks:
-      - skillsync-net
+      skillsync-net:
+        aliases:
+          - eureka-server
+          - skillsync-eureka
     restart: unless-stopped
 
   config-server:
@@ -237,7 +240,10 @@ services:
       retries: 10
       start_period: 80s
     networks:
-      - skillsync-net
+      skillsync-net:
+        aliases:
+          - config-server
+          - skillsync-config
     restart: unless-stopped
 
   # ======================== API GATEWAY =======================
@@ -258,13 +264,16 @@ services:
       config-server:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health/readiness || curl -fsS http://localhost:8080/actuator/health/readiness || nc -z localhost 8080 || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 10
-      start_period: 100s
+      start_period: 140s
     networks:
-      - skillsync-net
+      skillsync-net:
+        aliases:
+          - api-gateway
+          - skillsync-gateway
     restart: unless-stopped
 
   # ======================== MICROSERVICES =====================
@@ -287,7 +296,10 @@ services:
       config-server:
         condition: service_healthy
     networks:
-      - skillsync-net
+      skillsync-net:
+        aliases:
+          - auth-service
+          - skillsync-auth
     restart: unless-stopped
 
   user-service:
@@ -312,7 +324,10 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - skillsync-net
+      skillsync-net:
+        aliases:
+          - user-service
+          - skillsync-user
     restart: unless-stopped
 
   skill-service:
@@ -337,7 +352,10 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - skillsync-net
+      skillsync-net:
+        aliases:
+          - skill-service
+          - skillsync-skill
     restart: unless-stopped
 
   session-service:
@@ -362,7 +380,10 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - skillsync-net
+      skillsync-net:
+        aliases:
+          - session-service
+          - skillsync-session
     restart: unless-stopped
 
   # group-service: MERGED into user-service
@@ -392,7 +413,10 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - skillsync-net
+      skillsync-net:
+        aliases:
+          - notification-service
+          - skillsync-notification
     restart: unless-stopped
 
   payment-service:
@@ -417,7 +441,10 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - skillsync-net
+      skillsync-net:
+        aliases:
+          - payment-service
+          - skillsync-payment
     restart: unless-stopped
 
 
@@ -440,13 +467,15 @@ services:
       eureka-server:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost/nginx-health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost/nginx-health || curl -fsS http://localhost/nginx-health || nc -z localhost 80 || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
       start_period: 10s
     networks:
-      - skillsync-net
+      skillsync-net:
+        aliases:
+          - skillsync-nginx
     restart: unless-stopped
 
 # ======================== VOLUMES & NETWORKS ==================
