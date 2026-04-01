@@ -12,6 +12,10 @@ Recommended environment variables:
 
 ```bash
 VITE_API_URL=https://skillsync.mraks.dev
+VITE_BACKEND_BASE_URL=http://35.153.59.2
+VITE_MONITORING_BASE_URL=http://35.153.59.2
+VITE_SWAGGER_URL=http://35.153.59.2/swagger-ui/index.html
+VITE_EUREKA_URL=http://35.153.59.2/eureka-ui/
 VITE_GOOGLE_CLIENT_ID=<google-client-id>
 ```
 

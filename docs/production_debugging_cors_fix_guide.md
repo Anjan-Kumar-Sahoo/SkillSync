@@ -117,15 +117,15 @@ Files updated:
 
 Changes:
 
-- Added explicit OpenAPI server:
+- Added explicit relative OpenAPI server:
 
 ```java
-new Server().url(${APP_PUBLIC_BASE_URL:https://skillsync.mraks.dev})
+new Server().url("/")
 ```
 
 Impact:
 
-- Swagger `Try it out` now targets public gateway domain instead of private Docker IPs.
+- Swagger `Try it out` now targets the same host origin that served Swagger UI (EC2 IP or proxied host), instead of private Docker IPs.
 
 ## 3.5 Frontend Production Routing & HTTPS Consistency
 
@@ -150,11 +150,8 @@ Set in backend runtime `.env` on EC2:
 
 ```bash
 ALLOWED_ORIGINS=https://skillsync.mraks.dev,https://skill-sync-sage.vercel.app,http://localhost:3000,http://localhost:5173
-APP_PUBLIC_BASE_URL=https://skillsync.mraks.dev
 APP_BASE_URL=https://skillsync.mraks.dev
 ```
-
-`APP_PUBLIC_BASE_URL` is used by OpenAPI server URL and swagger redirect alignment.
 
 ## 4. OAuth Production Checklist
 
@@ -241,7 +238,7 @@ Expected: `{"status":"UP"}`.
 Apply changes in this order:
 
 1. Gateway
-2. Auth/User/Session/Skill/Notification/Payment (OpenAPI server URL)
+2. Auth/User/Session/Skill/Notification/Payment (relative OpenAPI server URL)
 3. NGINX
 4. Frontend (Vercel)
 

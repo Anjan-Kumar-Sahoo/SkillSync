@@ -2,7 +2,9 @@ import { Link } from 'react-router-dom';
 import logo from '../assets/skillsync-logo.png';
 import './LandingPage.css';
 
-const DEFAULT_PROD_API_URL = 'https://skillsync.mraks.dev';
+const DEFAULT_BACKEND_BASE_URL = 'http://35.153.59.2';
+const DEFAULT_SWAGGER_PATH = '/swagger-ui/index.html';
+const DEFAULT_EUREKA_PATH = '/eureka-ui/';
 
 type DocLink = {
   title: string;
@@ -41,14 +43,30 @@ const uiDocs: DocLink[] = [
 ];
 
 const resolveMonitoringLinks = (): MonitoringLink[] => {
-  const apiUrl = import.meta.env.VITE_API_URL || DEFAULT_PROD_API_URL;
+  const backendBaseUrl = import.meta.env.VITE_BACKEND_BASE_URL || DEFAULT_BACKEND_BASE_URL;
+  const monitoringBaseUrl = import.meta.env.VITE_MONITORING_BASE_URL || backendBaseUrl;
+  const swaggerUrl = import.meta.env.VITE_SWAGGER_URL;
+  const eurekaUrl = import.meta.env.VITE_EUREKA_URL;
 
   try {
-    const parsed = new URL(apiUrl);
-    const protocol = parsed.protocol;
-    const host = parsed.hostname;
-    const gatewayUrl = apiUrl.replace(/\/$/, '');
-    const onPort = (port: number, suffix = '') => `${protocol}//${host}:${port}${suffix}`;
+    const backendParsed = new URL(backendBaseUrl);
+    const monitoringParsed = new URL(monitoringBaseUrl);
+
+    const backendProtocol = backendParsed.protocol;
+    const backendHost = backendParsed.hostname;
+    const backendOrigin = backendParsed.port
+      ? `${backendProtocol}//${backendHost}:${backendParsed.port}`
+      : `${backendProtocol}//${backendHost}`;
+
+    const monitoringProtocol = monitoringParsed.protocol;
+    const monitoringHost = monitoringParsed.hostname;
+    const monitoringOrigin = monitoringParsed.port
+      ? `${monitoringProtocol}//${monitoringHost}:${monitoringParsed.port}`
+      : `${monitoringProtocol}//${monitoringHost}`;
+
+    const gatewayUrl = backendOrigin;
+    const onMonitoringPort = (port: number, suffix = '') =>
+      `${monitoringProtocol}//${monitoringHost}:${port}${suffix}`;
 
     return [
       {
@@ -61,49 +79,49 @@ const resolveMonitoringLinks = (): MonitoringLink[] => {
         name: 'Eureka',
         description: 'Service discovery dashboard',
         status: 'ACTIVE',
-        href: onPort(8761),
+        href: eurekaUrl || `${monitoringOrigin}${DEFAULT_EUREKA_PATH}`,
       },
       {
         name: 'RabbitMQ',
         description: 'Message broker management',
         status: 'ACTIVE',
-        href: onPort(15672),
+        href: onMonitoringPort(15672),
       },
       {
         name: 'Prometheus',
         description: 'Metrics collection and queries',
         status: 'ACTIVE',
-        href: onPort(9090),
+        href: onMonitoringPort(9090),
       },
       {
         name: 'Grafana',
         description: 'Dashboards and alerting',
         status: 'ACTIVE',
-        href: onPort(3000),
+        href: onMonitoringPort(3000),
       },
       {
         name: 'Loki Ready',
         description: 'Log aggregation health endpoint',
         status: 'CHECK',
-        href: onPort(3100, '/ready'),
+        href: onMonitoringPort(3100, '/ready'),
       },
       {
         name: 'Zipkin',
         description: 'Distributed tracing UI',
         status: 'ACTIVE',
-        href: onPort(9411),
+        href: onMonitoringPort(9411),
       },
       {
         name: 'Nginx Entry',
         description: 'Public reverse proxy entrypoint',
         status: 'ACTIVE',
-        href: `${protocol}//${host}`,
+        href: monitoringOrigin,
       },
       {
         name: 'Gateway Swagger',
         description: 'Gateway API contract explorer',
         status: 'DOCS',
-        href: `${protocol}//${host}/swagger-ui.html`,
+        href: swaggerUrl || `${backendOrigin}${DEFAULT_SWAGGER_PATH}`,
       },
     ];
   } catch {

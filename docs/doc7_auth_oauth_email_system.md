@@ -277,8 +277,7 @@ For production domain deployments (`https://skillsync.mraks.dev`):
   - `https://skillsync.mraks.dev`
 2. If authorization-code redirect flow is used, add this exact redirect URI:
   - `https://skillsync.mraks.dev/auth/oauth2/code/google`
-3. API Gateway and OpenAPI must advertise the public base URL:
-  - `APP_PUBLIC_BASE_URL=https://skillsync.mraks.dev`
+3. Swagger/OpenAPI now uses relative server URLs through gateway (`/`), so it works from EC2 IP ingress and proxied hosts without hardcoded domain mapping.
 4. CORS allowed origins must include the production frontend domain.
 
 Use `docs/production_debugging_cors_fix_guide.md` for full route, CORS, and Swagger validation commands.
