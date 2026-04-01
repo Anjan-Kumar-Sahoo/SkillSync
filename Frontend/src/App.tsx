@@ -9,6 +9,7 @@ import RegisterPage from './pages/auth/RegisterPage';
 import VerifyOtpPage from './pages/auth/VerifyOtpPage';
 import SetupPasswordPage from './pages/auth/SetupPasswordPage';
 import UnauthorizedPage from './pages/auth/UnauthorizedPage';
+import LandingPage from './pages/LandingPage';
 import LearnerDashboardPage from './pages/learner/LearnerDashboardPage';
 import DiscoverMentorsPage from './pages/mentors/DiscoverMentorsPage';
 import MentorProfilePage from './pages/mentors/MentorProfilePage';
@@ -31,6 +32,8 @@ function App() {
       <BrowserRouter>
         <AuthLoader>
           <Routes>
+            <Route path="/" element={<LandingPage />} />
+
             {/* Public Auth Routes */}
             <Route element={<AuthLayout />}>
               <Route path="/login" element={<LoginPage />} />
@@ -43,7 +46,6 @@ function App() {
 
             {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<DashboardRedirect />} />
               <Route path="/learner" element={<LearnerDashboardPage />} />
               <Route path="/mentor" element={<MentorDashboard />} />
