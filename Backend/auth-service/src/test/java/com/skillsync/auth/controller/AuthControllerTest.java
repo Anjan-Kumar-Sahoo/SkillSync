@@ -45,7 +45,7 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.accessToken").value("token"))
+                .andExpect(header().exists("Set-Cookie"))
                 .andExpect(jsonPath("$.user.email").value("test@example.com"));
     }
 
@@ -62,7 +62,7 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").value("token"));
+                .andExpect(header().exists("Set-Cookie"));
     }
 
     @Test
