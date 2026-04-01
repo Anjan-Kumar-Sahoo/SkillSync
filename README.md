@@ -8,8 +8,7 @@ SkillSync utilizes an API Gateway for routing and authentication, and delegates 
 
 ```mermaid
 graph TD
-    Client[Client Browser/App] --> Nginx[Nginx Reverse Proxy]
-    Nginx --> GW[API Gateway :8080]
+    Client[Client Browser/App] --> GW[API Gateway Ingress :80]
     
     GW -->|REST/JWT| Auth[Auth Service :8081]
     GW -->|REST/JWT| User[User Service :8082]
@@ -52,7 +51,8 @@ graph TD
 - **Styling:** Tailwind CSS
 
 ### Infrastructure & DevOps
-- **Deployment:** AWS EC2 (t3.large), Nginx (SSL & Reverse Proxy)
+- **Deployment:** AWS EC2 (t3.large), direct API Gateway ingress on port 80
+- **Domains:** Frontend `https://skillsync.mraks.dev` (Vercel), API `https://api.skillsync.mraks.dev` (EC2 Gateway)
 - **Containerization:** Docker & Docker Compose (Single-Repo Hub Strategy)
 - **CI/CD:** GitHub Actions (Path-filtered triggers for `Backend/` only; Build matrix: 9 services; Automated tags: `:latest`, `:${{ github.sha }}`; Automated EC2 deployment)
 
@@ -82,7 +82,7 @@ Comprehensive presentation-grade HTML visual documentation can be found in the `
 
 > For extensive backend API testing patterns via curl/Postman along with DB initializations, view [`docs/backend_testing_guide.md`](docs/backend_testing_guide.md).
 >
-> For gateway and NGINX production incident diagnosis and verified fixes, view [`docs/doc9_ec2_gateway_nginx_incident_fix.md`](docs/doc9_ec2_gateway_nginx_incident_fix.md).
+> For direct-gateway architecture migration, validation, and rollback notes, view [`docs/architecture_simplification_removal_of_nginx_and_direct_gateway_routing.md`](docs/architecture_simplification_removal_of_nginx_and_direct_gateway_routing.md).
 >
 > For complete production API/CORS/Swagger/OAuth diagnosis and remediation steps, view [`docs/production_debugging_cors_fix_guide.md`](docs/production_debugging_cors_fix_guide.md).
 

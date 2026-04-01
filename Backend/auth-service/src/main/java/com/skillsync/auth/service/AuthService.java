@@ -210,7 +210,7 @@ public class AuthService {
                 user.getRole().name(), user.getFirstName(), user.getLastName());
 
         // For new users: passwordSetupRequired=true, existing users: false
-        boolean needsPasswordSetup = isNewUser || !user.isPasswordSet();
+        boolean needsPasswordSetup = isNewUser;
 
         return new OAuthResponse(accessToken, refreshTokenStr,
                 jwtTokenProvider.getAccessExpiration() / 1000, "Bearer",

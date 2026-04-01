@@ -2,20 +2,21 @@
 
 ## SkillSync Production Notes
 
-This frontend is deployed on Vercel with path-based rewrites defined in `vercel.json`.
+This frontend is deployed on Vercel (`https://skillsync.mraks.dev`), while backend APIs are served directly from the gateway API domain (`https://api.skillsync.mraks.dev`).
 
-- API calls use same-origin paths (`/api/*`, `/auth/*`, `/user/*`, `/session/*`).
-- Vercel rewrites forward those paths to EC2 ingress (`http://35.153.59.2`).
-- Swagger is exposed through same origin at `/swagger-ui.html`.
+- API calls should target `https://api.skillsync.mraks.dev` (gateway ingress on EC2).
+- Vercel should not proxy backend APIs via rewrites.
+- Swagger is exposed at `https://api.skillsync.mraks.dev/swagger-ui.html`.
 
 Recommended environment variables:
 
 ```bash
-VITE_API_URL=https://skillsync.mraks.dev
-VITE_BACKEND_BASE_URL=http://35.153.59.2
-VITE_MONITORING_BASE_URL=http://35.153.59.2
-VITE_SWAGGER_URL=http://35.153.59.2/swagger-ui/index.html
-VITE_EUREKA_URL=http://35.153.59.2/eureka-ui/
+VITE_API_URL=https://api.skillsync.mraks.dev
+VITE_BACKEND_BASE_URL=https://api.skillsync.mraks.dev
+VITE_MONITORING_BASE_URL=https://api.skillsync.mraks.dev
+VITE_SWAGGER_URL=https://api.skillsync.mraks.dev/swagger-ui/index.html
+VITE_EUREKA_URL=https://api.skillsync.mraks.dev/eureka-ui/
+VITE_SONAR_URL=https://sonarcloud.io/organizations/skillsync-github/projects
 VITE_GOOGLE_CLIENT_ID=<google-client-id>
 ```
 

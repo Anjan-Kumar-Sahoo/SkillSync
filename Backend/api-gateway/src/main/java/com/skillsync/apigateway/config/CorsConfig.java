@@ -13,7 +13,7 @@ import java.util.List;
 @Configuration
 public class CorsConfig {
 
-    @Value("${app.cors.allowed-origins:https://skillsync.mraks.dev,http://35.153.59.2,http://localhost:3000,http://localhost:5173,http://localhost}")
+    @Value("${app.cors.allowed-origins:https://skillsync.mraks.dev}")
     private String allowedOrigins;
 
     @Bean
@@ -21,10 +21,7 @@ public class CorsConfig {
         CorsConfiguration corsConfig = new CorsConfiguration();
         List<String> origins = new java.util.ArrayList<>(Arrays.asList(allowedOrigins.split(",")));
         origins.replaceAll(String::trim);
-        origins.add("http://localhost:*");
-        origins.add("http://127.0.0.1:*");
-        origins.add("https://localhost:*");
-        
+
         corsConfig.setAllowedOriginPatterns(origins);
         corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         corsConfig.setAllowedHeaders(List.of("*"));

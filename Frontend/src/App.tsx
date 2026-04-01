@@ -9,6 +9,7 @@ import RegisterPage from './pages/auth/RegisterPage';
 import VerifyOtpPage from './pages/auth/VerifyOtpPage';
 import SetupPasswordPage from './pages/auth/SetupPasswordPage';
 import UnauthorizedPage from './pages/auth/UnauthorizedPage';
+import ServerErrorPage from './pages/error/ServerErrorPage';
 import LandingPage from './pages/LandingPage';
 import LearnerDashboardPage from './pages/learner/LearnerDashboardPage';
 import DiscoverMentorsPage from './pages/mentors/DiscoverMentorsPage';
@@ -43,6 +44,7 @@ function App() {
             </Route>
 
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
+            <Route path="/500" element={<ServerErrorPage />} />
 
             {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>

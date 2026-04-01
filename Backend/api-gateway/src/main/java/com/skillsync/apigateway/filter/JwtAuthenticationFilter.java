@@ -30,22 +30,36 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
+            String token = null;
 
-            if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-                return onError(exchange, "Missing Authorization header", HttpStatus.UNAUTHORIZED);
+            if (request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
+                String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+                if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                    token = authHeader.substring(7);
+                }
             }
 
-            String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return onError(exchange, "Invalid Authorization header", HttpStatus.UNAUTHORIZED);
+            // Fallback to HttpOnly cookie (Cross-subdomain auth)
+            if (token == null && request.getCookies().containsKey("accessToken")) {
+                org.springframework.http.HttpCookie cookie = request.getCookies().getFirst("accessToken");
+                if (cookie != null) {
+                    token = cookie.getValue();
+                }
             }
 
-            String token = authHeader.substring(7);
+            if (token == null) {
+                return onError(exchange, "Missing Authorization token", HttpStatus.UNAUTHORIZED);
+            }
 
             try {
                 Claims claims = extractClaims(token);
-                // Add user info to headers for downstream services
+                // Strip incoming spoofable headers and add user info from JWT
                 ServerHttpRequest modifiedRequest = request.mutate()
+                        .headers(h -> {
+                            h.remove("X-User-Id");
+                            h.remove("X-User-Email");
+                            h.remove("X-User-Role");
+                        })
                         .header("X-User-Id", claims.getSubject())
                         .header("X-User-Email", claims.get("email", String.class))
                         .header("X-User-Role", claims.get("role", String.class))

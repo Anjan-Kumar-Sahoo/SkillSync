@@ -140,6 +140,12 @@ public class RateLimitingFilter implements GlobalFilter, Ordered {
         return -2; // Run before JWT filter
     }
 
+    @org.springframework.scheduling.annotation.Scheduled(fixedRate = 120_000)
+    public void cleanExpiredBuckets() {
+        long now = System.currentTimeMillis();
+        buckets.entrySet().removeIf(e -> now - e.getValue().windowStart > WINDOW_MS * 2);
+    }
+
     private static class RateLimitBucket {
         final long windowStart;
         final AtomicInteger count = new AtomicInteger(0);

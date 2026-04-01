@@ -2,9 +2,10 @@ import { Link } from 'react-router-dom';
 import logo from '../assets/skillsync-logo.png';
 import './LandingPage.css';
 
-const DEFAULT_BACKEND_BASE_URL = 'http://35.153.59.2';
+const DEFAULT_BACKEND_BASE_URL = 'https://api.skillsync.mraks.dev';
 const DEFAULT_SWAGGER_PATH = '/swagger-ui/index.html';
 const DEFAULT_EUREKA_PATH = '/eureka-ui/';
+const DEFAULT_SONAR_URL = 'https://sonarcloud.io/organizations/skillsync-github/projects';
 
 type DocLink = {
   title: string;
@@ -47,6 +48,7 @@ const resolveMonitoringLinks = (): MonitoringLink[] => {
   const monitoringBaseUrl = import.meta.env.VITE_MONITORING_BASE_URL || backendBaseUrl;
   const swaggerUrl = import.meta.env.VITE_SWAGGER_URL;
   const eurekaUrl = import.meta.env.VITE_EUREKA_URL;
+  const sonarUrl = import.meta.env.VITE_SONAR_URL || DEFAULT_SONAR_URL;
 
   try {
     const backendParsed = new URL(backendBaseUrl);
@@ -64,17 +66,10 @@ const resolveMonitoringLinks = (): MonitoringLink[] => {
       ? `${monitoringProtocol}//${monitoringHost}:${monitoringParsed.port}`
       : `${monitoringProtocol}//${monitoringHost}`;
 
-    const gatewayUrl = backendOrigin;
     const onMonitoringPort = (port: number, suffix = '') =>
       `${monitoringProtocol}//${monitoringHost}:${port}${suffix}`;
 
     return [
-      {
-        name: 'API Gateway',
-        description: 'Traffic routing and filtering',
-        status: 'ACTIVE',
-        href: gatewayUrl,
-      },
       {
         name: 'Eureka',
         description: 'Service discovery dashboard',
@@ -100,6 +95,12 @@ const resolveMonitoringLinks = (): MonitoringLink[] => {
         href: onMonitoringPort(3000),
       },
       {
+        name: 'SonarCloud',
+        description: 'Code quality and security analysis',
+        status: 'QA',
+        href: sonarUrl,
+      },
+      {
         name: 'Loki Ready',
         description: 'Log aggregation health endpoint',
         status: 'CHECK',
@@ -110,12 +111,6 @@ const resolveMonitoringLinks = (): MonitoringLink[] => {
         description: 'Distributed tracing UI',
         status: 'ACTIVE',
         href: onMonitoringPort(9411),
-      },
-      {
-        name: 'Nginx Entry',
-        description: 'Public reverse proxy entrypoint',
-        status: 'ACTIVE',
-        href: monitoringOrigin,
       },
       {
         name: 'Gateway Swagger',
@@ -208,7 +203,7 @@ const LandingPage = () => {
           <div className="section-head">
             <p className="section-label">System Health</p>
             <h2>Monitoring Quick Access</h2>
-            <p>All production monitoring links are mapped from your EC2 backend target.</p>
+            <p>All production monitoring links are mapped from your direct gateway domain.</p>
           </div>
           <div className="monitor-grid">
             {monitoringLinks.map((item, index) => (

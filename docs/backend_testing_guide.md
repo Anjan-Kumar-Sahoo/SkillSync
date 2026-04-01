@@ -99,7 +99,7 @@ cd f:\SkillSync
 docker-compose up --build
 ```
 
-This starts everything (Postgres, RabbitMQ, all services, Nginx). Wait for all containers to become healthy.  
+This starts everything (Postgres, RabbitMQ, all services, API Gateway ingress). Wait for all containers to become healthy.  
 Verify: **http://localhost:8761** (Eureka Dashboard — all services should be registered)
 
 ### Option B — Local (for development/debugging)

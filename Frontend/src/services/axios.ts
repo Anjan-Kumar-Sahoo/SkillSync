@@ -1,18 +1,18 @@
 import axios from 'axios';
 import { store } from '../store';
-import { setCredentials, logout } from '../store/slices/authSlice';
+import { logout } from '../store/slices/authSlice';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.skillsync.mraks.dev';
 
 const api = axios.create({
-  baseURL: '',
+  baseURL: API_BASE_URL,
+  withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
 
-// REQUEST INTERCEPTOR — attach access token
+// REQUEST INTERCEPTOR — we no longer manually attach the token.
+// The browser will automatically send the HttpOnly 'accessToken' cookie.
 api.interceptors.request.use((config) => {
-  const token = store.getState().auth.accessToken;
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
   return config;
 });
 
@@ -47,28 +47,20 @@ api.interceptors.response.use(
       }
 
       isRefreshing = true;
-      const refreshToken = store.getState().auth.refreshToken;
-
-      if (!refreshToken) {
-        store.dispatch(logout());
-        window.location.href = '/login?reason=session_expired';
-        return Promise.reject(error);
-      }
 
       try {
-        const { data } = await axios.post('/api/auth/refresh', { refreshToken });
-        store.dispatch(setCredentials({
-          accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
-          user: store.getState().auth.user,
-        }));
-        processQueue(null, data.accessToken);
-        originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
+        await api.post('/api/auth/refresh');
+        
+        // Refresh was successful, but tokens are handled by cookies, not response body
+        // Just retry the queue.
+        processQueue(null, '');
+        
+        // Re-run original request without altering authorization header
+        delete originalRequest.headers.Authorization;
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
         store.dispatch(logout());
-        localStorage.clear();
         window.location.href = '/login?reason=session_expired';
         return Promise.reject(refreshError);
       } finally {
@@ -79,6 +71,11 @@ api.interceptors.response.use(
     // 403 — role forbidden
     if (error.response?.status === 403) {
       window.location.href = '/unauthorized';
+    }
+
+    // 500 — server error fallback message
+    if (error.response?.status >= 500 && error.response?.status !== 503) {
+      window.location.href = '/500';
     }
 
     // 429 / 503 — exponential backoff retry (max 3 times)

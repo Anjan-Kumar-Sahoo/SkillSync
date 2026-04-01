@@ -2,6 +2,9 @@
 
 Date: 2026-04-01
 
+> [!WARNING]
+> This guide documents the prior ingress model that used NGINX and Vercel API rewrites. The current production architecture is direct API Gateway ingress (no NGINX). See `docs/architecture_simplification_removal_of_nginx_and_direct_gateway_routing.md` for the active runbook.
+
 This guide captures the verified production failures, root causes, exact config fixes, and validation commands for SkillSync.
 
 ## 1. Incident Symptoms

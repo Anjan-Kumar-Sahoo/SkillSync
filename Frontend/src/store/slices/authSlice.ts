@@ -14,9 +14,9 @@ interface AuthState {
 
 const initialState: AuthState = {
   user: null,
-  accessToken: localStorage.getItem('skillsync_access_token'),
-  refreshToken: localStorage.getItem('skillsync_refresh_token'),
-  isAuthenticated: !!localStorage.getItem('skillsync_access_token'),
+  accessToken: null,
+  refreshToken: null,
+  isAuthenticated: false,
   role: null,
 };
 
@@ -40,9 +40,7 @@ const authSlice = createSlice({
         state.role = user.role as UserRole;
       }
 
-      // Persist to localStorage
-      localStorage.setItem('skillsync_access_token', accessToken);
-      localStorage.setItem('skillsync_refresh_token', refreshToken);
+      // Removed localStorage persistence for security (XSS mitigation)
     },
     logout(state) {
       state.user = null;
@@ -51,8 +49,7 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.role = null;
 
-      localStorage.removeItem('skillsync_access_token');
-      localStorage.removeItem('skillsync_refresh_token');
+      // Removed localStorage persistence for security
     },
   },
 });

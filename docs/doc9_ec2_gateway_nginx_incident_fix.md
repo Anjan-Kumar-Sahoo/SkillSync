@@ -1,5 +1,8 @@
 # Document 9: EC2 Gateway and NGINX Incident Fix Runbook
 
+> [!WARNING]
+> Legacy runbook: this document reflects the pre-simplification architecture that included NGINX. Current production topology uses direct API Gateway ingress (no NGINX). See `docs/architecture_simplification_removal_of_nginx_and_direct_gateway_routing.md`.
+
 > For the complete production-level diagnosis and fixes that include domain routing, CORS, Swagger server URL alignment, and OAuth checks, see `docs/production_debugging_cors_fix_guide.md`.
 
 ## Incident Summary

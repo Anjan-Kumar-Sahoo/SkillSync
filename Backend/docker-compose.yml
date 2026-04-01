@@ -5,11 +5,11 @@
 # ============================================================
 #
 #  Startup Order:
-#    postgres/rabbitmq → eureka → config-server → microservices → gateway → nginx
+#    postgres/rabbitmq → eureka → config-server → microservices → gateway
 #
 #  Exposed Ports:
-#    80    - NGINX (public entry point)
-#    8080  - API Gateway (Swagger UI: http://localhost:8080/swagger-ui.html)
+#    80    - API Gateway (public entry point)
+#    8080  - API Gateway (debug/local checks)
 #    8761  - Eureka Dashboard (debug only)
 #    15672 - RabbitMQ Management UI (debug only)
 #    9411  - Zipkin Tracing UI
@@ -18,7 +18,7 @@
 #    3100  - Loki Log Aggregation API
 #
 #  NOTE: Individual service ports are NOT exposed.
-#        All traffic goes through the API Gateway.
+#        All ingress traffic goes directly through the API Gateway.
 # ============================================================
 
 services:
@@ -59,8 +59,8 @@ services:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
     ports:
-      - "5672:5672"     # AMQP
-      - "15672:15672"   # Management UI (http://localhost:15672)
+      - "127.0.0.1:5672:5672"     # AMQP
+      - "127.0.0.1:15672:15672"   # Management UI (http://localhost:15672)
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
       interval: 15s
@@ -80,7 +80,7 @@ services:
           memory: 256M
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis-data:/data
     healthcheck:
@@ -101,7 +101,7 @@ services:
         limits:
           memory: 384M
     ports:
-      - "9411:9411"   # Zipkin UI (http://localhost:9411)
+      - "127.0.0.1:9411:9411"   # Zipkin UI (http://localhost:9411)
     environment:
       STORAGE_TYPE: mem
     healthcheck:
@@ -123,7 +123,7 @@ services:
         limits:
           memory: 384M
     ports:
-      - "9090:9090"   # Prometheus UI (http://localhost:9090)
+      - "127.0.0.1:9090:9090"   # Prometheus UI (http://localhost:9090)
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
@@ -151,10 +151,10 @@ services:
         limits:
           memory: 256M
     ports:
-      - "3000:3000"   # Grafana UI (http://localhost:3000)
+      - "127.0.0.1:3000:3000"   # Grafana UI (http://localhost:3000)
     environment:
       GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: skillsync
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:changeme}
       GF_USERS_ALLOW_SIGN_UP: "false"
     volumes:
       - grafana-data:/var/lib/grafana
@@ -182,7 +182,7 @@ services:
         limits:
           memory: 256M
     ports:
-      - "3100:3100"   # Loki API
+      - "127.0.0.1:3100:3100"   # Loki API
     volumes:
       - ./monitoring/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
       - loki-data:/loki
@@ -208,7 +208,7 @@ services:
           memory: 384M
     env_file: .env
     ports:
-      - "8761:8761"   # Exposed for debug dashboard — remove in true production
+      - "127.0.0.1:8761:8761"   # Exposed for debug dashboard — remove in true production
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8761/actuator/health || exit 1"]
       interval: 15s
@@ -257,7 +257,7 @@ services:
           memory: 384M
     env_file: .env
     ports:
-      - "8080:8080"   # API Gateway — main entry point for Postman
+      - "127.0.0.1:8080:8080"   # Bound to localhost to force traffic through NGINX host proxy
     depends_on:
       eureka-server:
         condition: service_healthy
@@ -445,37 +445,6 @@ services:
         aliases:
           - payment-service
           - skillsync-payment
-    restart: unless-stopped
-
-
-  # ======================== NGINX REVERSE PROXY ===============
-
-  nginx:
-    image: nginx:1.25-alpine
-    container_name: skillsync-nginx
-    deploy:
-      resources:
-        limits:
-          memory: 64M
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
-      api-gateway:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost/nginx-health || curl -fsS http://localhost/nginx-health || nc -z localhost 80 || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    networks:
-      skillsync-net:
-        aliases:
-          - skillsync-nginx
     restart: unless-stopped
 
 # ======================== VOLUMES & NETWORKS ==================

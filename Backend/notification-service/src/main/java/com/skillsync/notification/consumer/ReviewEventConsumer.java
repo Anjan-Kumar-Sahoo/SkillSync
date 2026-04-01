@@ -22,7 +22,7 @@ public class ReviewEventConsumer {
     private final EmailService emailService;
     private final AuthServiceClient authServiceClient;
 
-    @Value("${app.base-url:http://localhost}")
+    @Value("${app.base-url:https://skillsync.mraks.dev}")
     private String appBaseUrl;
 
     @RabbitListener(queues = RabbitMQConfig.REVIEW_NOTIFICATION_SUBMITTED_QUEUE)

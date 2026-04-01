@@ -13,12 +13,15 @@
 >
 > **Production API/CORS/OAuth Fix (April 2026):** End-to-end domain routing, Swagger, gateway compatibility routes, and CORS remediation is documented in `production_debugging_cors_fix_guide.md`.
 >
+> **Architecture Simplification (April 2026):** NGINX has been removed from the active runtime topology. API Gateway is now the single public ingress (`80:8080`). See `architecture_simplification_removal_of_nginx_and_direct_gateway_routing.md`.
+>
 > The original deployment diagrams below reflect the initial 11-service architecture. Real deployments use the current 9-service topology.
 
 Runtime naming convention for container DNS:
 - Prefer explicit `skillsync-*` hostnames for cross-container calls.
 - Keep Compose network aliases for both logical service names and `skillsync-*` names.
-- Use `skillsync-gateway:8080` as the NGINX upstream target.
+- Use `skillsync-gateway:8080` for internal service-to-gateway calls when needed.
+- Public ingress is direct to API Gateway via host mapping `80:8080`.
 
 ## SkillSync — Infrastructure, Deployment & Operations
 
