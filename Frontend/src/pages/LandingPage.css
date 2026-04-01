@@ -51,10 +51,23 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   padding: 16px clamp(18px, 4vw, 48px);
   backdrop-filter: blur(10px);
   background: #f8fbffb8;
   border-bottom: 1px solid var(--landing-border);
+}
+
+.presentation-pill {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid #7fa4d340;
+  background: #ffffffbf;
+  color: #27486b;
+  font-size: 0.83rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
 }
 
 .landing-brand {
@@ -139,6 +152,69 @@
 
 .hero-kicker {
   margin: 0 0 12px;
+  .brand-stage {
+    position: relative;
+    width: min(280px, 78vw);
+    aspect-ratio: 1 / 1;
+    margin-top: 4px;
+    margin-bottom: 10px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: radial-gradient(circle, #ffffff 0%, #ffffff00 72%);
+    overflow: hidden;
+  }
+
+  .hero-logo {
+    width: min(168px, 52vw);
+    height: auto;
+    z-index: 4;
+    filter: drop-shadow(0 15px 20px #0f4f8d26);
+    animation: logoFloat 5s ease-in-out infinite;
+  }
+
+  .gravity-orb {
+    position: absolute;
+    border-radius: 999px;
+    border: 2px solid #5ea8ff50;
+  }
+
+  .orb-a {
+    width: 88%;
+    height: 88%;
+    animation: orbit 12s linear infinite;
+  }
+
+  .orb-b {
+    width: 66%;
+    height: 66%;
+    border-color: #00a7b760;
+    animation: orbit 9s linear infinite reverse;
+  }
+
+  .orb-c {
+    width: 42%;
+    height: 42%;
+    border-color: #ff9b6a66;
+    animation: orbit 7s linear infinite;
+  }
+
+  .hero-brand-title {
+    margin: 0;
+    margin-top: 2px;
+    font-size: clamp(1.5rem, 3vw, 2.05rem);
+    font-weight: 900;
+    letter-spacing: 0.3px;
+  }
+
+  .hero-tagline {
+    margin-top: 6px;
+    color: #225f9c;
+    font-size: clamp(0.9rem, 2vw, 1.06rem);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.95px;
+  }
   color: #0a66cc;
   font-size: 0.82rem;
   font-weight: 800;
@@ -197,7 +273,7 @@
 
 .doc-card,
 .monitor-link {
-  animation: rise 420ms ease both;
+  animation: dropIn 560ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
   border-radius: 16px;
   text-decoration: none;
 }
@@ -296,11 +372,50 @@
     transform: translateY(16px);
   }
 }
+@keyframes orbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes logoFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes dropIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-34px) scale(0.98);
+  }
+  72% {
+    opacity: 1;
+    transform: translateY(4px) scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
 
 @media (max-width: 768px) {
   .landing-nav {
     flex-wrap: wrap;
     gap: 10px;
+  }
+
+  .presentation-pill {
+    order: 3;
+    width: 100%;
+    text-align: center;
   }
 
   .landing-actions {

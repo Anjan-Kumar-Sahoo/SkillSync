@@ -65,6 +65,10 @@ const LandingPage = () => {
           <span>SkillSync</span>
         </a>
 
+        <div className="presentation-pill" aria-label="Presentation Edition details">
+          Presentation Edition Details
+        </div>
+
         <nav className="landing-actions" aria-label="Landing actions">
           <a
             className="landing-btn landing-btn-ghost"
@@ -83,6 +87,14 @@ const LandingPage = () => {
       <main className="landing-content" id="top">
         <section className="hero-card">
           <p className="hero-kicker">Presentation Edition</p>
+          <div className="brand-stage" aria-hidden="true">
+            <div className="gravity-orb orb-a" />
+            <div className="gravity-orb orb-b" />
+            <div className="gravity-orb orb-c" />
+            <img src={logo} alt="" className="hero-logo" />
+          </div>
+          <h2 className="hero-brand-title">SkillSync</h2>
+          <p className="hero-tagline">Peer To Peer Learning Platform</p>
           <h1>One click entry to architecture docs and live monitoring surfaces.</h1>
           <p>
             This page is for presentation purpose only. It gives quick navigation to your
