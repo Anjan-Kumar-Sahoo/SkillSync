@@ -2,7 +2,16 @@ import axios from 'axios';
 import { store } from '../store';
 import { logout } from '../store/slices/authSlice';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.skillsync.mraks.dev';
+// Strongly force HTTPS in production to prevent Vercel ENV leaks pointing to raw IPs.
+const isProd = import.meta.env.PROD;
+let configuredUrl = import.meta.env.VITE_API_URL;
+
+// Correct legacy or raw IP configurations inside production builds automatically.
+if (isProd && configuredUrl && configuredUrl.includes('35.153.59.2')) {
+    configuredUrl = 'https://api.skillsync.mraks.dev';
+}
+
+const API_BASE_URL = configuredUrl || (isProd ? 'https://api.skillsync.mraks.dev' : 'http://localhost:8080');
 
 const api = axios.create({
   baseURL: API_BASE_URL,
