@@ -241,6 +241,17 @@
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
 }
 
+.monitoring-warning {
+  margin-top: 14px;
+  margin-bottom: 0;
+  border: 1px solid #f7b26780;
+  background: #fff2e2;
+  color: #8b4e0b;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
 .monitor-link {
   border: 1px solid #5f8eb53d;
   background: linear-gradient(145deg, #f8fcff, #eff7ff);

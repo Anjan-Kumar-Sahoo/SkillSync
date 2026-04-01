@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom';
 import logo from '../assets/skillsync-logo.png';
 import './LandingPage.css';
 
+const DEFAULT_EC2_API_URL = 'http://35.153.59.2:8080';
+
 const uiDocs = [
   {
     title: 'Backend Architecture',
@@ -25,16 +27,31 @@ const uiDocs = [
   },
 ];
 
-const monitoringLinks = [
-  { name: 'API Gateway', href: 'http://localhost:8080' },
-  { name: 'Eureka', href: 'http://localhost:8761' },
-  { name: 'RabbitMQ', href: 'http://localhost:15672' },
-  { name: 'Prometheus', href: 'http://localhost:9090' },
-  { name: 'Grafana', href: 'http://localhost:3000' },
-  { name: 'Loki', href: 'http://localhost:3100' },
-  { name: 'Zipkin', href: 'http://localhost:9411' },
-  { name: 'Nginx Entry', href: 'http://localhost:80' },
-];
+const resolveMonitoringLinks = () => {
+  const apiUrl = import.meta.env.VITE_API_URL || DEFAULT_EC2_API_URL;
+
+  try {
+    const parsed = new URL(apiUrl);
+    const protocol = parsed.protocol;
+    const host = parsed.hostname;
+    const gatewayUrl = parsed.origin;
+
+    return [
+      { name: 'API Gateway', href: gatewayUrl },
+      { name: 'Eureka', href: `${protocol}//${host}:8761` },
+      { name: 'RabbitMQ', href: `${protocol}//${host}:15672` },
+      { name: 'Prometheus', href: `${protocol}//${host}:9090` },
+      { name: 'Grafana', href: `${protocol}//${host}:3000` },
+      { name: 'Loki', href: `${protocol}//${host}:3100` },
+      { name: 'Zipkin', href: `${protocol}//${host}:9411` },
+      { name: 'Nginx Entry', href: `${protocol}//${host}` },
+    ];
+  } catch {
+    return [];
+  }
+};
+
+const monitoringLinks = resolveMonitoringLinks();
 
 const LandingPage = () => {
   return (

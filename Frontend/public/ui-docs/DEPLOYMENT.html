@@ -46,7 +46,7 @@
                     <div class="bg-indigo-900/40 border border-indigo-600 p-4 rounded-xl text-center w-full max-w-md mb-6 relative overflow-hidden">
                         <div class="absolute inset-0 bg-blue-500/10 mix-blend-overlay"></div>
                         <span class="font-bold text-lg text-indigo-200 block mb-1">Nginx Reverse Proxy (:80)</span>
-                        <span class="text-xs font-mono text-indigo-300">ProxyPass -> localhost:8080/</span>
+                        <span class="text-xs font-mono text-indigo-300">ProxyPass -> ec2-backend:8080/</span>
                     </div>
 
                     <div class="text-indigo-400 mb-6 font-bold">↓ Container Bridge Network ↓</div>
@@ -170,7 +170,7 @@
                     <h3 class="font-bold text-xl mb-3 flex items-center"><span class="mr-2 text-2xl">🛡️</span> Nginx Deep Proxy</h3>
                     <p class="text-sm leading-relaxed mb-4">Nginx runs natively on the EC2 host (outside Docker) acting as the ultimate boundary. It implements GZIP compression, limits payload sizes to prevent DDoS bursts, and proxies specific path prefixes to the Internal Gateway.</p>
                     <ul class="text-xs space-y-2 font-mono">
-                        <li>> ProxyPass <code>/api/</code> -> <code>http://127.0.0.1:8080/</code></li>
+                        <li>> ProxyPass <code>/api/</code> -> <code>http://ec2-backend:8080/</code></li>
                         <li>> Rate_limit: 10r/s per user IP zone.</li>
                     </ul>
                 </div>
