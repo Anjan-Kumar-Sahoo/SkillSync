@@ -2,7 +2,8 @@
 
 ## 🧩 PART 1 — GLOBAL RULES
 
-* **Base URL**: `http://localhost:8080` (Routed via API Gateway to corresponding microservices)
+* **Base URL (Production)**: `https://skillsync.mraks.dev` (same-origin routes like `/api/*`, `/auth/*` proxied to backend)
+* **Base URL (Local Dev)**: `http://localhost:8080` (via Vite proxy / Docker gateway)
 * **Format**: All requests and responses use `application/json`
 * **Naming Convention**: `camelCase` for all JSON keys
 * **Response Structure**:

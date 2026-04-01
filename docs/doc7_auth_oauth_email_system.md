@@ -266,3 +266,19 @@ MAIL_PASSWORD=your-app-password
 # Zipkin (for distributed tracing)
 ZIPKIN_HOST=zipkin
 ```
+
+---
+
+## 🌐 6. Production OAuth + API Domain Checklist
+
+For production domain deployments (`https://skillsync.mraks.dev`):
+
+1. Google Cloud Console must include this exact origin:
+  - `https://skillsync.mraks.dev`
+2. If authorization-code redirect flow is used, add this exact redirect URI:
+  - `https://skillsync.mraks.dev/auth/oauth2/code/google`
+3. API Gateway and OpenAPI must advertise the public base URL:
+  - `APP_PUBLIC_BASE_URL=https://skillsync.mraks.dev`
+4. CORS allowed origins must include the production frontend domain.
+
+Use `docs/production_debugging_cors_fix_guide.md` for full route, CORS, and Swagger validation commands.

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import logo from '../assets/skillsync-logo.png';
 import './LandingPage.css';
 
-const DEFAULT_EC2_API_URL = 'http://35.153.59.2:8080';
+const DEFAULT_PROD_API_URL = 'https://skillsync.mraks.dev';
 
 type DocLink = {
   title: string;
@@ -41,7 +41,7 @@ const uiDocs: DocLink[] = [
 ];
 
 const resolveMonitoringLinks = (): MonitoringLink[] => {
-  const apiUrl = import.meta.env.VITE_API_URL || DEFAULT_EC2_API_URL;
+  const apiUrl = import.meta.env.VITE_API_URL || DEFAULT_PROD_API_URL;
 
   try {
     const parsed = new URL(apiUrl);
@@ -103,7 +103,7 @@ const resolveMonitoringLinks = (): MonitoringLink[] => {
         name: 'Gateway Swagger',
         description: 'Gateway API contract explorer',
         status: 'DOCS',
-        href: onPort(8080, '/swagger-ui.html'),
+        href: `${protocol}//${host}/swagger-ui.html`,
       },
     ];
   } catch {
@@ -212,12 +212,11 @@ const LandingPage = () => {
           </div>
         </section>
       </main>
-
+      <p className="footer-description">
+        This page is for presentation purpose only. It gives quick navigation to your
+        platform walkthrough and operational dashboards.
+      </p>
       <footer className="landing-footer">
-        <p className="footer-description">
-          This page is for presentation purpose only. It gives quick navigation to your
-          platform walkthrough and operational dashboards.
-        </p>
         <h3>SkillSync</h3>
         <p>© 2026 SkillSync. Peer To Peer Learning Platform.</p>
       </footer>

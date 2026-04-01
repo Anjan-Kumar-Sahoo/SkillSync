@@ -83,6 +83,8 @@ Comprehensive presentation-grade HTML visual documentation can be found in the `
 > For extensive backend API testing patterns via curl/Postman along with DB initializations, view [`docs/backend_testing_guide.md`](docs/backend_testing_guide.md).
 >
 > For gateway and NGINX production incident diagnosis and verified fixes, view [`docs/doc9_ec2_gateway_nginx_incident_fix.md`](docs/doc9_ec2_gateway_nginx_incident_fix.md).
+>
+> For complete production API/CORS/Swagger/OAuth diagnosis and remediation steps, view [`docs/production_debugging_cors_fix_guide.md`](docs/production_debugging_cors_fix_guide.md).
 
 ## 🚀 Getting Started
 

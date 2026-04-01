@@ -13,15 +13,17 @@ import java.util.List;
 @Configuration
 public class CorsConfig {
 
-    @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:5173}")
+    @Value("${app.cors.allowed-origins:https://skillsync.mraks.dev,http://localhost:3000,http://localhost:5173,http://localhost}")
     private String allowedOrigins;
 
     @Bean
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration corsConfig = new CorsConfiguration();
         List<String> origins = new java.util.ArrayList<>(Arrays.asList(allowedOrigins.split(",")));
+        origins.replaceAll(String::trim);
         origins.add("http://localhost:*");
         origins.add("http://127.0.0.1:*");
+        origins.add("https://localhost:*");
         
         corsConfig.setAllowedOriginPatterns(origins);
         corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));

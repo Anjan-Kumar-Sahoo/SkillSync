@@ -11,6 +11,8 @@
 >
 > **EC2 Incident Fix (April 2026):** Gateway and NGINX health/routing stabilization is documented in `doc9_ec2_gateway_nginx_incident_fix.md` with exact diagnosis and validation commands.
 >
+> **Production API/CORS/OAuth Fix (April 2026):** End-to-end domain routing, Swagger, gateway compatibility routes, and CORS remediation is documented in `production_debugging_cors_fix_guide.md`.
+>
 > The original deployment diagrams below reflect the initial 11-service architecture. Real deployments use the current 9-service topology.
 
 Runtime naming convention for container DNS:

@@ -1,5 +1,20 @@
 # React + TypeScript + Vite
 
+## SkillSync Production Notes
+
+This frontend is deployed on Vercel with path-based rewrites defined in `vercel.json`.
+
+- API calls use same-origin paths (`/api/*`, `/auth/*`, `/user/*`, `/session/*`).
+- Vercel rewrites forward those paths to EC2 ingress (`http://35.153.59.2`).
+- Swagger is exposed through same origin at `/swagger-ui.html`.
+
+Recommended environment variables:
+
+```bash
+VITE_API_URL=https://skillsync.mraks.dev
+VITE_GOOGLE_CLIENT_ID=<google-client-id>
+```
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

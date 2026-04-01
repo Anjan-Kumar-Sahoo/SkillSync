@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite'
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const apiUrl = env.VITE_API_URL || 'http://35.153.59.2:8080'
+  const apiUrl = env.VITE_API_URL || 'http://localhost:8080'
   const targetOrigin = apiUrl ? new URL(apiUrl).origin : undefined
 
   return {

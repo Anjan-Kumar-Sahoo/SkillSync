@@ -1,5 +1,7 @@
 # Document 9: EC2 Gateway and NGINX Incident Fix Runbook
 
+> For the complete production-level diagnosis and fixes that include domain routing, CORS, Swagger server URL alignment, and OAuth checks, see `docs/production_debugging_cors_fix_guide.md`.
+
 ## Incident Summary
 
 Observed production symptoms on AWS EC2:
