@@ -583,22 +583,43 @@ The SkillSync pipeline (`.github/workflows/ci-cd.yml`) automates the full build 
 ```
 
 **Key Features:**
+- **Path-Filtered Triggers:** Only runs when `Backend/**` or `.github/workflows/**` files change — ignores Frontend, docs, and root-level edits.
 - **Matrix Parallelism:** Builds and tests all 9 services concurrently using GitHub Actions matrix strategy.
 - **Docker Hub Push:** Uses a bash loop to build all images in a single job with dual tagging.
 - **EC2 Auto-Deploy:** Copies compose files via SCP, then pulls/restarts via SSH.
 - **SonarCloud Integration:** Conditional code quality analysis (safe when token is not configured).
 - **Secrets Safety:** All `secrets.*` references are wrapped in `${{ }}` expressions to avoid GitHub Actions parse errors.
 
-### 5.3.2 Trigger Configuration
+### 5.3.2 Trigger Configuration (Path-Filtered)
+
+> [!IMPORTANT]
+> **Monorepo Path Filtering (April 2026):** The CI/CD pipeline now uses path-based triggers to avoid unnecessary runs when only `Frontend/`, `docs/`, or root-level files change. Only changes inside `Backend/**` or `.github/workflows/**` will trigger the pipeline.
 
 ```yaml
 on:
   push:
-    branches: [main]        # Full pipeline: build → test → Docker → deploy
+    branches: [main]
+    paths:
+      - 'Backend/**'             # Any backend service change
+      - '.github/workflows/**'   # Workflow definition changes
   pull_request:
-    branches: [main]        # Build + test only (no Docker push / deploy)
-  workflow_dispatch:         # Manual trigger via GitHub UI
+    branches: [main]
+    paths:
+      - 'Backend/**'
+      - '.github/workflows/**'
+  workflow_dispatch:              # Manual trigger via GitHub UI
 ```
+
+**Trigger Behavior:**
+
+| Change Location | CI/CD Triggered? | Reason |
+|---|---|---|
+| `Backend/**` | ✅ Yes | Backend service code — must build, test, deploy |
+| `.github/workflows/**` | ✅ Yes | Workflow changes must be validated |
+| `Frontend/**` | ❌ No | Frontend is deployed on Vercel separately |
+| `docs/**`, `README.md` | ❌ No | Documentation-only changes, no build needed |
+| Root-level files (`.gitignore`, etc.) | ❌ No | No impact on backend services |
+| Manual (`workflow_dispatch`) | ✅ Yes | Always available via GitHub UI |
 
 ### 5.3.3 Docker Tagging Strategy
 

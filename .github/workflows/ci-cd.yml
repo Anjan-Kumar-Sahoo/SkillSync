@@ -11,8 +11,14 @@ name: SkillSync CI/CD
 on:
   push:
     branches: [main]
+    paths:
+      - 'Backend/**'
+      - '.github/workflows/**'
   pull_request:
     branches: [main]
+    paths:
+      - 'Backend/**'
+      - '.github/workflows/**'
   workflow_dispatch:
 
 env:

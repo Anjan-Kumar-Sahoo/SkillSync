@@ -54,7 +54,7 @@ graph TD
 ### Infrastructure & DevOps
 - **Deployment:** AWS EC2 (t3.large), Nginx (SSL & Reverse Proxy)
 - **Containerization:** Docker & Docker Compose (Single-Repo Hub Strategy)
-- **CI/CD:** GitHub Actions (Build matrix: 9 services; Automated tags: `:latest`, `:${{ github.sha }}`; Automated EC2 deployment)
+- **CI/CD:** GitHub Actions (Path-filtered triggers for `Backend/` only; Build matrix: 9 services; Automated tags: `:latest`, `:${{ github.sha }}`; Automated EC2 deployment)
 
 ## 💡 Key Architectural Patterns
 

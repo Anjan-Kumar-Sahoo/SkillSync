@@ -4,7 +4,20 @@ import './LandingPage.css';
 
 const DEFAULT_EC2_API_URL = 'http://35.153.59.2:8080';
 
-const uiDocs = [
+type DocLink = {
+  title: string;
+  description: string;
+  href: string;
+};
+
+type MonitoringLink = {
+  name: string;
+  description: string;
+  status: string;
+  href: string;
+};
+
+const uiDocs: DocLink[] = [
   {
     title: 'Backend Architecture',
     description: 'Service topology, data boundaries, and domain ownership.',
@@ -27,24 +40,71 @@ const uiDocs = [
   },
 ];
 
-const resolveMonitoringLinks = () => {
+const resolveMonitoringLinks = (): MonitoringLink[] => {
   const apiUrl = import.meta.env.VITE_API_URL || DEFAULT_EC2_API_URL;
 
   try {
     const parsed = new URL(apiUrl);
     const protocol = parsed.protocol;
     const host = parsed.hostname;
-    const gatewayUrl = parsed.origin;
+    const gatewayUrl = apiUrl.replace(/\/$/, '');
+    const onPort = (port: number, suffix = '') => `${protocol}//${host}:${port}${suffix}`;
 
     return [
-      { name: 'API Gateway', href: gatewayUrl },
-      { name: 'Eureka', href: `${protocol}//${host}:8761` },
-      { name: 'RabbitMQ', href: `${protocol}//${host}:15672` },
-      { name: 'Prometheus', href: `${protocol}//${host}:9090` },
-      { name: 'Grafana', href: `${protocol}//${host}:3000` },
-      { name: 'Loki', href: `${protocol}//${host}:3100` },
-      { name: 'Zipkin', href: `${protocol}//${host}:9411` },
-      { name: 'Nginx Entry', href: `${protocol}//${host}` },
+      {
+        name: 'API Gateway',
+        description: 'Traffic routing and filtering',
+        status: 'ACTIVE',
+        href: gatewayUrl,
+      },
+      {
+        name: 'Eureka',
+        description: 'Service discovery dashboard',
+        status: 'ACTIVE',
+        href: onPort(8761),
+      },
+      {
+        name: 'RabbitMQ',
+        description: 'Message broker management',
+        status: 'ACTIVE',
+        href: onPort(15672),
+      },
+      {
+        name: 'Prometheus',
+        description: 'Metrics collection and queries',
+        status: 'ACTIVE',
+        href: onPort(9090),
+      },
+      {
+        name: 'Grafana',
+        description: 'Dashboards and alerting',
+        status: 'ACTIVE',
+        href: onPort(3000),
+      },
+      {
+        name: 'Loki Ready',
+        description: 'Log aggregation health endpoint',
+        status: 'CHECK',
+        href: onPort(3100, '/ready'),
+      },
+      {
+        name: 'Zipkin',
+        description: 'Distributed tracing UI',
+        status: 'ACTIVE',
+        href: onPort(9411),
+      },
+      {
+        name: 'Nginx Entry',
+        description: 'Public reverse proxy entrypoint',
+        status: 'ACTIVE',
+        href: `${protocol}//${host}`,
+      },
+      {
+        name: 'Gateway Swagger',
+        description: 'Gateway API contract explorer',
+        status: 'DOCS',
+        href: onPort(8080, '/swagger-ui.html'),
+      },
     ];
   } catch {
     return [];
@@ -64,11 +124,6 @@ const LandingPage = () => {
           <img src={logo} alt="SkillSync logo" className="landing-logo" />
           <span>SkillSync</span>
         </a>
-
-        <div className="presentation-pill" aria-label="Presentation Edition details">
-          Presentation Edition Details
-        </div>
-
         <nav className="landing-actions" aria-label="Landing actions">
           <a
             className="landing-btn landing-btn-ghost"
@@ -86,7 +141,9 @@ const LandingPage = () => {
 
       <main className="landing-content" id="top">
         <section className="hero-card">
-          <p className="hero-kicker">Presentation Edition</p>
+          <div className="hero-aura hero-aura-one" aria-hidden="true" />
+          <div className="hero-aura hero-aura-two" aria-hidden="true" />
+          <div className="hero-aura hero-aura-three" aria-hidden="true" />
           <div className="brand-stage" aria-hidden="true">
             <div className="gravity-orb orb-a" />
             <div className="gravity-orb orb-b" />
@@ -95,30 +152,21 @@ const LandingPage = () => {
           </div>
           <h2 className="hero-brand-title">SkillSync</h2>
           <p className="hero-tagline">Peer To Peer Learning Platform</p>
-          <h1>One click entry to architecture docs and live monitoring surfaces.</h1>
-          <p>
-            This page is for presentation purpose only. It gives quick navigation to your
-            platform walkthrough and operational dashboards.
-          </p>
           <div className="hero-cta-row">
             <Link className="landing-btn landing-btn-solid" to="/dashboard">
-              Start SkillSync App
+              Get Started
             </Link>
-            <a
-              className="landing-btn landing-btn-ghost"
-              href="https://github.com/Anjan-Kumar-Sahoo/SkillSync"
-              target="_blank"
-              rel="noreferrer"
-            >
-              View Source
+            <a className="landing-btn landing-btn-ghost" href="#ui-docs">
+              View Docs
             </a>
           </div>
         </section>
 
-        <section className="section-wrap">
+        <section className="section-wrap" id="ui-docs">
           <div className="section-head">
+            <p className="section-label">Infrastructure</p>
             <h2>UI Documentation</h2>
-            <p>Open each visual document directly in a new tab.</p>
+            <p>Explore comprehensive technical blueprints that power the SkillSync ecosystem.</p>
           </div>
           <div className="docs-grid">
             {uiDocs.map((doc, index) => (
@@ -132,16 +180,17 @@ const LandingPage = () => {
               >
                 <h3>{doc.title}</h3>
                 <p>{doc.description}</p>
-                <span>Open document</span>
+                <span>View Specs</span>
               </a>
             ))}
           </div>
         </section>
 
-        <section className="section-wrap">
+        <section className="section-wrap" id="system-health">
           <div className="section-head">
+            <p className="section-label">System Health</p>
             <h2>Monitoring Quick Access</h2>
-            <p>Jump to every operational endpoint from one place.</p>
+            <p>All production monitoring links are mapped from your EC2 backend target.</p>
           </div>
           <div className="monitor-grid">
             {monitoringLinks.map((item, index) => (
@@ -153,13 +202,25 @@ const LandingPage = () => {
                 rel="noreferrer"
                 style={{ animationDelay: `${index * 80}ms` }}
               >
-                <span>{item.name}</span>
-                <small>{item.href}</small>
+                <div className="monitor-top">
+                  <span>{item.name}</span>
+                  <b>{item.status}</b>
+                </div>
+                <small>{item.description}</small>
               </a>
             ))}
           </div>
         </section>
       </main>
+
+      <footer className="landing-footer">
+        <p className="footer-description">
+          This page is for presentation purpose only. It gives quick navigation to your
+          platform walkthrough and operational dashboards.
+        </p>
+        <h3>SkillSync</h3>
+        <p>© 2026 SkillSync. Peer To Peer Learning Platform.</p>
+      </footer>
     </div>
   );
 };
