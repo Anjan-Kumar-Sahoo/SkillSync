@@ -206,8 +206,10 @@ services:
     deploy:
       resources:
         limits:
-          memory: 384M
+          memory: 384m
     env_file: .env
+    environment:
+      JAVA_OPTS: "-Xms128m -Xmx256m"
     ports:
       - "127.0.0.1:8761:8761"   # Exposed for debug dashboard — remove in true production
     healthcheck:
@@ -229,8 +231,10 @@ services:
     deploy:
       resources:
         limits:
-          memory: 384M
+          memory: 384m
     env_file: .env
+    environment:
+      JAVA_OPTS: "-Xms128m -Xmx256m"
     depends_on:
       eureka-server:
         condition: service_healthy
@@ -255,8 +259,10 @@ services:
     deploy:
       resources:
         limits:
-          memory: 384M
+          memory: 384m
     env_file: .env
+    environment:
+      JAVA_OPTS: "-Xms128m -Xmx256m"
     ports:
       - "127.0.0.1:8080:8080"   # Bound to localhost to force traffic through NGINX host proxy
     depends_on:
@@ -285,10 +291,11 @@ services:
     deploy:
       resources:
         limits:
-          memory: 448M
+          memory: 384m
     env_file: .env
     environment:
       DB_NAME: skillsync_auth
+      JAVA_OPTS: "-Xms128m -Xmx256m"
     depends_on:
       postgres:
         condition: service_healthy
@@ -309,10 +316,11 @@ services:
     deploy:
       resources:
         limits:
-          memory: 448M
+          memory: 384m
     env_file: .env
     environment:
       DB_NAME: skillsync_user
+      JAVA_OPTS: "-Xms128m -Xmx384m"
     depends_on:
       postgres:
         condition: service_healthy
@@ -337,10 +345,11 @@ services:
     deploy:
       resources:
         limits:
-          memory: 448M
+          memory: 384m
     env_file: .env
     environment:
       DB_NAME: skillsync_skill
+      JAVA_OPTS: "-Xms128m -Xmx256m"
     depends_on:
       postgres:
         condition: service_healthy
@@ -365,10 +374,11 @@ services:
     deploy:
       resources:
         limits:
-          memory: 448M
+          memory: 384m
     env_file: .env
     environment:
       DB_NAME: skillsync_session
+      JAVA_OPTS: "-Xms128m -Xmx384m"
     depends_on:
       postgres:
         condition: service_healthy
@@ -398,10 +408,11 @@ services:
     deploy:
       resources:
         limits:
-          memory: 448M
+          memory: 384m
     env_file: .env
     environment:
       DB_NAME: skillsync_notification
+      JAVA_OPTS: "-Xms128m -Xmx256m"
     depends_on:
       postgres:
         condition: service_healthy
@@ -426,10 +437,11 @@ services:
     deploy:
       resources:
         limits:
-          memory: 448M
+          memory: 384m
     env_file: .env
     environment:
       DB_NAME: skillsync_payment
+      JAVA_OPTS: "-Xms128m -Xmx384m"
     depends_on:
       postgres:
         condition: service_healthy
