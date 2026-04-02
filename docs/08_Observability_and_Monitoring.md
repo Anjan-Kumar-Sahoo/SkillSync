@@ -1,3 +1,11 @@
+# 08 Observability and Monitoring
+
+
+
+---
+
+## Content from: doc8_observability.md
+
 # 📊 DOCUMENT 8: OBSERVABILITY — ZIPKIN + ACTUATOR + MICROMETER
 
 ## SkillSync — Distributed Tracing, Metrics, and Monitoring Architecture

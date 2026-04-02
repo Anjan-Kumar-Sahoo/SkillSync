@@ -1,3 +1,11 @@
+# 06 Deployment DevOps and Infrastructure
+
+
+
+---
+
+## Content from: doc5_deployment_devops.md
+
 # 📄 DOCUMENT 5: DEPLOYMENT + DEVOPS
 
 > [!IMPORTANT]
@@ -1029,3 +1037,558 @@ groups:
 > - [ ] Database backups scheduled (daily)
 > - [ ] Log rotation configured
 > - [ ] Firewall rules: only ports 80/443 exposed publicly
+
+
+---
+
+## Content from: doc11_deployment_architecture.md
+
+# Document 11: Deployment Architecture & Flow
+
+> Version: 1.0 | Date: 2026-04-01 | Status: Post-Audit
+
+## 1. Infrastructure Overview
+
+| Component | Platform | URL | Notes |
+|-----------|----------|-----|-------|
+| Frontend | Vercel | `https://skillsync.mraks.dev` | React SPA (Vite + TailwindCSS) |
+| Backend API | AWS EC2 | `https://api.skillsync.mraks.dev` | Docker Compose, 9 services |
+| DNS | Cloudflare | `mraks.dev` zone | Proxy mode (orange cloud) |
+| SSL | Cloudflare | Edge SSL | **No origin SSL (Certbot not configured)** |
+| Container Registry | Docker Hub | `aksahoo1097/skillsync` | Tags: eureka, config, gateway, auth, user, skill, session, payment, notification |
+
+## 2. DNS Configuration
+
+```
+skillsync.mraks.dev      → Vercel (CNAME to cname.vercel-dns.com)
+api.skillsync.mraks.dev  → EC2 Public IP (A record, Cloudflare proxied)
+```
+
+> ⚠️ Cloudflare SSL mode MUST be "Full" (not "Full Strict") unless Certbot is configured on EC2 origin.
+
+## 3. CI/CD Pipeline
+
+```mermaid
+graph TD
+    A[Push to main<br>Backend/** changed] --> B[Build Cache Common]
+    B --> C[Build & Test Matrix<br>9 services parallel]
+    C --> D{All pass?}
+    D -->|Yes| E[Docker Build & Push<br>All 9 images]
+    D -->|Yes| F[Validate Compose]
+    D -->|Yes| G[SonarCloud Analysis]
+    E --> H[Deploy to EC2]
+    F --> H
+    G --> H
+    H --> I[SCP files to EC2]
+    I --> J[SSH: docker compose pull]
+    J --> K[SSH: docker compose up -d]
+    K --> L[SSH: docker image prune]
+```
+
+### Trigger Conditions
+- `push` to `main` branch with changes in `Backend/**` or `.github/workflows/**`
+- `pull_request` to `main` (build + test only, no deploy)
+- `workflow_dispatch` (manual trigger)
+
+### Deploy Stage Requirements
+- Only runs on `push` to `main` (not PRs)
+- Depends on: `docker` (images pushed), `validate-compose`, `code-quality`
+
+## 4. Docker Compose Architecture
+
+### Service Startup Order
+
+```
+postgres, rabbitmq, redis → eureka-server → config-server → microservices → api-gateway
+```
+
+### Container Resource Limits
+
+| Service | Memory Limit | Exposed Ports |
+|---------|-------------|---------------|
+| PostgreSQL | 512M | None (internal) |
+| RabbitMQ | 512M | 5672, 15672 |
+| Redis | 256M | 6379 |
+| Eureka | 384M | 8761 |
+| Config Server | 384M | None |
+| API Gateway | 384M | 80, 8080 |
+| Auth Service | 448M | None |
+| User Service | 448M | None |
+| Skill Service | 448M | None |
+| Session Service | 448M | None |
+| Notification Service | 448M | None |
+| Payment Service | 448M | None |
+| Prometheus | 384M | 9090 |
+| Grafana | 256M | 3000 |
+| Loki | 256M | 3100 |
+| Zipkin | 384M | 9411 |
+
+**Total estimated memory:** ~6.5 GB minimum
+
+### JVM Settings
+All Java services: `-Xms256m -Xmx512m -XX:+UseG1GC -XX:+UseContainerSupport`
+
+## 5. Deployment Procedure (Manual)
+
+### First-Time Setup
+```bash
+# On EC2 instance
+cd ~/SkillSync/Backend
+cp .env.example .env
+# Edit .env with production secrets
+nano .env
+
+# Start all services
+docker compose pull
+docker compose up -d
+
+# Verify
+docker compose ps
+curl http://localhost/health
+```
+
+### Rolling Update (CI/CD Automated)
+```bash
+cd ~/SkillSync/Backend
+git pull origin main
+docker compose pull          # Pull new images
+docker compose up -d --remove-orphans  # Replace containers
+docker image prune -f        # Clean old images
+```
+
+### Rollback
+```bash
+# Use a specific commit SHA tag
+docker compose pull aksahoo1097/skillsync:gateway-<previous-sha>
+docker compose up -d api-gateway
+```
+
+## 6. Health Checks
+
+| Endpoint | Expected | Timeout | Check |
+|----------|----------|---------|-------|
+| `https://api.skillsync.mraks.dev/health` | `{"status":"UP"}` | 5s | Application health |
+| `https://api.skillsync.mraks.dev/actuator/health` | `{"status":"UP"}` | 10s | Spring Boot health |
+| `http://localhost:8761` (EC2 only) | Eureka dashboard | 10s | Service discovery |
+| `http://localhost:9090` (EC2 only) | Prometheus UI | 5s | Metrics collection |
+
+## 7. Monitoring Stack
+
+| Tool | Purpose | URL (EC2 internal) |
+|------|---------|-------------------|
+| Prometheus | Metrics scraping | `http://localhost:9090` |
+| Grafana | Dashboards | `http://localhost:3000` (admin/skillsync) |
+| Loki | Log aggregation | `http://localhost:3100` |
+| Zipkin | Distributed tracing | `http://localhost:9411` |
+
+## 8. Known Issues
+
+1. **No origin SSL** — EC2 relies entirely on Cloudflare proxy for HTTPS
+2. **Debug ports exposed** — Monitoring UIs accessible from internet if security groups allow
+3. **No auto-scaling** — Single EC2 instance, no load balancer
+4. **No post-deploy health check** — CI/CD doesn't verify deployment success
+5. **Backend currently returning 502** — Containers may be down (as of audit date)
+
+
+---
+
+## Content from: doc9_ec2_gateway_nginx_incident_fix.md
+
+# Document 9: EC2 Gateway and NGINX Incident Fix Runbook
+
+> [!WARNING]
+> Legacy runbook: this document reflects the pre-simplification architecture that included NGINX. Current production topology uses direct API Gateway ingress (no NGINX). See `docs/architecture_simplification_removal_of_nginx_and_direct_gateway_routing.md`.
+
+> For the complete production-level diagnosis and fixes that include domain routing, CORS, Swagger server URL alignment, and OAuth checks, see `docs/production_debugging_cors_fix_guide.md`.
+
+## Incident Summary
+
+Observed production symptoms on AWS EC2:
+- Containers running, but gateway remained in health state starting.
+- NGINX marked unhealthy.
+- Swagger and monitoring UIs reachable, but auth data flow (register and login) not reliably working end-to-end.
+
+## Root Causes Identified
+
+1. Healthcheck fragility in minimal containers
+- Gateway and NGINX healthchecks depended on single binaries only.
+- In slim images, utility availability can differ by tag, causing false negative health states even when the process is up.
+- This blocked readiness gating and made ingress behavior inconsistent.
+
+2. DNS naming inconsistency across ingress and observability
+- NGINX upstream and Prometheus targets were not consistently aligned to a single naming convention.
+- Mixed service-name and container-name usage increased the risk of DNS lookup mismatch in containerized runtime.
+
+3. Missing explicit network aliases for critical components
+- While Docker Compose often resolves service names automatically, explicit aliases were missing.
+- This made behavior depend on implicit DNS behavior and deployment mode details.
+
+## Fixes Applied
+
+### 1. NGINX upstream alignment
+
+Updated NGINX upstream target to gateway container DNS name.
+
+File changed:
+- Backend/nginx/nginx.conf
+
+Change:
+- upstream api_gateway now points to skillsync-gateway:8080
+
+### 2. Docker Compose healthcheck hardening
+
+Updated gateway and NGINX healthchecks to use fallback probes instead of one utility only.
+
+File changed:
+- Backend/docker-compose.yml
+
+Change:
+- Gateway healthcheck now tries readiness endpoint via wget, then curl, then TCP probe.
+- NGINX healthcheck now tries local health endpoint via wget, then curl, then TCP probe.
+- Gateway start period increased to 140s to avoid early flapping during dependent startup.
+
+### 3. Explicit network aliases for deterministic DNS
+
+Added explicit aliases on skillsync-net for key services.
+
+File changed:
+- Backend/docker-compose.yml
+
+Aliases added for:
+- eureka-server and skillsync-eureka
+- config-server and skillsync-config
+- api-gateway and skillsync-gateway
+- auth-service and skillsync-auth
+- user-service and skillsync-user
+- skill-service and skillsync-skill
+- session-service and skillsync-session
+- notification-service and skillsync-notification
+- payment-service and skillsync-payment
+- skillsync-nginx
+
+### 4. Prometheus target alignment
+
+Standardized scrape targets to explicit container DNS names.
+
+File changed:
+- Backend/monitoring/prometheus/prometheus.yml
+
+Updated targets:
+- skillsync-gateway:8080
+- skillsync-auth:8081
+- skillsync-user:8082
+- skillsync-skill:8084
+- skillsync-session:8085
+- skillsync-notification:8088
+- skillsync-payment:8086
+- skillsync-eureka:8761
+- skillsync-config:8888
+
+## Mandatory Debug Commands Used
+
+Run these on EC2 from the Backend directory.
+
+```bash
+docker compose ps
+docker logs skillsync-gateway --tail 300
+docker logs skillsync-nginx --tail 300
+curl -sS http://localhost:8761 | head
+curl -sS http://localhost:8080/actuator/health
+curl -sS http://localhost/actuator/health
+```
+
+Deep network and route checks:
+
+```bash
+docker exec -it skillsync-gateway sh -lc "wget -qO- http://localhost:8080/actuator/health || true"
+docker exec -it skillsync-nginx sh -lc "nginx -t"
+docker exec -it skillsync-nginx sh -lc "wget -qO- http://skillsync-gateway:8080/actuator/health || true"
+docker exec -it skillsync-gateway sh -lc "wget -qO- http://skillsync-auth:8081/actuator/health || true"
+```
+
+Eureka registration checks:
+
+```bash
+curl -sS http://localhost:8761/eureka/apps | grep -E "AUTH-SERVICE|USER-SERVICE|SESSION-SERVICE|SKILL-SERVICE|PAYMENT-SERVICE|NOTIFICATION-SERVICE|API-GATEWAY|CONFIG-SERVER"
+```
+
+Auth flow checks via ingress:
+
+```bash
+curl -i -X POST http://localhost/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"fullName":"EC2 Test","email":"ec2test@example.com","password":"P@ssword123"}'
+
+curl -i -X POST http://localhost/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"ec2test@example.com","password":"P@ssword123"}'
+```
+
+Prometheus target checks:
+
+```bash
+curl -sS http://localhost:9090/api/v1/targets | grep -E "skillsync-(gateway|auth|user|skill|session|payment|notification|config|eureka)"
+```
+
+## Controlled Redeploy Procedure
+
+Do not restart blindly. Redeploy with these exact steps after config changes:
+
+```bash
+docker compose config > /tmp/skillsync.compose.resolved.yml
+docker compose up -d --force-recreate api-gateway nginx prometheus
+docker compose ps
+```
+
+If service images are rebuilt in CI:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+## Final Validation Checklist
+
+1. docker compose ps shows gateway and nginx as healthy.
+2. Eureka dashboard shows all required services as UP.
+3. Login and register requests return success via NGINX endpoint.
+4. Gateway Swagger remains accessible and functional.
+5. Prometheus targets are UP for gateway and business services.
+6. Grafana dashboards show live metrics and no empty panels for core services.
+
+## Architecture Notes After Fix
+
+Ingress path:
+- Client -> NGINX (80) -> skillsync-gateway (8080) -> service discovery -> business services -> Postgres
+
+Discovery and config path:
+- Services -> skillsync-eureka (8761)
+- Services and gateway -> skillsync-config (8888)
+
+Observability path:
+- Prometheus -> service /actuator/prometheus endpoints
+- Grafana -> Prometheus datasource
+- Zipkin receives traces from services and gateway
+
+
+---
+
+## Content from: architecture_simplification_removal_of_nginx_and_direct_gateway_routing.md
+
+# Architecture Simplification: Removal of NGINX and Direct Gateway Routing
+
+Date: 2026-04-01
+
+## 1. Executive Summary
+
+SkillSync production ingress has been simplified from:
+
+Client -> NGINX -> API Gateway -> Microservices
+
+to:
+
+Client (skillsync.mraks.dev) -> API Gateway (api.skillsync.mraks.dev, port 80 -> container 8080) -> Microservices
+
+This change removes an extra hop, reduces DNS/upstream mismatch risk, and makes troubleshooting simpler while preserving service discovery, routing, CORS, Swagger, and OAuth behavior.
+
+## 2. Root Cause of Previous Instability
+
+The prior model had two ingress layers (Vercel path rewrites and NGINX reverse proxy) in front of the gateway. That introduced multiple failure modes:
+
+- Domain/API path mismatch between Vercel and EC2 ingress.
+- Intermittent upstream routing failures after container restarts due to extra proxy dependency.
+- Operational drift between docs, compose config, and runtime path contracts.
+
+Simplifying to direct gateway ingress removes that class of failures.
+
+## 3. Target Architecture
+
+```mermaid
+graph TD
+  FE[Frontend: https://skillsync.mraks.dev] --> GW[Gateway API: https://api.skillsync.mraks.dev\nEC2 host port 80 -> container 8080]
+    GW --> AUTH[AUTH-SERVICE]
+    GW --> USER[USER-SERVICE]
+    GW --> SESSION[SESSION-SERVICE]
+    GW --> PAYMENT[PAYMENT-SERVICE]
+    GW --> SKILL[SKILL-SERVICE]
+    GW --> NOTIF[NOTIFICATION-SERVICE]
+    GW -. discovery .-> EUREKA[Eureka Server]
+    AUTH -.-> CONFIG[Config Server]
+    USER -.-> CONFIG
+    SESSION -.-> CONFIG
+    PAYMENT -.-> CONFIG
+    SKILL -.-> CONFIG
+    NOTIF -.-> CONFIG
+```
+
+## 4. Config Changes Applied
+
+### 4.1 Docker Compose
+
+File: `Backend/docker-compose.yml`
+
+Changes:
+
+- Removed `nginx` service completely.
+- Exposed gateway as single ingress:
+  - `80:8080` (public)
+  - `8080:8080` (debug/local checks)
+- Updated header comments to reflect direct gateway architecture.
+
+### 4.2 Service Discovery and Config Defaults
+
+Files:
+
+- `Backend/api-gateway/src/main/resources/application.properties`
+- `Backend/auth-service/src/main/resources/application.properties`
+- `Backend/user-service/src/main/resources/application.properties`
+- `Backend/skill-service/src/main/resources/application.properties`
+- `Backend/session-service/src/main/resources/application.properties`
+- `Backend/notification-service/src/main/resources/application.properties`
+- `Backend/payment-service/src/main/resources/application.properties`
+- `Backend/config-server/src/main/resources/application.properties`
+
+Changes:
+
+- `spring.config.import` defaults to `http://${CONFIG_SERVER_HOST:skillsync-config}:8888`.
+- `eureka.client.service-url.defaultZone` defaults to `http://${EUREKA_HOST:skillsync-eureka}:8761/eureka`.
+
+Why:
+
+- Prevents silent fallback to `localhost` inside containers.
+- Reduces partial registration scenarios where some services run but are not discoverable.
+
+### 4.3 Gateway CORS
+
+Files:
+
+- `Backend/api-gateway/src/main/resources/application.properties`
+- `Backend/api-gateway/src/main/java/com/skillsync/apigateway/config/CorsConfig.java`
+
+Changes:
+
+- Default allowed origin set to `https://skillsync.mraks.dev`.
+- Credentials enabled.
+- Allowed methods include GET, POST, PUT, DELETE, OPTIONS, PATCH.
+- Allowed headers include all headers (`*`).
+- Removed implicit localhost wildcard origin patterns from code defaults.
+
+Why:
+
+- CORS policy is now gateway-owned and production-first.
+
+### 4.4 Swagger/OpenAPI Public Server URL
+
+Files:
+
+- `Backend/auth-service/src/main/java/com/skillsync/auth/config/OpenApiConfig.java`
+- `Backend/user-service/src/main/java/com/skillsync/user/config/OpenApiConfig.java`
+- `Backend/skill-service/src/main/java/com/skillsync/skill/config/OpenApiConfig.java`
+- `Backend/session-service/src/main/java/com/skillsync/session/config/OpenApiConfig.java`
+- `Backend/notification-service/src/main/java/com/skillsync/notification/config/OpenApiConfig.java`
+- `Backend/payment-service/src/main/java/com/skillsync/payment/config/OpenApiConfig.java`
+
+Changes:
+
+- OpenAPI `servers` now use `${APP_PUBLIC_BASE_URL:https://api.skillsync.mraks.dev}`.
+
+Why:
+
+- Swagger "Try it out" always targets public production ingress, not container/private URLs.
+
+### 4.5 Frontend API/Domain Alignment
+
+Files:
+
+- `Frontend/src/services/axios.ts`
+- `Frontend/src/pages/LandingPage.tsx`
+- `Frontend/vercel.json`
+
+Changes:
+
+- Axios default base URL set to `https://api.skillsync.mraks.dev` via `VITE_API_URL` fallback.
+- Token refresh now uses the same configured API client/base URL.
+- Monitoring defaults switched from raw EC2 IP to production domain.
+- Removed Vercel backend API rewrites (`rewrites: []`) to avoid proxying APIs through Vercel.
+
+## 5. Service Discovery Verification Checklist
+
+Expected Eureka service IDs:
+
+- AUTH-SERVICE
+- USER-SERVICE
+- SESSION-SERVICE
+- PAYMENT-SERVICE
+- SKILL-SERVICE
+- NOTIFICATION-SERVICE
+
+Verification commands (run on EC2):
+
+```bash
+cd ~/SkillSync/Backend
+docker compose ps
+docker logs skillsync-eureka --tail 200
+docker logs skillsync-gateway --tail 200
+docker logs skillsync-auth --tail 200
+docker logs skillsync-user --tail 200
+docker logs skillsync-session --tail 200
+docker logs skillsync-payment --tail 200
+docker logs skillsync-skill --tail 200
+docker logs skillsync-notification --tail 200
+```
+
+## 6. Deployment Procedure
+
+```bash
+cd ~/SkillSync/Backend
+docker compose down
+docker compose up -d --build
+```
+
+Post-deploy checks:
+
+```bash
+# No nginx container should exist
+docker ps --format '{{.Names}}' | grep nginx || true
+
+# Gateway ingress should be reachable on host port 80
+curl -i http://localhost/actuator/health
+curl -i http://localhost:8080/actuator/health
+```
+
+## 7. End-to-End Validation
+
+```bash
+# Public gateway health
+curl -i https://api.skillsync.mraks.dev/actuator/health
+
+# Auth path compatibility
+curl -i https://api.skillsync.mraks.dev/auth/actuator/health
+
+# API path
+curl -i -X POST https://api.skillsync.mraks.dev/auth/register
+
+# Swagger config
+curl -i https://api.skillsync.mraks.dev/v3/api-docs/swagger-config
+```
+
+Manual tests:
+
+- Swagger UI at `https://api.skillsync.mraks.dev/swagger-ui.html` executes API requests successfully.
+- Frontend login/register works against production domain APIs.
+- Google OAuth login starts and returns to frontend callback without CORS or redirect errors.
+
+## 8. Rollback Plan
+
+If regression occurs:
+
+1. Re-deploy previous known-good compose and gateway/service images.
+2. Restore NGINX service and config only if direct gateway ingress cannot be stabilized quickly.
+3. Keep Eureka/config host defaults (`skillsync-*`) to avoid localhost fallback regressions.
+
+## 9. Operational Learnings
+
+- In containerized production, localhost fallbacks are unsafe defaults for service discovery.
+- One ingress layer is easier to secure, observe, and debug than chained proxies.
+- Swagger server metadata must always point to a browser-reachable public URL.
+- Keep documentation synchronized with active topology to prevent runbook drift.
