@@ -18,21 +18,22 @@ public class OpenApiConfig {
         @Value("${APP_PUBLIC_BASE_URL:https://skillsync.mraks.dev}")
         private String publicBaseUrl;
 
-    @Bean
-    public OpenAPI notificationServiceOpenAPI() {
-        return new OpenAPI()
-                                .servers(List.of(new Server().url(publicBaseUrl).description("SkillSync Public Gateway URL")))
-                .info(new Info()
-                        .title("Notification Service API")
-                        .description("SkillSync Notification Service — Event-Driven Notifications via RabbitMQ & WebSocket.\n\n"
-                                + "**Note:** Pass `X-User-Id` header manually when testing directly (bypassing Gateway).")
-                        .version("1.0.0")
-                        .contact(new Contact().name("SkillSync Team")))
-                .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
-                .schemaRequirement("Bearer Authentication",
-                        new SecurityScheme()
-                                .type(SecurityScheme.Type.HTTP)
-                                .bearerFormat("JWT")
-                                .scheme("bearer"));
-    }
+        @Bean
+        public OpenAPI notificationServiceOpenAPI() {
+                return new OpenAPI()
+                                .servers(List.of(new Server().url(publicBaseUrl)
+                                                .description("SkillSync Public Gateway URL")))
+                                .info(new Info()
+                                                .title("Notification Service API")
+                                                .description("SkillSync Notification Service — Event-Driven Notifications via RabbitMQ & WebSocket.\n\n"
+                                                                + "**Note:** Pass `X-User-Id` header manually when testing directly (bypassing Gateway).")
+                                                .version("1.0.0")
+                                                .contact(new Contact().name("SkillSync Team")))
+                                .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
+                                .schemaRequirement("Bearer Authentication",
+                                                new SecurityScheme()
+                                                                .type(SecurityScheme.Type.HTTP)
+                                                                .bearerFormat("JWT")
+                                                                .scheme("bearer"));
+        }
 }
