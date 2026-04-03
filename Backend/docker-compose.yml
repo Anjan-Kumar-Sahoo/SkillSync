@@ -46,7 +46,10 @@ services:
       retries: 5
       start_period: 10s
     networks:
-      - skillsync-net
+      skillsync-net:
+        aliases:
+          - postgres
+          - skillsync-postgres
     restart: unless-stopped
 
   rabbitmq:
@@ -69,7 +72,10 @@ services:
       retries: 5
       start_period: 20s
     networks:
-      - skillsync-net
+      skillsync-net:
+        aliases:
+          - rabbitmq
+          - skillsync-rabbitmq
     restart: unless-stopped
 
   redis:
@@ -91,7 +97,10 @@ services:
       retries: 5
       start_period: 10s
     networks:
-      - skillsync-net
+      skillsync-net:
+        aliases:
+          - redis
+          - skillsync-redis
     restart: unless-stopped
 
   zipkin:
@@ -112,7 +121,10 @@ services:
       retries: 5
       start_period: 20s
     networks:
-      - skillsync-net
+      skillsync-net:
+        aliases:
+          - zipkin
+          - skillsync-zipkin
     restart: unless-stopped
 
   # ======================== PROMETHEUS ========================
@@ -140,7 +152,10 @@ services:
       retries: 5
       start_period: 15s
     networks:
-      - skillsync-net
+      skillsync-net:
+        aliases:
+          - prometheus
+          - skillsync-prometheus
     restart: unless-stopped
 
   # ======================== GRAFANA ===========================
@@ -171,7 +186,10 @@ services:
       retries: 5
       start_period: 30s
     networks:
-      - skillsync-net
+      skillsync-net:
+        aliases:
+          - grafana
+          - skillsync-grafana
     restart: unless-stopped
 
   # ======================== LOKI (Log Aggregation) ============
@@ -195,7 +213,10 @@ services:
       retries: 5
       start_period: 20s
     networks:
-      - skillsync-net
+      skillsync-net:
+        aliases:
+          - loki
+          - skillsync-loki
     restart: unless-stopped
 
   # ======================== DISCOVERY & CONFIG ================
@@ -231,6 +252,8 @@ services:
         limits:
           memory: 384M
     env_file: .env
+    environment:
+      CONFIG_SERVER_PROFILE: git
     depends_on:
       eureka-server:
         condition: service_healthy
