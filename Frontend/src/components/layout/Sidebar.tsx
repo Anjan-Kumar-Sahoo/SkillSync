@@ -29,8 +29,8 @@ const Sidebar = ({ role }: SidebarProps) => {
     { name: 'Dashboard', icon: 'grid_view', path: '/learner' }, 
     { name: 'Mentor Search', icon: 'person_search', path: '/mentors' },
     { name: 'My Sessions', icon: 'event_upcoming', path: '/sessions' },
-    { name: 'Learning Path', icon: 'school', path: '#' },
-    { name: 'Resources', icon: 'menu_book', path: '#' },
+    { name: 'Learning Path', icon: 'school', path: '/learning-path' },
+    { name: 'Resources', icon: 'menu_book', path: '/resources' },
   ];
 
   const mentorNav = [
@@ -38,13 +38,13 @@ const Sidebar = ({ role }: SidebarProps) => {
     { name: 'My Sessions', icon: 'event_upcoming', path: '/sessions' },
     { name: 'My Availability', icon: 'event_available', path: '/mentor#availability' },
     { name: 'My Profile', icon: 'account_circle', path: mentorData?.id ? `/mentors/${mentorData.id}` : '#' },
-    { name: 'Earnings', icon: 'payments', path: '#' },
+    { name: 'Earnings', icon: 'payments', path: '/mentor/earnings' },
   ];
 
   const adminNav = [
     { name: 'Dashboard', icon: 'grid_view', path: '/admin' },
-    { name: 'Users Center', icon: 'group', path: '#' },
-    { name: 'Platform Finances', icon: 'account_balance', path: '#' },
+    { name: 'Users Center', icon: 'group', path: '/admin/users' },
+    { name: 'Platform Finances', icon: 'account_balance', path: '/admin/finances' },
   ];
 
   const activeNav = role === 'ROLE_MENTOR' ? mentorNav : role === 'ROLE_ADMIN' ? adminNav : learnerNav;
@@ -105,7 +105,7 @@ const Sidebar = ({ role }: SidebarProps) => {
           <span className="hidden lg:inline ml-2 text-sm font-bold whitespace-nowrap">Find a Mentor</span>
         </button>
 
-        <Link to="#" className="w-full flex items-center justify-center lg:justify-start px-2 lg:px-4 h-12 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all duration-200 group">
+        <Link to="/help" className="w-full flex items-center justify-center lg:justify-start px-2 lg:px-4 h-12 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all duration-200 group">
           <span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">help</span>
           <span className="hidden lg:inline ml-4 text-sm font-semibold whitespace-nowrap">Help Center</span>
         </Link>

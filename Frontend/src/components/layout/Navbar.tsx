@@ -11,7 +11,7 @@ const Navbar = () => {
     queryKey: ['unread-notifications'],
     queryFn: async () => {
       try {
-        const response = await api.get('/api/notifications/unread/count');
+        const response = await api.get('/api/notifications/unread/count', { _skipErrorRedirect: true } as any);
         return response.data;
       } catch (e) {
         return { count: 0 };

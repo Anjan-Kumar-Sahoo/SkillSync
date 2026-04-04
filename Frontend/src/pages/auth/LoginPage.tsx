@@ -20,8 +20,9 @@ const LoginPage = () => {
   useEffect(() => {
     if (searchParams.get('reason') === 'session_expired') {
       showToast({ message: 'Your session expired. Please sign in again.', type: 'error' });
-      searchParams.delete('reason');
-      setSearchParams(searchParams, { replace: true });
+      const updatedParams = new URLSearchParams(searchParams);
+      updatedParams.delete('reason');
+      setSearchParams(updatedParams, { replace: true });
     }
   }, [searchParams, setSearchParams, showToast]);
 

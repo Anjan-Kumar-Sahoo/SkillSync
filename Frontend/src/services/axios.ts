@@ -48,7 +48,15 @@ const processQueue = (error: any, token: string | null = null) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
+    const originalRequest = error.config || {};
+    const requestUrl = originalRequest.url || '';
+    const isAuthEndpoint = typeof requestUrl === 'string' && requestUrl.startsWith('/api/auth/');
+
+    // Allow callers to handle unauthenticated states without global redirects.
+    // Also never force refresh/redirect for auth endpoints (login/register/etc.).
+    if (error.response?.status === 401 && (originalRequest._skipAuthRedirect || isAuthEndpoint)) {
+      return Promise.reject(error);
+    }
 
     // Skip refresh loop for the refresh endpoint itself
     if (error.response?.status === 401 && !originalRequest._retry && originalRequest.url !== '/api/auth/refresh') {
