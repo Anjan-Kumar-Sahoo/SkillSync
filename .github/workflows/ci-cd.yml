@@ -215,26 +215,13 @@ jobs:
 
   # ======================== STAGE 5: CODE QUALITY (SonarCloud) =
   code-quality:
-    name: Code Quality - ${{ matrix.service }}
+    name: Code Quality (SonarCloud)
     runs-on: ubuntu-latest
     needs: build-and-test
     if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'pull_request' }}
 
-    # ✅ FIX: Map secret to env var, then use env var in conditionals
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-    strategy:
-      fail-fast: false
-      matrix:
-        service:
-          - auth-service
-          - user-service
-          - skill-service
-          - session-service
-          - notification-service
-          - payment-service
-          - api-gateway
 
     steps:
       - name: Checkout code
@@ -255,19 +242,31 @@ jobs:
           name: cache-common-jar
           path: ~/.m2/repository/com/skillsync/skillsync-cache-common/
 
-      # ✅ FIX: Use ${{ env.SONAR_TOKEN != '' }} instead of bare secrets reference
-      - name: SonarCloud Scan - ${{ matrix.service }}
+      - name: Build & Test all services (for JaCoCo reports)
         if: ${{ env.SONAR_TOKEN != '' }}
-        working-directory: ./Backend/${{ matrix.service }}
+        run: |
+          SERVICES="auth-service user-service skill-service session-service notification-service payment-service api-gateway"
+          for svc in $SERVICES; do
+            echo "======= Building & Testing: $svc ======="
+            cd Backend/$svc
+            mvn -B verify || true
+            cd ../..
+          done
+
+      - name: SonarCloud Scan
+        if: ${{ env.SONAR_TOKEN != '' }}
+        uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          mvn -B verify sonar:sonar \
-            -Dsonar.projectKey=SkillSync_${{ matrix.service }} \
-            -Dsonar.organization=skillsync-github \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+        with:
+          args: >
+            -Dsonar.projectKey=Anjan-Kumar-Sahoo_SkillSync
+            -Dsonar.organization=anjan-kumar-sahoo
+            -Dsonar.sources=Backend/auth-service/src/main,Backend/user-service/src/main,Backend/skill-service/src/main,Backend/session-service/src/main,Backend/notification-service/src/main,Backend/payment-service/src/main,Backend/api-gateway/src/main,Frontend/src
+            -Dsonar.tests=Backend/auth-service/src/test,Backend/user-service/src/test,Backend/skill-service/src/test,Backend/session-service/src/test,Backend/notification-service/src/test,Backend/payment-service/src/test,Backend/api-gateway/src/test
+            -Dsonar.java.binaries=Backend/auth-service/target/classes,Backend/user-service/target/classes,Backend/skill-service/target/classes,Backend/session-service/target/classes,Backend/notification-service/target/classes,Backend/payment-service/target/classes,Backend/api-gateway/target/classes
+            -Dsonar.coverage.jacoco.xmlReportPaths=Backend/auth-service/target/site/jacoco/jacoco.xml,Backend/user-service/target/site/jacoco/jacoco.xml,Backend/skill-service/target/site/jacoco/jacoco.xml,Backend/session-service/target/site/jacoco/jacoco.xml,Backend/notification-service/target/site/jacoco/jacoco.xml,Backend/payment-service/target/site/jacoco/jacoco.xml,Backend/api-gateway/target/site/jacoco/jacoco.xml
 
       - name: Skip SonarCloud (token not configured)
         if: ${{ env.SONAR_TOKEN == '' }}
