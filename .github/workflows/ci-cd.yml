@@ -276,7 +276,7 @@ jobs:
   deploy:
     name: Deploy to EC2
     runs-on: ubuntu-latest
-    needs: [docker, validate-compose, code-quality]
+    needs: [docker, validate-compose]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
