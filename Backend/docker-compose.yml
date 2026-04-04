@@ -147,7 +147,7 @@ services:
       - '--web.enable-lifecycle'
       - '--web.external-url=/prometheus/'
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9090/-/healthy || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9090/prometheus/-/healthy || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
