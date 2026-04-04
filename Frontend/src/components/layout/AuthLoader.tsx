@@ -17,7 +17,7 @@ export const AuthLoader = ({ children }: { children: ReactNode }) => {
       // If user isn't loaded yet, try to fetch profile using cookies
       if (!user) {
         try {
-          const { data } = await api.get('/api/users/profile');
+          const { data } = await api.get('/api/users/me', { _skipErrorRedirect: true } as any);
           if (mounted) {
             dispatch(setCredentials({ accessToken: '', refreshToken: '', user: data }));
           }

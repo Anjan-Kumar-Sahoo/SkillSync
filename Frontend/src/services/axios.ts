@@ -82,8 +82,8 @@ api.interceptors.response.use(
       window.location.href = '/unauthorized';
     }
 
-    // 500 — server error fallback message
-    if (error.response?.status >= 500 && error.response?.status !== 503) {
+    // 500 — server error fallback message (skip if caller opted out)
+    if (error.response?.status >= 500 && error.response?.status !== 503 && !originalRequest._skipErrorRedirect) {
       window.location.href = '/500';
     }
 
