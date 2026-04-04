@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
 
-type ToastType = 'success' | 'error';
+type ToastType = 'success' | 'error' | 'info';
 
 interface ToastOptions {
   message: string;
@@ -30,7 +30,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
       {toastData && (
         <div 
           className={`fixed bottom-6 right-6 px-6 py-3 rounded-xl shadow-lg font-bold text-white z-50 transition-all duration-300 transform translate-y-0 ${
-            toastData.type === 'error' ? 'bg-error' : 'bg-primary'
+            toastData.type === 'error' ? 'bg-error' : toastData.type === 'info' ? 'bg-secondary' : 'bg-primary'
           }`}
         >
           {toastData.message}

@@ -111,6 +111,9 @@ const RegisterPage = () => {
     { label: 'One special character', met: /[@$!%*?&#]/.test(currentPassword) }
   ];
 
+  const handleConstraintClass = (met: boolean) => 
+    `flex items-center text-sm font-medium transition-colors ${met ? 'text-primary' : 'text-on-surface-variant'}`;
+
   const handleOtpChange = (index: number, value: string) => {
     if (value.length > 1) value = value.slice(-1);
     const newOtp = [...otp];
