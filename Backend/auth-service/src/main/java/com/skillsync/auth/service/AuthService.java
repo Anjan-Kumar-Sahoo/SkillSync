@@ -19,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -62,20 +64,21 @@ public class AuthService {
     }
 
     @Transactional
-    public Object initiateRegistration(InitiateRegistrationRequest request) {
-        java.util.Optional<AuthUser> existingUserOpt = authUserRepository.findByEmail(request.email());
+    public Map<String, Object> initiateRegistration(InitiateRegistrationRequest request) {
+        String normalizedEmail = request.email().trim().toLowerCase();
+        Optional<AuthUser> existingUserOpt = authUserRepository.findByEmail(normalizedEmail);
         if (existingUserOpt.isPresent()) {
             AuthUser existing = existingUserOpt.get();
             if (existing.isVerified()) {
-                return java.util.Map.of("exists", true, "message", "User already registered.");
+                return Map.of("exists", true, "message", "User already registered.");
             } else {
                 otpService.generateAndSendOtp(existing, OtpType.REGISTRATION);
-                return java.util.Map.of("exists", false, "otpSent", true);
+                return Map.of("exists", false, "otpSent", true);
             }
         }
 
         AuthUser user = AuthUser.builder()
-                .email(request.email())
+                .email(normalizedEmail)
                 .passwordHash("PENDING")
                 .firstName("PENDING")
                 .lastName("PENDING")
@@ -88,7 +91,7 @@ public class AuthService {
         user = authUserRepository.save(user);
         otpService.generateAndSendOtp(user, OtpType.REGISTRATION);
 
-        return java.util.Map.of("exists", false, "otpSent", true);
+        return Map.of("exists", false, "otpSent", true);
     }
 
     @Transactional

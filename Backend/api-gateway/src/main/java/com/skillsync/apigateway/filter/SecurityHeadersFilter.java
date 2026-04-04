@@ -12,14 +12,13 @@ public class SecurityHeadersFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        return chain.filter(exchange).then(Mono.fromRunnable(() -> {
-            var headers = exchange.getResponse().getHeaders();
-            headers.add("X-Frame-Options", "DENY");
-            headers.add("X-Content-Type-Options", "nosniff");
-            headers.add("X-XSS-Protection", "1; mode=block");
-            headers.add("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
-            headers.add("Referrer-Policy", "strict-origin-when-cross-origin");
-        }));
+        var headers = exchange.getResponse().getHeaders();
+        headers.set("X-Frame-Options", "DENY");
+        headers.set("X-Content-Type-Options", "nosniff");
+        headers.set("X-XSS-Protection", "1; mode=block");
+        headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+        headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+        return chain.filter(exchange);
     }
 
     @Override
