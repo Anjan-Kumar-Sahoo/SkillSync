@@ -11,16 +11,16 @@ const Navbar = () => {
     queryKey: ['unread-notifications'],
     queryFn: async () => {
       try {
-        const response = await api.get('/api/notifications/unread-count');
+        const response = await api.get('/api/notifications/unread/count');
         return response.data;
       } catch (e) {
-        return { unreadCount: 0 };
+        return { count: 0 };
       }
     },
     refetchInterval: 30000,
   });
 
-  const unreadCount = notificationData?.unreadCount || 0;
+  const unreadCount = notificationData?.count || 0;
   
   const initial1 = user?.firstName?.[0]?.toUpperCase() || 'U';
   const initial2 = user?.lastName?.[0]?.toUpperCase() || '';

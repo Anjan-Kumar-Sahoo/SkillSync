@@ -42,9 +42,7 @@ class ReviewService {
     const params = new URLSearchParams();
     params.append('page', page.toString());
     params.append('size', size.toString());
-    const res = await api.get(
-      `/api/mentors/${mentorId}/reviews?${params.toString()}`
-    );
+    const res = await api.get(`/api/reviews/mentor/${mentorId}?${params.toString()}`);
     return res.data;
   }
 
@@ -55,7 +53,7 @@ class ReviewService {
     const params = new URLSearchParams();
     params.append('page', page.toString());
     params.append('size', size.toString());
-    const res = await api.get(`/api/reviews/my?${params.toString()}`);
+    const res = await api.get(`/api/reviews/me?${params.toString()}`);
     return res.data;
   }
 
@@ -85,7 +83,7 @@ class ReviewService {
     averageRating: number;
     totalReviews: number;
   }> {
-    const res = await api.get(`/api/mentors/${mentorId}/rating`);
+    const res = await api.get(`/api/reviews/mentor/${mentorId}/summary`);
     return res.data;
   }
 }

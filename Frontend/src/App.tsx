@@ -15,7 +15,6 @@ import LearnerDashboardPage from './pages/learner/LearnerDashboardPage';
 import MentorDashboardPage from './pages/mentor/MentorDashboardPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import DiscoverMentorsPage from './pages/mentors/DiscoverMentorsPage';
-import MentorProfilePage from './pages/mentors/MentorProfilePage';
 import MentorDetailPage from './pages/mentors/MentorDetailPage';
 import MySessionsPage from './pages/sessions/MySessionsPage';
 import CheckoutPage from './pages/payment/CheckoutPage';

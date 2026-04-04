@@ -28,7 +28,7 @@ class SessionService {
     if (status) params.append('status', status);
     params.append('page', page.toString());
     params.append('size', size.toString());
-    const res = await api.get(`/api/sessions?${params.toString()}`);
+    const res = await api.get(`/api/sessions/learner?${params.toString()}`);
     return res.data;
   }
 
@@ -59,22 +59,26 @@ class SessionService {
     id: number,
     payload: UpdateSessionPayload
   ): Promise<SessionData> {
-    const res = await api.put(`/api/sessions/${id}`, payload);
+    const action =
+      payload.status === 'CANCELLED'
+        ? 'cancel'
+        : payload.status === 'ACCEPTED'
+          ? 'accept'
+          : 'reject';
+    const res = await api.put(`/api/sessions/${id}/${action}`);
     return res.data;
   }
 
   async cancelSession(id: number): Promise<void> {
-    await api.delete(`/api/sessions/${id}`);
+    await this.updateSession(id, { status: 'CANCELLED' });
   }
 
   async acceptSession(id: number): Promise<SessionData> {
-    const res = await api.put(`/api/sessions/${id}`, { status: 'ACCEPTED' });
-    return res.data;
+    return this.updateSession(id, { status: 'ACCEPTED' });
   }
 
   async rejectSession(id: number): Promise<SessionData> {
-    const res = await api.put(`/api/sessions/${id}`, { status: 'REJECTED' });
-    return res.data;
+    return this.updateSession(id, { status: 'REJECTED' });
   }
 }
 

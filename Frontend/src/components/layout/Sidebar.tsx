@@ -1,10 +1,9 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useQuery } from '@tanstack/react-query';
 import { logout } from '../../store/slices/authSlice';
 import api from '../../services/axios';
 import logo from '../../assets/skillsync-logo.png';
-import type { RootState } from '../../store';
 
 interface SidebarProps {
   role: 'ROLE_LEARNER' | 'ROLE_MENTOR' | 'ROLE_ADMIN';
@@ -14,13 +13,12 @@ const Sidebar = ({ role }: SidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const refreshToken = useSelector((state: RootState) => state.auth.refreshToken);
 
   const { data: mentorData } = useQuery({
     queryKey: ['mentor', 'my', 'sidebar'],
     queryFn: async () => {
       if (role !== 'ROLE_MENTOR') return null;
-      const res = await api.get('/api/mentors/my');
+      const res = await api.get('/api/mentors/me', { _skipErrorRedirect: true } as any);
       return res.data;
     },
     enabled: role === 'ROLE_MENTOR',
@@ -53,7 +51,7 @@ const Sidebar = ({ role }: SidebarProps) => {
 
   const handleLogout = async () => {
     try {
-      await api.post('/api/auth/logout', { refreshToken });
+      await api.post('/api/auth/logout');
     } catch (e) {
       console.warn("Logout request failed cleanly", e);
     } finally {

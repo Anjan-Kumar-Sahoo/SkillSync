@@ -21,8 +21,8 @@ class NotificationService {
   }
 
   async getUnreadNotifications(): Promise<NotificationData[]> {
-    const res = await api.get('/api/notifications/unread');
-    return res.data;
+    const res = await this.getNotifications();
+    return res.content.filter((notification) => !notification.isRead);
   }
 
   async getUnreadCount(): Promise<number> {
@@ -44,7 +44,8 @@ class NotificationService {
   }
 
   async clearAllNotifications(): Promise<void> {
-    await api.delete('/api/notifications');
+    const allNotifications = await this.getNotifications();
+    await Promise.all(allNotifications.content.map((notification) => this.deleteNotification(notification.id)));
   }
 
   async subscribeToNotifications(): Promise<void> {

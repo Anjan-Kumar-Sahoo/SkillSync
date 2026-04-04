@@ -23,7 +23,7 @@ const MentorDashboardPage = () => {
     queryKey: ['mentor', 'my'],
     queryFn: async () => {
       try {
-        const res = await api.get('/api/mentors/my');
+        const res = await api.get('/api/mentors/me', { _skipErrorRedirect: true } as any);
         return res.data;
       } catch (e) {
         return null;
@@ -37,7 +37,7 @@ const MentorDashboardPage = () => {
   const { data: totalSessionsObj } = useQuery({
     queryKey: ['sessions', 'total'],
     queryFn: async () => {
-      const res = await api.get('/api/sessions?page=0&size=1');
+      const res = await api.get('/api/sessions/mentor?page=0&size=1', { _skipErrorRedirect: true } as any);
       return res.data;
     }
   });
@@ -45,7 +45,7 @@ const MentorDashboardPage = () => {
   const { data: pendingReqsObj } = useQuery({
     queryKey: ['sessions', 'requested'],
     queryFn: async () => {
-      const res = await api.get('/api/sessions?status=REQUESTED&page=0&size=5');
+      const res = await api.get('/api/sessions/mentor?status=REQUESTED&page=0&size=5', { _skipErrorRedirect: true } as any);
       return res.data;
     }
   });
@@ -53,7 +53,7 @@ const MentorDashboardPage = () => {
   const { data: upcomingObj } = useQuery({
     queryKey: ['sessions', 'accepted'],
     queryFn: async () => {
-      const res = await api.get('/api/sessions?status=ACCEPTED&page=0&size=5');
+      const res = await api.get('/api/sessions/mentor?status=ACCEPTED&page=0&size=5', { _skipErrorRedirect: true } as any);
       return res.data;
     }
   });
@@ -62,7 +62,7 @@ const MentorDashboardPage = () => {
   const { data: recentReviewsObj } = useQuery({
     queryKey: ['reviews', mentorId],
     queryFn: async () => {
-      const res = await api.get(`/api/reviews/mentor/${mentorId}?page=0&size=3`);
+      const res = await api.get(`/api/reviews/mentor/${mentorId}?page=0&size=3`, { _skipErrorRedirect: true } as any);
       return res.data;
     },
     enabled: !!mentorId
@@ -73,7 +73,7 @@ const MentorDashboardPage = () => {
 
   // Mutations
   const acceptMutation = useMutation({
-    mutationFn: async (id: number) => api.post(`/api/sessions/${id}/accept`),
+    mutationFn: async (id: number) => api.post(`/api/sessions/${id}/accept`, undefined, { _skipErrorRedirect: true } as any),
     onSuccess: () => {
       showToast({ message: 'Session accepted!', type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
@@ -81,7 +81,7 @@ const MentorDashboardPage = () => {
   });
 
   const rejectMutation = useMutation({
-    mutationFn: async (id: number) => api.post(`/api/sessions/${id}/reject`),
+    mutationFn: async (id: number) => api.post(`/api/sessions/${id}/reject`, undefined, { _skipErrorRedirect: true } as any),
     onSuccess: () => {
       showToast({ message: 'Session rejected.', type: 'success' });
       setRejectingId(null);
@@ -90,7 +90,7 @@ const MentorDashboardPage = () => {
   });
 
   const completeMutation = useMutation({
-    mutationFn: async (id: number) => api.post(`/api/sessions/${id}/complete`),
+    mutationFn: async (id: number) => api.post(`/api/sessions/${id}/complete`, undefined, { _skipErrorRedirect: true } as any),
     onSuccess: () => {
       showToast({ message: 'Session marked complete!', type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
@@ -103,7 +103,7 @@ const MentorDashboardPage = () => {
       // e.g., 2026-03-28T09:00:00
       const startDateTime = new Date(`${availDate}T${availStart}:00`).toISOString();
       const endDateTime = new Date(`${availDate}T${availEnd}:00`).toISOString();
-      return api.post('/api/mentors/availability', { startTime: startDateTime, endTime: endDateTime });
+      return api.post('/api/mentors/me/availability', { startTime: startDateTime, endTime: endDateTime }, { _skipErrorRedirect: true } as any);
     },
     onSuccess: () => {
       showToast({ message: 'Slot added!', type: 'success' });
@@ -115,7 +115,7 @@ const MentorDashboardPage = () => {
   });
 
   const deleteSlotMutation = useMutation({
-    mutationFn: async (slotId: number) => api.delete(`/api/mentors/availability/${slotId}`),
+    mutationFn: async (slotId: number) => api.delete(`/api/mentors/me/availability/${slotId}`, { _skipErrorRedirect: true } as any),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mentor', 'my'] });
       showToast({ message: 'Slot removed.', type: 'success' });
