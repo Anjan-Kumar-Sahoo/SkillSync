@@ -32,6 +32,18 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(authResponse);
     }
 
+    @PostMapping("/initiate-registration")
+    public ResponseEntity<?> initiateRegistration(@Valid @RequestBody InitiateRegistrationRequest request) {
+        return ResponseEntity.ok(authService.initiateRegistration(request));
+    }
+
+    @PostMapping("/complete-registration")
+    public ResponseEntity<AuthResponse> completeRegistration(@Valid @RequestBody CompleteRegistrationRequest request, HttpServletResponse response) {
+        AuthResponse authResponse = authService.completeRegistration(request);
+        addAuthCookies(response, authResponse);
+        return ResponseEntity.ok(authResponse);
+    }
+
     @PostMapping("/verify-otp")
     public ResponseEntity<Map<String, String>> verifyOtp(@Valid @RequestBody VerifyOtpRequest request) {
         otpService.verifyOtp(request.email(), request.otp(), OtpType.REGISTRATION);

@@ -38,6 +38,7 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
+        // Legacy support
         if (authUserRepository.existsByEmail(request.email())) {
             throw new RuntimeException("Email already registered: " + request.email());
         }
@@ -55,8 +56,61 @@ public class AuthService {
         user = authUserRepository.save(user);
         log.info("User registered successfully: {}", user.getEmail());
 
-        // Send OTP for email verification
         otpService.generateAndSendOtp(user, OtpType.REGISTRATION);
+
+        return generateAuthResponse(user);
+    }
+
+    @Transactional
+    public Object initiateRegistration(InitiateRegistrationRequest request) {
+        java.util.Optional<AuthUser> existingUserOpt = authUserRepository.findByEmail(request.email());
+        if (existingUserOpt.isPresent()) {
+            AuthUser existing = existingUserOpt.get();
+            if (existing.isVerified()) {
+                return java.util.Map.of("exists", true, "message", "User already registered.");
+            } else {
+                otpService.generateAndSendOtp(existing, OtpType.REGISTRATION);
+                return java.util.Map.of("exists", false, "otpSent", true);
+            }
+        }
+
+        AuthUser user = AuthUser.builder()
+                .email(request.email())
+                .passwordHash("PENDING")
+                .firstName("PENDING")
+                .lastName("PENDING")
+                .role(Role.ROLE_LEARNER)
+                .isActive(true)
+                .isVerified(false)
+                .passwordSet(false)
+                .build();
+
+        user = authUserRepository.save(user);
+        otpService.generateAndSendOtp(user, OtpType.REGISTRATION);
+
+        return java.util.Map.of("exists", false, "otpSent", true);
+    }
+
+    @Transactional
+    public AuthResponse completeRegistration(CompleteRegistrationRequest request) {
+        AuthUser user = authUserRepository.findByEmail(request.email())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!user.isVerified()) {
+            throw new RuntimeException("Email not verified. Please verify OTP first.");
+        }
+
+        if (user.isPasswordSet() && !user.getPasswordHash().equals("PENDING")) {
+            throw new RuntimeException("Registration already completed for this user.");
+        }
+
+        user.setFirstName(request.firstName());
+        user.setLastName(request.lastName());
+        user.setPasswordHash(passwordEncoder.encode(request.password()));
+        user.setPasswordSet(true);
+        user = authUserRepository.save(user);
+        
+        log.info("User registration completed for: {}", user.getEmail());
 
         return generateAuthResponse(user);
     }
