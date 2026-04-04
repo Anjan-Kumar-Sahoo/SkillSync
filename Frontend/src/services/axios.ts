@@ -11,6 +11,14 @@ if (isProd && configuredUrl && configuredUrl.includes('35.153.59.2')) {
     configuredUrl = 'https://api.skillsync.mraks.dev';
 }
 
+// CRITICAL: If configuredUrl points to the frontend domain (skillsync.mraks.dev, Vercel),
+// redirect to the actual API domain (api.skillsync.mraks.dev, EC2). This handles
+// misconfigured VITE_API_URL in Vercel deployment settings.
+if (isProd && configuredUrl && new URL(configuredUrl).hostname === 'skillsync.mraks.dev') {
+    console.warn('[CORS FIX] Detected misconfigured API URL pointing to frontend domain. Redirecting to API Gateway...');
+    configuredUrl = 'https://api.skillsync.mraks.dev';
+}
+
 const API_BASE_URL = configuredUrl || (isProd ? 'https://api.skillsync.mraks.dev' : 'http://localhost:8080');
 
 const api = axios.create({
