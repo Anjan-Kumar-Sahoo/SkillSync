@@ -1,6 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { useQuery } from '@tanstack/react-query';
 import { logout } from '../../store/slices/authSlice';
 import api from '../../services/axios';
 import logo from '../../assets/skillsync-logo.png';
@@ -14,17 +13,6 @@ const Sidebar = ({ role }: SidebarProps) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { data: mentorData } = useQuery({
-    queryKey: ['mentor', 'my', 'sidebar'],
-    queryFn: async () => {
-      if (role !== 'ROLE_MENTOR') return null;
-      const res = await api.get('/api/mentors/me', { _skipErrorRedirect: true } as any);
-      return res.data;
-    },
-    enabled: role === 'ROLE_MENTOR',
-    staleTime: 300000, // 5 min
-  });
-
   const learnerNav = [
     { name: 'Dashboard', icon: 'grid_view', path: '/learner' }, 
     { name: 'Mentor Search', icon: 'person_search', path: '/mentors' },
@@ -36,8 +24,8 @@ const Sidebar = ({ role }: SidebarProps) => {
   const mentorNav = [
     { name: 'Dashboard', icon: 'grid_view', path: '/mentor' },
     { name: 'My Sessions', icon: 'event_upcoming', path: '/sessions' },
-    { name: 'My Availability', icon: 'event_available', path: '/mentor#availability' },
-    { name: 'My Profile', icon: 'account_circle', path: mentorData?.id ? `/mentors/${mentorData.id}` : '#' },
+    { name: 'My Availability', icon: 'event_available', path: '/mentor/availability' },
+    { name: 'My Profile', icon: 'account_circle', path: '/profile' },
     { name: 'Earnings', icon: 'payments', path: '/mentor/earnings' },
   ];
 

@@ -1,23 +1,26 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import userService from '../../services/userService';
 import PageLayout from '../../components/layout/PageLayout';
 import { useToast } from '../../components/ui/Toast';
+import type { RootState } from '../../store';
 
 const UserProfilePage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const role = useSelector((state: RootState) => state.auth.role);
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     bio: '',
-    phoneNumber: '',
+    phone: '',
     location: '',
   });
-  const [, setProfileImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
 
   // Fetch user profile
@@ -25,6 +28,19 @@ const UserProfilePage = () => {
     queryKey: ['user', 'profile'],
     queryFn: () => userService.getMyProfile(),
   });
+
+  useEffect(() => {
+    if (!profile) return;
+
+    setFormData({
+      firstName: profile.firstName || '',
+      lastName: profile.lastName || '',
+      bio: profile.bio || '',
+      phone: profile.phone || '',
+      location: profile.location || '',
+    });
+    setPreviewUrl(profile.avatarUrl || '');
+  }, [profile]);
 
   // Update profile mutation
   const updateProfileMutation = useMutation({
@@ -55,7 +71,6 @@ const UserProfilePage = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setProfileImage(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviewUrl(reader.result as string);
@@ -86,7 +101,7 @@ const UserProfilePage = () => {
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg p-8 text-white">
           <h1 className="text-3xl font-bold">My Profile</h1>
-          <p className="text-blue-100 mt-2">Manage your personal information and settings</p>
+          <p className="text-blue-100 mt-2">Manage your personal information, bio, and profile image</p>
         </div>
 
         {/* Profile Card */}
@@ -96,7 +111,7 @@ const UserProfilePage = () => {
             <div className="flex flex-col items-center">
               <div className="relative">
                 <img
-                  src={previewUrl || 'https://via.placeholder.com/150'}
+                  src={previewUrl || profile?.avatarUrl || 'https://via.placeholder.com/150'}
                   alt="Profile"
                   className="w-32 h-32 rounded-full object-cover border-4 border-gray-200"
                 />
@@ -114,10 +129,12 @@ const UserProfilePage = () => {
                 )}
               </div>
               <div className="text-center mt-4">
-                <p className="font-semibold text-gray-900">{profile?.name}</p>
+                <p className="font-semibold text-gray-900">
+                  {[profile?.firstName, profile?.lastName].filter(Boolean).join(' ') || 'Your Profile'}
+                </p>
                 <p className="text-sm text-gray-500">{profile?.email}</p>
                 <span className="inline-block mt-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
-                  {profile?.role?.replace('ROLE_', '')}
+                  {(role || 'ROLE_LEARNER').replace('ROLE_', '')}
                 </span>
               </div>
             </div>
@@ -126,11 +143,22 @@ const UserProfilePage = () => {
             <div className="flex-1">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
                   <input
                     type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    disabled={!isEditing}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                  <input
+                    type="text"
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                     disabled={!isEditing}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                   />
@@ -152,8 +180,8 @@ const UserProfilePage = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
                   <input
                     type="tel"
-                    value={formData.phoneNumber}
-                    onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     disabled={!isEditing}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                   />
@@ -206,6 +234,11 @@ const UserProfilePage = () => {
         {/* Account Settings */}
         <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
           <h2 className="text-lg font-bold text-gray-900 mb-4">Account Settings</h2>
+          {profile?.profileCompletePct !== undefined && (
+            <div className="mb-4 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+              Profile completion: {profile.profileCompletePct}%
+            </div>
+          )}
           <div className="space-y-3">
             <button
               onClick={() => navigate('/settings/password')}

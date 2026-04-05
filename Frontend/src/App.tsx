@@ -18,6 +18,7 @@ import LearnerDashboardPage from './pages/learner/LearnerDashboardPage';
 import LearningPathPage from './pages/learner/LearningPathPage';
 import ResourcesPage from './pages/learner/ResourcesPage';
 import MentorDashboardPage from './pages/mentor/MentorDashboardPage';
+import MentorAvailabilityPage from './pages/mentor/MentorAvailabilityPage';
 import EarningsPage from './pages/mentor/EarningsPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import UsersCenterPage from './pages/admin/UsersCenterPage';
@@ -69,6 +70,7 @@ function App() {
               <Route path="/learning-path" element={<LearningPathPage />} />
               <Route path="/resources" element={<ResourcesPage />} />
               <Route path="/mentor" element={<MentorDashboardPage />} />
+              <Route path="/mentor/availability" element={<MentorAvailabilityPage />} />
               <Route path="/mentor/earnings" element={<EarningsPage />} />
               <Route path="/admin" element={<AdminDashboardPage />} />
               <Route path="/admin/users" element={<UsersCenterPage />} />

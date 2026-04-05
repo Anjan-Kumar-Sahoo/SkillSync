@@ -13,11 +13,6 @@ const MentorDashboardPage = () => {
   // For Inline Reject Confirm
   const [rejectingId, setRejectingId] = useState<number | null>(null);
 
-  // For Availability form
-  const [availDate, setAvailDate] = useState('');
-  const [availStart, setAvailStart] = useState('09:00');
-  const [availEnd, setAvailEnd] = useState('10:00');
-
   // Fetch Mentor Profile to get mentorId and rating
   const { data: mentorData } = useQuery({
     queryKey: ['mentor', 'my'],
@@ -72,9 +67,6 @@ const MentorDashboardPage = () => {
     enabled: !!mentorId
   });
 
-  // Get Availability query (if not included in mentorData)
-  const availableSlots = mentorData?.availableSlots || [];
-
   // Mutations
   const acceptMutation = useMutation({
     mutationFn: async (id: number) => api.put(`/api/sessions/${id}/accept`, undefined, { _skipErrorRedirect: true } as any),
@@ -98,31 +90,6 @@ const MentorDashboardPage = () => {
     onSuccess: () => {
       showToast({ message: 'Session marked complete!', type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
-    }
-  });
-
-  const addSlotMutation = useMutation({
-    mutationFn: async () => {
-      // Must be ISO strings
-      // e.g., 2026-03-28T09:00:00
-      const startDateTime = new Date(`${availDate}T${availStart}:00`).toISOString();
-      const endDateTime = new Date(`${availDate}T${availEnd}:00`).toISOString();
-      return api.post('/api/mentors/me/availability', { startTime: startDateTime, endTime: endDateTime }, { _skipErrorRedirect: true } as any);
-    },
-    onSuccess: () => {
-      showToast({ message: 'Slot added!', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: ['mentor', 'my'] });
-    },
-    onError: () => {
-      showToast({ message: 'Failed to add slot. Check your times.', type: 'error' });
-    }
-  });
-
-  const deleteSlotMutation = useMutation({
-    mutationFn: async (slotId: number) => api.delete(`/api/mentors/me/availability/${slotId}`, { _skipErrorRedirect: true } as any),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mentor', 'my'] });
-      showToast({ message: 'Slot removed.', type: 'success' });
     }
   });
 
@@ -187,14 +154,20 @@ const MentorDashboardPage = () => {
       </div>
 
       {/* Mark Sessions Complete Helper */}
-      {upcomingSessions.length > 0 && (
+      {mentorId && (
         <div className="bg-primary/5 p-6 rounded-2xl shadow-sm border border-primary/20">
           <h3 className="font-bold text-lg text-primary mb-2 flex items-center gap-2">
-            <span className="material-symbols-outlined">task_alt</span> Post-Session
+            <span className="material-symbols-outlined">event_available</span> Availability
           </h3>
           <p className="text-xs text-on-surface-variant font-medium mb-4 leading-relaxed">
-            Did you just finish a session? Remember to mark it as completed so the learner can leave you a review.
+            Manage your weekly availability from the dedicated page. Keep this dashboard focused on bookings and reviews.
           </p>
+          <button
+            onClick={() => navigate('/mentor/availability')}
+            className="w-full gradient-btn text-white px-4 py-2.5 rounded-lg text-sm font-bold shadow-sm hover:shadow-md transition-all active:scale-95"
+          >
+            Open Availability Manager
+          </button>
         </div>
       )}
     </>
@@ -332,118 +305,6 @@ const MentorDashboardPage = () => {
           ) : (
             <p className="text-sm font-medium text-on-surface-variant px-2">No upcoming confirmed sessions.</p>
           )}
-        </div>
-      </section>
-
-      {/* Availability Manager */}
-      <section id="availability" className="pt-4 scroll-mt-24">
-        <div className="bg-surface-container-lowest rounded-2xl p-6 md:p-8 shadow-sm border border-outline-variant/15">
-          <h3 className="text-2xl font-extrabold text-on-surface mb-6">Manage Availability</h3>
-          
-          <div className="flex flex-col md:flex-row gap-4 items-end mb-8 bg-surface-container-low/50 p-5 rounded-xl border border-outline-variant/10">
-            <div className="flex-1 w-full">
-              <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1 pl-1">Date</label>
-              <input 
-                type="date" 
-                value={availDate}
-                min={new Date().toISOString().split('T')[0]}
-                onChange={(e) => setAvailDate(e.target.value)}
-                className="w-full h-10 px-3 bg-surface-container rounded-lg text-sm font-semibold text-on-surface outline-none focus:ring-1 focus:ring-primary border border-transparent"
-              />
-            </div>
-            <div className="flex-1 w-full">
-              <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1 pl-1">Start Time</label>
-              <select 
-                value={availStart}
-                onChange={(e) => setAvailStart(e.target.value)}
-                className="w-full h-10 px-3 bg-surface-container rounded-lg text-sm font-semibold text-on-surface outline-none focus:ring-1 focus:ring-primary border border-transparent"
-              >
-                {Array(30).fill(0).map((_, i) => {
-                  const hour = Math.floor(i / 2) + 7; // 7 AM to 21:00 (9 PM)
-                  const minute = i % 2 === 0 ? '00' : '30';
-                  const label = `${hour > 12 ? hour - 12 : hour}:${minute} ${hour >= 12 ? 'PM' : 'AM'}`;
-                  const value = `${hour.toString().padStart(2, '0')}:${minute}`;
-                  return <option key={value} value={value}>{label}</option>;
-                })}
-              </select>
-            </div>
-            <div className="flex-1 w-full">
-              <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1 pl-1">End Time</label>
-              <select 
-                value={availEnd}
-                onChange={(e) => setAvailEnd(e.target.value)}
-                className="w-full h-10 px-3 bg-surface-container rounded-lg text-sm font-semibold text-on-surface outline-none focus:ring-1 focus:ring-primary border border-transparent"
-              >
-                {Array(30).fill(0).map((_, i) => {
-                  const hour = Math.floor(i / 2) + 7; // 7 AM to 21:00 (9 PM)
-                  const minute = i % 2 === 0 ? '00' : '30';
-                  const label = `${hour > 12 ? hour - 12 : hour}:${minute} ${hour >= 12 ? 'PM' : 'AM'}`;
-                  const value = `${hour.toString().padStart(2, '0')}:${minute}`;
-                  return <option key={value} value={value}>{label}</option>;
-                })}
-              </select>
-            </div>
-            <button 
-              onClick={() => addSlotMutation.mutate()}
-              disabled={!availDate || addSlotMutation.isPending}
-              className="w-full md:w-auto h-10 px-6 gradient-btn text-white font-bold rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95 disabled:opacity-50 shrink-0"
-            >
-              Add Slot
-            </button>
-          </div>
-
-          <div>
-            <h4 className="font-bold text-on-surface mb-3 flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px]">list_alt</span> Current Open Slots
-            </h4>
-            
-            {availableSlots.length > 0 ? (
-              <div className="max-h-64 overflow-y-auto pr-2 rounded-xl border border-outline-variant/10">
-                {availableSlots
-                  .sort((a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-                  .map((slot: any) => {
-                  const sTime = new Date(slot.startTime);
-                  const eTime = new Date(slot.endTime);
-                  const isPast = sTime < new Date();
-                  
-                  return (
-                    <div key={slot.id} className={`flex justify-between items-center py-3 px-4 border-b border-outline-variant/10 last:border-0 hover:bg-surface-container-lowest transition-colors ${isPast ? 'opacity-50' : ''}`}>
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
-                        <span className="font-bold text-sm text-on-surface w-24">{sTime.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                        <span className="text-sm font-semibold text-on-surface-variant flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[14px]">schedule</span>
-                          {sTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit'})} – {eTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit'})}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {slot.isBooked && (
-                          <span className="bg-primary/10 text-primary border border-primary/20 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded shadow-sm">
-                            Booked
-                          </span>
-                        )}
-                        {!slot.isBooked ? (
-                          <button 
-                            onClick={() => deleteSlotMutation.mutate(slot.id)}
-                            disabled={deleteSlotMutation.isPending}
-                            className="p-1.5 rounded-lg text-on-surface-variant hover:bg-error/10 hover:text-error transition-colors"
-                            title="Remove Slot"
-                          >
-                            <span className="material-symbols-outlined text-[18px]">delete</span>
-                          </button>
-                        ) : (
-                          <div className="w-8"></div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-sm font-medium text-on-surface-variant italic border border-dashed border-outline-variant/30 rounded-xl p-8 text-center bg-surface-container-lowest">
-                You haven't added any available time slots yet.
-              </p>
-            )}
-          </div>
         </div>
       </section>
 

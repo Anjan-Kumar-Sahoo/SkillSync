@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import PageLayout from '../../components/layout/PageLayout';
 import ReviewModal from '../../components/modals/ReviewModal';
 import api from '../../services/axios';
 import { useToast } from '../../components/ui/Toast';
+import type { RootState } from '../../store';
 
 
 type Tab = 'Upcoming' | 'Pending' | 'Completed' | 'Cancelled';
@@ -20,6 +22,8 @@ const MySessionsPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const role = useSelector((state: RootState) => state.auth.role);
+  const isMentor = role === 'ROLE_MENTOR';
 
   const tabs: Tab[] = ['Upcoming', 'Pending', 'Completed', 'Cancelled'];
   const [activeTab, setActiveTab] = useState<Tab>('Upcoming');
@@ -32,10 +36,11 @@ const MySessionsPage = () => {
   });
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['sessions', activeTab, page],
+    queryKey: ['sessions', role || 'unknown', activeTab, page],
     queryFn: async () => {
       const status = statusMap[activeTab];
-      const res = await api.get(`/api/sessions/learner?page=${page}&size=50`);
+      const endpoint = isMentor ? '/api/sessions/mentor' : '/api/sessions/learner';
+      const res = await api.get(`${endpoint}?page=${page}&size=50`);
       const allSessions = res.data?.content || [];
       const filtered = allSessions.filter((s: any) => s.status === status);
       return {
@@ -70,13 +75,36 @@ const MySessionsPage = () => {
     return colors[name ? name.charCodeAt(0) % colors.length : 0];
   };
 
+  const getSessionLabel = (session: any) => {
+    if (isMentor) {
+      return session.learnerName || (session.learnerId ? `Learner #${session.learnerId}` : 'Learner');
+    }
+
+    return session.mentorName || (session.mentorId ? `Mentor #${session.mentorId}` : 'Mentor');
+  };
+
+  const handleMentorSessionAction = async (id: number, action: 'accept' | 'reject' | 'complete') => {
+    try {
+      await api.put(`/api/sessions/${id}/${action}`);
+      const actionLabel = action === 'accept' ? 'accepted' : action === 'reject' ? 'rejected' : 'completed';
+      showToast({ message: `Session ${actionLabel} successfully.`, type: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
+    } catch (error) {
+      showToast({ message: `Failed to ${action} session.`, type: 'error' });
+    }
+  };
+
   const sessions = data?.content || [];
 
   return (
     <PageLayout>
       <div className="mb-8">
         <h1 className="text-4xl font-extrabold text-on-surface tracking-tight mb-2">My Sessions</h1>
-        <p className="text-on-surface-variant text-lg">Manage your upcoming and past mentoring sessions.</p>
+        <p className="text-on-surface-variant text-lg">
+          {isMentor
+            ? 'Review learner bookings, accept or reject requests, and manage your completed sessions.'
+            : 'Manage your upcoming and past mentoring sessions.'}
+        </p>
       </div>
 
       <div className="bg-surface-container-lowest border border-outline-variant/10 rounded-xl p-1.5 inline-flex gap-1 mb-6 shadow-sm overflow-x-auto max-w-full print:hidden scrollbar-hide">
@@ -119,7 +147,7 @@ const MySessionsPage = () => {
           </div>
         ) : (
           sessions.map((session: any) => {
-            const displayName = session.mentorName || session.learnerName || (session.mentorId ? `Mentor #${session.mentorId}` : session.learnerId ? `Learner #${session.learnerId}` : 'Unknown User');
+            const displayName = getSessionLabel(session);
             const sessionDateTime = session.startTime || session.sessionDate;
             
             let statusClasses = 'bg-surface-container text-on-surface-variant';
@@ -160,7 +188,24 @@ const MySessionsPage = () => {
                   </span>
 
                   <div className="flex items-center gap-2">
-                    {session.status === 'REQUESTED' && (
+                    {isMentor && session.status === 'REQUESTED' && (
+                      <>
+                        <button 
+                          onClick={() => handleMentorSessionAction(session.id, 'reject')}
+                          className="text-error bg-error/10 hover:bg-error/20 px-4 py-2 rounded-lg text-sm font-bold transition-colors border border-transparent hover:border-error/20 shrink-0"
+                        >
+                          Reject
+                        </button>
+                        <button 
+                          onClick={() => handleMentorSessionAction(session.id, 'accept')}
+                          className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors shrink-0"
+                        >
+                          Accept Request
+                        </button>
+                      </>
+                    )}
+
+                    {!isMentor && session.status === 'REQUESTED' && (
                       <button 
                         onClick={() => cancelMutation.mutate(session.id)}
                         disabled={cancelMutation.isPending}
@@ -170,7 +215,7 @@ const MySessionsPage = () => {
                       </button>
                     )}
 
-                    {session.status === 'ACCEPTED' && (
+                    {!isMentor && session.status === 'ACCEPTED' && (
                       <>
                         <button className="bg-surface-container-high hover:bg-surface-container-highest text-on-surface px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors border border-outline-variant/10 shrink-0">
                           Join Call
@@ -186,7 +231,16 @@ const MySessionsPage = () => {
                       </>
                     )}
 
-                    {session.status === 'COMPLETED' && (
+                    {isMentor && session.status === 'ACCEPTED' && (
+                      <button 
+                        onClick={() => handleMentorSessionAction(session.id, 'complete')}
+                        className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors shrink-0"
+                      >
+                        Mark Complete
+                      </button>
+                    )}
+
+                    {!isMentor && session.status === 'COMPLETED' && (
                       <button 
                         onClick={() => setReviewModalData({ isOpen: true, sessionId: session.id, mentorId: session.mentorId })}
                         className="bg-primary/10 hover:bg-primary/20 text-primary px-4 py-2 rounded-lg text-sm font-bold transition-colors border border-primary/20 shrink-0"

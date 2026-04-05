@@ -2,25 +2,24 @@ import api from './axios';
 
 export interface UserProfile {
   id: number;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  profileImage?: string;
+  avatarUrl?: string;
   bio?: string;
-  phoneNumber?: string;
+  phone?: string;
   location?: string;
-  role: 'ROLE_LEARNER' | 'ROLE_MENTOR' | 'ROLE_ADMIN';
-  isEmailVerified: boolean;
-  isMentor: boolean;
+  profileCompletePct?: number;
+  skills?: Array<{ id: number; name: string; categoryName?: string }>;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface UpdateProfilePayload {
-  name?: string;
+  firstName?: string;
+  lastName?: string;
   bio?: string;
-  phoneNumber?: string;
+  phone?: string;
   location?: string;
-  profileImage?: string;
 }
 
 export interface ChangePasswordPayload {
