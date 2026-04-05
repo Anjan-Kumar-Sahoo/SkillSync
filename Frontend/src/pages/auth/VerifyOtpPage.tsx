@@ -17,6 +17,7 @@ const VerifyOtpPage = () => {
   const { showToast } = useToast();
   
   const email = location.state?.email || 'your email';
+  const flow = location.state?.flow;
 
   // Countdown timer logic
   useEffect(() => {
@@ -33,6 +34,12 @@ const VerifyOtpPage = () => {
       return response.data;
     },
     onSuccess: () => {
+      if (flow === 'forgot-password') {
+        showToast({ message: 'OTP verified. Set your new password.', type: 'success' });
+        navigate('/setup-password', { state: { email } });
+        return;
+      }
+
       showToast({ message: 'Email verified successfully!', type: 'success' });
       navigate('/login');
     },
@@ -40,8 +47,8 @@ const VerifyOtpPage = () => {
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
       if (newAttempts >= 5) {
-        showToast({ message: 'Too many attempts. Please register again.', type: 'error' });
-        setTimeout(() => navigate('/register'), 3000);
+        showToast({ message: flow === 'forgot-password' ? 'Too many attempts. Please restart password reset.' : 'Too many attempts. Please register again.', type: 'error' });
+        setTimeout(() => navigate(flow === 'forgot-password' ? '/forgot-password' : '/register'), 3000);
       } else {
         showToast({ message: `Invalid OTP. Attempts left: ${5 - newAttempts}`, type: 'error' });
       }

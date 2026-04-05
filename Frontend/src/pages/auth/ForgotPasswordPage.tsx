@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/axios';
 import { useToast } from '../../components/ui/Toast';
 
@@ -10,6 +10,7 @@ interface ForgotPasswordForm {
 
 const ForgotPasswordPage = () => {
   const { register, handleSubmit, formState: { errors }, reset } = useForm<ForgotPasswordForm>();
+  const navigate = useNavigate();
   const { showToast } = useToast();
 
   const forgotPasswordMutation = useMutation({
@@ -17,12 +18,13 @@ const ForgotPasswordPage = () => {
       const response = await api.post('/api/auth/forgot-password', data, { _skipErrorRedirect: true } as any);
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       showToast({
         message: 'If your email exists, a reset OTP has been sent.',
         type: 'success',
       });
       reset();
+      navigate('/verify-otp', { state: { email: variables.email, flow: 'forgot-password' } });
     },
     onError: () => {
       showToast({

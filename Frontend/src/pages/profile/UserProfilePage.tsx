@@ -22,6 +22,7 @@ const UserProfilePage = () => {
     location: '',
   });
   const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [canSaveEdits, setCanSaveEdits] = useState(false);
 
   // Fetch user profile
   const { data: profile, isLoading } = useQuery({
@@ -41,6 +42,17 @@ const UserProfilePage = () => {
     });
     setPreviewUrl(profile.avatarUrl || '');
   }, [profile]);
+
+  useEffect(() => {
+    if (!isEditing) {
+      setCanSaveEdits(false);
+      return;
+    }
+
+    // Prevent accidental immediate submit when switching from Edit button to Save button.
+    const timer = window.setTimeout(() => setCanSaveEdits(true), 600);
+    return () => window.clearTimeout(timer);
+  }, [isEditing]);
 
   // Update profile mutation
   const updateProfileMutation = useMutation({
@@ -91,8 +103,10 @@ const UserProfilePage = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = () => {
+    if (!isEditing || !canSaveEdits) {
+      return;
+    }
 
     if (formData.firstName.trim() && formData.firstName.trim().length < 2) {
       showToast({ message: 'First name must be at least 2 characters.', type: 'error' });
@@ -163,7 +177,7 @@ const UserProfilePage = () => {
 
             {/* Profile Form */}
             <div className="flex-1">
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
                   <input
@@ -232,8 +246,9 @@ const UserProfilePage = () => {
                   ) : (
                     <>
                       <button
-                        type="submit"
-                        disabled={updateProfileMutation.isPending}
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={updateProfileMutation.isPending || !canSaveEdits}
                         className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition disabled:opacity-50"
                       >
                         Save Changes

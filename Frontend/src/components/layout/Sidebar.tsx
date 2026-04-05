@@ -84,7 +84,7 @@ const Sidebar = ({ role }: SidebarProps) => {
 
       {/* BOTTOM SECTION */}
       <div className="w-full shrink-0 p-2 lg:p-4 border-t border-outline-variant/10 flex flex-col gap-2">
-        {role !== 'ROLE_MENTOR' && (
+        {role === 'ROLE_LEARNER' && (
           <button 
             onClick={() => navigate('/mentors')}
             className="w-full flex items-center justify-center h-12 gradient-btn text-white rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
