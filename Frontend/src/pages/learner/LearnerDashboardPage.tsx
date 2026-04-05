@@ -13,23 +13,27 @@ const LearnerDashboardPage = () => {
   const { data: upSessions, isLoading: loadingUp } = useQuery({
     queryKey: ['sessions', 'upcoming'],
     queryFn: async () => {
-      const res = await api.get('/api/sessions?status=ACCEPTED&page=0&size=3');
-      return res.data;
+      const res = await api.get('/api/sessions/learner?page=0&size=50');
+      const allSessions = res.data?.content || [];
+      const accepted = allSessions.filter((s: any) => s.status === 'ACCEPTED');
+      return { ...res.data, content: accepted.slice(0, 3), totalElements: accepted.length };
     }
   });
 
   const { data: compSessions } = useQuery({
     queryKey: ['sessions', 'completed'],
     queryFn: async () => {
-      const res = await api.get('/api/sessions?status=COMPLETED&page=0&size=1');
-      return res.data;
+      const res = await api.get('/api/sessions/learner?page=0&size=50');
+      const allSessions = res.data?.content || [];
+      const completed = allSessions.filter((s: any) => s.status === 'COMPLETED');
+      return { ...res.data, content: completed.slice(0, 1), totalElements: completed.length };
     }
   });
 
   const { data: mentors, isLoading: loadingMentors } = useQuery({
     queryKey: ['mentors', 'recommended'],
     queryFn: async () => {
-      const res = await api.get('/api/mentors?page=0&size=4&sort=rating,desc');
+      const res = await api.get('/api/mentors/search?page=0&size=4&sort=rating,desc');
       return res.data;
     }
   });
@@ -66,6 +70,9 @@ const LearnerDashboardPage = () => {
     const d = new Date(iso);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' • ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   };
+
+  const getSessionMentorName = (session: any) => session.mentorName || (session.mentorId ? `Mentor #${session.mentorId}` : 'Mentor');
+  const getSessionDateTime = (session: any) => session.startTime || session.sessionDate;
 
   const rightPanel = (
     <>
@@ -163,16 +170,16 @@ const LearnerDashboardPage = () => {
             upSessions.content.map((session: any) => (
               <div key={session.id} className="bg-surface-container-lowest rounded-xl p-4 flex flex-col md:flex-row md:items-center gap-4 shadow-sm border border-outline-variant/10 hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-4 flex-1">
-                  <div className={`w-10 h-10 rounded-full text-white flex items-center justify-center font-bold shadow-sm shrink-0 ${getAvatarColor(session.mentorName)}`}>
-                    {getInitials(session.mentorName)}
+                  <div className={`w-10 h-10 rounded-full text-white flex items-center justify-center font-bold shadow-sm shrink-0 ${getAvatarColor(getSessionMentorName(session))}`}>
+                    {getInitials(getSessionMentorName(session))}
                   </div>
                   <div>
-                    <h4 className="font-bold text-on-surface">{session.mentorName}</h4>
+                    <h4 className="font-bold text-on-surface">{getSessionMentorName(session)}</h4>
                     <p className="text-xs font-semibold text-on-surface-variant">{session.topic || 'Mentorship Session'}</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto">
-                  <p className="text-sm font-semibold text-on-surface-variant text-right">{formatDateTime(session.startTime)}</p>
+                  <p className="text-sm font-semibold text-on-surface-variant text-right">{formatDateTime(getSessionDateTime(session))}</p>
                   <span className="bg-primary-container/20 text-primary-container px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider">
                     {session.status}
                   </span>

@@ -45,16 +45,20 @@ const MentorDashboardPage = () => {
   const { data: pendingReqsObj } = useQuery({
     queryKey: ['sessions', 'requested'],
     queryFn: async () => {
-      const res = await api.get('/api/sessions/mentor?status=REQUESTED&page=0&size=5', { _skipErrorRedirect: true } as any);
-      return res.data;
+      const res = await api.get('/api/sessions/mentor?page=0&size=50', { _skipErrorRedirect: true } as any);
+      const allSessions = res.data?.content || [];
+      const requested = allSessions.filter((s: any) => s.status === 'REQUESTED');
+      return { ...res.data, content: requested.slice(0, 5), totalElements: requested.length };
     }
   });
 
   const { data: upcomingObj } = useQuery({
     queryKey: ['sessions', 'accepted'],
     queryFn: async () => {
-      const res = await api.get('/api/sessions/mentor?status=ACCEPTED&page=0&size=5', { _skipErrorRedirect: true } as any);
-      return res.data;
+      const res = await api.get('/api/sessions/mentor?page=0&size=50', { _skipErrorRedirect: true } as any);
+      const allSessions = res.data?.content || [];
+      const accepted = allSessions.filter((s: any) => s.status === 'ACCEPTED');
+      return { ...res.data, content: accepted.slice(0, 5), totalElements: accepted.length };
     }
   });
 
@@ -73,7 +77,7 @@ const MentorDashboardPage = () => {
 
   // Mutations
   const acceptMutation = useMutation({
-    mutationFn: async (id: number) => api.post(`/api/sessions/${id}/accept`, undefined, { _skipErrorRedirect: true } as any),
+    mutationFn: async (id: number) => api.put(`/api/sessions/${id}/accept`, undefined, { _skipErrorRedirect: true } as any),
     onSuccess: () => {
       showToast({ message: 'Session accepted!', type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
@@ -81,7 +85,7 @@ const MentorDashboardPage = () => {
   });
 
   const rejectMutation = useMutation({
-    mutationFn: async (id: number) => api.post(`/api/sessions/${id}/reject`, undefined, { _skipErrorRedirect: true } as any),
+    mutationFn: async (id: number) => api.put(`/api/sessions/${id}/reject`, undefined, { _skipErrorRedirect: true } as any),
     onSuccess: () => {
       showToast({ message: 'Session rejected.', type: 'success' });
       setRejectingId(null);
@@ -90,7 +94,7 @@ const MentorDashboardPage = () => {
   });
 
   const completeMutation = useMutation({
-    mutationFn: async (id: number) => api.post(`/api/sessions/${id}/complete`, undefined, { _skipErrorRedirect: true } as any),
+    mutationFn: async (id: number) => api.put(`/api/sessions/${id}/complete`, undefined, { _skipErrorRedirect: true } as any),
     onSuccess: () => {
       showToast({ message: 'Session marked complete!', type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
@@ -131,6 +135,18 @@ const MentorDashboardPage = () => {
   const pendingRequests = pendingReqsObj?.content || [];
   const upcomingSessions = upcomingObj?.content || [];
   const recentReviews = recentReviewsObj?.content || [];
+  const mentorRating = Number(mentorData?.avgRating || 0);
+
+  const getSessionDisplayName = (session: any) => {
+    if (session.learnerName) return session.learnerName;
+    if (session.learnerId) return `Learner #${session.learnerId}`;
+    return 'Learner';
+  };
+
+  const getSessionDate = (session: any) => {
+    const raw = session.startTime || session.sessionDate;
+    return raw ? new Date(raw) : null;
+  };
 
   const rightPanel = (
     <>
@@ -143,7 +159,7 @@ const MentorDashboardPage = () => {
             {recentReviews.map((review: any) => (
               <div key={review.id} className="pb-4 border-b border-outline-variant/10 last:border-0 last:pb-0">
                 <div className="flex justify-between items-center mb-1">
-                  <span className="font-bold text-sm text-on-surface">{review.learnerName}</span>
+                  <span className="font-bold text-sm text-on-surface">{review.learnerName || `Learner #${review.reviewerId}`}</span>
                   <span className="text-xs font-semibold text-on-surface-variant">{new Date(review.createdAt).toLocaleDateString()}</span>
                 </div>
                 <div className="flex text-amber-500 text-[12px] mb-1">
@@ -205,7 +221,7 @@ const MentorDashboardPage = () => {
           <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Total Sessions</span>
         </div>
         <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/10 flex flex-col items-center justify-center text-center">
-          <span className="text-4xl font-black text-primary mb-1">{mentorData?.rating?.toFixed(1) || '0.0'} <span className="text-amber-500 text-3xl">★</span></span>
+          <span className="text-4xl font-black text-primary mb-1">{mentorRating.toFixed(1)} <span className="text-amber-500 text-3xl">★</span></span>
           <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Average Rating</span>
         </div>
         <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/10 flex flex-col items-center justify-center text-center">
@@ -231,13 +247,13 @@ const MentorDashboardPage = () => {
               <div key={req.id} className="bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-amber-500/20 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
-                    {getInitials(req.learnerName)}
+                    {getInitials(getSessionDisplayName(req))}
                   </div>
                   <div>
-                    <h4 className="font-bold text-on-surface leading-tight text-lg">{req.learnerName}</h4>
+                    <h4 className="font-bold text-on-surface leading-tight text-lg">{getSessionDisplayName(req)}</h4>
                     <p className="text-xs font-semibold text-on-surface-variant mt-0.5 flex items-center gap-1">
                       <span className="material-symbols-outlined text-[14px]">calendar_today</span>
-                      {new Date(req.startTime).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })} • {new Date(req.startTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} (60 min)
+                      {getSessionDate(req)?.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })} • {getSessionDate(req)?.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} ({req.durationMinutes || 60} min)
                     </p>
                   </div>
                 </div>
@@ -288,13 +304,13 @@ const MentorDashboardPage = () => {
               <div key={session.id} className="bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-outline-variant/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
-                    {getInitials(session.learnerName)}
+                    {getInitials(getSessionDisplayName(session))}
                   </div>
                   <div>
-                    <h4 className="font-bold text-on-surface leading-tight text-lg">{session.learnerName}</h4>
+                    <h4 className="font-bold text-on-surface leading-tight text-lg">{getSessionDisplayName(session)}</h4>
                     <p className="text-xs font-semibold text-on-surface-variant mt-0.5 flex items-center gap-1">
                       <span className="material-symbols-outlined text-[14px]">calendar_today</span>
-                      {new Date(session.startTime).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })} • {new Date(session.startTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                      {getSessionDate(session)?.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })} • {getSessionDate(session)?.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                     </p>
                   </div>
                 </div>

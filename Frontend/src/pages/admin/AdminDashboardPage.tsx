@@ -27,8 +27,18 @@ const AdminDashboardPage = () => {
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['admin', 'stats'],
     queryFn: async () => {
-      const res = await api.get('/api/admin/stats');
-      return res.data as AdminStats;
+      try {
+        const res = await api.get('/api/admin/stats', { _skipErrorRedirect: true } as any);
+        return res.data as AdminStats;
+      } catch {
+        return {
+          totalUsers: 0,
+          totalMentors: 0,
+          totalSessions: 0,
+          totalRevenue: 0,
+          pendingMentorApprovals: 0,
+        } as AdminStats;
+      }
     },
   });
 
@@ -36,8 +46,12 @@ const AdminDashboardPage = () => {
   const { data: usersData } = useQuery({
     queryKey: ['admin', 'users'],
     queryFn: async () => {
-      const res = await api.get('/api/admin/users?page=0&size=10');
-      return res.data.content || [];
+      try {
+        const res = await api.get('/api/admin/users?page=0&size=10', { _skipErrorRedirect: true } as any);
+        return res.data.content || [];
+      } catch {
+        return [];
+      }
     },
   });
 
@@ -45,8 +59,12 @@ const AdminDashboardPage = () => {
   const { data: pendingMentors } = useQuery({
     queryKey: ['admin', 'mentors', 'pending'],
     queryFn: async () => {
-      const res = await api.get('/api/admin/mentors/pending');
-      return res.data || [];
+      try {
+        const res = await api.get('/api/mentors/pending?page=0&size=20', { _skipErrorRedirect: true } as any);
+        return res.data?.content || [];
+      } catch {
+        return [];
+      }
     },
   });
 

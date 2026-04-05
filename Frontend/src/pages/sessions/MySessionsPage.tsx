@@ -35,15 +35,21 @@ const MySessionsPage = () => {
     queryKey: ['sessions', activeTab, page],
     queryFn: async () => {
       const status = statusMap[activeTab];
-      const res = await api.get(`/api/sessions?status=${status}&page=${page}&size=10`);
-      return res.data;
+      const res = await api.get(`/api/sessions/learner?page=${page}&size=50`);
+      const allSessions = res.data?.content || [];
+      const filtered = allSessions.filter((s: any) => s.status === status);
+      return {
+        ...res.data,
+        content: filtered.slice(0, 10),
+        totalElements: filtered.length,
+      };
     },
     refetchInterval: activeTab === 'Pending' ? 30000 : false,
   });
 
   const cancelMutation = useMutation({
     mutationFn: async (id: number) => {
-      const res = await api.delete(`/api/sessions/${id}`);
+      const res = await api.put(`/api/sessions/${id}/cancel`);
       return res.data;
     },
     onSuccess: () => {
@@ -113,7 +119,8 @@ const MySessionsPage = () => {
           </div>
         ) : (
           sessions.map((session: any) => {
-            const displayName = session.mentorName || session.learnerName || 'Unknown User';
+            const displayName = session.mentorName || session.learnerName || (session.mentorId ? `Mentor #${session.mentorId}` : session.learnerId ? `Learner #${session.learnerId}` : 'Unknown User');
+            const sessionDateTime = session.startTime || session.sessionDate;
             
             let statusClasses = 'bg-surface-container text-on-surface-variant';
             if (session.status === 'REQUESTED') statusClasses = 'bg-amber-100 text-amber-700';
@@ -132,9 +139,9 @@ const MySessionsPage = () => {
                   <div>
                     <h3 className="font-bold text-on-surface text-lg leading-tight group-hover:text-primary transition-colors">{displayName}</h3>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm text-on-surface-variant font-medium mt-0.5">
-                      <span className="flex items-center"><span className="material-symbols-outlined text-[16px] mr-1">calendar_month</span> {new Date(session.startTime).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                      <span className="flex items-center"><span className="material-symbols-outlined text-[16px] mr-1">calendar_month</span> {new Date(sessionDateTime).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                       <span className="hidden sm:inline-block w-1 h-1 bg-outline-variant/50 rounded-full"></span>
-                      <span className="flex items-center"><span className="material-symbols-outlined text-[16px] mr-1">schedule</span> {new Date(session.startTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</span>
+                      <span className="flex items-center"><span className="material-symbols-outlined text-[16px] mr-1">schedule</span> {new Date(sessionDateTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</span>
                     </div>
                   </div>
                 </div>

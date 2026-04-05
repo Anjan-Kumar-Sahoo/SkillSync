@@ -34,7 +34,7 @@ const CheckoutPage = () => {
 
   if (!state) return null;
 
-  const { mentorId, mentorName, slotId, startTime, hourlyRate } = state;
+  const { mentorId, mentorName, startTime, hourlyRate } = state;
   const platformFee = hourlyRate * 0.05;
   const totalAmount = hourlyRate + platformFee;
 
@@ -62,16 +62,18 @@ const CheckoutPage = () => {
       setLoadingStep('session');
       const sessionRes = await api.post('/api/sessions', {
         mentorId,
-        slotId,
-        topic: 'Mentoring Session'
+        topic: 'Mentoring Session',
+        description: `Checkout booking with ${mentorName}`,
+        sessionDate: startTime,
+        durationMinutes: 60,
       });
       const sessionId = sessionRes.data.id;
 
       setLoadingStep('order');
-      const orderRes = await api.post('/api/payments/order', {
-        sessionId,
-        amount: totalAmount,
-        currency: 'USD'
+      const orderRes = await api.post('/api/payments/create-order', {
+        type: 'SESSION_BOOKING',
+        referenceId: sessionId,
+        referenceType: 'SESSION_BOOKING'
       });
       const { orderId, amount, currency, keyId } = orderRes.data;
 

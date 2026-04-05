@@ -15,7 +15,7 @@ const MentorProfilePage = () => {
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [bookingData, setBookingData] = useState({
     sessionDate: '',
-    sessionDuration: 30,
+    sessionDuration: 60,
   });
 
   // Fetch mentor profile
@@ -36,7 +36,7 @@ const MentorProfilePage = () => {
     onSuccess: () => {
       showToast({ message: 'Session request sent successfully', type: 'success' });
       setShowBookingForm(false);
-      setBookingData({ sessionDate: '', sessionDuration: 30 });
+      setBookingData({ sessionDate: '', sessionDuration: 60 });
       navigate('/sessions');
     },
     onError: (error: any) => {
@@ -54,8 +54,10 @@ const MentorProfilePage = () => {
 
     bookSessionMutation.mutate({
       mentorId: Number(id),
+      topic: 'Mentoring Session',
+      description: 'Booked from mentor profile',
       sessionDate: new Date(bookingData.sessionDate).toISOString(),
-      sessionDuration: bookingData.sessionDuration,
+      durationMinutes: bookingData.sessionDuration,
     });
   };
 
@@ -85,6 +87,13 @@ const MentorProfilePage = () => {
     );
   }
 
+  const mentorAny = mentor as any;
+  const mentorDisplayName = mentorAny.name || `${mentorAny.firstName || ''} ${mentorAny.lastName || ''}`.trim() || `Mentor #${mentorAny.id}`;
+  const mentorRating = Number(mentorAny.rating ?? mentorAny.avgRating ?? 0);
+  const mentorReviews = Number(mentorAny.reviewCount ?? mentorAny.totalReviews ?? 0);
+  const mentorExperience = Number(mentorAny.experience ?? mentorAny.experienceYears ?? 0);
+  const mentorAvatar = mentorAny.profileImage || mentorAny.avatarUrl || 'https://via.placeholder.com/150';
+
   return (
     <PageLayout>
       <div className="max-w-4xl mx-auto space-y-6">
@@ -102,8 +111,8 @@ const MentorProfilePage = () => {
             {/* Profile Picture */}
             <div className="flex-shrink-0">
               <img
-                src={mentor.profileImage || 'https://via.placeholder.com/150'}
-                alt={mentor.name}
+                src={mentorAvatar}
+                alt={mentorDisplayName}
                 className="w-40 h-40 rounded-full object-cover border-4 border-gray-200"
               />
             </div>
@@ -112,15 +121,15 @@ const MentorProfilePage = () => {
             <div className="flex-1">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900">{mentor.name}</h1>
-                  <p className="text-gray-500 mt-1">{mentor.experience} years of experience</p>
+                  <h1 className="text-3xl font-bold text-gray-900">{mentorDisplayName}</h1>
+                  <p className="text-gray-500 mt-1">{mentorExperience} years of experience</p>
                 </div>
                 <div className="text-right">
                   <div className="text-4xl font-bold text-yellow-500">
-                    {mentor.rating.toFixed(1)}
+                    {mentorRating.toFixed(1)}
                     <span className="text-lg text-gray-400">/ 5</span>
                   </div>
-                  <p className="text-sm text-gray-500">({mentor.reviewCount} reviews)</p>
+                  <p className="text-sm text-gray-500">({mentorReviews} reviews)</p>
                 </div>
               </div>
 
@@ -134,7 +143,7 @@ const MentorProfilePage = () => {
                 <div className="bg-green-50 rounded p-4">
                   <p className="text-sm text-gray-600">Status</p>
                   <p className="text-2xl font-bold text-green-600">
-                    {mentor.isApproved ? 'Verified' : 'Pending'}
+                    {mentorAny.isApproved || mentorAny.status === 'APPROVED' ? 'Verified' : mentorAny.status || 'Pending'}
                   </p>
                 </div>
               </div>
@@ -155,7 +164,7 @@ const MentorProfilePage = () => {
           <div className="flex flex-wrap gap-2">
             {mentor.skills?.map((skill) => (
               <span
-                key={skill.id}
+                key={skill.id ?? skill.name}
                 className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-semibold"
               >
                 {skill.name}

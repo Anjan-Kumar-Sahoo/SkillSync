@@ -36,7 +36,7 @@ class MentorService {
     if (filters?.search) params.append('search', filters.search);
     params.append('page', page.toString());
     params.append('size', size.toString());
-    const res = await api.get(`/api/mentors?${params.toString()}`);
+    const res = await api.get(`/api/mentors/search?${params.toString()}`);
     return res.data;
   }
 
@@ -76,7 +76,7 @@ class MentorService {
   }
 
   async getTopMentors(limit: number = 5): Promise<MentorData[]> {
-    const res = await api.get(`/api/mentors?sort=rating,desc&size=${limit}`);
+    const res = await api.get(`/api/mentors/search?sort=rating,desc&size=${limit}`);
     return res.data.content || [];
   }
 }

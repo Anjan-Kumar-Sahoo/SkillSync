@@ -3,8 +3,10 @@ import type { SessionData } from '../store/slices/sessionsSlice';
 
 export interface CreateSessionPayload {
   mentorId: number;
+  topic: string;
+  description?: string;
   sessionDate: string;
-  sessionDuration: number;
+  durationMinutes: number;
 }
 
 export interface UpdateSessionPayload {

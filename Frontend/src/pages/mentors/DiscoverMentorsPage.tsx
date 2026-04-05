@@ -34,7 +34,7 @@ const DiscoverMentorsPage = () => {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['mentors', filters.skill, filters.rating, filters.minPrice, filters.maxPrice, page],
     queryFn: async () => {
-      const res = await api.get(`/api/mentors?skill=${filters.skill}&rating=${filters.rating}&minPrice=${filters.minPrice}&maxPrice=${filters.maxPrice}&page=${page}&size=9`);
+      const res = await api.get(`/api/mentors/search?skill=${filters.skill}&rating=${filters.rating}&minPrice=${filters.minPrice}&maxPrice=${filters.maxPrice}&page=${page}&size=9`);
       return res.data;
     }
   });
