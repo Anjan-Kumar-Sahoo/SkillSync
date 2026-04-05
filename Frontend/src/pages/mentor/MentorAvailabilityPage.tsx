@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import PageLayout from '../../components/layout/PageLayout';
@@ -15,6 +15,7 @@ const MentorAvailabilityPage = () => {
   const [dayOfWeek, setDayOfWeek] = useState('1');
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('10:00');
+  const [localSlots, setLocalSlots] = useState<any[]>([]);
 
   const { data: mentorData, isLoading } = useQuery({
     queryKey: ['mentor', 'my', 'availability'],
@@ -23,6 +24,10 @@ const MentorAvailabilityPage = () => {
       return res.data;
     },
   });
+
+  useEffect(() => {
+    setLocalSlots(mentorData?.availability || []);
+  }, [mentorData]);
 
   const addSlotMutation = useMutation({
     mutationFn: async () =>
@@ -35,8 +40,16 @@ const MentorAvailabilityPage = () => {
         },
         { _skipErrorRedirect: true } as any
       ),
-    onSuccess: () => {
+    onSuccess: (response) => {
+      const createdSlot = response?.data;
+      if (createdSlot?.id) {
+        setLocalSlots((prev) => {
+          const exists = prev.some((slot: any) => slot.id === createdSlot.id);
+          return exists ? prev : [...prev, createdSlot];
+        });
+      }
       showToast({ message: 'Availability slot added.', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['mentor', 'my'] });
       queryClient.invalidateQueries({ queryKey: ['mentor', 'my', 'availability'] });
     },
     onError: () => {
@@ -46,8 +59,10 @@ const MentorAvailabilityPage = () => {
 
   const deleteSlotMutation = useMutation({
     mutationFn: async (slotId: number) => api.delete(`/api/mentors/me/availability/${slotId}`, { _skipErrorRedirect: true } as any),
-    onSuccess: () => {
+    onSuccess: (_, slotId) => {
+      setLocalSlots((prev) => prev.filter((slot: any) => slot.id !== slotId));
       showToast({ message: 'Availability slot removed.', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['mentor', 'my'] });
       queryClient.invalidateQueries({ queryKey: ['mentor', 'my', 'availability'] });
     },
     onError: () => {
@@ -55,7 +70,7 @@ const MentorAvailabilityPage = () => {
     },
   });
 
-  const slots = mentorData?.availability || [];
+  const slots = localSlots;
 
   const sortedSlots = [...slots].sort((a: any, b: any) => {
     if (a.dayOfWeek !== b.dayOfWeek) return a.dayOfWeek - b.dayOfWeek;

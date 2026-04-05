@@ -44,14 +44,25 @@ const UserProfilePage = () => {
 
   // Update profile mutation
   const updateProfileMutation = useMutation({
-    mutationFn: () => userService.updateProfile(formData),
+    mutationFn: () => {
+      const cleanedPayload = {
+        firstName: formData.firstName.trim().length >= 2 ? formData.firstName.trim() : undefined,
+        lastName: formData.lastName.trim().length >= 2 ? formData.lastName.trim() : undefined,
+        bio: formData.bio.trim() || undefined,
+        phone: formData.phone.trim() || undefined,
+        location: formData.location.trim() || undefined,
+      };
+
+      return userService.updateProfile(cleanedPayload);
+    },
     onSuccess: () => {
       showToast({ message: 'Profile updated successfully', type: 'success' });
       setIsEditing(false);
       queryClient.invalidateQueries({ queryKey: ['user', 'profile'] });
     },
-    onError: () => {
-      showToast({ message: 'Failed to update profile', type: 'error' });
+    onError: (error: any) => {
+      const msg = error?.response?.data?.message || 'Failed to update profile';
+      showToast({ message: msg, type: 'error' });
     },
   });
 
@@ -82,6 +93,17 @@ const UserProfilePage = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (formData.firstName.trim() && formData.firstName.trim().length < 2) {
+      showToast({ message: 'First name must be at least 2 characters.', type: 'error' });
+      return;
+    }
+
+    if (formData.lastName.trim() && formData.lastName.trim().length < 2) {
+      showToast({ message: 'Last name must be at least 2 characters.', type: 'error' });
+      return;
+    }
+
     updateProfileMutation.mutate();
   };
 

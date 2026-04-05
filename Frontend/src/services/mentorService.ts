@@ -9,6 +9,13 @@ export interface MentorUpdatePayload {
   availability?: string[];
 }
 
+export interface MentorApplicationPayload {
+  bio: string;
+  experienceYears: number;
+  hourlyRate: number;
+  skillIds: number[];
+}
+
 interface PaginatedResponse<T> {
   content: T[];
   totalElements: number;
@@ -58,8 +65,8 @@ class MentorService {
     return res.data;
   }
 
-  async applyAsMentor(payload: MentorUpdatePayload): Promise<MentorData> {
-    const res = await api.post('/api/mentors', payload);
+  async applyAsMentor(payload: MentorApplicationPayload): Promise<MentorData> {
+    const res = await api.post('/api/mentors/apply', payload);
     return res.data;
   }
 

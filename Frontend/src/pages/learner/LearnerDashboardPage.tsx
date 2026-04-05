@@ -1,13 +1,24 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/axios';
 import type { RootState } from '../../store';
 import PageLayout from '../../components/layout/PageLayout';
+import { useToast } from '../../components/ui/Toast';
 
 const LearnerDashboardPage = () => {
   const user = useSelector((state: RootState) => state.auth.user);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
+  const [showApplyForm, setShowApplyForm] = useState(false);
+  const [applyData, setApplyData] = useState({
+    bio: '',
+    experienceYears: 1,
+    hourlyRate: 25,
+    skillIds: [] as number[],
+  });
 
   // Queries
   const { data: upSessions, isLoading: loadingUp } = useQuery({
@@ -51,7 +62,50 @@ const LearnerDashboardPage = () => {
     }
   });
 
+  const { data: myMentorProfile } = useQuery({
+    queryKey: ['mentor', 'my', 'learner-dashboard'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('/api/mentors/me', { _skipErrorRedirect: true } as any);
+        return res.data;
+      } catch {
+        return null;
+      }
+    },
+  });
+
+  const { data: allSkills } = useQuery({
+    queryKey: ['skills', 'all', 'apply'],
+    queryFn: async () => {
+      const res = await api.get('/api/skills?page=0&size=100', { _skipErrorRedirect: true } as any);
+      return res.data?.content || [];
+    },
+  });
+
+  const applyMutation = useMutation({
+    mutationFn: async () => {
+      return api.post('/api/mentors/apply', {
+        bio: applyData.bio,
+        experienceYears: applyData.experienceYears,
+        hourlyRate: applyData.hourlyRate,
+        skillIds: applyData.skillIds,
+      });
+    },
+    onSuccess: () => {
+      showToast({ message: 'Mentor application submitted successfully.', type: 'success' });
+      setShowApplyForm(false);
+      queryClient.invalidateQueries({ queryKey: ['mentor', 'my', 'learner-dashboard'] });
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || 'Failed to submit mentor application.';
+      showToast({ message, type: 'error' });
+    },
+  });
+
   const groups = Array.isArray(groupsData) ? groupsData : groupsData?.content || [];
+  const mentorStatus = myMentorProfile?.status || null;
+  const mentorApplied = Boolean(myMentorProfile);
+  const skills = Array.isArray(allSkills) ? allSkills : [];
 
   const getInitials = (name?: string) => {
     if (!name) return 'U';
@@ -74,19 +128,61 @@ const LearnerDashboardPage = () => {
   const getSessionMentorName = (session: any) => session.mentorName || (session.mentorId ? `Mentor #${session.mentorId}` : 'Mentor');
   const getSessionDateTime = (session: any) => session.startTime || session.sessionDate;
 
+  const toggleSkill = (skillId: number) => {
+    setApplyData((prev) => ({
+      ...prev,
+      skillIds: prev.skillIds.includes(skillId)
+        ? prev.skillIds.filter((id) => id !== skillId)
+        : [...prev.skillIds, skillId].slice(0, 10),
+    }));
+  };
+
+  const submitMentorApplication = () => {
+    if (applyData.bio.trim().length < 50) {
+      showToast({ message: 'Bio must be at least 50 characters for mentor application.', type: 'error' });
+      return;
+    }
+
+    if (applyData.skillIds.length === 0) {
+      showToast({ message: 'Select at least one skill to apply as mentor.', type: 'error' });
+      return;
+    }
+
+    applyMutation.mutate();
+  };
+
   const rightPanel = (
     <>
-      <div className="bg-primary-container text-white p-6 rounded-2xl relative overflow-hidden shadow-sm">
-        <h3 className="font-bold text-lg mb-1 relative z-10">Current Path Progress</h3>
-        <p className="text-sm opacity-80 mb-6 relative z-10">Senior UI Architect Track</p>
-        <div className="w-full bg-black/20 rounded-full h-2 mb-2 relative z-10">
-          <div className="bg-white h-2 rounded-full" style={{ width: '64%' }}></div>
+      <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/15">
+        <h3 className="font-bold text-lg text-on-surface mb-2">Apply As Mentor</h3>
+        {mentorApplied ? (
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+            <p className="text-sm font-semibold text-on-surface">
+              Application Status: <span className="text-primary">{mentorStatus || 'PENDING'}</span>
+            </p>
+            <p className="text-xs text-on-surface-variant mt-2">You already have a mentor profile/application in the system.</p>
+          </div>
+        ) : (
+          <>
+            <p className="text-sm text-on-surface-variant mb-4">Share your expertise and start mentoring learners.</p>
+            <button
+              onClick={() => setShowApplyForm(true)}
+              className="w-full gradient-btn text-white py-2.5 rounded-xl font-bold"
+            >
+              Start Mentor Application
+            </button>
+          </>
+        )}
+      </div>
+
+      <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/15">
+        <h3 className="font-bold text-lg text-on-surface mb-4">Practice Links</h3>
+        <div className="space-y-2 text-sm font-semibold">
+          <a href="https://leetcode.com" target="_blank" rel="noreferrer" className="block text-primary hover:underline">LeetCode</a>
+          <a href="https://www.hackerrank.com" target="_blank" rel="noreferrer" className="block text-primary hover:underline">HackerRank</a>
+          <a href="https://www.geeksforgeeks.org" target="_blank" rel="noreferrer" className="block text-primary hover:underline">GeeksforGeeks</a>
+          <a href="https://www.codechef.com" target="_blank" rel="noreferrer" className="block text-primary hover:underline">CodeChef</a>
         </div>
-        <p className="text-xs font-semibold mb-6 relative z-10">64% Completed</p>
-        <button className="w-full bg-white text-primary-container hover:bg-white/90 font-bold py-2.5 rounded-xl transition-all shadow-sm relative z-10">
-          Continue Learning
-        </button>
-        <div className="absolute -top-12 -right-12 w-40 h-40 bg-white/10 rounded-full pointer-events-none"></div>
       </div>
 
       <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/15">
@@ -136,6 +232,97 @@ const LearnerDashboardPage = () => {
 
   return (
     <PageLayout rightPanel={rightPanel}>
+      {showApplyForm && !mentorApplied && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-surface-container-lowest border border-outline-variant/20 shadow-xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-extrabold text-on-surface">Mentor Application</h2>
+              <button onClick={() => setShowApplyForm(false)} className="text-on-surface-variant hover:text-on-surface">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-on-surface mb-1">Bio (minimum 50 characters)</label>
+                <textarea
+                  value={applyData.bio}
+                  onChange={(e) => setApplyData((prev) => ({ ...prev, bio: e.target.value }))}
+                  rows={5}
+                  className="w-full rounded-xl border border-outline-variant/30 bg-surface px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary/40"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-on-surface mb-1">Experience (years)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={50}
+                    value={applyData.experienceYears}
+                    onChange={(e) => setApplyData((prev) => ({ ...prev, experienceYears: Number(e.target.value) }))}
+                    className="w-full rounded-xl border border-outline-variant/30 bg-surface px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary/40"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-on-surface mb-1">Hourly Rate (USD)</label>
+                  <input
+                    type="number"
+                    min={5}
+                    max={500}
+                    value={applyData.hourlyRate}
+                    onChange={(e) => setApplyData((prev) => ({ ...prev, hourlyRate: Number(e.target.value) }))}
+                    className="w-full rounded-xl border border-outline-variant/30 bg-surface px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary/40"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-on-surface mb-2">Select Skills (max 10)</label>
+                <div className="max-h-56 overflow-y-auto rounded-xl border border-outline-variant/30 p-3">
+                  <div className="flex flex-wrap gap-2">
+                    {skills.map((skill: any) => {
+                      const selected = applyData.skillIds.includes(skill.id);
+                      return (
+                        <button
+                          key={skill.id}
+                          type="button"
+                          onClick={() => toggleSkill(skill.id)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${
+                            selected
+                              ? 'bg-primary text-white border-primary'
+                              : 'bg-surface-container-low text-on-surface-variant border-outline-variant/30 hover:border-primary/40'
+                          }`}
+                        >
+                          {skill.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={submitMentorApplication}
+                  disabled={applyMutation.isPending}
+                  className="flex-1 gradient-btn text-white py-2.5 rounded-xl font-bold disabled:opacity-50"
+                >
+                  {applyMutation.isPending ? 'Submitting...' : 'Submit Application'}
+                </button>
+                <button
+                  onClick={() => setShowApplyForm(false)}
+                  className="flex-1 bg-surface-container text-on-surface py-2.5 rounded-xl font-bold"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header Section */}
       <section className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>

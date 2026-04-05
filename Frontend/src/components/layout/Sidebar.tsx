@@ -17,8 +17,7 @@ const Sidebar = ({ role }: SidebarProps) => {
     { name: 'Dashboard', icon: 'grid_view', path: '/learner' }, 
     { name: 'Mentor Search', icon: 'person_search', path: '/mentors' },
     { name: 'My Sessions', icon: 'event_upcoming', path: '/sessions' },
-    { name: 'Learning Path', icon: 'school', path: '/learning-path' },
-    { name: 'Resources', icon: 'menu_book', path: '/resources' },
+    { name: 'Groups', icon: 'groups', path: '/groups' },
   ];
 
   const mentorNav = [
@@ -85,13 +84,15 @@ const Sidebar = ({ role }: SidebarProps) => {
 
       {/* BOTTOM SECTION */}
       <div className="w-full shrink-0 p-2 lg:p-4 border-t border-outline-variant/10 flex flex-col gap-2">
-        <button 
-          onClick={() => navigate('/mentors')}
-          className="w-full flex items-center justify-center h-12 gradient-btn text-white rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
-        >
-          <span className="material-symbols-outlined text-xl">search</span>
-          <span className="hidden lg:inline ml-2 text-sm font-bold whitespace-nowrap">Find a Mentor</span>
-        </button>
+        {role !== 'ROLE_MENTOR' && (
+          <button 
+            onClick={() => navigate('/mentors')}
+            className="w-full flex items-center justify-center h-12 gradient-btn text-white rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+          >
+            <span className="material-symbols-outlined text-xl">search</span>
+            <span className="hidden lg:inline ml-2 text-sm font-bold whitespace-nowrap">Find a Mentor</span>
+          </button>
+        )}
 
         <Link to="/help" className="w-full flex items-center justify-center lg:justify-start px-2 lg:px-4 h-12 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all duration-200 group">
           <span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">help</span>

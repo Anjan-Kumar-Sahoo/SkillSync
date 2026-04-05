@@ -15,8 +15,6 @@ import UnauthorizedPage from './pages/auth/UnauthorizedPage';
 import ServerErrorPage from './pages/error/ServerErrorPage';
 import LandingPage from './pages/LandingPage';
 import LearnerDashboardPage from './pages/learner/LearnerDashboardPage';
-import LearningPathPage from './pages/learner/LearningPathPage';
-import ResourcesPage from './pages/learner/ResourcesPage';
 import MentorDashboardPage from './pages/mentor/MentorDashboardPage';
 import MentorAvailabilityPage from './pages/mentor/MentorAvailabilityPage';
 import EarningsPage from './pages/mentor/EarningsPage';
@@ -67,8 +65,8 @@ function App() {
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<DashboardRedirect />} />
               <Route path="/learner" element={<LearnerDashboardPage />} />
-              <Route path="/learning-path" element={<LearningPathPage />} />
-              <Route path="/resources" element={<ResourcesPage />} />
+              <Route path="/learning-path" element={<Navigate to="/groups" replace />} />
+              <Route path="/resources" element={<Navigate to="/groups" replace />} />
               <Route path="/mentor" element={<MentorDashboardPage />} />
               <Route path="/mentor/availability" element={<MentorAvailabilityPage />} />
               <Route path="/mentor/earnings" element={<EarningsPage />} />
