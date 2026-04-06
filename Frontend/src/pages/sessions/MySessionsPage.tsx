@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+
 import { useSelector } from 'react-redux';
 import PageLayout from '../../components/layout/PageLayout';
 import ReviewModal from '../../components/modals/ReviewModal';
@@ -19,7 +19,7 @@ const statusMap: Record<Tab, string> = {
 };
 
 const MySessionsPage = () => {
-  const navigate = useNavigate();
+
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const role = useSelector((state: RootState) => state.auth.role);
