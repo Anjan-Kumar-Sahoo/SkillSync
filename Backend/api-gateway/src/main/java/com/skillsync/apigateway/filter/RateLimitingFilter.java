@@ -45,6 +45,12 @@ public class RateLimitingFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
         String path = request.getPath().value();
+
+        // Never rate-limit CORS preflight requests
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod().name())) {
+            return chain.filter(exchange);
+        }
+
         String clientIp = extractClientIp(request);
 
         // Determine rate limit category

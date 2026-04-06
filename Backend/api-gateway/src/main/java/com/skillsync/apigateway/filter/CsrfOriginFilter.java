@@ -22,6 +22,11 @@ public class CsrfOriginFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String method = exchange.getRequest().getMethod().name();
         
+        // Never block CORS preflight requests
+        if ("OPTIONS".equalsIgnoreCase(method)) {
+            return chain.filter(exchange);
+        }
+        
         // Only apply to mutating methods
         if (List.of("POST", "PUT", "DELETE", "PATCH").contains(method)) {
             String origin = exchange.getRequest().getHeaders().getFirst("Origin");
