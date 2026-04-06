@@ -1,3 +1,9 @@
+﻿# Presentation Sync Note
+
+Updated for final presentation on 2026-04-06. Start with docs/00_Presentation_Playbook.md for the guided narrative, then use this document for deep details.
+
+---
+
 # 04 Security Auth and OAuth
 
 
@@ -13,28 +19,28 @@
 ## 1. Security Boundaries
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      INTERNET                                │
-│                                                              │
-│  ┌──────────────┐            ┌──────────────────────────┐   │
-│  │   Frontend    │            │    Cloudflare Proxy       │   │
-│  │   (Vercel)    │───HTTPS───▶│  (SSL termination +      │   │
-│  │   SPA React   │            │   DDoS protection)       │   │
-│  └──────────────┘            └───────────┬──────────────┘   │
-│                                          │ HTTP/HTTPS        │
-│                              ┌───────────▼──────────────┐   │
-│                              │    EC2 Host               │   │
-│                              │  ┌────────────────────┐  │   │
-│                              │  │  API Gateway (:80)  │  │   │
-│                              │  │  (Spring Cloud)     │  │   │
-│                              │  └────────┬───────────┘  │   │
-│                              │           │ Docker net    │   │
-│                              │  ┌────────▼───────────┐  │   │
-│                              │  │   Microservices     │  │   │
-│                              │  │   (internal only)   │  │   │
-│                              │  └────────────────────┘  │   │
-│                              └──────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                      INTERNET                                â”‚
+â”‚                                                              â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”            â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”   â”‚
+â”‚  â”‚   Frontend    â”‚            â”‚    Cloudflare Proxy       â”‚   â”‚
+â”‚  â”‚   (Vercel)    â”‚â”€â”€â”€HTTPSâ”€â”€â”€â–¶â”‚  (SSL termination +      â”‚   â”‚
+â”‚  â”‚   SPA React   â”‚            â”‚   DDoS protection)       â”‚   â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜            â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜   â”‚
+â”‚                                          â”‚ HTTP/HTTPS        â”‚
+â”‚                              â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”   â”‚
+â”‚                              â”‚    EC2 Host               â”‚   â”‚
+â”‚                              â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”‚   â”‚
+â”‚                              â”‚  â”‚  API Gateway (:80)  â”‚  â”‚   â”‚
+â”‚                              â”‚  â”‚  (Spring Cloud)     â”‚  â”‚   â”‚
+â”‚                              â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â”‚   â”‚
+â”‚                              â”‚           â”‚ Docker net    â”‚   â”‚
+â”‚                              â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”‚   â”‚
+â”‚                              â”‚  â”‚   Microservices     â”‚  â”‚   â”‚
+â”‚                              â”‚  â”‚   (internal only)   â”‚  â”‚   â”‚
+â”‚                              â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â”‚   â”‚
+â”‚                              â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜   â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ## 2. Authentication Flow
@@ -43,20 +49,20 @@
 
 ```
 Frontend                    Gateway                   Auth Service
-   │                           │                          │
-   │ POST /api/auth/login      │                          │
-   │ {email, password}         │                          │
-   │──────────────────────────▶│──────────────────────────▶│
-   │                           │                          │ Authenticate
-   │                           │                          │ Generate JWT
-   │                           │                          │ Store RefreshToken in DB
-   │                           │     AuthResponse +       │
-   │  Set-Cookie: accessToken  │◀─── Set-Cookie headers ──│
-   │  Set-Cookie: refreshToken │                          │
-   │◀──────────────────────────│                          │
-   │                           │                          │
-   │ Store tokens in Redux +   │                          │
-   │ localStorage (current)    │                          │
+   â”‚                           â”‚                          â”‚
+   â”‚ POST /api/auth/login      â”‚                          â”‚
+   â”‚ {email, password}         â”‚                          â”‚
+   â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚
+   â”‚                           â”‚                          â”‚ Authenticate
+   â”‚                           â”‚                          â”‚ Generate JWT
+   â”‚                           â”‚                          â”‚ Store RefreshToken in DB
+   â”‚                           â”‚     AuthResponse +       â”‚
+   â”‚  Set-Cookie: accessToken  â”‚â—€â”€â”€â”€ Set-Cookie headers â”€â”€â”‚
+   â”‚  Set-Cookie: refreshToken â”‚                          â”‚
+   â”‚â—€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚                          â”‚
+   â”‚                           â”‚                          â”‚
+   â”‚ Store tokens in Redux +   â”‚                          â”‚
+   â”‚ localStorage (current)    â”‚                          â”‚
 ```
 
 ### 2.2 Cookie Attributes (Production)
@@ -65,7 +71,7 @@ Frontend                    Gateway                   Auth Service
 |-------------|---------------|-----------|
 | `HttpOnly`  | `true`        | Prevents JS access (XSS mitigation) |
 | `Secure`    | `true`        | Only sent over HTTPS |
-| `SameSite`  | `None`        | Required for cross-subdomain cookies (api.mraks.dev → skillsync.mraks.dev) |
+| `SameSite`  | `None`        | Required for cross-subdomain cookies (api.mraks.dev â†’ skillsync.mraks.dev) |
 | `Domain`    | `.mraks.dev`  | Shared across all subdomains |
 | `Path`      | `/`           | Available to all routes |
 | `Max-Age`   | `900` / `604800` | 15 min (access) / 7 days (refresh) |
@@ -74,43 +80,43 @@ Frontend                    Gateway                   Auth Service
 
 ```
 Frontend                    Gateway                   Auth Service
-   │                           │                          │
-   │ Google OAuth flow         │                          │
-   │ (Google handles auth)     │                          │
-   │                           │                          │
-   │ POST /api/auth/oauth-login│                          │
-   │ {provider, providerId,    │                          │
-   │  email, firstName, ...}   │                          │
-   │──────────────────────────▶│──────────────────────────▶│
-   │                           │                          │ Find or create user
-   │                           │                          │ Generate JWT
-   │                           │     OAuthResponse +      │
-   │  Set-Cookie: accessToken  │◀─── Set-Cookie headers ──│
-   │  Set-Cookie: refreshToken │                          │
-   │◀──────────────────────────│                          │
-   │                           │                          │
-   │ If new user:              │                          │
-   │ Redirect to /setup-password│                         │
+   â”‚                           â”‚                          â”‚
+   â”‚ Google OAuth flow         â”‚                          â”‚
+   â”‚ (Google handles auth)     â”‚                          â”‚
+   â”‚                           â”‚                          â”‚
+   â”‚ POST /api/auth/oauth-loginâ”‚                          â”‚
+   â”‚ {provider, providerId,    â”‚                          â”‚
+   â”‚  email, firstName, ...}   â”‚                          â”‚
+   â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚
+   â”‚                           â”‚                          â”‚ Find or create user
+   â”‚                           â”‚                          â”‚ Generate JWT
+   â”‚                           â”‚     OAuthResponse +      â”‚
+   â”‚  Set-Cookie: accessToken  â”‚â—€â”€â”€â”€ Set-Cookie headers â”€â”€â”‚
+   â”‚  Set-Cookie: refreshToken â”‚                          â”‚
+   â”‚â—€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚                          â”‚
+   â”‚                           â”‚                          â”‚
+   â”‚ If new user:              â”‚                          â”‚
+   â”‚ Redirect to /setup-passwordâ”‚                         â”‚
 ```
 
 ### 2.4 Token Refresh (Silent)
 
 ```
 Frontend (axios interceptor)    Gateway              Auth Service
-   │                               │                      │
-   │ Receives 401                  │                      │
-   │                               │                      │
-   │ POST /api/auth/refresh        │                      │
-   │ {refreshToken}                │                      │
-   │──────────────────────────────▶│─────────────────────▶│
-   │                               │                      │ Validate
-   │                               │                      │ Delete old token
-   │                               │                      │ Generate new pair
-   │                               │     New tokens       │
-   │◀──────────────────────────────│◀─────────────────────│
-   │                               │                      │
-   │ Retry original request        │                      │
-   │ with new token                │                      │
+   â”‚                               â”‚                      â”‚
+   â”‚ Receives 401                  â”‚                      â”‚
+   â”‚                               â”‚                      â”‚
+   â”‚ POST /api/auth/refresh        â”‚                      â”‚
+   â”‚ {refreshToken}                â”‚                      â”‚
+   â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚
+   â”‚                               â”‚                      â”‚ Validate
+   â”‚                               â”‚                      â”‚ Delete old token
+   â”‚                               â”‚                      â”‚ Generate new pair
+   â”‚                               â”‚     New tokens       â”‚
+   â”‚â—€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚â—€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚
+   â”‚                               â”‚                      â”‚
+   â”‚ Retry original request        â”‚                      â”‚
+   â”‚ with new token                â”‚                      â”‚
 ```
 
 ## 3. Authorization Model
@@ -119,30 +125,30 @@ Frontend (axios interceptor)    Gateway              Auth Service
 
 | Route Pattern | JWT Required | Filter |
 |---------------|-------------|--------|
-| `/api/auth/**` | ❌ No | None (auth service handles internally) |
-| `/api/users/**` | ✅ Yes | `JwtAuthenticationFilter` |
-| `/api/mentors/**` | ✅ Yes | `JwtAuthenticationFilter` |
-| `/api/sessions/**` | ✅ Yes | `JwtAuthenticationFilter` |
-| `/api/notifications/**` | ✅ Yes | `JwtAuthenticationFilter` |
-| `/api/payments/**` | ✅ Yes | `JwtAuthenticationFilter` |
-| `/api/skills/**` | ❌ No | None (public browsing) |
-| `/ws/**` | ❌ No | WebSocket (separate auth) |
-| `/health` | ❌ No | Public health check |
-| `/actuator/**` | ❌ No | Public (restrict in production) |
+| `/api/auth/**` | âŒ No | None (auth service handles internally) |
+| `/api/users/**` | âœ… Yes | `JwtAuthenticationFilter` |
+| `/api/mentors/**` | âœ… Yes | `JwtAuthenticationFilter` |
+| `/api/sessions/**` | âœ… Yes | `JwtAuthenticationFilter` |
+| `/api/notifications/**` | âœ… Yes | `JwtAuthenticationFilter` |
+| `/api/payments/**` | âœ… Yes | `JwtAuthenticationFilter` |
+| `/api/skills/**` | âŒ No | None (public browsing) |
+| `/ws/**` | âŒ No | WebSocket (separate auth) |
+| `/health` | âŒ No | Public health check |
+| `/actuator/**` | âŒ No | Public (restrict in production) |
 
 ### 3.2 Service-Level (X-User-Id Trust Model)
 
 The gateway extracts JWT claims and forwards as headers:
-- `X-User-Id` — user's database ID
-- `X-User-Email` — user's email
-- `X-User-Role` — user's role (ROLE_LEARNER, ROLE_MENTOR, ROLE_ADMIN)
+- `X-User-Id` â€” user's database ID
+- `X-User-Email` â€” user's email
+- `X-User-Role` â€” user's role (ROLE_LEARNER, ROLE_MENTOR, ROLE_ADMIN)
 
 Downstream services **trust these headers implicitly**. This is secure ONLY because:
 1. Services are not exposed outside Docker network
 2. Gateway is the sole ingress point
 3. Gateway strips and rewrites these headers from JWT
 
-> ⚠️ **KNOWN RISK**: Gateway does NOT currently strip incoming X-User-Id headers before processing. An attacker could add this header to bypass auth IF a route lacks the JWT filter.
+> âš ï¸ **KNOWN RISK**: Gateway does NOT currently strip incoming X-User-Id headers before processing. An attacker could add this header to bypass auth IF a route lacks the JWT filter.
 
 ## 4. Secrets Management
 
@@ -155,7 +161,7 @@ Downstream services **trust these headers implicitly**. This is secure ONLY beca
 | Docker Hub Credentials | GitHub Secrets | Manual |
 | EC2 SSH Key | GitHub Secrets | Manual |
 
-> ⚠️ **RECOMMENDATION**: Migrate to AWS Secrets Manager for automated rotation and audit logging.
+> âš ï¸ **RECOMMENDATION**: Migrate to AWS Secrets Manager for automated rotation and audit logging.
 
 ## 5. Rate Limiting
 
@@ -169,20 +175,20 @@ Downstream services **trust these headers implicitly**. This is secure ONLY beca
 
 Implementation: In-memory `ConcurrentHashMap` sliding window.
 
-> ⚠️ **LIMITATION**: Single-instance only. Requires Redis backend for multi-instance deployments.
+> âš ï¸ **LIMITATION**: Single-instance only. Requires Redis backend for multi-instance deployments.
 
 ## 6. Known Security Gaps (Post-Audit)
 
 | # | Gap | Status | Priority |
 |---|-----|--------|----------|
-| 1 | `updateUserRole` lacks RBAC | ❌ Open | P0 |
-| 2 | CSRF protection missing | ❌ Open | P0 |
-| 3 | JWT secret is weak/predictable | ❌ Open | P0 |
-| 4 | `setupPassword` unauthenticated | ❌ Open | P0 |
-| 5 | No security response headers | ❌ Open | P1 |
-| 6 | Tokens in localStorage | ❌ Open | P2 |
-| 7 | Internal routes exposed via gateway | ❌ Open | P1 |
-| 8 | Debug ports exposed on EC2 | ❌ Open | P3 |
+| 1 | `updateUserRole` lacks RBAC | âŒ Open | P0 |
+| 2 | CSRF protection missing | âŒ Open | P0 |
+| 3 | JWT secret is weak/predictable | âŒ Open | P0 |
+| 4 | `setupPassword` unauthenticated | âŒ Open | P0 |
+| 5 | No security response headers | âŒ Open | P1 |
+| 6 | Tokens in localStorage | âŒ Open | P2 |
+| 7 | Internal routes exposed via gateway | âŒ Open | P1 |
+| 8 | Debug ports exposed on EC2 | âŒ Open | P3 |
 
 See `docs/skillsync_production_audit_report.md` for detailed fixes.
 
@@ -201,14 +207,14 @@ See `docs/skillsync_production_audit_report.md` for detailed fixes.
 | 22 | TCP | Your IP only | SSH |
 | 80 | TCP | Cloudflare IPs | HTTP redirect |
 | 443 | TCP | Cloudflare IPs | HTTPS |
-| All others | — | Deny | Block direct access |
+| All others | â€” | Deny | Block direct access |
 
 
 ---
 
 ## Content from: doc7_auth_oauth_email_system.md
 
-# 🔐 SkillSync Auth & Notification System (V3)
+# ðŸ” SkillSync Auth & Notification System (V3)
 
 This document outlines the architecture and implementation details for the 
 **Registration Rollback**, **Password Reset with OTP**, **OAuth Integration**, 
@@ -216,7 +222,7 @@ the **Asynchronous Email Pipeline**, and the **Email Retry Mechanism**.
 
 ---
 
-## 🔑 1. Authentication Upgrades & Rate Limiting
+## ðŸ”‘ 1. Authentication Upgrades & Rate Limiting
 
 ### 1.0 API Gateway Rate Limiting
 To protect against brute force attacks, OTP spamming, and credential stuffing, an API Gateway `RateLimitingFilter` enforces tiered limits across auth endpoints (**before** JWT validation):
@@ -262,22 +268,22 @@ SkillSync supports **Google OAuth** login with different behavior for new vs exi
 When a user logs in via OAuth and does NOT have an existing account:
 
 ```text
-Frontend → Google OAuth → sends profile to POST /api/auth/oauth-login
-  ↓
+Frontend â†’ Google OAuth â†’ sends profile to POST /api/auth/oauth-login
+  â†“
 Backend: User not found by provider+providerId nor by email
-  ↓
+  â†“
 Create user:
   - provider = "google"
   - providerId = "google-id-123"  
   - isVerified = true (verified by OAuth provider)
   - passwordSet = false (MUST set password)
-  ↓
+  â†“
 Response: OAuthResponse { passwordSetupRequired: true }
-  ↓
+  â†“
 Frontend: REDIRECT to Password Setup Screen
-  ↓
+  â†“
 POST /api/auth/setup-password { email, password }
-  ↓
+  â†“
 User can now login with email + password
 ```
 
@@ -286,13 +292,13 @@ User can now login with email + password
 When a user already exists AND is verified:
 
 ```text
-Frontend → Google OAuth → sends profile to POST /api/auth/oauth-login
-  ↓
+Frontend â†’ Google OAuth â†’ sends profile to POST /api/auth/oauth-login
+  â†“
 Backend: User FOUND by provider+providerId or by email, and isVerified=true
-  ↓
+  â†“
 Response: OAuthResponse { passwordSetupRequired: false }
-  ↓
-Direct login — NO password prompt, NO forced reset
+  â†“
+Direct login â€” NO password prompt, NO forced reset
 ```
 
 #### 1.3.3 Edge Cases
@@ -302,13 +308,13 @@ Direct login — NO password prompt, NO forced reset
 | User exists but NOT verified | OAuth login BLOCKED. Error: "Please verify your email first" |
 | OAuth email matches existing local account | Link OAuth provider to existing account (if verified) |
 | User already has password set | `passwordSetupRequired: false` |
-| Duplicate OAuth call for same user | Idempotent — returns existing user |
+| Duplicate OAuth call for same user | Idempotent â€” returns existing user |
 
 #### 1.3.4 User Lookup Priority
 
-1. `findByProviderAndProviderId(provider, providerId)` — exact OAuth match
-2. `findByEmail(email)` — fallback to email match
-3. If neither found → create new user
+1. `findByProviderAndProviderId(provider, providerId)` â€” exact OAuth match
+2. `findByEmail(email)` â€” fallback to email match
+3. If neither found â†’ create new user
 
 #### 1.3.5 New Endpoints
 
@@ -319,7 +325,7 @@ Direct login — NO password prompt, NO forced reset
 
 #### 1.3.6 New DTOs
 
-**OAuthResponse** — extends standard auth response:
+**OAuthResponse** â€” extends standard auth response:
 ```json
 {
   "accessToken": "eyJ...",
@@ -341,7 +347,7 @@ Direct login — NO password prompt, NO forced reset
 
 ---
 
-## 📧 2. Asynchronous Email Pipeline
+## ðŸ“§ 2. Asynchronous Email Pipeline
 
 The **Notification Service** uses a hybrid **WebSocket + Email** architecture.
 
@@ -349,10 +355,10 @@ The **Notification Service** uses a hybrid **WebSocket + Email** architecture.
 The system follows an event-driven pattern via RabbitMQ:
 ```text
 Event (Session/Payment/Mentor) 
-  → Multi-Queue Consumer 
-  → DB Save 
-  → WebSocket Push (Real-time UI)
-  → Email Service (Async Delivery)
+  â†’ Multi-Queue Consumer 
+  â†’ DB Save 
+  â†’ WebSocket Push (Real-time UI)
+  â†’ Email Service (Async Delivery)
 ```
 
 ### 2.2 Template System
@@ -385,16 +391,16 @@ Example log output:
 
 ```text
 EmailService.sendEmail() fails
-  ↓
+  â†“
 Publish EmailRetryEvent to email.retry.queue
-  ↓
+  â†“
 EmailRetryConsumer picks up event
-  ↓
+  â†“
 Attempt resend with exponential backoff
-  ↓
+  â†“
 On success: done
 On failure (retryCount < 3): re-publish with retryCount++
-On failure (retryCount >= 3): log PERMANENT FAILURE → message goes to email.dlq
+On failure (retryCount >= 3): log PERMANENT FAILURE â†’ message goes to email.dlq
 ```
 
 #### Retry Policy
@@ -429,26 +435,26 @@ On failure (retryCount >= 3): log PERMANENT FAILURE → message goes to email.dl
 
 ---
 
-## 🏗️ 3. Redis Caching & Consistency
+## ðŸ—ï¸ 3. Redis Caching & Consistency
 
 - **Invalidation Strategy**:
   - `AuthService` now has direct access to `CacheService` (via `skillsync-cache-common`).
   - Upon **Password Reset**, **Password Setup**, or **OAuth linking**, the `user:profile:<userId>` key is evicted.
   - This prevents `User Query Service` from serving outdated profile data or verified statuses.
-- **Key Format**: All keys use `CacheService.vKey(...)` → `v1:<domain>:<entity>:<id>`
+- **Key Format**: All keys use `CacheService.vKey(...)` â†’ `v1:<domain>:<entity>:<id>`
 
 ---
 
-## 🧪 4. Testing & Validation
+## ðŸ§ª 4. Testing & Validation
 
 Test scenarios:
 
 ### OAuth Flow Tests
-1. **New user → password setup required**: `passwordSetupRequired: true`
-2. **Existing verified user → direct login**: `passwordSetupRequired: false`, no user creation
-3. **Unverified user → blocked**: Exception thrown, no OAuth login
-4. **Password setup → success**: Password set, cache evicted
-5. **Duplicate password setup → rejected**: Error if password already set
+1. **New user â†’ password setup required**: `passwordSetupRequired: true`
+2. **Existing verified user â†’ direct login**: `passwordSetupRequired: false`, no user creation
+3. **Unverified user â†’ blocked**: Exception thrown, no OAuth login
+4. **Password setup â†’ success**: Password set, cache evicted
+5. **Duplicate password setup â†’ rejected**: Error if password already set
 
 ### Email Retry Tests
 1. **Successful retry**: Email sent on retry attempt
@@ -463,7 +469,7 @@ Test scenarios:
 
 ---
 
-## 🐳 5. DevOps Configuration
+## ðŸ³ 5. DevOps Configuration
 
 Add these to your `.env` file before running:
 ```bash
@@ -479,7 +485,7 @@ ZIPKIN_HOST=zipkin
 
 ---
 
-## 🌐 6. Production OAuth + API Domain Checklist
+## ðŸŒ 6. Production OAuth + API Domain Checklist
 
 For production domain deployments (`https://skillsync.mraks.dev`):
 
@@ -491,3 +497,4 @@ For production domain deployments (`https://skillsync.mraks.dev`):
 4. CORS allowed origins must include the production frontend domain.
 
 Use `docs/production_debugging_cors_fix_guide.md` for full route, CORS, and Swagger validation commands.
+

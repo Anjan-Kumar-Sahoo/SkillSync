@@ -1,3 +1,9 @@
+﻿# Presentation Sync Note
+
+Updated for final presentation on 2026-04-06. Start with docs/00_Presentation_Playbook.md for the guided narrative, then use this document for deep details.
+
+---
+
 # 06 Deployment DevOps and Infrastructure
 
 
@@ -6,12 +12,12 @@
 
 ## Content from: doc5_deployment_devops.md
 
-# 📄 DOCUMENT 5: DEPLOYMENT + DEVOPS
+# ðŸ“„ DOCUMENT 5: DEPLOYMENT + DEVOPS
 
 > [!IMPORTANT]
 > **Architecture Update (March 2026):** The following services have been merged and are removed from deployment topologies:
-> - **Mentor Service + Group Service → User Service** (port 8082)
-> - **Review Service → Session Service** (port 8085)
+> - **Mentor Service + Group Service â†’ User Service** (port 8082)
+> - **Review Service â†’ Session Service** (port 8085)
 >
 > **Payment Extraction (March 2026):** Payment has been extracted from User Service into a dedicated **Payment Service** (port 8086) with its own database (`skillsync_payment`).
 >
@@ -31,87 +37,87 @@ Runtime naming convention for container DNS:
 - Use `skillsync-gateway:8080` for internal service-to-gateway calls when needed.
 - Public ingress is direct to API Gateway via host mapping `80:8080`.
 
-## SkillSync — Infrastructure, Deployment & Operations
+## SkillSync â€” Infrastructure, Deployment & Operations
 
 ---
 
 ## 5.1 Production Architecture
 
 ```
-                            ┌──────────────────────────┐
-                            │      DNS / CDN           │
-                            │   (CloudFlare / AWS CF)  │
-                            └────────────┬─────────────┘
-                                         │
-                                         │ HTTPS (443)
-                                         ▼
-                            ┌──────────────────────────┐
-                            │       Nginx              │
-                            │   Reverse Proxy          │
-                            │   (SSL Termination)      │
-                            │                          │
-                            │  /           → React SPA │
-                            │  /api/*      → Gateway   │
-                            │  /ws/*       → WebSocket │
-                            └──────┬─────────┬─────────┘
-                                   │         │
-                      ┌────────────┘         └────────────┐
-                      │                                    │
-                      ▼                                    ▼
-         ┌──────────────────────┐            ┌──────────────────────┐
-         │    React Frontend    │            │  Spring Cloud Gateway │
-         │    (Static Files)    │            │       :8080           │
-         │    Served by Nginx   │            │  ┌────────────────┐  │
-         └──────────────────────┘            │  │ JWT Filter     │  │
-                                             │  │ Rate Limiter   │  │
-                                             │  │ Circuit Breaker│  │
-                                             │  │ Load Balancer  │  │
-                                             │  └────────────────┘  │
-                                             └──────────┬───────────┘
-                                                        │
-                              ┌──────────────────────────┼──────────────────────────┐
-                              │                          │                          │
-                    ┌─────────┴─────────┐    ┌───────────┴─────────┐    ┌──────────┴──────────┐
-                    │                   │    │                     │    │                     │
-                    │  Auth Service     │    │  User Service       │    │  Mentor Service     │
-                    │  :8081 (×2)       │    │  :8082 (×2)         │    │  :8083 (×2)         │
-                    │                   │    │                     │    │                     │
-                    └─────────┬─────────┘    └───────────┬─────────┘    └──────────┬──────────┘
-                              │                          │                          │
-                    ┌─────────┴─────────┐    ┌───────────┴─────────┐    ┌──────────┴──────────┐
-                    │                   │    │                     │    │                     │
-                    │  Skill Service    │    │  Session Service    │    │  Group Service      │
-                    │  :8084 (×1)       │    │  :8085 (×2)         │    │  :8086 (×1)         │
-                    │                   │    │                     │    │                     │
-                    └─────────┬─────────┘    └───────────┬─────────┘    └──────────┬──────────┘
-                              │                          │                          │
-                    ┌─────────┴─────────┐    ┌───────────┴─────────┐               │
-                    │                   │    │                     │               │
-                    │  Review Service   │    │ Notification Service│               │
-                    │  :8087 (×1)       │    │  :8088 (×2)         │               │
-                    │                   │    │                     │               │
-                    └───────────────────┘    └─────────────────────┘               │
-                                                                                   │
-                          ┌──────────────────────────────────────────────────────────┘
-                          │
-          ┌───────────────┼───────────────┐
-          │               │               │
-          ▼               ▼               ▼
-    ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
-   │ PostgreSQL  │ │  RabbitMQ   │ │   Eureka    │ │   Redis     │
-   │ Cluster     │ │  Cluster    │ │   Server    │ │   7.2       │
-   │ (Primary +  │ │ (Mirrored)  │ │   :8761     │ │   :6379     │
-   │  Replica)   │ │             │ │             │ │ (AOF+LRU)   │
-   └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘
+                            â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                            â”‚      DNS / CDN           â”‚
+                            â”‚   (CloudFlare / AWS CF)  â”‚
+                            â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                                         â”‚
+                                         â”‚ HTTPS (443)
+                                         â–¼
+                            â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                            â”‚       Nginx              â”‚
+                            â”‚   Reverse Proxy          â”‚
+                            â”‚   (SSL Termination)      â”‚
+                            â”‚                          â”‚
+                            â”‚  /           â†’ React SPA â”‚
+                            â”‚  /api/*      â†’ Gateway   â”‚
+                            â”‚  /ws/*       â†’ WebSocket â”‚
+                            â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                                   â”‚         â”‚
+                      â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜         â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                      â”‚                                    â”‚
+                      â–¼                                    â–¼
+         â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”            â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+         â”‚    React Frontend    â”‚            â”‚  Spring Cloud Gateway â”‚
+         â”‚    (Static Files)    â”‚            â”‚       :8080           â”‚
+         â”‚    Served by Nginx   â”‚            â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”‚
+         â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜            â”‚  â”‚ JWT Filter     â”‚  â”‚
+                                             â”‚  â”‚ Rate Limiter   â”‚  â”‚
+                                             â”‚  â”‚ Circuit Breakerâ”‚  â”‚
+                                             â”‚  â”‚ Load Balancer  â”‚  â”‚
+                                             â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â”‚
+                                             â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                                                        â”‚
+                              â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                              â”‚                          â”‚                          â”‚
+                    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                    â”‚                   â”‚    â”‚                     â”‚    â”‚                     â”‚
+                    â”‚  Auth Service     â”‚    â”‚  User Service       â”‚    â”‚  Mentor Service     â”‚
+                    â”‚  :8081 (Ã—2)       â”‚    â”‚  :8082 (Ã—2)         â”‚    â”‚  :8083 (Ã—2)         â”‚
+                    â”‚                   â”‚    â”‚                     â”‚    â”‚                     â”‚
+                    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                              â”‚                          â”‚                          â”‚
+                    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                    â”‚                   â”‚    â”‚                     â”‚    â”‚                     â”‚
+                    â”‚  Skill Service    â”‚    â”‚  Session Service    â”‚    â”‚  Group Service      â”‚
+                    â”‚  :8084 (Ã—1)       â”‚    â”‚  :8085 (Ã—2)         â”‚    â”‚  :8086 (Ã—1)         â”‚
+                    â”‚                   â”‚    â”‚                     â”‚    â”‚                     â”‚
+                    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                              â”‚                          â”‚                          â”‚
+                    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”               â”‚
+                    â”‚                   â”‚    â”‚                     â”‚               â”‚
+                    â”‚  Review Service   â”‚    â”‚ Notification Serviceâ”‚               â”‚
+                    â”‚  :8087 (Ã—1)       â”‚    â”‚  :8088 (Ã—2)         â”‚               â”‚
+                    â”‚                   â”‚    â”‚                     â”‚               â”‚
+                    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜               â”‚
+                                                                                   â”‚
+                          â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                          â”‚
+          â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+          â”‚               â”‚               â”‚
+          â–¼               â–¼               â–¼
+    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+   â”‚ PostgreSQL  â”‚ â”‚  RabbitMQ   â”‚ â”‚   Eureka    â”‚ â”‚   Redis     â”‚
+   â”‚ Cluster     â”‚ â”‚  Cluster    â”‚ â”‚   Server    â”‚ â”‚   7.2       â”‚
+   â”‚ (Primary +  â”‚ â”‚ (Mirrored)  â”‚ â”‚   :8761     â”‚ â”‚   :6379     â”‚
+   â”‚  Replica)   â”‚ â”‚             â”‚ â”‚             â”‚ â”‚ (AOF+LRU)   â”‚
+   â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
-**Scaling annotations** (×N) show the recommended minimum replica count for production.
+**Scaling annotations** (Ã—N) show the recommended minimum replica count for production.
 
 ---
 
 ## 5.2 Docker Setup
 
-### 5.2.1 Dockerfile — Microservice Strategy
+### 5.2.1 Dockerfile â€” Microservice Strategy
 
 SkillSync uses standardized multi-stage Dockerfiles. Key requirements include:
 - **Build Context:** Services depending on `skillsync-cache-common` use `./Backend` as the context to copy shared resources.
@@ -129,7 +135,7 @@ RUN mvn -f auth-service/pom.xml package -DskipTests
 ...
 ```
 
-### 5.2.2 Dockerfile — React Frontend (Multi-stage)
+### 5.2.2 Dockerfile â€” React Frontend (Multi-stage)
 
 ```dockerfile
 # Dockerfile.frontend
@@ -254,7 +260,7 @@ server {
 }
 ```
 
-### 5.2.4 Docker Compose — Full Stack
+### 5.2.4 Docker Compose â€” Full Stack
 
 ```yaml
 # docker-compose.yml
@@ -591,19 +597,19 @@ fi
 
 ### 5.3.1 Pipeline Overview
 
-The SkillSync pipeline (`.github/workflows/ci-cd.yml`) automates the full build → test → containerize → deploy lifecycle.
+The SkillSync pipeline (`.github/workflows/ci-cd.yml`) automates the full build â†’ test â†’ containerize â†’ deploy lifecycle.
 
 ```
-┌──────────────┐    ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐    ┌────────────────┐    ┌──────────────┐
-│  Stage 1     │    │  Stage 2         │    │  Stage 3         │    │  Stage 4         │    │  Stage 5       │    │  Stage 6     │
-│  Build       │───▶│  Build & Test    │───▶│  Docker Build    │───▶│  Compose         │───▶│  Code Quality  │───▶│  Deploy      │
-│  Cache       │    │  All 9 Services  │    │  & Push to       │    │  Validation      │    │  SonarCloud    │    │  to EC2      │
-│  Common      │    │  (Matrix)        │    │  Docker Hub      │    │                  │    │  (Conditional) │    │  via SSH     │
-└──────────────┘    └──────────────────┘    └──────────────────┘    └──────────────────┘    └────────────────┘    └──────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚  Stage 1     â”‚    â”‚  Stage 2         â”‚    â”‚  Stage 3         â”‚    â”‚  Stage 4         â”‚    â”‚  Stage 5       â”‚    â”‚  Stage 6     â”‚
+â”‚  Build       â”‚â”€â”€â”€â–¶â”‚  Build & Test    â”‚â”€â”€â”€â–¶â”‚  Docker Build    â”‚â”€â”€â”€â–¶â”‚  Compose         â”‚â”€â”€â”€â–¶â”‚  Code Quality  â”‚â”€â”€â”€â–¶â”‚  Deploy      â”‚
+â”‚  Cache       â”‚    â”‚  All 9 Services  â”‚    â”‚  & Push to       â”‚    â”‚  Validation      â”‚    â”‚  SonarCloud    â”‚    â”‚  to EC2      â”‚
+â”‚  Common      â”‚    â”‚  (Matrix)        â”‚    â”‚  Docker Hub      â”‚    â”‚                  â”‚    â”‚  (Conditional) â”‚    â”‚  via SSH     â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 **Key Features:**
-- **Path-Filtered Triggers:** Only runs when `Backend/**` or `.github/workflows/**` files change — ignores Frontend, docs, and root-level edits.
+- **Path-Filtered Triggers:** Only runs when `Backend/**` or `.github/workflows/**` files change â€” ignores Frontend, docs, and root-level edits.
 - **Matrix Parallelism:** Builds and tests all 9 services concurrently using GitHub Actions matrix strategy.
 - **Docker Hub Push:** Uses a bash loop to build all images in a single job with dual tagging.
 - **EC2 Auto-Deploy:** Copies compose files via SCP, then pulls/restarts via SSH.
@@ -634,12 +640,12 @@ on:
 
 | Change Location | CI/CD Triggered? | Reason |
 |---|---|---|
-| `Backend/**` | ✅ Yes | Backend service code — must build, test, deploy |
-| `.github/workflows/**` | ✅ Yes | Workflow changes must be validated |
-| `Frontend/**` | ❌ No | Frontend is deployed on Vercel separately |
-| `docs/**`, `README.md` | ❌ No | Documentation-only changes, no build needed |
-| Root-level files (`.gitignore`, etc.) | ❌ No | No impact on backend services |
-| Manual (`workflow_dispatch`) | ✅ Yes | Always available via GitHub UI |
+| `Backend/**` | âœ… Yes | Backend service code â€” must build, test, deploy |
+| `.github/workflows/**` | âœ… Yes | Workflow changes must be validated |
+| `Frontend/**` | âŒ No | Frontend is deployed on Vercel separately |
+| `docs/**`, `README.md` | âŒ No | Documentation-only changes, no build needed |
+| Root-level files (`.gitignore`, etc.) | âŒ No | No impact on backend services |
+| Manual (`workflow_dispatch`) | âœ… Yes | Always available via GitHub UI |
 
 ### 5.3.3 Docker Tagging Strategy
 
@@ -658,14 +664,14 @@ All images are pushed to the unified Docker Hub repository `aksahoo1097/skillsyn
 | notification-service | `aksahoo1097/skillsync:notification` | `aksahoo1097/skillsync:notification-<sha>` |
 
 **Why dual tags?**
-- `:tag` (e.g., `:auth`) — always points to the latest main-branch build; used by `docker compose pull` on EC2.
-- `:tag-<sha>` — immutable; enables rollback to any specific commit.
+- `:tag` (e.g., `:auth`) â€” always points to the latest main-branch build; used by `docker compose pull` on EC2.
+- `:tag-<sha>` â€” immutable; enables rollback to any specific commit.
 
 > [!CAUTION]
-> **CI/CD ↔ docker-compose Tag Sync (Critical)**
+> **CI/CD â†” docker-compose Tag Sync (Critical)**
 > The `docker-compose.yml` image tags **must exactly match** what the CI/CD pipeline pushes. A previous mismatch caused production failures:
-> - CI/CD pushed: `skillsync:session` ← correct
-> - docker-compose used: `skillsync:session-latest` ← **wrong, image not found on EC2**
+> - CI/CD pushed: `skillsync:session` â† correct
+> - docker-compose used: `skillsync:session-latest` â† **wrong, image not found on EC2**
 >
 > **Rule:** Never append `-latest` to the service tag. The CI/CD pushes bare tags (`:auth`, `:eureka`, etc.) which already represent the latest build. If you need to pin a version, use the SHA tag (`:auth-a1b2c3d`).
 
@@ -684,7 +690,7 @@ env:
 # 2. Use the env var in conditionals (wrapped in ${{ }})
 steps:
   - name: SonarCloud Scan
-    if: ${{ env.SONAR_TOKEN != '' }}   # ✅ Safe
+    if: ${{ env.SONAR_TOKEN != '' }}   # âœ… Safe
     run: mvn sonar:sonar ...
 ```
 
@@ -705,7 +711,7 @@ The deploy job runs **only** on pushes to `main` after Docker images are pushed:
 
 ```bash
 # 1. SCP: Copy latest compose/config files to EC2
-scp Backend/docker-compose.yml Backend/nginx/ Backend/.env.example → ~/SkillSync/
+scp Backend/docker-compose.yml Backend/nginx/ Backend/.env.example â†’ ~/SkillSync/
 
 # 2. SSH: Pull and restart
 cd ~/SkillSync/Backend
@@ -878,20 +884,20 @@ DEPLOY_USER=deploy
 ### 5.5.2 Database Scaling
 
 ```
-                    ┌─────────────────┐
-                    │   Primary       │
-                    │   (Read/Write)  │
-                    └────────┬────────┘
-                             │
-                    ┌────────┴────────┐
-                    │  Streaming      │
-                    │  Replication    │
-                    ├────────┬────────┤
-                    │        │        │
-               ┌────┴───┐  ┌┴────────┴───┐
-               │Replica │  │  Replica    │
-               │(Read)  │  │  (Read)     │
-               └────────┘  └─────────────┘
+                    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                    â”‚   Primary       â”‚
+                    â”‚   (Read/Write)  â”‚
+                    â””â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                             â”‚
+                    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”
+                    â”‚  Streaming      â”‚
+                    â”‚  Replication    â”‚
+                    â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+                    â”‚        â”‚        â”‚
+               â”Œâ”€â”€â”€â”€â”´â”€â”€â”€â”  â”Œâ”´â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”
+               â”‚Replica â”‚  â”‚  Replica    â”‚
+               â”‚(Read)  â”‚  â”‚  (Read)     â”‚
+               â””â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 - **Read replicas** for Session Service and Mentor Service (high read load)
@@ -902,9 +908,9 @@ DEPLOY_USER=deploy
 ### 5.5.3 Caching Strategy
 
 ```
-Request → API Gateway → Service → Check Redis Cache → DB (if cache miss)
-                                        │
-                                  Cache Hit → Return cached data
+Request â†’ API Gateway â†’ Service â†’ Check Redis Cache â†’ DB (if cache miss)
+                                        â”‚
+                                  Cache Hit â†’ Return cached data
 ```
 
 | Data | Cache TTL | Invalidation |
@@ -1026,7 +1032,7 @@ groups:
 > [!IMPORTANT]
 > **Production Checklist** (before going live):
 > - [ ] All environment variables set in production `.env`
-> - [ ] JWT secret is ≥256 bits and securely stored
+> - [ ] JWT secret is â‰¥256 bits and securely stored
 > - [ ] Database passwords are strong and rotated
 > - [ ] Razorpay Production API Key/Secret configured
 > - [ ] SSL certificates configured on Nginx
@@ -1060,11 +1066,11 @@ groups:
 ## 2. DNS Configuration
 
 ```
-skillsync.mraks.dev      → Vercel (CNAME to cname.vercel-dns.com)
-api.skillsync.mraks.dev  → EC2 Public IP (A record, Cloudflare proxied)
+skillsync.mraks.dev      â†’ Vercel (CNAME to cname.vercel-dns.com)
+api.skillsync.mraks.dev  â†’ EC2 Public IP (A record, Cloudflare proxied)
 ```
 
-> ⚠️ Cloudflare SSL mode MUST be "Full" (not "Full Strict") unless Certbot is configured on EC2 origin.
+> âš ï¸ Cloudflare SSL mode MUST be "Full" (not "Full Strict") unless Certbot is configured on EC2 origin.
 
 ## 3. CI/CD Pipeline
 
@@ -1099,7 +1105,7 @@ graph TD
 ### Service Startup Order
 
 ```
-postgres, rabbitmq, redis → eureka-server → config-server → microservices → api-gateway
+postgres, rabbitmq, redis â†’ eureka-server â†’ config-server â†’ microservices â†’ api-gateway
 ```
 
 ### Container Resource Limits
@@ -1183,11 +1189,11 @@ docker compose up -d api-gateway
 
 ## 8. Known Issues
 
-1. **No origin SSL** — EC2 relies entirely on Cloudflare proxy for HTTPS
-2. **Debug ports exposed** — Monitoring UIs accessible from internet if security groups allow
-3. **No auto-scaling** — Single EC2 instance, no load balancer
-4. **No post-deploy health check** — CI/CD doesn't verify deployment success
-5. **Backend currently returning 502** — Containers may be down (as of audit date)
+1. **No origin SSL** â€” EC2 relies entirely on Cloudflare proxy for HTTPS
+2. **Debug ports exposed** â€” Monitoring UIs accessible from internet if security groups allow
+3. **No auto-scaling** â€” Single EC2 instance, no load balancer
+4. **No post-deploy health check** â€” CI/CD doesn't verify deployment success
+5. **Backend currently returning 502** â€” Containers may be down (as of audit date)
 
 
 ---
@@ -1592,3 +1598,4 @@ If regression occurs:
 - One ingress layer is easier to secure, observe, and debug than chained proxies.
 - Swagger server metadata must always point to a browser-reachable public URL.
 - Keep documentation synchronized with active topology to prevent runbook drift.
+

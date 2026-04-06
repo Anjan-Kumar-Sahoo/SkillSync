@@ -30,8 +30,8 @@ const Sidebar = ({ role }: SidebarProps) => {
 
   const adminNav = [
     { name: 'Dashboard', icon: 'grid_view', path: '/admin' },
-    { name: 'Users Center', icon: 'group', path: '/admin/users' },
-    { name: 'Platform Finances', icon: 'account_balance', path: '/admin/finances' },
+    { name: 'Manage Users', icon: 'group', path: '/admin/users' },
+    { name: 'Approve Mentors', icon: 'how_to_reg', path: '/admin/mentor-approvals' },
   ];
 
   const activeNav = role === 'ROLE_MENTOR' ? mentorNav : role === 'ROLE_ADMIN' ? adminNav : learnerNav;

@@ -1,146 +1,412 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Frontend Architecture</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Inter', sans-serif; }</style>
+  <meta charset="UTF-8">
+  <title>SkillSync Frontend Architecture - Master Document</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --primary-dark: #1e40af;
+      --accent: #10b981;
+      --bg: #f4f7f9;
+      --card: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    /* Progress bar */
+    #progress-container {
+      position: fixed; top: 0; left: 0; width: 100%; height: 4px; z-index: 1001; background: #e2e8f0;
+    }
+    #progress-bar {
+      height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary), var(--accent)); transition: width 0.1s ease-out;
+    }
+
+    /* Header */
+    header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0; z-index: 100;
+      padding: 15px 40px; /* Reduced vertical padding */
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow-sm);
+    }
+    .header-text h1 { margin: 0; font-size: 1.6rem; color: var(--primary-dark); font-weight: 700; letter-spacing: -0.5px; }
+    .header-text p { margin: 2px 0 0 0; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; }
+    .time-badge { background: var(--primary-light); color: var(--primary-dark); padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #bfdbfe; }
+
+    /* Layout */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 30px;
+      display: flex;
+      gap: 40px;
+      align-items: flex-start;
+    }
+
+    /* Sidebar Navigation */
+    aside {
+      width: 320px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 90px;
+      background: var(--card);
+      border-radius: 16px;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border);
+      max-height: calc(100vh - 120px);
+      overflow-y: auto;
+      padding: 24px;
+    }
+    aside::-webkit-scrollbar { width: 6px; }
+    aside::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    
+    .nav-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-muted); font-weight: 700; margin-bottom: 16px; }
+    nav ul { list-style: none; padding: 0; margin: 0; }
+    nav li { margin-bottom: 6px; }
+    nav a {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      color: var(--text);
+      font-size: 0.9rem;
+      padding: 8px 12px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      font-weight: 500;
+    }
+    nav a:hover { background: #f1f5f9; color: var(--primary); transform: translateX(4px); }
+    nav a.active { background: var(--primary); color: white; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2); font-weight: 600; }
+    
+    /* Main Content */
+    main { flex-grow: 1; min-width: 0; }
+
+    /* Cards */
+    .section-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 40px;
+      margin-bottom: 40px;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border);
+      scroll-margin-top: 100px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .section-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+    
+    h2 { font-size: 1.8rem; color: var(--text); margin-top: 0; margin-bottom: 12px; font-weight: 700; padding-bottom: 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+    .section-desc { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 30px; font-weight: 400; line-height: 1.6; }
+
+    /* Content Blocks */
+    .block-title { font-size: 1.1rem; color: var(--text); font-weight: 700; display: inline-block; margin-bottom: 12px; position: relative; }
+    .block-title::after { content: ""; position: absolute; left: 0; bottom: -4px; width: 100%; height: 2px; background: var(--primary); opacity: 0.2;}
+    
+    .theory-box {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .theory-box p { margin: 0 0 12px 0; }
+    .theory-box p:last-child { margin: 0; }
+    .theory-box strong { color: var(--primary-dark); }
+
+    .impl-box {
+      background: linear-gradient(to right, #eff6ff, #ffffff);
+      border-left: 4px solid var(--primary);
+      border-radius: 0 12px 12px 0;
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+    .impl-box strong { color: var(--primary); }
+    
+    .code-term {
+      font-family: 'Fira Code', monospace;
+      background: #e2e8f0;
+      color: #334155;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
+
+    @media (max-width: 1024px) {
+      .container { flex-direction: column; padding: 20px; }
+      aside { width: 100%; position: static; max-height: 300px; margin-bottom: 20px; }
+      header { padding: 15px 20px; flex-direction: column; text-align: center; gap: 10px; }
+      .section-card { padding: 24px; scroll-margin-top: 140px; }
+    }
+  </style>
 </head>
-<body class="bg-gray-50 text-gray-800 antialiased p-4 md:p-10">
-    <div class="max-w-7xl mx-auto space-y-20">
-        
-        <div class="text-center space-y-6 pt-10">
-            <h1 class="text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-indigo-600 tracking-tight">React SPA Architecture</h1>
-            <p class="text-xl text-gray-500 max-w-3xl mx-auto leading-relaxed">Deconstructing the React 18 frontend: Server State synchronization through React Query and Client UI State via Redux Toolkit.</p>
-        </div>
-
-        <!-- Architectural Component Data Flow -->
-        <section class="bg-white rounded-3xl p-6 md:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
-            <h2 class="text-3xl font-bold mb-10 text-gray-800 flex items-center border-b pb-4">
-                <span class="mr-4">🌊</span> Data Flow Control (Server State vs Client State)
-            </h2>
-            
-            <div class="flex flex-col md:flex-row items-center w-full justify-between space-y-8 md:space-y-0 relative">
-                
-                <!-- Hidden responsive line connecting blocks -->
-                <div class="hidden md:block absolute left-10 right-10 h-1 bg-gray-200 top-1/2 -z-10 translate-y-[-50%]"></div>
-
-                <!-- Block 1 -->
-                <div class="w-full md:w-64 bg-white border-2 border-indigo-200 p-6 shadow-md rounded-2xl flex flex-col items-center z-10 text-center hover:border-indigo-400 transition-all group">
-                    <span class="text-4xl mb-3">🖥️</span>
-                    <h3 class="font-bold text-lg text-gray-800">React UI Layer</h3>
-                    <p class="text-xs text-gray-500 mt-2 mb-4">Functional generic components, Tailwind CSS stylings.</p>
-                    <div class="mt-auto flex space-x-2">
-                        <span class="bg-indigo-50 text-indigo-600 border border-indigo-100 px-2 py-1 rounded text-xs">JSX</span>
-                        <span class="bg-teal-50 text-teal-600 border border-teal-100 px-2 py-1 rounded text-xs">Tailwind</span>
-                    </div>
-                </div>
-
-                <div class="md:hidden text-gray-300 transform rotate-90 text-2xl">→</div>
-
-                <!-- Block 2 -->
-                <div class="w-full md:w-64 bg-indigo-50 border-2 border-indigo-300 p-6 shadow-lg rounded-2xl flex flex-col items-center z-10 text-center hover:border-indigo-500 transition-all group group relative">
-                    <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-indigo-600 text-white text-[10px] uppercase font-bold px-3 py-1 rounded-full whitespace-nowrap">State Manager</div>
-                    <span class="text-4xl mb-3">🧠</span>
-                    <h3 class="font-bold text-lg text-gray-800">State Ecosystem</h3>
-                    <p class="text-xs text-gray-500 mt-2 mb-4">Hooks abstract state synchronization securely.</p>
-                    <div class="mt-auto flex space-x-2 justify-center w-full">
-                        <span class="bg-white text-blue-600 border border-blue-200 px-2 py-1 rounded text-xs font-bold shadow-sm w-1/2">Redux</span>
-                        <span class="bg-white text-orange-600 border border-orange-200 px-2 py-1 rounded text-xs font-bold shadow-sm w-1/2">React Query</span>
-                    </div>
-                </div>
-
-                <div class="md:hidden text-gray-300 transform rotate-90 text-2xl">→</div>
-                
-                <!-- Block 3 -->
-                <div class="w-full md:w-64 bg-white border-2 border-emerald-200 p-6 shadow-md rounded-2xl flex flex-col items-center z-10 text-center hover:border-emerald-400 transition-all group">
-                    <span class="text-4xl mb-3">📡</span>
-                    <h3 class="font-bold text-lg text-gray-800">Axios Interceptors</h3>
-                    <p class="text-xs text-gray-500 mt-2 mb-4">Appends JWT credentials dynamically, handles 401s.</p>
-                    <div class="mt-auto flex space-x-2">
-                        <span class="bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-1 rounded text-xs">Request</span>
-                        <span class="bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-1 rounded text-xs">Response</span>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Deep Dive Descriptions -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-16 pt-8 border-t border-gray-100">
-                <div class="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 text-sm hover:shadow-md transition">
-                    <h4 class="font-bold text-blue-800 text-lg mb-2 flex items-center">⚛️ Redux Toolkit (Auth)</h4>
-                    <p class="text-blue-900 leading-relaxed">
-                        Redux is strictly reserved for global, highly-accessed <strong>Client State</strong> (primarily Authentication variables like the JWT token, `isAuthenticated`, user role, and ID). We avoid stuffing API outputs into Redux, eliminating the "boilerplate nightmare" of THUNKs completely.
-                    </p>
-                </div>
-                <div class="p-6 bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl border border-orange-100 text-sm hover:shadow-md transition">
-                    <h4 class="font-bold text-orange-800 text-lg mb-2 flex items-center">♻️ React Query (Server State)</h4>
-                    <p class="text-orange-900 leading-relaxed">
-                        Query handles 95% of state. Any data inherently "owned" by the backend (Mentors, Sessions, Notifications) is managed via `useQuery`/`useMutation`. It caches data automatically, dedupes parallel requests, polls dependencies continuously, and updates the View seamlessly without manual state tracking (`isLoading`, `isError`).
-                    </p>
-                </div>
-            </div>
-        </section>
-
-        <!-- View Folder Structure Design -->
-        <section class="grid grid-cols-1 lg:grid-cols-3 gap-10">
-            <!-- File Tree Overview -->
-            <div class="col-span-1 lg:col-span-2 bg-[#0d1117] rounded-3xl p-8 shadow-2xl border border-gray-800 text-gray-300">
-                <h2 class="text-2xl font-bold mb-6 text-white border-b border-gray-700 pb-4">🗂️ Atomic React Structure Tree</h2>
-                
-                <div class="font-mono text-sm leading-8 ml-4">
-                    <div class="flex items-center"><span class="text-yellow-300 mr-2 text-lg">📁</span><span class="font-bold text-white">src/</span></div>
-                    
-                    <div class="flex items-center mt-2 ml-6 group"><span class="text-blue-400 mr-2 text-lg">📁</span><span class="text-blue-200 group-hover:text-blue-300">components/</span> <span class="text-gray-500 ml-3 italic"># Atomic UI Layout Elements</span></div>
-                    <div class="flex items-center ml-12 hover:text-white"><span class="text-gray-400 mr-2">├─</span> atoms/ <span class="text-gray-500 ml-2 italic">(Button.tsx, Input.tsx, Spinner.tsx)</span></div>
-                    <div class="flex items-center ml-12 hover:text-white"><span class="text-gray-400 mr-2">├─</span> molecules/ <span class="text-gray-500 ml-2 italic">(FormGroup.tsx, SearchBar.tsx)</span></div>
-                    <div class="flex items-center ml-12 hover:text-white"><span class="text-gray-400 mr-2">└─</span> organisms/ <span class="text-gray-500 ml-2 italic">(Navbar.tsx, Sidebar.tsx)</span></div>
-                    
-                    <div class="flex items-center mt-2 ml-6 group"><span class="text-emerald-400 mr-2 text-lg">📁</span><span class="text-emerald-200 group-hover:text-emerald-300">pages/</span> <span class="text-gray-500 ml-3 italic"># Isolated Routable Views</span></div>
-                    <div class="flex items-center ml-12 hover:text-white"><span class="text-gray-400 mr-2">├─</span> Auth/ <span class="text-gray-500 ml-2 italic">(Login.tsx, Register.tsx)</span></div>
-                    <div class="flex items-center ml-12 hover:text-white"><span class="text-gray-400 mr-2">├─</span> Dashboard/ <span class="text-gray-500 ml-2 italic">(LearnerDash.tsx, MentorDash.tsx)</span></div>
-                    <div class="flex items-center ml-12 hover:text-white"><span class="text-gray-400 mr-2">└─</span> Mentors/ <span class="text-gray-500 ml-2 italic">(BrowseMentors.tsx, ApplyMentor.tsx)</span></div>
-                    
-                    <div class="flex items-center mt-2 ml-6 group"><span class="text-purple-400 mr-2 text-lg">📁</span><span class="text-purple-200 group-hover:text-purple-300">services/</span> <span class="text-gray-500 ml-3 italic"># API Network Communication</span></div>
-                    <div class="flex items-center ml-12 hover:text-white"><span class="text-gray-400 mr-2">├─</span> <span class="text-gray-300">api.ts</span> <span class="text-gray-500 ml-2 italic">(Central Axios Configuration)</span></div>
-                    <div class="flex items-center ml-12 hover:text-white"><span class="text-gray-400 mr-2">└─</span> <span class="text-gray-300">types.ts</span> <span class="text-gray-500 ml-2 italic">(TypeScript DTO interfaces matching Backend)</span></div>
-                    
-                    <div class="flex items-center mt-2 ml-6 group"><span class="text-orange-400 mr-2 text-lg">📁</span><span class="text-orange-200 group-hover:text-orange-300">store/</span> <span class="text-gray-500 ml-3 italic"># Redux Setup</span></div>
-                    <div class="flex items-center ml-12 hover:text-white"><span class="text-gray-400 mr-2">└─</span> <span class="text-gray-300">authSlice.ts</span> <span class="text-gray-500 ml-2 italic">(JWT Tokens & Refresh Logic)</span></div>
-                </div>
-            </div>
-
-            <!-- Page Implementation Rules -->
-            <div class="col-span-1 bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 flex flex-col justify-between">
-                <div>
-                    <h2 class="text-xl font-bold mb-6 text-gray-800 flex items-center border-b pb-4">
-                        <span class="mr-3 text-2xl">🚦</span> Route Guards
-                    </h2>
-                    <p class="text-sm text-gray-500 mb-6 leading-relaxed">Specific application pages map strictly to Java backend JWT Role privileges. Unauthorized traversals trigger automatic router kickbacks redirecting unauthorized visitors.</p>
-                    
-                    <ul class="space-y-4">
-                        <li class="bg-gray-50 p-4 border border-gray-200 rounded-xl shadow-sm hover:shadow transition">
-                            <strong class="text-sm text-gray-800 block">ProtectedRoute (Base API)</strong>
-                            <p class="text-xs text-gray-500 mt-1">Requires user context state `isAuthenticated == true`. Protects Dashboards, Bookings, Notifications.</p>
-                        </li>
-                        <li class="bg-purple-50 p-4 border border-purple-200 rounded-xl shadow-sm hover:shadow transition">
-                            <strong class="text-sm text-purple-800 block">MentorRoute</strong>
-                            <p class="text-xs text-purple-600 mt-1">Stops `LEARNER` roles. Allows access to Mentor availability schedules, earnings overviews.</p>
-                        </li>
-                        <li class="bg-indigo-50 p-4 border border-indigo-200 rounded-xl shadow-sm hover:shadow transition">
-                            <strong class="text-sm text-indigo-800 block">AdminRoute</strong>
-                            <p class="text-xs text-indigo-600 mt-1">Only accessible via `ROLE_ADMIN` context token. Renders the specialized analytics and Mentor Approval tables.</p>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-
-        <div class="mt-20 border-t border-gray-200 pt-8 text-center text-sm text-gray-400 font-medium">
-            Ensure all project documentation is updated whenever system changes are made, and add new sections if required.
-        </div>
+<body>
+  <div id="progress-container"><div id="progress-bar"></div></div>
+  
+  <header>
+    <div class="header-text">
+      <h1>SkillSync Frontend Architecture</h1>
+      <p>Presentation Ready Deep-Dive Masterclass (1-Hour Format)</p>
     </div>
+    <div class="time-badge">Est. Presentation: 60 mins</div>
+  </header>
+
+  <div class="container">
+    <aside>
+      <div class="nav-title">Presentation Agenda</div>
+      <nav><ul id="navlist"></ul></nav>
+    </aside>
+    
+    <main id="content"></main>
+  </div>
+
+  <script>
+    const db = [
+      {
+        id: "overview",
+        title: "1. Overview & Core Philosophy",
+        desc: "Why we built the frontend the way we did: setting expectations for a highly-performant interactive platform.",
+        theory: "<p><strong>What is an SPA?</strong> A Single Page Application (SPA) replaces the traditional model of requesting full HTML documents for every page change. Instead, an SPA downloads a single skeleton HTML file and uses JavaScript to dynamically rewrite the content (DOM). This gives the user an 'app-like' experience with instant routing and no page refreshes.</p><p><strong>Why React?</strong> We utilized React over alternatives like Angular or vanilla HTML/JS due to its component-driven architecture and Virtual DOM. Angular forces strict structural opinions, while React enables us to architect explicitly for SkillSync's needs. The Virtual DOM ensures that when underlying data changes, only the exact pixels needing updates are re-rendered, yielding peak performance.</p>",
+        impl: "<p><strong>Architecture Division:</strong> The SkillSync Frontend is a standalone application built using the <code>Vite</code> toolchain. It has zero code entanglement with the Spring Boot backend, meaning it can be scaled, deployed, and secured individually. By decoupling the presentation logic from the backend, we enforce strict boundary separation where all interactions occur exclusively over RESTful JSON API endpoints.</p>"
+      },
+      {
+        id: "architecture",
+        title: "2. Architecture & Code Quality",
+        desc: "How we structured our repository to ensure thousands of components don't become unmaintainable spaghetti code.",
+        theory: "<p><strong>Feature-Based vs Type-Based Structure:</strong> A common anti-pattern in React is organizing by file types (all components in one folder, all hooks in another). Over time, this makes maintaining domain logic a nightmare. <strong>Feature-Based Architecture</strong> groups files by their domain (e.g., Auth, Profile, Sessions). This means everything related to Mentors lives in one boundary.</p>",
+        impl: "<p><strong>SkillSync Layout:</strong> We use an atomic-inspired, feature-sliced structure in <code>src/</code>.</p><ul><li><code>components/common</code> contains purely visual, 'dumb' components (Buttons, Inputs) re-used everywhere.</li><li><code>features/</code> contains isolated modules (e.g., <code>features/auth</code> has its own hooks, API definitions, and UI).</li><li><code>pages/</code> stitch together the features into specific route endpoints.</li></ul><p>This enforces separation of concerns—UI layout doesn't care about API logic.</p>"
+      },
+      {
+        id: "api",
+        title: "3. API Integration & Data Handling",
+        desc: "The bridge between our React application and the Spring Cloud microservices.",
+        theory: "<p><strong>The Challenge of APIs:</strong> Managing HTTP requests securely across an entire app can lead to code duplication, missed error handling, and security leaks (like forgetting JWT tokens). <strong>Axios Interceptors</strong> act as middleware for HTTP constraints: intercepting responses, modifying headers, and normalizing JSON.</p>",
+        impl: "<p><strong>How we use Axios:</strong> We instantiated a global Axios instance inside <code>src/services/axiosInstance.ts</code>. Before any request leaves the browser, our Request Interceptor automatically injects the Bearer JWT token into the header. If the response returns a <strong>401 Unauthorized</strong>, our Response Interceptor throws a global event that clears Redux and force-redirects the user to the Login screen via React Router—all without a single line of API-specific code inside the UI components.</p>"
+      },
+      {
+        id: "auth",
+        title: "4. Authentication & Authorization",
+        desc: "How we secure user access and ensure strict Role-Based Access Control (RBAC).",
+        theory: "<p><strong>Authentication vs Authorization:</strong> Authentication is identifying <em>who</em> the user is (JWT validation). Authorization is knowing <em>what</em> they are allowed to do (Role access). <strong>JWT (JSON Web Tokens)</strong> are stateless tokens, cryptographically signed by the backend. The frontend decodes the payload to instantly know the user role without querying the DB.</p>",
+        impl: "<p><strong>SkillSync Guard Logic:</strong> We implemented <code>ProtectedRoute</code> wrapper components. When a user navigates to <code>/admin/dashboard</code>, the component checks the Redux slice for the user role. If the role is <code>Learner</code>, it interrupts the render cycle and silently rewrites the route to their authorized dashboard. Authentication tokens are securely held in memory or secure HTTP-only cookies to avoid XSS (Cross Site Scripting) attacks extracting the payload.</p>"
+      },
+      {
+        id: "error",
+        title: "5. Error Handling & Resilience",
+        desc: "Protecting the user experience when things inevitably fail.",
+        theory: "<p><strong>React Error Boundaries vs Async Checking:</strong> In React, if a component crashes during render, the whole DOM tree unmounts resulting in a blank white screen. <strong>Error Boundaries</strong> are specialized React class components that catch rendering exceptions gracefully. However, they don't catch Async API failures, which require explicit `.catch()` implementation.</p>",
+        impl: "<p><strong>Unified Toast Strategy:</strong> We utilize <code>react-hot-toast</code> integrated directly into our Axios interceptors. When the backend gateway returns a <code>400 Bad Request</code> containing field validation errors, the interceptor parses the JSON and globally pops a styled error toast alerting the user. The component rendering crash is prevented by global ErrorBoundary wrappers that fallback to a 'Something went wrong' UI rather than breaking the application.</p>"
+      },
+      {
+        id: "state",
+        title: "6. State Management Deep-Dive",
+        desc: "Why we use multiple tools for state, rather than piling everything into Redux.",
+        theory: "<p><strong>What is State?</strong> State is any data that changes over time affecting the UI. Historically, teams shoved all state into Redux, which caused massive boilerplate and synchronization bugs. <strong>Server State vs Client State</strong>: Server State (like user profile data) is asynchronous, cached, and owned by the DB. Client State (like dark mode toggle) is synchronous and owned by the browser.</p><p><strong>Why React Query?</strong> It operates as a powerful async cache manager, handling deduplication, auto-refetching, and pagination infinitely better than raw Redux thunks.</p>",
+        impl: "<p><strong>Two-Pronged Architecture:</strong> In SkillSync, if the state is synchronous global UI manipulation (e.g. tracking if the sidebar is open, or tracking the user's logged-in identity), we use <strong>Redux Toolkit (RTK)</strong>. For all backend operations (e.g. fetching the list of Mentor Avaliabilities), we use <strong>React Query (TanStack)</strong>. This guarantees that complex fetching logic is handled by specialized caching tools while keeping Redux clean.</p>"
+      },
+      {
+        id: "env",
+        title: "7. Environment & Configuration",
+        desc: "Deploying SkillSync to different stages without rewriting code.",
+        theory: "<p><strong>12-Factor App methodology:</strong> The methodology states that config should be strictly separated from code. Hardcoding API endpoints implies rebuilding the entire code base for every deployment phase (Dev -> Staging -> Prod).</p>",
+        impl: "<p><strong>Vite Env Automation:</strong> We utilize Vite's internal parsing of <code>.env</code> files. Code references API calls via <code>import.meta.env.VITE_API_URL</code>. In development, it defaults to our localhost Spring Gateway. In production environments/Docker instances, it's overwritten by production variables, ensuring zero code changes during CI/CD pipelines.</p>"
+      },
+      {
+        id: "components",
+        title: "8. Component Design",
+        desc: "Creating isolated, highly reusable elements to avoid duplication.",
+        theory: "<p><strong>Atomic Design Concept:</strong> UIs break down into Atoms (Buttons), Molecules (Search bars), Organisms (Headers), and Pages. Writing highly pure atomic components (components that only rely on passed Props, not global state) means you can drop that component anywhere without breaking things.</p>",
+        impl: "<p><strong>The SkillSync Approach:</strong> Take our custom Button component. We utilize <code>class-variance-authority (CVA)</code> alongside Tailwind. Instead of writing massive inline ternary statements, CVA defines button 'Variants' (Primary, Outline, Ghost) and 'Sizes' (sm, md, lg). When developing a new page, a developer simply calls <code>&lt;Button variant='primary' size='lg'&gt;</code> ensuring pixel-perfect consistency everywhere.</p>"
+      },
+      {
+        id: "ux",
+        title: "9. User Experience Strategy",
+        desc: "How we manipulate perceived performance to make the app feel instant.",
+        theory: "<p><strong>Perceived Performance vs Actual Performance:</strong> Users abandon apps that 'feel' slow. Rather than staring at a generic spinning circle, <strong>Skeleton Loaders</strong> mimic the layout of incoming text so the user's eye adjusts instantly. <strong>Optimistic UI</strong> is a technique where the UI updates to represent success before the API actually responds, correcting itself only if the backend throws an error.</p>",
+        impl: "<p><strong>SkillSync Implementations:</strong> We built pure Tailwind skeleton pulse components for complex tables like Mentor Avaliability. When performing lightweight actions (liking, approving logic), we leverage React Query's <code>onMutate</code> handlers to instantly apply Optimistic UI transitions, creating a snappy zero-latency sensation.</p>"
+      },
+      {
+        id: "design",
+        title: "10. UI Design & Visual System",
+        desc: "The aesthetic philosophy guaranteeing a premium brand feel.",
+        theory: "<p><strong>Why Tailwind CSS?</strong> Traditional CSS creates bloated stylesheets, scope-leaking side effects, and naming convention nightmares (BEM). Utility-first frameworks like Tailwind map CSS variables directly to inline classes, ensuring no dead code is shipped and creating a constrained design system automatically.</p>",
+        impl: "<p><strong>Implementation:</strong> We configured <code>tailwind.config.ts</code> with explicit SkillSync brand tokens (slate grays, primary indigos). We employed <em>Glassmorphism</em> (blur filters + semi-transparent backgrounds) on navigation bars and floating cards to provide depth layering, resulting in an interface matching top-tier SaaS standards.</p>"
+      },
+      {
+        id: "responsive",
+        title: "11. Responsiveness & Adaptive UI",
+        desc: "Ensuring visual fidelity on every screen size natively.",
+        theory: "<p><strong>Mobile-First Design:</strong> Instead of writing desktop code and overriding it for mobile (which is slower to compute), we write mobile CSS first, then specify layout upgrades for larger breakpoints.</p>",
+        impl: "<p><strong>The Execution:</strong> Using Tailwind's <code>md:</code> and <code>lg:</code> prefixes, components are innately fluid. A mentor grid naturally flows as 1-column on phones. On <code>md:</code> (tablets), it morphs to 2-columns, and on <code>lg:</code> it expands to 3. The navigation sidebar natively converts to a collapsing burger menu on smaller viewports.</p>"
+      },
+      {
+        id: "perf",
+        title: "12. Performance Optimization Engine",
+        desc: "Keeping browser memory usage low and Time To Interactive (TTI) blazingly fast.",
+        theory: "<p><strong>Code Splitting:</strong> By default, Vite bundles your entire application into a single JavaScript file. If your app is large, downloading this file delays rendering heavily. Code Splitting fragments the app into logical chunks downloaded only when necessary.</p><p><strong>Re-render Thrashing:</strong> React re-renders when state changes. If handled poorly, typing in a text field can force a massive complex table to redraw on every keystroke, freezing the UI.</p>",
+        impl: "<p><strong>Our Solutions:</strong> 1. We wrap deep routes via <code>React.lazy()</code>. A Learner user literally never downloads the Javascript necessary to run the Admin pages. 2. Heavy components (like complex data grids) are wrapped in <code>React.memo</code>, instructing React to skip rendering them unless their exact data props change, securing 60FPS scrolling.</p>"
+      },
+      {
+        id: "rtc",
+        title: "13. Real Time Communication",
+        desc: "The technology powering instant updates without asking the user to refresh.",
+        theory: "<p><strong>WebSockets vs HTTP Polling:</strong> HTTP is designed for single Request-Response bursts. Polling asks 'Is there an update?' every 5 seconds, generating massive server load. <strong>WebSockets</strong> create a persistent tunnel—the server simply pushes data directly to the client the millisecond it's available.</p>",
+        impl: "<p><strong>StompJS Integration:</strong> SkillSync utilizes <code>SockJS</code> and <code>STOMP</code> to subscribe to internal message queues inside Spring Boot. When a mentor approves a session, the backend fires an event over the socket tube. The frontend listener captures this and triggers a Redux/React Query cache invalidation immediately updating the UI automatically.</p>"
+      },
+      {
+        id: "payment",
+        title: "14. Payment Flow Integrity",
+        desc: "Processing financial transactions while remaining legally and technically sound.",
+        theory: "<p><strong>PCI Compliance & Security:</strong> If a web server directly processes credit card numbers, it is legally subject to immense auditing and liability. The modern approach utilizes injected IFrames (like Stripe Elements) where the card numbers are typed securely into the payment gateway's server directly, totally bypassing our UI memory.</p>",
+        impl: "<p><strong>Session Payment Flow:</strong> We implemented the pre-intent creation flow. The user attempts to book a session. Our UI pings our BE Payment Service. BE securely generates a 'Payment Intent Key'. The Frontend passes this key into the Secure Payment Modal component, allowing the transaction to complete directly, whereupon we capture the callback receipt.</p>"
+      },
+      {
+        id: "test",
+        title: "15. Quality Assurance & Debugging",
+        desc: "Confirming code works today and doesn't break tomorrow.",
+        theory: "<p><strong>Testing Pyramids:</strong> Unit tests confirm math logic works. Integration tests confirm components work. E2E (End to End) tests confirm the user flow works.</p>",
+        impl: "<p><strong>The Toolkit:</strong> We engineered the FE to be easily debuggable. By embedding <strong>React Query DevTools</strong> and <strong>Redux DevTools</strong>, during our Viva demonstration we can pop open a panel and mathematically prove exactly what API queries were triggered and precisely what the JSON payload payload looks like without printing any console.logs.</p>"
+      },
+      {
+        id: "docs",
+        title: "16. Codebase Documentation",
+        desc: "How we allow new developers to onboard the code rapidly.",
+        theory: "<p><strong>Self-Documenting Code vs Comments:</strong> Excessive commenting usually goes stale. Strong Types in TypeScript act as a living contract that the compiler enforces, making the code mathematically self-documenting.</p>",
+        impl: "<p><strong>Type Definitions:</strong> In <code>src/types/</code>, we define explicit interfaces for every backend entity (e.g. <code>SessionDTO</code>). If the backend API expects a string but we try to send a number, VS Code throws a redline error instantly before the developer even runs the app. JSDoc tooltips are used for advanced abstract custom hook logic.</p>"
+      },
+      {
+        id: "feature",
+        title: "17. Feature Completeness",
+        desc: "Checking the boxes on the fundamental application requirements.",
+        theory: "<p><strong>End to End Execution:</strong> A project isn't just about elegant code; it's about executing user stories logically. Mentors must be able to define availability, Learners must be able to view it and book, and Admins must moderate the entire ecosystem.</p>",
+        impl: "<p><strong>What is Working:</strong> We successfully architected all three portals (Learner, Mentor, Admin) running simultaneously through the RBAC router. Live data is routed correctly over the API gateway resulting in fully functioning dashboards mimicking enterprise EdTech products fully backed by functional Spring microservices.</p>"
+      },
+      {
+        id: "trace",
+        title: "18. Code Traceability (Explainability)",
+        desc: "The path of logic execution from click to database.",
+        theory: "<p><strong>Why is tracing important?</strong> If a button breaks, you need to know exactly the 5-step path it took through the architecture to isolate the failure quickly without guessing.</p>",
+        impl: "<p><strong>The SkillSync Flow:</strong> To explain this during our Viva, the execution path is strictly standardized: 1. User clicks <code>Submit</code> -> 2. The Form executes a <code>React Query Mutation hook</code> -> 3. The Hook fires the <code>Axios API Service function</code> -> 4. Axios Interceptors attach Auth Headings -> 5. The Payload routes through the Docker API Gateway -> Microservice operates. No logic deviates from this pipeline.</p>"
+      },
+      {
+        id: "comm",
+        title: "19. Communication & Challenge Resolution",
+        desc: "How the frontend team navigated inter-team blockers.",
+        theory: "<p><strong>CORS (Cross-Origin Resource Sharing):</strong> A browser security feature blocking web apps from making requests to a domain different from the one that served the web page, constantly breaking separated FE/BE development workflows.</p>",
+        impl: "<p><strong>Solving System Frictions:</strong> During development, the Spring Gateway threw constant chunked encoding and CORS rejections. The FE team dynamically resolved this by configuring Vite Proxy configurations targeting the local network, mocking pre-flight <code>OPTIONS</code> requests properly, bridging the communication gap until the infrastructure team finalized the Docker Gateway rules.</p>"
+      },
+      {
+        id: "sec",
+        title: "20. Frontend Security Implementations",
+        desc: "Protecting users against common OWASP Top 10 web vulnerabilities.",
+        theory: "<p><strong>XSS (Cross Site Scripting):</strong> When a malicious user inputs script tags into a chat/comment box, forcing other users' browsers to run that javascript. <strong>CSRF (Cross Site Request Forgery):</strong> Tricking a user's browser into executing an action on another site where they are authenticated.</p>",
+        impl: "<p><strong>Protective Layers:</strong> By default, React converts all text inputs to absolute strings, neutralizing XSS vectors (we completely ban the use of <code>dangerouslySetInnerHTML</code>). API payload data is sanitized by Axios. JWT state tokens are isolated from local third-party script extraction.</p>"
+      },
+      {
+        id: "advanced",
+        title: "21. Advanced Practices Engaged",
+        desc: "The extra 10% that separates generic projects from professional deployments.",
+        theory: "<p><strong>Debouncing & Throttling:</strong> Without debouncing, a user typing 'Java' in a search bar sends 4 separate HTTP requests (J, a, v, a) to the database, crashing servers. Debouncing is a technique that pauses the API trigger until the user stops typing for ~500ms.</p>",
+        impl: "<p><strong>Custom Hook Tooling:</strong> We authored internal generic custom hooks such as <code>useDebounce</code> and <code>useLocalStorage</code>. We utilized Intersection Observers to trigger scrolling animations natively. These practices prevent API spam and greatly optimize both client CPU usage and backend database costs.</p>"
+      }
+    ];
+
+    function renderPage() {
+      const navlist = document.getElementById("navlist");
+      const content = document.getElementById("content");
+
+      db.forEach((block, idx) => {
+        // Build Sidebar Link
+        const li = document.createElement("li");
+        const a = document.createElement("a");
+        a.href = "#" + block.id;
+        a.id = "link-" + block.id;
+        a.innerHTML = block.title;
+        li.appendChild(a);
+        navlist.appendChild(li);
+
+        // Build Content Article
+        const article = document.createElement("article");
+        article.className = "section-card";
+        article.id = block.id;
+
+        article.innerHTML = `
+          <h2>${block.title}</h2>
+          <div class="section-desc">${block.desc}</div>
+          
+          <div class="block-title">Deep-Dive Theory</div>
+          <div class="theory-box">
+             ${block.theory}
+          </div>
+
+          <div class="block-title">SkillSync Implementation</div>
+          <div class="impl-box">
+             ${block.impl}
+          </div>
+        `;
+        content.appendChild(article);
+      });
+      
+      // Set first active
+      document.getElementById("link-overview").classList.add("active");
+    }
+
+    function initScrollSpy() {
+      const sections = document.querySelectorAll(".section-card");
+      const navLinks = document.querySelectorAll("nav a");
+      const progressBar = document.getElementById("progress-bar");
+
+      window.addEventListener("scroll", () => {
+        let current = "";
+        
+        // Progress Calc
+        const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+        const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrolled = (winScroll / height) * 100;
+        progressBar.style.width = scrolled + "%";
+
+        // Spy Calc
+        sections.forEach((sec) => {
+          const top = sec.offsetTop;
+          if (pageYOffset >= top - 200) {
+            current = sec.getAttribute("id");
+          }
+        });
+
+        navLinks.forEach((link) => {
+          link.classList.remove("active");
+          if (link.getAttribute("href") === "#" + current) {
+            link.classList.add("active");
+          }
+        });
+      });
+    }
+
+    // Init
+    document.addEventListener("DOMContentLoaded", () => {
+      renderPage();
+      initScrollSpy();
+    });
+  </script>
 </body>
 </html>

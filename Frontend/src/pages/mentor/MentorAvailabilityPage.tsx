@@ -15,42 +15,27 @@ const MentorAvailabilityPage = () => {
   const [dayOfWeek, setDayOfWeek] = useState('1');
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('10:00');
-  const [localSlots, setLocalSlots] = useState<any[]>([]);
-
-  const { data: mentorData, isLoading } = useQuery({
-    queryKey: ['mentor', 'my', 'availability'],
+  const { data: slots = [], isLoading } = useQuery({
+    queryKey: ['mentor', 'availability'],
     queryFn: async () => {
-      const res = await api.get('/api/mentors/me', { _skipErrorRedirect: true } as any);
+      const res = await api.get('/api/users/mentor/availability');
       return res.data;
     },
   });
 
-  useEffect(() => {
-    setLocalSlots(mentorData?.availability || []);
-  }, [mentorData]);
-
   const addSlotMutation = useMutation({
     mutationFn: async () =>
       api.post(
-        '/api/mentors/me/availability',
+        '/api/users/mentor/availability',
         {
           dayOfWeek: Number(dayOfWeek),
           startTime: `${startTime}:00`,
           endTime: `${endTime}:00`,
-        },
-        { _skipErrorRedirect: true } as any
+        }
       ),
-    onSuccess: (response) => {
-      const createdSlot = response?.data;
-      if (createdSlot?.id) {
-        setLocalSlots((prev) => {
-          const exists = prev.some((slot: any) => slot.id === createdSlot.id);
-          return exists ? prev : [...prev, createdSlot];
-        });
-      }
+    onSuccess: () => {
       showToast({ message: 'Availability slot added.', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: ['mentor', 'my'] });
-      queryClient.invalidateQueries({ queryKey: ['mentor', 'my', 'availability'] });
+      queryClient.invalidateQueries({ queryKey: ['mentor', 'availability'] });
     },
     onError: () => {
       showToast({ message: 'Failed to add availability slot.', type: 'error' });
@@ -58,19 +43,15 @@ const MentorAvailabilityPage = () => {
   });
 
   const deleteSlotMutation = useMutation({
-    mutationFn: async (slotId: number) => api.delete(`/api/mentors/me/availability/${slotId}`, { _skipErrorRedirect: true } as any),
-    onSuccess: (_, slotId) => {
-      setLocalSlots((prev) => prev.filter((slot: any) => slot.id !== slotId));
+    mutationFn: async (slotId: number) => api.delete(`/api/users/mentor/availability/${slotId}`),
+    onSuccess: () => {
       showToast({ message: 'Availability slot removed.', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: ['mentor', 'my'] });
-      queryClient.invalidateQueries({ queryKey: ['mentor', 'my', 'availability'] });
+      queryClient.invalidateQueries({ queryKey: ['mentor', 'availability'] });
     },
     onError: () => {
       showToast({ message: 'Failed to remove slot.', type: 'error' });
     },
   });
-
-  const slots = localSlots;
 
   const sortedSlots = [...slots].sort((a: any, b: any) => {
     if (a.dayOfWeek !== b.dayOfWeek) return a.dayOfWeek - b.dayOfWeek;

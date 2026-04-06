@@ -92,7 +92,7 @@ const MentorProfilePage = () => {
   const mentorRating = Number(mentorAny.rating ?? mentorAny.avgRating ?? 0);
   const mentorReviews = Number(mentorAny.reviewCount ?? mentorAny.totalReviews ?? 0);
   const mentorExperience = Number(mentorAny.experience ?? mentorAny.experienceYears ?? 0);
-  const mentorAvatar = mentorAny.profileImage || mentorAny.avatarUrl || 'https://via.placeholder.com/150';
+
 
   return (
     <PageLayout>
@@ -110,11 +110,9 @@ const MentorProfilePage = () => {
           <div className="flex flex-col md:flex-row gap-8">
             {/* Profile Picture */}
             <div className="flex-shrink-0">
-              <img
-                src={mentorAvatar}
-                alt={mentorDisplayName}
-                className="w-40 h-40 rounded-full object-cover border-4 border-gray-200"
-              />
+              <div className="w-40 h-40 rounded-full bg-blue-500 text-white flex items-center justify-center text-5xl font-bold border-4 border-gray-200 shadow-md">
+                {(mentorAny.firstName?.[0] || '') + (mentorAny.lastName?.[0] || '') || mentorDisplayName.charAt(0)}
+              </div>
             </div>
 
             {/* Mentor Info */}

@@ -21,7 +21,7 @@ import MentorAvailabilityPage from './pages/mentor/MentorAvailabilityPage';
 import EarningsPage from './pages/mentor/EarningsPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import UsersCenterPage from './pages/admin/UsersCenterPage';
-import PlatformFinancesPage from './pages/admin/PlatformFinancesPage';
+import MentorApprovalsPage from './pages/admin/MentorApprovalsPage';
 import DiscoverMentorsPage from './pages/mentors/DiscoverMentorsPage';
 import MentorDetailPage from './pages/mentors/MentorDetailPage';
 import MySessionsPage from './pages/sessions/MySessionsPage';
@@ -72,9 +72,10 @@ function App() {
               <Route path="/mentor" element={<MentorDashboardPage />} />
               <Route path="/mentor/availability" element={<MentorAvailabilityPage />} />
               <Route path="/mentor/earnings" element={<EarningsPage />} />
+              <Route path="/mentor/sessions" element={<MySessionsPage />} />
               <Route path="/admin" element={<AdminDashboardPage />} />
               <Route path="/admin/users" element={<UsersCenterPage />} />
-              <Route path="/admin/finances" element={<PlatformFinancesPage />} />
+              <Route path="/admin/mentor-approvals" element={<MentorApprovalsPage />} />
               <Route path="/mentors" element={<DiscoverMentorsPage />} />
               <Route path="/mentors/:id" element={<MentorDetailPage />} />
               <Route path="/sessions" element={<MySessionsPage />} />

@@ -1,3 +1,9 @@
+﻿# Presentation Sync Note
+
+Updated for final presentation on 2026-04-06. Start with docs/00_Presentation_Playbook.md for the guided narrative, then use this document for deep details.
+
+---
+
 # 07 Testing and QA Strategy
 
 
@@ -6,38 +12,38 @@
 
 ## Content from: doc4_testing_strategy.md
 
-# 📄 DOCUMENT 4: TESTING STRATEGY
+# ðŸ“„ DOCUMENT 4: TESTING STRATEGY
 
 > [!IMPORTANT]
 > **Architecture Update (March 2026):** The backend architecture has been simplified:
-> - **Mentor Service + Group Service → User Service** (port 8082)
-> - **Review Service → Session Service** (port 8085)
+> - **Mentor Service + Group Service â†’ User Service** (port 8082)
+> - **Review Service â†’ Session Service** (port 8085)
 >
 > **CQRS + Redis Caching (March 2026):** All business services now use the **CQRS pattern** with **Redis 7.2** distributed caching. Unit tests mock `CacheService` to verify cache hit/miss/invalidation behavior. Integration tests include Redis via Testcontainers.
 >
 > Testing principles remain the same, but tests for merged services now reside in their new parent service modules. See `service_architecture_summary.md` for details.
 
-## SkillSync — Comprehensive Testing Plan
+## SkillSync â€” Comprehensive Testing Plan
 
 ---
 
 ## 4.1 Testing Pyramid
 
 ```
-                    ┌──────────┐
-                    │   E2E    │    15% — Critical user journeys
-                    │ Playwright│    Slow, expensive, high confidence
-                    ├──────────┤
-                    │          │
-                ┌───┤  Integ.  ├───┐  25% — Service interactions, API contracts
-                │   │  Tests   │   │  Medium speed, medium confidence
-                ├───┤          ├───┤
-                │   │          │   │
-            ┌───┤   ├──────────┤   ├───┐
-            │   │   │          │   │   │  60% — Business logic, utilities
-            │   │   │   Unit   │   │   │  Fast, cheap, frequent
-            │   │   │  Tests   │   │   │
-            └───┴───┴──────────┴───┴───┘
+                    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                    â”‚   E2E    â”‚    15% â€” Critical user journeys
+                    â”‚ Playwrightâ”‚    Slow, expensive, high confidence
+                    â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+                    â”‚          â”‚
+                â”Œâ”€â”€â”€â”¤  Integ.  â”œâ”€â”€â”€â”  25% â€” Service interactions, API contracts
+                â”‚   â”‚  Tests   â”‚   â”‚  Medium speed, medium confidence
+                â”œâ”€â”€â”€â”¤          â”œâ”€â”€â”€â”¤
+                â”‚   â”‚          â”‚   â”‚
+            â”Œâ”€â”€â”€â”¤   â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤   â”œâ”€â”€â”€â”
+            â”‚   â”‚   â”‚          â”‚   â”‚   â”‚  60% â€” Business logic, utilities
+            â”‚   â”‚   â”‚   Unit   â”‚   â”‚   â”‚  Fast, cheap, frequent
+            â”‚   â”‚   â”‚  Tests   â”‚   â”‚   â”‚
+            â””â”€â”€â”€â”´â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”´â”€â”€â”€â”˜
 ```
 
 ### Strategy at a Glance
@@ -60,12 +66,12 @@
 
 ### 4.2.1 Unit Testing (JUnit 5 + Mockito)
 
-#### CQRS Service Layer Testing — Cache Interactions
+#### CQRS Service Layer Testing â€” Cache Interactions
 
 With the CQRS refactoring, service tests now verify **cache behavior** in addition to business logic:
 
 ```java
-// Example: SkillQueryServiceTest.java — Testing cache-aside pattern
+// Example: SkillQueryServiceTest.java â€” Testing cache-aside pattern
 @ExtendWith(MockitoExtension.class)
 class SkillQueryServiceTest {
 
@@ -107,7 +113,7 @@ class SkillQueryServiceTest {
     }
 }
 
-// Example: SkillCommandServiceTest.java — Testing cache invalidation
+// Example: SkillCommandServiceTest.java â€” Testing cache invalidation
 @ExtendWith(MockitoExtension.class)
 class SkillCommandServiceTest {
 
@@ -542,7 +548,7 @@ class SessionServiceIntegrationTest {
     @Autowired private SessionRepository sessionRepository;
 
     @Test
-    @DisplayName("Full session lifecycle: create → accept → complete")
+    @DisplayName("Full session lifecycle: create â†’ accept â†’ complete")
     void sessionLifecycle_FullFlow() {
         // 1. Create session
         HttpHeaders headers = new HttpHeaders();
@@ -626,29 +632,29 @@ class SkillServiceCQRSIntegrationTest {
     @Autowired private RedisTemplate<String, Object> redisTemplate;
 
     @Test
-    @DisplayName("Full cache lifecycle: miss → populate → hit → invalidate → miss")
+    @DisplayName("Full cache lifecycle: miss â†’ populate â†’ hit â†’ invalidate â†’ miss")
     void cacheLifecycle_FullFlow() {
         // 1. Create a skill (write)
         commandService.createSkill(new CreateSkillRequest("Java", "Programming", "desc"));
 
-        // 2. First read → cache MISS → populates cache
+        // 2. First read â†’ cache MISS â†’ populates cache
         Skill first = queryService.getSkillById(1L);
         assertNotNull(first);
 
         // 3. Verify key exists in Redis
         assertNotNull(redisTemplate.opsForValue().get("skill:1"));
 
-        // 4. Second read → cache HIT (no DB query)
+        // 4. Second read â†’ cache HIT (no DB query)
         Skill second = queryService.getSkillById(1L);
         assertEquals(first.getName(), second.getName());
 
-        // 5. Update skill → cache INVALIDATED
+        // 5. Update skill â†’ cache INVALIDATED
         commandService.updateSkill(1L, new UpdateSkillRequest("Java SE", "Programming", "desc"));
 
         // 6. Verify key removed from Redis
         assertNull(redisTemplate.opsForValue().get("skill:1"));
 
-        // 7. Next read → cache MISS again → fresh data from DB
+        // 7. Next read â†’ cache MISS again â†’ fresh data from DB
         Skill updated = queryService.getSkillById(1L);
         assertEquals("Java SE", updated.getName());
     }
@@ -1196,20 +1202,20 @@ test.describe('Mentor Approval Flow', () => {
 
 | Metric | Target | Tool |
 |---|---|---|
-| Backend line coverage | ≥ 80% | JaCoCo |
-| Backend branch coverage | ≥ 70% | JaCoCo |
-| Frontend line coverage | ≥ 75% | Jest Coverage |
-| Frontend branch coverage | ≥ 65% | Jest Coverage |
-| Critical path coverage | ≥ 90% | Custom report |
+| Backend line coverage | â‰¥ 80% | JaCoCo |
+| Backend branch coverage | â‰¥ 70% | JaCoCo |
+| Frontend line coverage | â‰¥ 75% | Jest Coverage |
+| Frontend branch coverage | â‰¥ 65% | Jest Coverage |
+| Critical path coverage | â‰¥ 90% | Custom report |
 | E2E scenario coverage | 5 core flows | Playwright |
 
-### Critical Flows (Must Have ≥90% Coverage)
+### Critical Flows (Must Have â‰¥90% Coverage)
 
-1. **User Registration + Login** — Auth Service + Frontend auth
-2. **Session Booking (w/ Payment)** — Book → Razorpay Checkout → Accept → Complete → Review
-3. **Mentor Onboarding** — Apply → Pay Mentor Fee → Auto-Approve / Admin fallback
-4. **Mentor Discovery** — Search with filters, pagination
-5. **Review Submission** — After completed session
+1. **User Registration + Login** â€” Auth Service + Frontend auth
+2. **Session Booking (w/ Payment)** â€” Book â†’ Razorpay Checkout â†’ Accept â†’ Complete â†’ Review
+3. **Mentor Onboarding** â€” Apply â†’ Pay Mentor Fee â†’ Auto-Approve / Admin fallback
+4. **Mentor Discovery** â€” Search with filters, pagination
+5. **Review Submission** â€” After completed session
 
 ---
 
@@ -1358,12 +1364,12 @@ jobs:
 
 ## Content from: backend_testing_guide.md
 
-# SkillSync Backend — Complete Testing Guide
+# SkillSync Backend â€” Complete Testing Guide
 
 > [!IMPORTANT]
 > **Architecture Update (March 2026):** The following services have been merged:
-> - **Mentor Service + Group Service → User Service** (port 8082)
-> - **Review Service → Session Service** (port 8085)
+> - **Mentor Service + Group Service â†’ User Service** (port 8082)
+> - **Review Service â†’ Session Service** (port 8085)
 >
 > **CQRS + Redis Caching (March 2026):** All business services now use Redis 7.2 for distributed caching. Services require a running Redis instance on port 6379. If Redis is unavailable, services fall back to direct PostgreSQL queries with zero data loss.
 >
@@ -1384,7 +1390,7 @@ jobs:
 
 ---
 
-## 📋 STEP 1: Prerequisites
+## ðŸ“‹ STEP 1: Prerequisites
 
 ### 1.1 Create PostgreSQL Databases & Schemas
 
@@ -1435,12 +1441,12 @@ Management UI: http://localhost:15672 (guest/guest)
 
 ### 1.3 Install & Start Redis
 
-**Option A — Docker (Recommended):**
+**Option A â€” Docker (Recommended):**
 ```powershell
 docker run -d --name skillsync-redis -p 6379:6379 redis:7.2-alpine --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
 ```
 
-**Option B — Manual install:**
+**Option B â€” Manual install:**
 Download from https://redis.io/download and start the service.
 
 Verify: `redis-cli ping` should return `PONG`
@@ -1450,9 +1456,9 @@ Verify: `redis-cli ping` should return `PONG`
 
 ---
 
-## 📋 STEP 2: Start Services
+## ðŸ“‹ STEP 2: Start Services
 
-### Option A — Docker (Recommended)
+### Option A â€” Docker (Recommended)
 
 ```powershell
 cd f:\SkillSync
@@ -1460,46 +1466,46 @@ docker-compose up --build
 ```
 
 This starts everything (Postgres, RabbitMQ, all services, API Gateway ingress). Wait for all containers to become healthy.  
-Verify: **http://localhost:8761** (Eureka Dashboard — all services should be registered)
+Verify: **http://localhost:8761** (Eureka Dashboard â€” all services should be registered)
 
-### Option B — Local (for development/debugging)
+### Option B â€” Local (for development/debugging)
 
 Open **separate terminals** for each service and run:
 
 ```powershell
-# Terminal 1 — Eureka Server (MUST start first, wait until ready)
+# Terminal 1 â€” Eureka Server (MUST start first, wait until ready)
 cd f:\SkillSync\eureka-server
 mvn spring-boot:run
 
-# Terminal 2 — Config Server
+# Terminal 2 â€” Config Server
 cd f:\SkillSync\config-server
 mvn spring-boot:run
 
-# Terminal 3 — API Gateway
+# Terminal 3 â€” API Gateway
 cd f:\SkillSync\api-gateway
 mvn spring-boot:run
 
-# Terminal 4 — Auth Service
+# Terminal 4 â€” Auth Service
 cd f:\SkillSync\auth-service
 mvn spring-boot:run
 
-# Terminal 5 — User Service (serves User + Mentor + Group APIs)
+# Terminal 5 â€” User Service (serves User + Mentor + Group APIs)
 cd f:\SkillSync\user-service
 mvn spring-boot:run
 
-# Terminal 6 — Skill Service
+# Terminal 6 â€” Skill Service
 cd f:\SkillSync\skill-service
 mvn spring-boot:run
 
-# Terminal 7 — Session Service (serves Session + Review APIs)
+# Terminal 7 â€” Session Service (serves Session + Review APIs)
 cd f:\SkillSync\session-service
 mvn spring-boot:run
 
-# Terminal 8 — Payment Service
+# Terminal 8 â€” Payment Service
 cd f:\SkillSync\payment-service
 mvn spring-boot:run
 
-# Terminal 9 — Notification Service
+# Terminal 9 â€” Notification Service
 cd f:\SkillSync\notification-service
 mvn spring-boot:run
 ```
@@ -1510,7 +1516,7 @@ You should see all services registered.
 
 ---
 
-## 📋 STEP 3: Test APIs (via Gateway at `localhost:8080`)
+## ðŸ“‹ STEP 3: Test APIs (via Gateway at `localhost:8080`)
 
 > [!IMPORTANT]
 > All requests go through the **API Gateway** at port **8080**.  
@@ -1518,7 +1524,7 @@ You should see all services registered.
 
 ---
 
-### 🔐 3.1 AUTH SERVICE
+### ðŸ” 3.1 AUTH SERVICE
 
 #### Register User 1 (Learner)
 ```bash
@@ -1542,7 +1548,7 @@ curl -X POST http://localhost:8080/api/auth/verify-otp \
   }'
 ```
 > [!IMPORTANT]
-> **Email verification is mandatory.** The OTP is always sent via real email to the registered address — even during testing. Check the email inbox (including spam/junk folder) for the OTP code. Login will be **blocked** until the email is verified.
+> **Email verification is mandatory.** The OTP is always sent via real email to the registered address â€” even during testing. Check the email inbox (including spam/junk folder) for the OTP code. Login will be **blocked** until the email is verified.
 >
 > If you attempt to login without verifying your email, the service will automatically re-send a new OTP and reject the login with a clear error message.
 
@@ -1644,7 +1650,7 @@ curl -X GET http://localhost:8080/api/auth/validate \
 
 ---
 
-### 🎯 3.2 SKILL SERVICE (create skills first — other services depend on these)
+### ðŸŽ¯ 3.2 SKILL SERVICE (create skills first â€” other services depend on these)
 
 #### Create Skills
 ```bash
@@ -1689,7 +1695,7 @@ curl -X PUT http://localhost:8080/api/skills/1 \
 
 ---
 
-### 👤 3.3 USER SERVICE
+### ðŸ‘¤ 3.3 USER SERVICE
 
 > [!NOTE]
 > The Gateway passes `X-User-Id` header after JWT validation. For direct testing, pass it manually.
@@ -1739,7 +1745,7 @@ curl http://localhost:8080/api/users/1 \
 
 ---
 
-### 🎓 3.4 MENTOR APIs (served by User Service on port 8082)
+### ðŸŽ“ 3.4 MENTOR APIs (served by User Service on port 8082)
 
 #### Apply to Become Mentor (as User 2)
 ```bash
@@ -1762,7 +1768,7 @@ curl http://localhost:8080/api/mentors/pending \
   -H "X-User-Id: 3"
 ```
 
-#### Approve Mentor (Admin — mentorId=1)
+#### Approve Mentor (Admin â€” mentorId=1)
 ```bash
 curl -X PUT http://localhost:8080/api/mentors/1/approve \
   -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>" \
@@ -1798,7 +1804,7 @@ curl -X POST http://localhost:8080/api/mentors/me/availability \
 
 ---
 
-### 📅 3.5 SESSION APIs (served by Session Service on port 8085)
+### ðŸ“… 3.5 SESSION APIs (served by Session Service on port 8085)
 
 #### Book a Session (Learner books with Mentor)
 ```bash
@@ -1876,7 +1882,7 @@ curl -X PUT "http://localhost:8080/api/sessions/2/reject?reason=Schedule%20confl
 
 ---
 
-### ⭐ 3.6 REVIEW APIs (served by Session Service on port 8085 — Session must be COMPLETED first)
+### â­ 3.6 REVIEW APIs (served by Session Service on port 8085 â€” Session must be COMPLETED first)
 
 #### Submit Review (Learner reviews completed session)
 ```bash
@@ -1922,7 +1928,7 @@ curl http://localhost:8080/api/reviews/me \
 
 ---
 
-### 👥 3.7 GROUP APIs (served by User Service on port 8082)
+### ðŸ‘¥ 3.7 GROUP APIs (served by User Service on port 8082)
 
 #### Create a Learning Group
 ```bash
@@ -1982,7 +1988,7 @@ curl http://localhost:8080/api/groups/1/discussions \
 
 ---
 
-### 🔔 3.8 NOTIFICATION SERVICE
+### ðŸ”” 3.8 NOTIFICATION SERVICE
 
 #### Get My Notifications
 ```bash
@@ -2016,13 +2022,13 @@ curl -X PUT http://localhost:8080/api/notifications/read-all \
 
 ---
 
-### 💳 3.9 PAYMENT APIs (served by Payment Service on port 8086)
+### ðŸ’³ 3.9 PAYMENT APIs (served by Payment Service on port 8086)
 
 > [!IMPORTANT]
 > Payment uses **Razorpay test credentials** by default. No real money is charged.
 > The create-order endpoint creates a Razorpay order, and the verify endpoint validates the payment signature.
 
-#### Create Payment Order (as Learner — Mentor Fee)
+#### Create Payment Order (as Learner â€” Mentor Fee)
 ```bash
 curl -X POST http://localhost:8080/api/payments/create-order \
   -H "Content-Type: application/json" \
@@ -2078,13 +2084,13 @@ curl "http://localhost:8080/api/payments/check?type=SESSION_BOOKING" \
 
 ---
 
-## 📋 STEP 4: End-to-End Flow (Recommended Test Order)
+## ðŸ“‹ STEP 4: End-to-End Flow (Recommended Test Order)
 
 Follow this order for the complete happy path:
 
 ```
  1. Register learner@test.com
- 2. Verify OTP for learner (check EMAIL INBOX — OTP is always sent via real email)
+ 2. Verify OTP for learner (check EMAIL INBOX â€” OTP is always sent via real email)
  3. Register mentor@test.com
  4. Verify OTP for mentor (check EMAIL INBOX)
  5. Register admin@test.com
@@ -2105,12 +2111,12 @@ Follow this order for the complete happy path:
 19. Check mentor rating summary
 20. Create a group and post discussions
 21. Check notifications (mentor should have: approval + session request + review alerts)
-22. Check payment history (GET /api/payments/my-payments) — served by Payment Service
+22. Check payment history (GET /api/payments/my-payments) â€” served by Payment Service
 ```
 
 ---
 
-## 📋 STEP 5: Run Unit Tests (CQRS & Redis Validation)
+## ðŸ“‹ STEP 5: Run Unit Tests (CQRS & Redis Validation)
 
 Run the full test suite to guarantee cache correctness, fallback mechanics, and Saga consistency without hitting a live Redis instance.
 
@@ -2131,13 +2137,13 @@ mvn test
 3. **Event-Driven Cache Invalidation Tests (`ReviewEventCacheSyncConsumerTest`)**
    - Proves RabbitMQ events reliably trigger cache evictions (e.g., `updateAvgRating()` is invoked on `ReviewSubmittedEvent`).
 
-4. **Saga Consistency Tests (`PaymentSagaOrchestratorTest`)** — in payment-service
+4. **Saga Consistency Tests (`PaymentSagaOrchestratorTest`)** â€” in payment-service
    - Verifies the `SUCCESS` branch publishes `payment.business.action` event via RabbitMQ.
    - Verifies the `COMPENSATION` branch marks payment as COMPENSATED and publishes compensation event.
 
 ---
 
-## 📋 STEP 6: Swagger UI (API Gateway — Single Entry Point)
+## ðŸ“‹ STEP 6: Swagger UI (API Gateway â€” Single Entry Point)
 
 > [!IMPORTANT]
 > Swagger UI is available **only** through the API Gateway. Individual service ports are **not exposed**.
@@ -2160,7 +2166,7 @@ Use the **dropdown at the top** to select which service to view/test:
 
 ---
 
-## 🔧 Troubleshooting
+## ðŸ”§ Troubleshooting
 
 | Issue | Solution |
 |-------|----------|
@@ -2174,7 +2180,7 @@ Use the **dropdown at the top** to select which service to view/test:
 | `Table not found` errors | JPA `ddl-auto=update` creates tables automatically, but schemas must exist first |
 | Port already in use | Kill the process: `netstat -ano | findstr :PORT` then `taskkill /PID <PID> /F` |
 | Docker: database init fails | Delete the postgres volume (`docker volume rm skillsync_postgres-data`) and rebuild |
-| Docker: service can't reach postgres | Check if healthcheck passed — services wait for `service_healthy` condition |
+| Docker: service can't reach postgres | Check if healthcheck passed â€” services wait for `service_healthy` condition |
 | Swagger UI empty | Ensure all services are registered in Eureka and healthy |
 | Payment create-order fails | Check Razorpay credentials in payment-service `application.properties` or env vars |
 | Signature verification fails | Ensure you pass the exact `razorpaySignature` from Razorpay checkout response |
@@ -2185,7 +2191,7 @@ Use the **dropdown at the top** to select which service to view/test:
 
 ## Content from: doc7_full_qa_verification_report.md
 
-# 🚀 SkillSync Final Pre-Production QA & Verification Report
+# ðŸš€ SkillSync Final Pre-Production QA & Verification Report
 
 **Auditor:** Senior Backend Engineer + QA Auditor  
 **Date:** March 25, 2026  
@@ -2193,85 +2199,86 @@ Use the **dropdown at the top** to select which service to view/test:
 
 ---
 
-## 🔍 PART 1: APPLICATION RUN VERIFICATION
-**Status:** ✅ Working correctly  
+## ðŸ” PART 1: APPLICATION RUN VERIFICATION
+**Status:** âœ… Working correctly  
 **Observations:** 
 - The newly implemented `skillsync-cache-common` module is successfully integrated into `user-service`, `skill-service`, `session-service`, and `notification-service`. 
 - No Spring application context startup failures exist natively since all broken `@Mock` configurations in the Unit Testing environment and absent Jackson `RedisTemplate` serialization errors were resolved during final hardening.
 
-## ⚡ PART 2: REDIS BEHAVIOR VERIFICATION
-**Status:** ✅ Working correctly  
+## âš¡ PART 2: REDIS BEHAVIOR VERIFICATION
+**Status:** âœ… Working correctly  
 **Observations:** 
-- **Cache MISS → DB → Cache:** Verified locally via `CacheService.getOrLoad`. A `ReentrantLock` successfully encapsulates the DB fallback ensuring *Stampede Protection*.
+- **Cache MISS â†’ DB â†’ Cache:** Verified locally via `CacheService.getOrLoad`. A `ReentrantLock` successfully encapsulates the DB fallback ensuring *Stampede Protection*.
 - **Cache HIT:** Explicitly tested via `shouldReturnFromCache()`. The `repository.findById()` is verified to be invoked `0` times (`never()`).
 - **Redis DOWN Scenario:** Explicitly tested via `shouldFallbackToDbOnRedisFailure()`. The `CacheService` swallows `RedisConnectionException` gracefully, logging a warning, and executes the `Supplier<T> dbFallback.get()`. No 500 Internal Server Errors are thrown.
 
-## 🔄 PART 3: CACHE INVALIDATION
-**Status:** ✅ Working correctly  
+## ðŸ”„ PART 3: CACHE INVALIDATION
+**Status:** âœ… Working correctly  
 **Observations:**
 - `MentorCommandService.removeAvailability()` successfully evicts the correlated `mentorCaches` using the newly injected `CacheService.evictByPattern()`. 
 - `MentorCommandService.apply()` correctly purges the `user:mentor:pending:*` cache pattern via `evictByPattern`. 
 - CQRS implementations strictly prevent write-methods from bypassing cache invalidation streams.
 
-## 🔁 PART 4: EVENT-DRIVEN CACHE SYNC
-**Status:** ✅ Working correctly  
+## ðŸ” PART 4: EVENT-DRIVEN CACHE SYNC
+**Status:** âœ… Working correctly  
 **Observations:**
 - `ReviewEventCacheSyncConsumer` listens to `user.review.submitted.queue`.
 - On receipt, it delegates to `MentorCommandService.updateAvgRating()`. 
 - This method natively triggers `cacheService.evictByPattern(CacheService.vKey("user:mentor:*"))` ensuring eventual consistency for mentor profiles post-review.
 
-## 🔗 PART 5: SAGA + CACHE CONSISTENCY
-**Status:** ✅ Working correctly  
+## ðŸ”— PART 5: SAGA + CACHE CONSISTENCY
+**Status:** âœ… Working correctly  
 **Observations:**
 - **Success Flow:** `PaymentSagaOrchestrator` triggers `approveMentor()`. The mentor is persisted as `APPROVED` and caching is invalidated.
 - **Failure Flow:** On `COMPENSATION` event, `revertMentorApproval()` successfully degrades the profile back to `PENDING` and purges the stale caches preventing users from booking unverified mentors.
 
-## 🧪 PART 6: TEST EXECUTION
-**Status:** ✅ Working correctly  
+## ðŸ§ª PART 6: TEST EXECUTION
+**Status:** âœ… Working correctly  
 **Observations:**
 - **Tests Passing:** `mvn test` executed entirely across `user-service`, `session-service`, `skill-service`, and `notification-service`. All 100% of the test-suites are passing locally.
 - **Key Formatting:** Verified strictly utilizing `v1:` prefix universally via `CacheService.vKey()`.
 
-## ⚠️ PART 7: EDGE CASE TESTING
-**Status:** ✅ Working correctly  
+## âš ï¸ PART 7: EDGE CASE TESTING
+**Status:** âœ… Working correctly  
 **Observations:**
 - **Invalid IDs:** Cache penetration is protected by `NULL_SENTINEL_TTL` (60s). If an attacker spams ID `9999999`, it writes `__NULL__` to Redis preventing PostgreSQL overload.
 - **High-frequency requests:** Java's `ConcurrentHashMap<String, ReentrantLock>` directly mitigates cache stampedes on the exact key boundaries.
 
-## ⚡ PART 8: PERFORMANCE CHECK
-**Status:** 🚀 Highly Satisfactory
+## âš¡ PART 8: PERFORMANCE CHECK
+**Status:** ðŸš€ Highly Satisfactory
 **Observations:**
 - `SCAN` operations successfully replaced `KEYS *` preventing accidental O(N) thread-blocking on the Redis cluster during mass cache evictions. 
 
-## 🧠 PART 9: CODE CONSISTENCY CHECK
-**Status:** ✅ Working correctly  
+## ðŸ§  PART 9: CODE CONSISTENCY CHECK
+**Status:** âœ… Working correctly  
 **Observations:**
 - All duplicated logic `RedisConfig.java` and internal `CacheService.java` implementations were successfully purged and centralized into the `skillsync-cache-common` `pom.xml` dependency across all microservices.
 
-## 🔐 PART 10: SECURITY VALIDATION
-**Status:** ✅ Working correctly  
+## ðŸ” PART 10: SECURITY VALIDATION
+**Status:** âœ… Working correctly  
 **Observations:**
 - Payment transactions (`razorpay_order_id`, `signatures`), system OTPs, and JWT strings are strictly restricted to execution memory and `auth-service` databases. They are never serialized utilizing Jackson caching protocols.
 
 ---
 
-## 📊 FINAL OUTPUT SUMMARY
+## ðŸ“Š FINAL OUTPUT SUMMARY
 
-### 1. ✅ Working correctly
+### 1. âœ… Working correctly
 The CQRS + Redis implementation is structurally sound. Service contexts are properly communicating with localized PostgreSQL dialects and distributed Redis clusters seamlessly.
 
-### 2. ⚠️ Minor issues
+### 2. âš ï¸ Minor issues
 None remaining post-hardening context. 
 
-### 3. ❌ Bugs found
+### 3. âŒ Bugs found
 None. Critical bugs discovered in `MentorCommandService` missed caches and `ReviewEventCacheSyncConsumer` parameter mapping have been entirely eradicated.
 
-### 4. 🚀 Improvements suggested
+### 4. ðŸš€ Improvements suggested
 - **Circuit Breaker:** Introduce `Resilience4j` wrapping `CacheService` to actively short-circuit requests if Redis goes down, preventing the `1000ms` connection timeout from slowing down every respective API call during an outage.
 - **Distributed Locks:** Migrate `ReentrantLock` (which only locks JVM-locally) to Redis-based Redisson locks if cache stampedes become distributed across Kubernetes pods.
 
-### 5. 📊 Final confidence score (0–10)
+### 5. ðŸ“Š Final confidence score (0â€“10)
 **9.8 / 10**
 
-### 6. 🧠 Final verdict
-**Safe to Deploy / Production Ready!** 🚀
+### 6. ðŸ§  Final verdict
+**Safe to Deploy / Production Ready!** ðŸš€
+

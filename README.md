@@ -1,102 +1,60 @@
-# 🚀 SkillSync — Microservices E-Learning Platform
+﻿# SkillSync
 
-SkillSync is a production-grade, distributed microservices platform designed to seamlessly connect learners with tech mentors. It features robust distributed transactions, real-time eventual consistency, and highly-available cache layers resilient to partition failures.
+SkillSync is a production-focused mentor-learning platform with role-based workflows, microservices architecture, and a React frontend.
 
-## 🏗️ System Architecture
+## What this project demonstrates
+- End-to-end product flow: authentication, mentor discovery, session lifecycle, profile, payments
+- Microservices patterns: gateway-based auth, service discovery, config server, event-driven messaging
+- Reliability patterns: CQRS read/write split, Redis cache, resilient fallbacks, observability stack
+- Production deployment practice: Dockerized services and environment-driven configuration
 
-SkillSync utilizes an API Gateway for routing and authentication, and delegates business domains to 9 distinct Spring Boot microservices via an Event-Driven architecture powered by RabbitMQ. 
+## Architecture at a glance
+- Frontend: React + TypeScript + Redux Toolkit + React Query
+- Backend: API Gateway + 8 domain/infra services (Spring Boot)
+- Infrastructure: PostgreSQL, Redis, RabbitMQ, Zipkin, Prometheus, Grafana, Loki
+- Deployment: Docker Compose on EC2
 
-```mermaid
-graph TD
-    Client[Client Browser/App] --> GW[API Gateway Ingress :80]
-    
-    GW -->|REST/JWT| Auth[Auth Service :8081]
-    GW -->|REST/JWT| User[User Service :8082]
-    GW -->|REST/JWT| Skill[Skill Service :8084]
-    GW -->|REST/JWT| Session[Session Service :8085]
-    GW -->|REST/JWT| Payment[Payment Service :8086]
-    GW -->|REST/JWT| Notif[Notification :8088]
-    GW -->|REST/JWT| Config[Config Server :8888]
-    GW -->|REST/JWT| Eureka[Eureka Server :8761]
+## Roles
+- Learner: discover mentors, request sessions, join groups, review completed sessions
+- Mentor: manage availability, accept/reject requests, track sessions and profile
+- Admin: manage users and platform governance features
 
-    User -.->|Event| RabbitMQ
-    Payment -.->|Event| RabbitMQ
-    Session -.->|Event| RabbitMQ
-    RabbitMQ -.->|Consume| User
-    RabbitMQ -.->|Consume| Notif
-    
-    subgraph Core Infrastructure
-    Eureka[Eureka Server :8761]
-    Config[Config Server :8888]
-    RabbitMQ[(RabbitMQ Event Bus)]
-    Redis[(Redis Cluster)]
-    PG[(PostgreSQL Schema/DB per Service)]
-    end
-```
+## Core flows
+- Registration with OTP verification
+- Forgot password with OTP reset flow
+- Mentor onboarding and payment-linked workflows
+- Session request -> accept/reject -> complete -> review
 
-## 🛠️ Tech Stack
+## Current docs map
+- Project presentation guide: docs/00_Presentation_Playbook.md
+- Project overview: docs/01_Project_Overview_and_Viva_Prep.md
+- System and DB architecture: docs/02_System_and_Database_Architecture.md
+- Frontend architecture and API contract: docs/03_Frontend_Design_and_API_Contract.md
+- Security and auth: docs/04_Security_Auth_and_OAuth.md
+- CQRS and Redis: docs/05_CQRS_and_Redis_Caching.md
+- Deployment and infra: docs/06_Deployment_DevOps_and_Infrastructure.md
+- Testing strategy: docs/07_Testing_and_QA_Strategy.md
+- Observability: docs/08_Observability_and_Monitoring.md
+- Payment architecture: docs/09_Payment_Implementation_Guide.md
+- Production incidents and fixes: docs/10_Production_Readiness_and_Incident_Reports.md
+- Frontend implementation details: docs/11_Frontend_Complete_Implementation.md
 
-### Backend
-- **Java 17 & Spring Boot 3.3.4**
-- **Spring Cloud:** Eureka (Discovery), Gateway, Config Server, OpenFeign
-- **Data:** PostgreSQL (Schema per service), Spring Data JPA
-- **Caching:** Redis (Cache-Aside Pattern)
-- **Messaging:** RabbitMQ (Topic Exchanges, Dead Letter Queues)
-- **Resilience:** Resilience4j (Circuit Breakers)
+## UI documentation for presentation
+- UI DOCS/BE-ARCHITECTURE.html
+- UI DOCS/FE-ARCHITECTURE.html
+- UI DOCS/PAYMENT_SAGA.html
+- UI DOCS/DEPLOYMENT.html
 
-### Frontend
-- **React 18 & TypeScript**
-- **Networking:** Axios with central JWT interceptors
-- **State:** Redux Toolkit (Auth state), React Query (Server cache state)
-- **Styling:** Tailwind CSS
+## Manual deployment workflow (current)
+1. Push code to GitHub
+2. Build and push changed Docker image(s) to Docker Hub
+3. SSH into EC2 and run:
+   - git pull
+   - docker compose pull
+   - docker compose up -d --remove-orphans
 
-### Infrastructure & DevOps
-- **Deployment:** AWS EC2 (t3.large), direct API Gateway ingress on port 80
-- **Domains:** Frontend `https://skillsync.mraks.dev` (Vercel), API `https://api.skillsync.mraks.dev` (EC2 Gateway)
-- **Containerization:** Docker & Docker Compose (Single-Repo Hub Strategy)
-- **CI/CD:** GitHub Actions (Path-filtered triggers for `Backend/` only; Build matrix: 9 services; Automated tags: `:latest`, `:${{ github.sha }}`; Automated EC2 deployment)
-
-## 💡 Key Architectural Patterns
-
-### 1. CQRS (Command Query Responsibility Segregation)
-- Mutations bypass cache entirely, executing via `CommandService` on primary DBs and triggering async Cache invalidation events.
-- Queries rely solely on the `QueryService` utilizing a fault-tolerant Redis layer. If Redis drops, queries natively fallback to DB without throwing 500 exceptions.
-
-### 2. Saga Orchestration & Transactional Outbox
-- **Payment Service** coordinates cross-service data changes utilizing an **Event-Driven Saga**.
-- It uses the **Transactional Outbox Pattern** with `FOR UPDATE SKIP LOCKED` and Publisher Confirms to ensure atomic database writes and guaranteed message deliveries, avoiding dual-write inconsistencies.
-- Automated Dead Letter Queue (DLQ) consumers and recovery schedulers rollback/compensate stuck state transitions.
-
-### 3. API Gateway Token Offloading
-- Security absolute-trust mechanism: Sub-services do not parse JWTs. 
-- API Gateway strictly validates tokens securely and proxies authenticated requests by extracting and appending headers (`X-User-Id`, `X-User-Role`). Services completely discard and reject externally simulated header payloads.
-
-## 📖 UI Documentation
-
-Comprehensive presentation-grade HTML visual documentation can be found in the `/UI DOCS/` folder. Standardize project walk-thoughts by exploring the following views:
-- [`BE-ARCHITECTURE.html`](file:///f:/SkillSync/UI%20DOCS/BE-ARCHITECTURE.html) — Backend Topology and System Decisions
-- [`API_CONTRACT.html`](file:///f:/SkillSync/UI%20DOCS/API_CONTRACT.html) — Gateway Context Rules and Request Schemas
-- [`PAYMENT_SAGA.html`](file:///f:/SkillSync/UI%20DOCS/PAYMENT_SAGA.html) — State Transitions & Outbox Isolation
-- [`DEPLOYMENT.html`](file:///f:/SkillSync/UI%20DOCS/DEPLOYMENT.html) — Ingress flow, AWS Compute and Container automations
-- [`FE-ARCHITECTURE.html`](file:///f:/SkillSync/UI%20DOCS/FE-ARCHITECTURE.html) — Component hierarchy and Data synchronization loops
-
-> For extensive backend API testing patterns via curl/Postman along with DB initializations, view [`docs/backend_testing_guide.md`](docs/backend_testing_guide.md).
->
-> For direct-gateway architecture migration, validation, and rollback notes, view [`docs/architecture_simplification_removal_of_nginx_and_direct_gateway_routing.md`](docs/architecture_simplification_removal_of_nginx_and_direct_gateway_routing.md).
->
-> For complete production API/CORS/Swagger/OAuth diagnosis and remediation steps, view [`docs/production_debugging_cors_fix_guide.md`](docs/production_debugging_cors_fix_guide.md).
-
-## 🚀 Getting Started
-
-### 1. Configuration Check
-Ensure Docker is securely installed. Setup standard secure keys within `.env` configuration files to hook the Razorpay SDK parameters (`RAZORPAY_API_KEY`) ensuring all test profiles synchronize flawlessly.
-
-### 2. Startup Infrastructure & Services
-Initialize all distinct databases, attached schemas, stateful RabbitMQ/Redis, and internal backend instances concurrently:
-```bash
-cd f:\SkillSync
-docker-compose up --build -d
-```
-
-### 3. Validation Hub
-Verify overall system readiness via the Eureka Server Discovery Dashboard (`http://localhost:8761`). All distinct systems (Auth, Gateway, Config, Session, Notification, User, Payment, Skill) should successfully assert an `UP` status.
+## Recent implementation highlights
+- Added dedicated reset-password page for OTP + new password
+- Upgraded password setup UX with visibility toggle and live constraints
+- Removed learner-only mentor search action from mentor context
+- Updated profile avatar editing path via avatarUrl persistence

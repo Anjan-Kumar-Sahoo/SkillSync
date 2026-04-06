@@ -1,3 +1,9 @@
+﻿# Presentation Sync Note
+
+Updated for final presentation on 2026-04-06. Start with docs/00_Presentation_Playbook.md for the guided narrative, then use this document for deep details.
+
+---
+
 # 05 CQRS and Redis Caching
 
 
@@ -6,9 +12,9 @@
 
 ## Content from: doc6_cqrs_redis_architecture.md
 
-# 📄 DOCUMENT 6: CQRS + REDIS CACHING ARCHITECTURE
+# ðŸ“„ DOCUMENT 6: CQRS + REDIS CACHING ARCHITECTURE
 
-## SkillSync — Command Query Responsibility Segregation & Distributed Caching
+## SkillSync â€” Command Query Responsibility Segregation & Distributed Caching
 
 ---
 
@@ -18,13 +24,13 @@
 
 ```
 Traditional (single service):
-  Controller → Service → Repository → DB
+  Controller â†’ Service â†’ Repository â†’ DB
 
 CQRS (split services):
-  Controller → CommandService ──→ Repository → DB  (writes + cache invalidation)
-               QueryService   ──→ Redis → DB        (reads + cache-aside)
+  Controller â†’ CommandService â”€â”€â†’ Repository â†’ DB  (writes + cache invalidation)
+               QueryService   â”€â”€â†’ Redis â†’ DB        (reads + cache-aside)
   
-  Both Services ──> Mapper ──> DTO (Decoupled mapping logic)
+  Both Services â”€â”€> Mapper â”€â”€> DTO (Decoupled mapping logic)
 ```
 
 ### Why CQRS for SkillSync?
@@ -71,10 +77,10 @@ SkillSync uses the **Cache-Aside** (Lazy Loading) pattern:
 ### Read Path (QueryService)
 
 ```
-Client → QueryService:
+Client â†’ QueryService:
   1. Check Redis for key (e.g., "v1:user:profile:100")
-  2. HIT → Return cached response immediately
-  3. MISS → Query PostgreSQL
+  2. HIT â†’ Return cached response immediately
+  3. MISS â†’ Query PostgreSQL
   4. Store result in Redis with domain-specific TTL
   5. Return response to client
 ```
@@ -82,7 +88,7 @@ Client → QueryService:
 ### Write Path (CommandService)
 
 ```
-Client → CommandService:
+Client â†’ CommandService:
   1. Execute database write (INSERT/UPDATE/DELETE)
   2. Evict relevant Redis cache keys
   3. (Optional) Publish RabbitMQ event for cross-service invalidation
@@ -116,10 +122,10 @@ Client → CommandService:
 
 ### TTL Design Principles
 
-1. **Shorter TTL for volatile data** — Sessions change status frequently (5 min)
-2. **Longer TTL for stable data** — Skills rarely change (1 hour)
-3. **Very short TTL for counters** — Unread notification count (2 min)
-4. **No caching for sensitive data** — Auth tokens, OTPs, payment secrets are **never** cached
+1. **Shorter TTL for volatile data** â€” Sessions change status frequently (5 min)
+2. **Longer TTL for stable data** â€” Skills rarely change (1 hour)
+3. **Very short TTL for counters** â€” Unread notification count (2 min)
+4. **No caching for sensitive data** â€” Auth tokens, OTPs, payment secrets are **never** cached
 
 ---
 
@@ -130,22 +136,22 @@ Client → CommandService:
 ```
 com.skillsync.user
   +-- cache/
-  │   ├── RedisConfig.java          ← Lettuce client + Jackson JSON serialization
-  │   └── CacheService.java         ← Generic cache wrapper with graceful degradation
+  â”‚   â”œâ”€â”€ RedisConfig.java          â† Lettuce client + Jackson JSON serialization
+  â”‚   â””â”€â”€ CacheService.java         â† Generic cache wrapper with graceful degradation
   +-- service/
       +-- command/
-      │   ├── UserCommandService     ← Profile CRUD + cache invalidation
-      │   ├── MentorCommandService   ← Mentor approval + Saga integration + cache invalidation
-      │   └── GroupCommandService    ← Group operations + cache invalidation
+      â”‚   â”œâ”€â”€ UserCommandService     â† Profile CRUD + cache invalidation
+      â”‚   â”œâ”€â”€ MentorCommandService   â† Mentor approval + Saga integration + cache invalidation
+      â”‚   â””â”€â”€ GroupCommandService    â† Group operations + cache invalidation
       +-- query/
-          ├── UserQueryService       ← Cache-aside profile reads
-          ├── MentorQueryService     ← Cache-aside mentor reads (search, discovery)
-          └── GroupQueryService      ← Cache-aside group reads
+          â”œâ”€â”€ UserQueryService       â† Cache-aside profile reads
+          â”œâ”€â”€ MentorQueryService     â† Cache-aside mentor reads (search, discovery)
+          â””â”€â”€ GroupQueryService      â† Cache-aside group reads
   +-- mapper/
-      ├── UserMapper                 ← Dedicated static mapping methods
-      ├── MentorMapper               ← Dedicated static mapping methods
-      ├── GroupMapper                ← Dedicated static mapping methods
-      └── PaymentMapper              ← Dedicated static mapping methods
+      â”œâ”€â”€ UserMapper                 â† Dedicated static mapping methods
+      â”œâ”€â”€ MentorMapper               â† Dedicated static mapping methods
+      â”œâ”€â”€ GroupMapper                â† Dedicated static mapping methods
+      â””â”€â”€ PaymentMapper              â† Dedicated static mapping methods
 ```
 
 ### Skill Service
@@ -153,19 +159,19 @@ com.skillsync.user
 ```
 com.skillsync.skill
   +-- cache/
-  │   ├── RedisConfig.java
-  │   └── CacheService.java
+  â”‚   â”œâ”€â”€ RedisConfig.java
+  â”‚   â””â”€â”€ CacheService.java
   +-- config/
-  │   └── RabbitMQConfig.java       ← Skill event exchange
+  â”‚   â””â”€â”€ RabbitMQConfig.java       â† Skill event exchange
   +-- event/
-  │   └── SkillEvent.java           ← Event DTO for cross-service sync
+  â”‚   â””â”€â”€ SkillEvent.java           â† Event DTO for cross-service sync
   +-- service/
       +-- command/
-      │   └── SkillCommandService   ← Skill CRUD + cache invalidation + event publishing
+      â”‚   â””â”€â”€ SkillCommandService   â† Skill CRUD + cache invalidation + event publishing
       +-- query/
-          └── SkillQueryService     ← Cache-aside skill reads (autocomplete, catalog)
+          â””â”€â”€ SkillQueryService     â† Cache-aside skill reads (autocomplete, catalog)
   +-- mapper/
-      └── SkillMapper               ← Dedicated static mapping methods
+      â””â”€â”€ SkillMapper               â† Dedicated static mapping methods
 ```
 
 ### Session Service
@@ -173,18 +179,18 @@ com.skillsync.skill
 ```
 com.skillsync.session
   +-- cache/
-  │   ├── RedisConfig.java
-  │   └── CacheService.java
+  â”‚   â”œâ”€â”€ RedisConfig.java
+  â”‚   â””â”€â”€ CacheService.java
   +-- service/
       +-- command/
-      │   ├── SessionCommandService ← Session lifecycle + cache invalidation
-      │   └── ReviewCommandService  ← Review submission + cache invalidation + event publishing
+      â”‚   â”œâ”€â”€ SessionCommandService â† Session lifecycle + cache invalidation
+      â”‚   â””â”€â”€ ReviewCommandService  â† Review submission + cache invalidation + event publishing
       +-- query/
-          ├── SessionQueryService   ← Cache-aside session reads
-          └── ReviewQueryService    ← Cache-aside review reads (rating summary, distribution)
+          â”œâ”€â”€ SessionQueryService   â† Cache-aside session reads
+          â””â”€â”€ ReviewQueryService    â† Cache-aside review reads (rating summary, distribution)
   +-- mapper/
-      ├── SessionMapper             ← Dedicated static mapping methods
-      └── ReviewMapper              ← Dedicated static mapping methods
+      â”œâ”€â”€ SessionMapper             â† Dedicated static mapping methods
+      â””â”€â”€ ReviewMapper              â† Dedicated static mapping methods
 ```
 
 ### Notification Service
@@ -192,15 +198,15 @@ com.skillsync.session
 ```
 com.skillsync.notification
   +-- cache/
-  │   ├── RedisConfig.java
-  │   └── CacheService.java
+  â”‚   â”œâ”€â”€ RedisConfig.java
+  â”‚   â””â”€â”€ CacheService.java
   +-- service/
       +-- command/
-      │   └── NotificationCommandService ← Create + push + cache invalidation
+      â”‚   â””â”€â”€ NotificationCommandService â† Create + push + cache invalidation
       +-- query/
-          └── NotificationQueryService   ← Cache-aside unread count
+          â””â”€â”€ NotificationQueryService   â† Cache-aside unread count
   +-- mapper/
-      └── NotificationMapper             ← Dedicated static mapping methods
+      â””â”€â”€ NotificationMapper             â† Dedicated static mapping methods
 ```
 
 ---
@@ -213,18 +219,18 @@ When a review is submitted in Session Service, it must invalidate the mentor's c
 
 ```
 Session Service                    RabbitMQ                    User Service
-     │                                │                            │
-     │  ReviewSubmittedEvent          │                            │
-     │  {mentorId, rating, reviewId}  │                            │
-     │───────────────────────────────►│                            │
-     │                                │  review.submitted          │
-     │                                │───────────────────────────►│
-     │                                │                            │
-     │                                │       ReviewEventCacheSyncConsumer:
-     │                                │       1. Update mentor avgRating
-     │                                │       2. Evict v1:user:mentor:{mentorId}
-     │                                │       3. Evict v1:user:mentor:user:{userId}
-     │                                │                            │
+     â”‚                                â”‚                            â”‚
+     â”‚  ReviewSubmittedEvent          â”‚                            â”‚
+     â”‚  {mentorId, rating, reviewId}  â”‚                            â”‚
+     â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚                            â”‚
+     â”‚                                â”‚  review.submitted          â”‚
+     â”‚                                â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚
+     â”‚                                â”‚                            â”‚
+     â”‚                                â”‚       ReviewEventCacheSyncConsumer:
+     â”‚                                â”‚       1. Update mentor avgRating
+     â”‚                                â”‚       2. Evict v1:user:mentor:{mentorId}
+     â”‚                                â”‚       3. Evict v1:user:mentor:user:{userId}
+     â”‚                                â”‚                            â”‚
 ```
 
 ### Skill Event Sync
@@ -233,13 +239,13 @@ When a skill is created/updated/deactivated, the Skill Service publishes to `ski
 
 ```
 Skill Service                      RabbitMQ
-     │                                │
-     │  SkillEvent                    │
-     │  {skillId, action, name}       │
-     │───────────────────────────────►│
-     │                                │
-     │                 (Future: consumed by User Service
-     │                  to invalidate skill-related caches)
+     â”‚                                â”‚
+     â”‚  SkillEvent                    â”‚
+     â”‚  {skillId, action, name}       â”‚
+     â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚
+     â”‚                                â”‚
+     â”‚                 (Future: consumed by User Service
+     â”‚                  to invalidate skill-related caches)
 ```
 
 ---
@@ -250,17 +256,17 @@ The `PaymentSagaOrchestrator` integrates with the CQRS layer to ensure cache con
 
 ```
 PaymentSagaOrchestrator
-     │
-     ├── SUCCESS PATH:
-     │   1. transitionToSuccessPending()        → DB update
-     │   2. MentorCommandService.approveMentor() → DB update + cache evict
-     │   3. markPaymentSuccess()                → DB update
-     │   4. Publish payment.success event       → RabbitMQ
-     │
-     └── COMPENSATION PATH:
-         1. MentorCommandService.revertMentorApproval() → DB revert + cache evict
-         2. markPaymentCompensated()                    → DB update
-         3. Publish payment.compensated event           → RabbitMQ
+     â”‚
+     â”œâ”€â”€ SUCCESS PATH:
+     â”‚   1. transitionToSuccessPending()        â†’ DB update
+     â”‚   2. MentorCommandService.approveMentor() â†’ DB update + cache evict
+     â”‚   3. markPaymentSuccess()                â†’ DB update
+     â”‚   4. Publish payment.success event       â†’ RabbitMQ
+     â”‚
+     â””â”€â”€ COMPENSATION PATH:
+         1. MentorCommandService.revertMentorApproval() â†’ DB revert + cache evict
+         2. markPaymentCompensated()                    â†’ DB update
+         3. Publish payment.compensated event           â†’ RabbitMQ
 ```
 
 > [!IMPORTANT]
@@ -354,20 +360,20 @@ cache.ttl.default=600
 All services expose cache metrics via Spring Boot Actuator:
 
 ```
-GET /actuator/health      → Includes Redis health
-GET /actuator/metrics     → Cache hit/miss ratios
-GET /actuator/caches      → Registered cache names
+GET /actuator/health      â†’ Includes Redis health
+GET /actuator/metrics     â†’ Cache hit/miss ratios
+GET /actuator/caches      â†’ Registered cache names
 ```
 
 ### Key Metrics to Monitor
 
 | Metric | What It Tells You |
 |--------|-------------------|
-| `cache.gets{result=hit}` | Cache hit count — should be high |
-| `cache.gets{result=miss}` | Cache miss count — triggers DB query |
+| `cache.gets{result=hit}` | Cache hit count â€” should be high |
+| `cache.gets{result=miss}` | Cache miss count â€” triggers DB query |
 | `cache.evictions` | Number of evictions (LRU or explicit) |
 | `cache.puts` | Number of items added to cache |
-| Redis `used_memory` | Memory usage — should stay below 256MB |
+| Redis `used_memory` | Memory usage â€” should stay below 256MB |
 | Redis `connected_clients` | Connection pool usage |
 
 ---
@@ -376,10 +382,10 @@ GET /actuator/caches      → Registered cache names
 
 > [!CAUTION]
 > The following are **explicitly excluded** from Redis caching:
-> - **Auth Service** — Entirely excluded. No caching of JWT tokens, passwords, OTPs, or verification codes
-> - **Payment secrets** — Razorpay API keys, signatures, and order secrets are never cached
-> - **Session tokens** — Refresh tokens and access tokens are managed in PostgreSQL only
-> - **User passwords** — BCrypt hashes are never stored in Redis
+> - **Auth Service** â€” Entirely excluded. No caching of JWT tokens, passwords, OTPs, or verification codes
+> - **Payment secrets** â€” Razorpay API keys, signatures, and order secrets are never cached
+> - **Session tokens** â€” Refresh tokens and access tokens are managed in PostgreSQL only
+> - **User passwords** â€” BCrypt hashes are never stored in Redis
 
 ---
 
@@ -404,8 +410,8 @@ GET /actuator/caches      → Registered cache names
 
 ### Rules
 
-1. **Always use `CacheService.vKey("domain:entity:id")`** → produces `v1:domain:entity:id`
-2. **Never hardcode the `v1:` prefix** — the version is managed centrally in `CacheService.KEY_VERSION`
+1. **Always use `CacheService.vKey("domain:entity:id")`** â†’ produces `v1:domain:entity:id`
+2. **Never hardcode the `v1:` prefix** â€” the version is managed centrally in `CacheService.KEY_VERSION`
 3. **Key format**: `v1:<service-domain>:<entity-type>:<identifier>`
 4. **Pattern eviction**: Use `CacheService.evictByPattern("v1:domain:*")` for bulk eviction
 
@@ -419,12 +425,12 @@ private static final String KEY_VERSION = "v1";
 
 To migrate cache keys to a new version:
 1. Update `KEY_VERSION` in `CacheService.java`
-2. Deploy all services — old keys expire naturally via TTL
+2. Deploy all services â€” old keys expire naturally via TTL
 3. No manual Redis flush required
 
 ### Audit Status
 
-✅ **All services verified** — No hardcoded cache keys found. All keys use `CacheService.vKey()`.
+âœ… **All services verified** â€” No hardcoded cache keys found. All keys use `CacheService.vKey()`.
 
 ---
 
@@ -443,11 +449,11 @@ For full details, see **[doc8_observability.md](doc8_observability.md)**.
 
 ## 6.15 Future Enhancements
 
-1. **Redis Sentinel/Cluster** — For high availability in production
-2. **Cache warming** — Pre-populate hot data on service startup
-3. **Read replicas** — Separate Redis read replicas for query-heavy services
-4. **Grafana dashboard** — Real-time cache hit/miss ratios and memory usage via Prometheus
-5. **Distributed locking** — Redis-based distributed locks for concurrent write scenarios
+1. **Redis Sentinel/Cluster** â€” For high availability in production
+2. **Cache warming** â€” Pre-populate hot data on service startup
+3. **Read replicas** â€” Separate Redis read replicas for query-heavy services
+4. **Grafana dashboard** â€” Real-time cache hit/miss ratios and memory usage via Prometheus
+5. **Distributed locking** â€” Redis-based distributed locks for concurrent write scenarios
 
 ---
 
@@ -460,7 +466,7 @@ For full details, see **[doc8_observability.md](doc8_observability.md)**.
 
 ## Content from: cqrs_redis_audit_report.md
 
-# 🔍 CQRS + Redis Architecture — Deep Technical Audit Report
+# ðŸ” CQRS + Redis Architecture â€” Deep Technical Audit Report
 
 > **Auditor:** Senior Backend Engineer / System Reviewer
 > **Date:** 2026-03-25
@@ -471,32 +477,32 @@ For full details, see **[doc8_observability.md](doc8_observability.md)**.
 
 ## PART 1: CQRS VALIDATION
 
-### ✅ Strict Separation — PASS
+### âœ… Strict Separation â€” PASS
 
 | Service | CommandService(s) | QueryService(s) | Separation Clean? |
 |---------|-------------------|------------------|--------------------|
-| User | `UserCommandService`, `MentorCommandService`, `GroupCommandService` | `UserQueryService`, `MentorQueryService`, `GroupQueryService` | ✅ Yes |
-| Skill | `SkillCommandService` | `SkillQueryService` | ✅ Yes |
-| Session | `SessionCommandService`, `ReviewCommandService` | `SessionQueryService`, `ReviewQueryService` | ✅ Yes |
-| Notification | `NotificationCommandService` | `NotificationQueryService` | ✅ Yes |
+| User | `UserCommandService`, `MentorCommandService`, `GroupCommandService` | `UserQueryService`, `MentorQueryService`, `GroupQueryService` | âœ… Yes |
+| Skill | `SkillCommandService` | `SkillQueryService` | âœ… Yes |
+| Session | `SessionCommandService`, `ReviewCommandService` | `SessionQueryService`, `ReviewQueryService` | âœ… Yes |
+| Notification | `NotificationCommandService` | `NotificationQueryService` | âœ… Yes |
 
 **Finding:** No mixing of read/write logic. All `CommandService` classes handle writes + cache invalidation. All `QueryService` classes handle reads + cache-aside. The `static mapToResponse()` pattern is correctly shared between command and query services.
 
-### ✅ Controller Usage — PASS
+### âœ… Controller Usage â€” PASS
 
 Every controller injects **both** `CommandService` and `QueryService` and delegates correctly:
-- GET endpoints → QueryService
-- POST/PUT/DELETE endpoints → CommandService
-- Clear `// ─── QUERIES ───` / `// ─── COMMANDS ───` section markers
+- GET endpoints â†’ QueryService
+- POST/PUT/DELETE endpoints â†’ CommandService
+- Clear `// â”€â”€â”€ QUERIES â”€â”€â”€` / `// â”€â”€â”€ COMMANDS â”€â”€â”€` section markers
 
 **Exceptions (by design):**
-- [PaymentController](file:///f:/SkillSync/user-service/src/main/java/com/skillsync/user/controller/PaymentController.java) uses `PaymentService` (non-CQRS) — **acceptable** because payments are security-critical and should NOT be cached.
+- [PaymentController](file:///f:/SkillSync/user-service/src/main/java/com/skillsync/user/controller/PaymentController.java) uses `PaymentService` (non-CQRS) â€” **acceptable** because payments are security-critical and should NOT be cached.
 
-### ⚠️ Minor: CommandService depends on QueryService
+### âš ï¸ Minor: CommandService depends on QueryService
 
 - [UserCommandService L9](file:///f:/SkillSync/user-service/src/main/java/com/skillsync/user/service/command/UserCommandService.java#L9) imports `UserQueryService` for `mapToResponse()`.
 - [MentorCommandService L15](file:///f:/SkillSync/user-service/src/main/java/com/skillsync/user/service/command/MentorCommandService.java#L15) imports `MentorQueryService` for `mapToResponse()`.
-- Pattern: Command → save → then call `QueryService.mapToResponse()` for the return value.
+- Pattern: Command â†’ save â†’ then call `QueryService.mapToResponse()` for the return value.
 
 **Verdict:** This is a **data coupling** (shared mapper only), NOT a logic coupling. The `mapToResponse()` methods are `static` and pure functions. **Acceptable** but could be cleaner with a dedicated `Mapper` class.
 
@@ -504,52 +510,52 @@ Every controller injects **both** `CommandService` and `QueryService` and delega
 
 ## PART 2: REDIS CACHING VALIDATION
 
-### ✅ Cache-Aside Pattern — CORRECTLY IMPLEMENTED
+### âœ… Cache-Aside Pattern â€” CORRECTLY IMPLEMENTED
 
 The `getOrLoad()` method in [CacheService](file:///f:/SkillSync/user-service/src/main/java/com/skillsync/user/cache/CacheService.java#L190-L221) implements production-grade cache-aside:
 
 ```
-1. Fast path: check Redis → HIT → return
-2. Check null sentinel → penetration protection
-3. Acquire per-key lock → stampede protection
+1. Fast path: check Redis â†’ HIT â†’ return
+2. Check null sentinel â†’ penetration protection
+3. Acquire per-key lock â†’ stampede protection
 4. Double-check after lock acquisition
-5. Load from DB → cache result (or cache null sentinel)
+5. Load from DB â†’ cache result (or cache null sentinel)
 6. Release lock + cleanup
 ```
 
 **Bonus features above basic cache-aside:**
-- ✅ **Stampede protection** via `ConcurrentHashMap<String, ReentrantLock>` — prevents thundering herd
-- ✅ **Cache penetration protection** via `__NULL__` sentinel with 60s TTL — prevents DB hammering for non-existent IDs
-- ✅ **Versioned keys** (`v1:` prefix) — enables cache migration without flushing
-- ✅ **Micrometer metrics** — `cache.operations{result=hit|miss|evict|error}` with service tag
+- âœ… **Stampede protection** via `ConcurrentHashMap<String, ReentrantLock>` â€” prevents thundering herd
+- âœ… **Cache penetration protection** via `__NULL__` sentinel with 60s TTL â€” prevents DB hammering for non-existent IDs
+- âœ… **Versioned keys** (`v1:` prefix) â€” enables cache migration without flushing
+- âœ… **Micrometer metrics** â€” `cache.operations{result=hit|miss|evict|error}` with service tag
 
-### ✅ Cache Keys — CONSISTENT + NAMESPACED
+### âœ… Cache Keys â€” CONSISTENT + NAMESPACED
 
 | Service | Key Pattern | Versioned? | Namespaced? |
 |---------|------------|-----------|------------|
-| User | `v1:user:profile:{userId}` | ✅ | ✅ |
-| User | `v1:user:mentor:{mentorId}` | ✅ | ✅ |
-| User | `v1:user:group:{groupId}` | ✅ | ✅ |
-| Skill | `v1:skill:{skillId}` | ✅ | ✅ |
-| Session | `v1:session:{sessionId}` | ✅ | ✅ |
-| Session | `v1:review:{reviewId}` | ✅ | ✅ |
-| Session | `v1:review:mentor:{id}:summary` | ✅ | ✅ |
-| Notification | `v1:notification:unread:{userId}` | ✅ | ✅ |
+| User | `v1:user:profile:{userId}` | âœ… | âœ… |
+| User | `v1:user:mentor:{mentorId}` | âœ… | âœ… |
+| User | `v1:user:group:{groupId}` | âœ… | âœ… |
+| Skill | `v1:skill:{skillId}` | âœ… | âœ… |
+| Session | `v1:session:{sessionId}` | âœ… | âœ… |
+| Session | `v1:review:{reviewId}` | âœ… | âœ… |
+| Session | `v1:review:mentor:{id}:summary` | âœ… | âœ… |
+| Notification | `v1:notification:unread:{userId}` | âœ… | âœ… |
 
-### ✅ TTLs — ALL DEFINED
+### âœ… TTLs â€” ALL DEFINED
 
 | Domain | TTL | Configured In | Appropriate? |
 |--------|-----|--------------|-------------|
-| Profile | 600s (10 min) | `cache.ttl.profile=600` | ✅ |
-| Mentor | 600s (10 min) | `cache.ttl.mentor=600` | ✅ |
-| Group | 600s (10 min) | `cache.ttl.group=600` | ✅ |
-| Skill | 3600s (1 hour) | `cache.ttl.skill=3600` | ✅ Stable data |
-| Session | 300s (5 min) | `cache.ttl.session=300` | ✅ Volatile state |
-| Review | 300s (5 min) | `cache.ttl.review=300` | ✅ |
-| Notification | 120s (2 min) | `cache.ttl.notification=120` | ✅ High poll rate |
-| Null sentinel | 60s | Hardcoded | ✅ Short-lived |
+| Profile | 600s (10 min) | `cache.ttl.profile=600` | âœ… |
+| Mentor | 600s (10 min) | `cache.ttl.mentor=600` | âœ… |
+| Group | 600s (10 min) | `cache.ttl.group=600` | âœ… |
+| Skill | 3600s (1 hour) | `cache.ttl.skill=3600` | âœ… Stable data |
+| Session | 300s (5 min) | `cache.ttl.session=300` | âœ… Volatile state |
+| Review | 300s (5 min) | `cache.ttl.review=300` | âœ… |
+| Notification | 120s (2 min) | `cache.ttl.notification=120` | âœ… High poll rate |
+| Null sentinel | 60s | Hardcoded | âœ… Short-lived |
 
-**No infinite TTLs found.** ✅
+**No infinite TTLs found.** âœ…
 
 ---
 
@@ -559,27 +565,27 @@ The `getOrLoad()` method in [CacheService](file:///f:/SkillSync/user-service/src
 
 | Operation | Cache Keys Evicted | Status |
 |-----------|-------------------|--------|
-| `createOrUpdateProfile` | `v1:user:profile:{userId}`, `v1:user:profile:id:{profileId}` | ✅ |
-| `addSkill` | `v1:user:profile:{userId}` | ✅ |
-| `removeSkill` | `v1:user:profile:{userId}` | ✅ |
-| `approveMentor` | `v1:user:mentor:{id}`, `v1:user:mentor:user:{userId}`, `v1:user:mentor:search:*`, `v1:user:mentor:pending:*` | ✅ |
-| `rejectMentor` | Same as approve | ✅ |
-| `revertMentorApproval` | Same as approve | ✅ |
-| `addAvailability` | All mentor caches | ✅ |
-| `updateAvgRating` | All mentor caches | ✅ |
-| `createGroup` | `v1:user:group:all:*` | ✅ |
-| `joinGroup` | `v1:user:group:{groupId}` | ✅ |
-| `leaveGroup` | `v1:user:group:{groupId}` | ✅ |
-| `postDiscussion` | `v1:user:group:{groupId}:discussions:*` | ✅ |
+| `createOrUpdateProfile` | `v1:user:profile:{userId}`, `v1:user:profile:id:{profileId}` | âœ… |
+| `addSkill` | `v1:user:profile:{userId}` | âœ… |
+| `removeSkill` | `v1:user:profile:{userId}` | âœ… |
+| `approveMentor` | `v1:user:mentor:{id}`, `v1:user:mentor:user:{userId}`, `v1:user:mentor:search:*`, `v1:user:mentor:pending:*` | âœ… |
+| `rejectMentor` | Same as approve | âœ… |
+| `revertMentorApproval` | Same as approve | âœ… |
+| `addAvailability` | All mentor caches | âœ… |
+| `updateAvgRating` | All mentor caches | âœ… |
+| `createGroup` | `v1:user:group:all:*` | âœ… |
+| `joinGroup` | `v1:user:group:{groupId}` | âœ… |
+| `leaveGroup` | `v1:user:group:{groupId}` | âœ… |
+| `postDiscussion` | `v1:user:group:{groupId}:discussions:*` | âœ… |
 
-### ❌ CRITICAL: `removeAvailability` — MISSING CACHE INVALIDATION
+### âŒ CRITICAL: `removeAvailability` â€” MISSING CACHE INVALIDATION
 
 **File:** [MentorCommandService.java:147-149](file:///f:/SkillSync/user-service/src/main/java/com/skillsync/user/service/command/MentorCommandService.java#L147-L149)
 
 ```java
 public void removeAvailability(Long slotId) {
     availabilitySlotRepository.deleteById(slotId);
-    // ❌ NO cache invalidation!
+    // âŒ NO cache invalidation!
 }
 ```
 
@@ -587,68 +593,68 @@ public void removeAvailability(Long slotId) {
 
 **Fix:** Need to look up the mentor profile for the slot, then call `invalidateMentorCaches(profile.getId(), profile.getUserId())`.
 
-### ⚠️ MINOR: `apply()` (mentor application) — NO LIST CACHE INVALIDATION
+### âš ï¸ MINOR: `apply()` (mentor application) â€” NO LIST CACHE INVALIDATION
 
 **File:** [MentorCommandService.java:40-65](file:///f:/SkillSync/user-service/src/main/java/com/skillsync/user/service/command/MentorCommandService.java#L40-L65)
 
 The `apply()` method does NOT invalidate `v1:user:mentor:pending:*` caches. A newly submitted application won't immediately appear in the pending list until TTL expires.
 
-**Impact:** Low — pending applications page could show stale data for up to 10 minutes.
+**Impact:** Low â€” pending applications page could show stale data for up to 10 minutes.
 
 ### Skill Service
 
 | Operation | Cache Keys Evicted | Status |
 |-----------|-------------------|--------|
-| `createSkill` | `v1:skill:all:*`, `v1:skill:search:*` | ✅ |
-| `updateSkill` | `v1:skill:{id}`, `v1:skill:all:*`, `v1:skill:search:*` | ✅ |
-| `deactivateSkill` | `v1:skill:{id}`, `v1:skill:all:*`, `v1:skill:search:*` | ✅ |
+| `createSkill` | `v1:skill:all:*`, `v1:skill:search:*` | âœ… |
+| `updateSkill` | `v1:skill:{id}`, `v1:skill:all:*`, `v1:skill:search:*` | âœ… |
+| `deactivateSkill` | `v1:skill:{id}`, `v1:skill:all:*`, `v1:skill:search:*` | âœ… |
 
 ### Session Service
 
 | Operation | Cache Keys Evicted | Status |
 |-----------|-------------------|--------|
-| `createSession` | `v1:session:{id}`, `v1:session:learner:{id}:*`, `v1:session:mentor:{id}:*` | ✅ |
-| `acceptSession` | Same pattern | ✅ |
-| `rejectSession` | Same pattern | ✅ |
-| `cancelSession` | Same pattern | ✅ |
-| `completeSession` | Same pattern | ✅ |
-| `submitReview` | `v1:review:mentor:{id}:*`, `v1:review:mentor:{id}:summary`, `v1:review:user:{id}:*` | ✅ |
-| `deleteReview` | `v1:review:{id}`, all mentor + user review caches | ✅ |
+| `createSession` | `v1:session:{id}`, `v1:session:learner:{id}:*`, `v1:session:mentor:{id}:*` | âœ… |
+| `acceptSession` | Same pattern | âœ… |
+| `rejectSession` | Same pattern | âœ… |
+| `cancelSession` | Same pattern | âœ… |
+| `completeSession` | Same pattern | âœ… |
+| `submitReview` | `v1:review:mentor:{id}:*`, `v1:review:mentor:{id}:summary`, `v1:review:user:{id}:*` | âœ… |
+| `deleteReview` | `v1:review:{id}`, all mentor + user review caches | âœ… |
 
-### ⚠️ MINOR: `submitReview` has redundant eviction
+### âš ï¸ MINOR: `submitReview` has redundant eviction
 
 [ReviewCommandService.java:56-58](file:///f:/SkillSync/session-service/src/main/java/com/skillsync/session/service/command/ReviewCommandService.java#L56-L58):
 ```java
 cacheService.evictByPattern(CacheService.vKey("review:mentor:" + mentorId + ":*"));  // Pattern covers summary
-cacheService.evict(CacheService.vKey("review:mentor:" + mentorId + ":summary"));      // ← Redundant
+cacheService.evict(CacheService.vKey("review:mentor:" + mentorId + ":summary"));      // â† Redundant
 ```
 The `evictByPattern("review:mentor:{id}:*")` already covers `review:mentor:{id}:summary`. Not a bug, just unnecessary double eviction.
 
-### Notification Service — ✅ ALL OPERATIONS COVERED
+### Notification Service â€” âœ… ALL OPERATIONS COVERED
 
 ---
 
 ## PART 4: EVENT-DRIVEN CACHE SYNC
 
-### ✅ ReviewEventCacheSyncConsumer — CORRECTLY IMPLEMENTED
+### âœ… ReviewEventCacheSyncConsumer â€” CORRECTLY IMPLEMENTED
 
 **File:** [ReviewEventCacheSyncConsumer.java](file:///f:/SkillSync/user-service/src/main/java/com/skillsync/user/consumer/ReviewEventCacheSyncConsumer.java)
 
 - Listens on `user.review.submitted.queue`
 - Calls `mentorCommandService.updateAvgRating()` which writes to DB + invalidates cache
-- **Idempotent:** Uses `avgRating` and `totalReviews` from event (recalculated at source), so duplicate events produce the same result ✅
+- **Idempotent:** Uses `avgRating` and `totalReviews` from event (recalculated at source), so duplicate events produce the same result âœ…
 
-### ✅ Notification Consumers — ALL USE `NotificationCommandService`
+### âœ… Notification Consumers â€” ALL USE `NotificationCommandService`
 
 All 4 notification consumers ([MentorEventConsumer](file:///f:/SkillSync/notification-service/src/main/java/com/skillsync/notification/consumer/MentorEventConsumer.java), [SessionEventConsumer](file:///f:/SkillSync/notification-service/src/main/java/com/skillsync/notification/consumer/SessionEventConsumer.java), [ReviewEventConsumer](file:///f:/SkillSync/notification-service/src/main/java/com/skillsync/notification/consumer/ReviewEventConsumer.java), [PaymentEventConsumer](file:///f:/SkillSync/notification-service/src/main/java/com/skillsync/notification/consumer/PaymentEventConsumer.java)) correctly use `NotificationCommandService.createAndPush()` which handles cache invalidation.
 
-### ⚠️ MINOR: No consumer for Skill events
+### âš ï¸ MINOR: No consumer for Skill events
 
 `SkillCommandService` publishes to `skill.exchange` with routing keys `skill.created`, `skill.updated`, but **no service consumes these events**. The exchange declaration exists but the events go nowhere.
 
 **Impact:** No functional impact currently. This is future infrastructure.
 
-### ⚠️ Event Ordering
+### âš ï¸ Event Ordering
 
 RabbitMQ does NOT guarantee strict ordering across consumers. If two reviews are submitted in quick succession:
 - Event 1: `avgRating=4.5, totalReviews=10`
@@ -656,44 +662,44 @@ RabbitMQ does NOT guarantee strict ordering across consumers. If two reviews are
 
 If Event 2 is processed before Event 1, the mentor will have `avgRating=4.5, totalReviews=10` (stale). 
 
-**Mitigation:** The current implementation is self-correcting — the next review submission will recalculate from the database. **Acceptable at current scale.**
+**Mitigation:** The current implementation is self-correcting â€” the next review submission will recalculate from the database. **Acceptable at current scale.**
 
 ---
 
 ## PART 5: SAGA + CACHE CONSISTENCY
 
-### ✅ Success Path — CACHE CONSISTENT
+### âœ… Success Path â€” CACHE CONSISTENT
 
 ```
 PaymentSagaOrchestrator.executeSaga()
-  → transitionToSuccessPending()     → DB write (no cache for payments ✅)
-  → executeMentorOnboarding()        → MentorCommandService.approveMentor()
-                                        → DB write + invalidateMentorCaches() ✅
-  → markPaymentSuccess()             → DB write
-  → publishPaymentEvent()            → RabbitMQ notification
+  â†’ transitionToSuccessPending()     â†’ DB write (no cache for payments âœ…)
+  â†’ executeMentorOnboarding()        â†’ MentorCommandService.approveMentor()
+                                        â†’ DB write + invalidateMentorCaches() âœ…
+  â†’ markPaymentSuccess()             â†’ DB write
+  â†’ publishPaymentEvent()            â†’ RabbitMQ notification
 ```
 
-### ✅ Compensation Path — CACHE CONSISTENT
+### âœ… Compensation Path â€” CACHE CONSISTENT
 
 ```
 PaymentSagaOrchestrator.compensate()
-  → compensateMentorOnboarding()     → MentorCommandService.revertMentorApproval()
-                                        → DB revert + invalidateMentorCaches() ✅
-  → markPaymentCompensated()         → DB write
-  → publishPaymentEvent()            → RabbitMQ notification
+  â†’ compensateMentorOnboarding()     â†’ MentorCommandService.revertMentorApproval()
+                                        â†’ DB revert + invalidateMentorCaches() âœ…
+  â†’ markPaymentCompensated()         â†’ DB write
+  â†’ publishPaymentEvent()            â†’ RabbitMQ notification
 ```
 
-**Both paths invalidate cache.** ✅ No DB↔cache inconsistency possible.
+**Both paths invalidate cache.** âœ… No DBâ†”cache inconsistency possible.
 
-### ✅ PaymentService — NO CACHING (CORRECT)
+### âœ… PaymentService â€” NO CACHING (CORRECT)
 
-`PaymentService` and `PaymentSagaOrchestrator` do NOT inject `CacheService` for their own payment data reads. Payment data is **never cached** — write-through to PostgreSQL only. This is the correct security decision.
+`PaymentService` and `PaymentSagaOrchestrator` do NOT inject `CacheService` for their own payment data reads. Payment data is **never cached** â€” write-through to PostgreSQL only. This is the correct security decision.
 
 ---
 
 ## PART 6: FAILURE HANDLING
 
-### ✅ Redis Down — GRACEFUL DEGRADATION
+### âœ… Redis Down â€” GRACEFUL DEGRADATION
 
 Every method in `CacheService` wraps Redis calls in `try-catch`:
 ```java
@@ -704,32 +710,32 @@ try {
     log.warn("Redis GET failed for key={}: {}. Falling back to DB.", key, e.getMessage());
     cacheErrorCounter.increment();
 }
-return null;  // QueryService sees null → queries DB
+return null;  // QueryService sees null â†’ queries DB
 ```
 
-**All 4 CacheService implementations follow this pattern.** System continues with DB-only reads on Redis failure. ✅
+**All 4 CacheService implementations follow this pattern.** System continues with DB-only reads on Redis failure. âœ…
 
-### ✅ Cache Stampede Protection — IMPLEMENTED
+### âœ… Cache Stampede Protection â€” IMPLEMENTED
 
-The `getOrLoad()` method uses `ConcurrentHashMap<String, ReentrantLock>` for per-key locking. On a cache miss, only ONE thread hits the database; others wait and read the cached result. ✅
+The `getOrLoad()` method uses `ConcurrentHashMap<String, ReentrantLock>` for per-key locking. On a cache miss, only ONE thread hits the database; others wait and read the cached result. âœ…
 
-### ⚠️ MINOR: Stampede protection is per-JVM only
+### âš ï¸ MINOR: Stampede protection is per-JVM only
 
 The `keyLocks` map is in-process. If you run multiple replicas of a service, each replica has its own lock map. Under high concurrency with N replicas, up to N threads (one per replica) could hit the database simultaneously on a cache miss.
 
 **Mitigation:** For current scale, this is acceptable. For true distributed locking, use Redis-based locks (`SETNX` or Redisson).
 
-### ⚠️ MINOR: No circuit breaker on Redis
+### âš ï¸ MINOR: No circuit breaker on Redis
 
 If Redis is slow (not down), every cache call will wait for the 3000ms timeout before falling back. This could cascade into slow responses system-wide.
 
-**Recommendation:** Add a circuit breaker (Resilience4j) around Redis calls, or reduce `spring.data.redis.timeout` to 500ms–1000ms.
+**Recommendation:** Add a circuit breaker (Resilience4j) around Redis calls, or reduce `spring.data.redis.timeout` to 500msâ€“1000ms.
 
 ---
 
 ## PART 7: PERFORMANCE REVIEW
 
-### ✅ Paginated Queries — NOT CACHED (CORRECT DECISION)
+### âœ… Paginated Queries â€” NOT CACHED (CORRECT DECISION)
 
 ```java
 // UserQueryService
@@ -743,9 +749,9 @@ public Page<MentorProfileResponse> searchMentors(Pageable pageable) {
 }
 ```
 
-Paginated results have too many parameter combinations (page, size, sort) to cache effectively. This is the right design decision. ✅
+Paginated results have too many parameter combinations (page, size, sort) to cache effectively. This is the right design decision. âœ…
 
-### ⚠️ MINOR: `searchSkills()` — NOT CACHED
+### âš ï¸ MINOR: `searchSkills()` â€” NOT CACHED
 
 ```java
 public List<SkillResponse> searchSkills(String query) {
@@ -755,7 +761,7 @@ public List<SkillResponse> searchSkills(String query) {
 
 Search results are not cached. For autocomplete-style queries, this could be a performance concern at scale.
 
-### ⚠️ MINOR: `KEYS` command for pattern eviction
+### âš ï¸ MINOR: `KEYS` command for pattern eviction
 
 ```java
 Set<String> keys = redisTemplate.keys(pattern);
@@ -765,19 +771,19 @@ Set<String> keys = redisTemplate.keys(pattern);
 
 **Recommendation:** Migrate to `SCAN` cursor-based iteration at scale.
 
-### ✅ Payload Size — REASONABLE
+### âœ… Payload Size â€” REASONABLE
 
-Cached objects are DTOs (records), not entities. No lazy-loaded JPA collections are serialized. JSON serialization with type info is used. ✅
+Cached objects are DTOs (records), not entities. No lazy-loaded JPA collections are serialized. JSON serialization with type info is used. âœ…
 
 ---
 
 ## PART 8: CODE QUALITY
 
-### ✅ Proper Abstraction
+### âœ… Proper Abstraction
 
-All services use `CacheService` as the cache wrapper. No direct `RedisTemplate` calls in business logic. ✅
+All services use `CacheService` as the cache wrapper. No direct `RedisTemplate` calls in business logic. âœ…
 
-### ⚠️ MINOR: Code Duplication — CacheService × 4
+### âš ï¸ MINOR: Code Duplication â€” CacheService Ã— 4
 
 The `CacheService` class is **identically duplicated** across 4 services (user, skill, session, notification), differing only in the `service` tag for metrics:
 
@@ -785,74 +791,74 @@ The `CacheService` class is **identically duplicated** across 4 services (user, 
 .tag("service", "user-service")   // Only this changes
 ```
 
-**Total duplication:** ~220 lines × 4 = ~880 lines of duplicated code.
+**Total duplication:** ~220 lines Ã— 4 = ~880 lines of duplicated code.
 
 **Recommendation:** Extract to a shared `skillsync-cache-common` Maven module. Services would only configure the service tag.
 
-### ⚠️ MINOR: RedisConfig × 4
+### âš ï¸ MINOR: RedisConfig Ã— 4
 
 Similarly, `RedisConfig.java` is duplicated 4 times. Same recommendation as above.
 
-### ✅ Clean Architecture
+### âœ… Clean Architecture
 
 All services follow the same consistent pattern:
 ```
-controller/ → service/command/ → repository → DB + cache evict
-           → service/query/  → cache → (miss) → repository → DB → cache put
+controller/ â†’ service/command/ â†’ repository â†’ DB + cache evict
+           â†’ service/query/  â†’ cache â†’ (miss) â†’ repository â†’ DB â†’ cache put
 ```
 
 ---
 
 ## PART 9: SECURITY CHECK
 
-### ✅ Auth Service — NO CACHING
+### âœ… Auth Service â€” NO CACHING
 
-No `CacheService`, `RedisConfig`, or Redis dependency exists in `auth-service`. Confirmed by search. ✅
+No `CacheService`, `RedisConfig`, or Redis dependency exists in `auth-service`. Confirmed by search. âœ…
 
-### ✅ Payment Data — NOT CACHED
+### âœ… Payment Data â€” NOT CACHED
 
-`PaymentService` does NOT use `CacheService`. Payment amounts, Razorpay secrets, order IDs, and signatures are never stored in Redis. ✅
+`PaymentService` does NOT use `CacheService`. Payment amounts, Razorpay secrets, order IDs, and signatures are never stored in Redis. âœ…
 
-### ✅ JWT/OTP — NOT CACHED
+### âœ… JWT/OTP â€” NOT CACHED
 
-`auth-service` manages JWT tokens, refresh tokens, and OTPs entirely in PostgreSQL. No Redis involvement. ✅
+`auth-service` manages JWT tokens, refresh tokens, and OTPs entirely in PostgreSQL. No Redis involvement. âœ…
 
-### ✅ No Sensitive Data in Cached DTOs
+### âœ… No Sensitive Data in Cached DTOs
 
-Cached DTOs (`ProfileResponse`, `MentorProfileResponse`, `SkillResponse`, `SessionResponse`, `ReviewResponse`, `NotificationResponse`) contain only display-level data. No passwords, tokens, or payment secrets. ✅
+Cached DTOs (`ProfileResponse`, `MentorProfileResponse`, `SkillResponse`, `SessionResponse`, `ReviewResponse`, `NotificationResponse`) contain only display-level data. No passwords, tokens, or payment secrets. âœ…
 
 ---
 
 ## PART 10: TESTING COVERAGE
 
-### ✅ Cache Hit/Miss Tests — PRESENT
+### âœ… Cache Hit/Miss Tests â€” PRESENT
 
 | Service | Test File | Cache Hit | Cache Miss | Cache Invalidation |
 |---------|-----------|-----------|------------|-------------------|
-| User | `UserServiceTest.java` | ❌ missing | ✅ | ✅ |
-| Skill | `SkillServiceTest.java` | ❌ missing | ✅ | ✅ |
-| Session | `SessionServiceTest.java` | ❌ missing | ✅ | ✅ |
-| Notification | `NotificationServiceTest.java` | ❌ missing | ✅ | ✅ |
+| User | `UserServiceTest.java` | âŒ missing | âœ… | âœ… |
+| Skill | `SkillServiceTest.java` | âŒ missing | âœ… | âœ… |
+| Session | `SessionServiceTest.java` | âŒ missing | âœ… | âœ… |
+| Notification | `NotificationServiceTest.java` | âŒ missing | âœ… | âœ… |
 
-### ⚠️ Cache HIT scenario NOT explicitly tested
+### âš ï¸ Cache HIT scenario NOT explicitly tested
 
-All tests verify cache miss → DB fetch → cache put. But none test: **cache HIT → return from Redis → DB NOT called**. This is a gap.
+All tests verify cache miss â†’ DB fetch â†’ cache put. But none test: **cache HIT â†’ return from Redis â†’ DB NOT called**. This is a gap.
 
-### ⚠️ Test keys don't use versioned prefix
+### âš ï¸ Test keys don't use versioned prefix
 
 Test expectations use bare keys like `"user:profile:100"` instead of `"v1:user:profile:100"`. Since the actual code uses `CacheService.vKey()` which prepends `v1:`, **tests may not be verifying the correct key format**.
 
 **This is potentially a test accuracy issue.** The tests mock `cacheService.get("user:profile:100", ...)` but the actual code calls `cacheService.get("v1:user:profile:100", ...)`.
 
-### ❌ No Redis Failure Tests
+### âŒ No Redis Failure Tests
 
 No test verifies that the system degrades gracefully when `CacheService` throws exceptions.
 
-### ❌ No Event-Driven Cache Sync Tests
+### âŒ No Event-Driven Cache Sync Tests
 
 `ReviewEventCacheSyncConsumer` has no dedicated test class.
 
-### ❌ No Saga + Cache Consistency Tests
+### âŒ No Saga + Cache Consistency Tests
 
 No test verifies that cache is invalidated during both saga success and compensation paths.
 
@@ -860,7 +866,7 @@ No test verifies that cache is invalidated during both saga success and compensa
 
 ## PART 11: DEVOPS VALIDATION
 
-### ✅ Redis Container Config — PRODUCTION-GRADE
+### âœ… Redis Container Config â€” PRODUCTION-GRADE
 
 ```yaml
 redis:
@@ -872,13 +878,13 @@ redis:
     - redis-data:/data
 ```
 
-- ✅ AOF persistence enabled
-- ✅ Memory limit with LRU eviction
-- ✅ Health check configured
-- ✅ Named volume for data persistence
-- ✅ Alpine image for minimal footprint
+- âœ… AOF persistence enabled
+- âœ… Memory limit with LRU eviction
+- âœ… Health check configured
+- âœ… Named volume for data persistence
+- âœ… Alpine image for minimal footprint
 
-### ✅ Service Dependencies — CORRECT
+### âœ… Service Dependencies â€” CORRECT
 
 All 4 cached services include:
 ```yaml
@@ -887,13 +893,13 @@ depends_on:
     condition: service_healthy
 ```
 
-Services wait for Redis health check before starting. ✅
+Services wait for Redis health check before starting. âœ…
 
-### ✅ Auth Service — NO Redis Dependency
+### âœ… Auth Service â€” NO Redis Dependency
 
-`auth-service` does NOT depend on Redis in Docker Compose. Correct. ✅
+`auth-service` does NOT depend on Redis in Docker Compose. Correct. âœ…
 
-### ✅ Connection Pool Configuration — CONSISTENT
+### âœ… Connection Pool Configuration â€” CONSISTENT
 
 All services configure Lettuce pool with appropriate values:
 - `max-active=16` (user/skill/session), `8` (notification)
@@ -904,54 +910,54 @@ All services configure Lettuce pool with appropriate values:
 
 ## PART 12: DOCUMENTATION AUDIT
 
-### ✅ doc6 Created — Comprehensive CQRS + Redis Architecture Doc
+### âœ… doc6 Created â€” Comprehensive CQRS + Redis Architecture Doc
 
 [doc6_cqrs_redis_architecture.md](file:///f:/SkillSync/docs/doc6_cqrs_redis_architecture.md) covers:
-- Cache-aside pattern explanation ✅
-- Cache key namespace + TTL table ✅
-- Event-driven sync flows ✅
-- Saga + cache consistency ✅
-- Graceful degradation ✅
-- Security exclusions ✅
-- Trade-offs document ✅
+- Cache-aside pattern explanation âœ…
+- Cache key namespace + TTL table âœ…
+- Event-driven sync flows âœ…
+- Saga + cache consistency âœ…
+- Graceful degradation âœ…
+- Security exclusions âœ…
+- Trade-offs document âœ…
 
-### ⚠️ Documentation vs Implementation Gaps
+### âš ï¸ Documentation vs Implementation Gaps
 
 | Topic | doc6 Says | Actual Implementation |
 |-------|-----------|----------------------|
-| Cache keys | `user:profile:{userId}` | Actual: `v1:user:profile:{userId}` — **missing `v1:` prefix in docs** |
-| CacheService API | `put(key, value, ttlSeconds)` | Actual: `put(key, value, Duration)` — **TTL param is Duration, not long** |
+| Cache keys | `user:profile:{userId}` | Actual: `v1:user:profile:{userId}` â€” **missing `v1:` prefix in docs** |
+| CacheService API | `put(key, value, ttlSeconds)` | Actual: `put(key, value, Duration)` â€” **TTL param is Duration, not long** |
 | Stampede protection | Not mentioned in doc6 | Implemented via `getOrLoad()` with ReentrantLock |
 | Null sentinel caching | Not mentioned | Implemented via `putNull()` |
 | Micrometer metrics | Mentioned briefly | Fully implemented with tagged counters |
 
-### ⚠️ doc6 underrepresents the actual implementation quality
+### âš ï¸ doc6 underrepresents the actual implementation quality
 
 The documentation describes a simpler version than what's actually implemented. The code is MORE sophisticated than the docs suggest (stampede protection, null sentinels, versioned keys, per-key locking).
 
 ---
 
-## 📊 SUMMARY SCORECARD
+## ðŸ“Š SUMMARY SCORECARD
 
-### 1. ✅ What Is Implemented Correctly
+### 1. âœ… What Is Implemented Correctly
 
-- CQRS pattern — clean command/query separation across all services
-- Cache-aside pattern — with stampede protection, penetration protection, versioned keys
-- Graceful degradation — Redis failures never crash the API
-- Micrometer metrics — hit/miss/evict/error counters per service
-- Event-driven cache sync — `ReviewEventCacheSyncConsumer` idempotent updates
-- Saga + cache consistency — both success and compensation paths invalidate cache
-- Security exclusions — Auth, payment, JWT, OTP data never cached
-- Docker config — Redis with AOF, LRU, health checks, named volumes
-- All TTLs defined — domain-specific, no infinite TTLs
-- Controller delegation — clean command/query separation at API layer
+- CQRS pattern â€” clean command/query separation across all services
+- Cache-aside pattern â€” with stampede protection, penetration protection, versioned keys
+- Graceful degradation â€” Redis failures never crash the API
+- Micrometer metrics â€” hit/miss/evict/error counters per service
+- Event-driven cache sync â€” `ReviewEventCacheSyncConsumer` idempotent updates
+- Saga + cache consistency â€” both success and compensation paths invalidate cache
+- Security exclusions â€” Auth, payment, JWT, OTP data never cached
+- Docker config â€” Redis with AOF, LRU, health checks, named volumes
+- All TTLs defined â€” domain-specific, no infinite TTLs
+- Controller delegation â€” clean command/query separation at API layer
 
-### 2. ⚠️ Minor Issues (9 total)
+### 2. âš ï¸ Minor Issues (9 total)
 
 | # | Issue | Severity | Location |
 |---|-------|----------|----------|
-| 1 | `CacheService` duplicated 4× (~880 lines) | Minor | All services |
-| 2 | `RedisConfig` duplicated 4× | Minor | All services |
+| 1 | `CacheService` duplicated 4Ã— (~880 lines) | Minor | All services |
+| 2 | `RedisConfig` duplicated 4Ã— | Minor | All services |
 | 3 | CommandService imports QueryService (for mapper) | Minor | All services |
 | 4 | `searchSkills()` not cached | Minor | SkillQueryService |
 | 5 | Redundant `evict()` after `evictByPattern()` in ReviewCommandService | Minor | ReviewCommandService:56-58 |
@@ -960,15 +966,15 @@ The documentation describes a simpler version than what's actually implemented. 
 | 8 | No circuit breaker on Redis | Minor | CacheService |
 | 9 | Event ordering not guaranteed (RabbitMQ) | Minor | ReviewEventCacheSyncConsumer |
 
-### 3. ❌ Critical Issues (3 total)
+### 3. âŒ Critical Issues (3 total)
 
 | # | Issue | Severity | Location | Fix Required |
 |---|-------|----------|----------|-------------|
-| **C1** | **`removeAvailability()` missing cache invalidation** | 🔴 HIGH | [MentorCommandService:147-149](file:///f:/SkillSync/user-service/src/main/java/com/skillsync/user/service/command/MentorCommandService.java#L147-L149) | Must look up mentor from slot, then call `invalidateMentorCaches()` |
-| **C2** | **Test keys don't use `v1:` prefix** | 🟡 MEDIUM | All `*ServiceTest.java` | Tests verify `"user:profile:100"` but code uses `"v1:user:profile:100"` — tests may pass but are not testing real behavior |
-| **C3** | **`apply()` doesn't invalidate pending list cache** | 🟡 MEDIUM | [MentorCommandService:40-65](file:///f:/SkillSync/user-service/src/main/java/com/skillsync/user/service/command/MentorCommandService.java#L40-L65) | Add `cacheService.evictByPattern(CacheService.vKey("user:mentor:pending:*"))` |
+| **C1** | **`removeAvailability()` missing cache invalidation** | ðŸ”´ HIGH | [MentorCommandService:147-149](file:///f:/SkillSync/user-service/src/main/java/com/skillsync/user/service/command/MentorCommandService.java#L147-L149) | Must look up mentor from slot, then call `invalidateMentorCaches()` |
+| **C2** | **Test keys don't use `v1:` prefix** | ðŸŸ¡ MEDIUM | All `*ServiceTest.java` | Tests verify `"user:profile:100"` but code uses `"v1:user:profile:100"` â€” tests may pass but are not testing real behavior |
+| **C3** | **`apply()` doesn't invalidate pending list cache** | ðŸŸ¡ MEDIUM | [MentorCommandService:40-65](file:///f:/SkillSync/user-service/src/main/java/com/skillsync/user/service/command/MentorCommandService.java#L40-L65) | Add `cacheService.evictByPattern(CacheService.vKey("user:mentor:pending:*"))` |
 
-### 4. 🚀 Improvements Recommended
+### 4. ðŸš€ Improvements Recommended
 
 | # | Improvement | Priority | Effort |
 |---|-------------|----------|--------|
@@ -984,7 +990,7 @@ The documentation describes a simpler version than what's actually implemented. 
 | 10 | Extract `mapToResponse()` to dedicated Mapper classes | Low | 1 hour |
 | 11 | Update doc6 to document stampede protection + null sentinels + versioned keys | Medium | 30 min |
 
-### 5. 📊 Production Readiness Score
+### 5. ðŸ“Š Production Readiness Score
 
 | Category | Score | Notes |
 |----------|-------|-------|
@@ -993,16 +999,16 @@ The documentation describes a simpler version than what's actually implemented. 
 | Cache Invalidation | 7/10 | Missing `removeAvailability()` + `apply()` invalidation |
 | Event-Driven Sync | 8/10 | Working, idempotent, but no tests |
 | Saga Consistency | 10/10 | Both paths covered, correct implementation |
-| Failure Handling | 8/10 | Graceful degradation ✅, but no circuit breaker |
+| Failure Handling | 8/10 | Graceful degradation âœ…, but no circuit breaker |
 | Security | 10/10 | Auth, payment, JWT all excluded from caching |
 | Testing | 6/10 | Key prefix mismatch, missing hit tests, no event tests |
 | DevOps | 9/10 | Proper Docker config, health checks, dependencies |
 | Docs | 7/10 | Good but underrepresents actual implementation quality |
 | **Overall** | **8.3/10** | |
 
-### 6. 🧠 Final Verdict
+### 6. ðŸ§  Final Verdict
 
-## **NEEDS MINOR WORK** — Ready for demo/evaluation after fixing 3 issues
+## **NEEDS MINOR WORK** â€” Ready for demo/evaluation after fixing 3 issues
 
 The implementation is architecturally sound and exceeds typical production quality in several areas (stampede protection, null sentinel caching, versioned keys, Micrometer metrics). The CQRS separation is clean and consistent.
 
@@ -1023,3 +1029,4 @@ The implementation is architecturally sound and exceeds typical production quali
 | **doc4** | Fix test examples to use `CacheService.vKey()` prefix; add cache HIT test example |
 | **backend_testing_guide** | Add missing test scenarios: cache hit, Redis failure, event sync |
 | **doc2** | Update CacheService code sample to show `Duration` API instead of `long ttlSeconds`; add `getOrLoad()` signature |
+

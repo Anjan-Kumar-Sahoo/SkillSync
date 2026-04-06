@@ -20,7 +20,7 @@ type MonitoringLink = {
   href: string;
 };
 
-const uiDocs: DocLink[] = [
+const docsLinks: DocLink[] = [
   {
     title: 'Backend Architecture',
     description: 'Service topology, data boundaries, and domain ownership.',
@@ -169,20 +169,20 @@ const LandingPage = () => {
             <Link className="landing-btn landing-btn-solid" to="/dashboard">
               Get Started
             </Link>
-            <a className="landing-btn landing-btn-ghost" href="#ui-docs">
+            <a className="landing-btn landing-btn-ghost" href="#docs">
               View Docs
             </a>
           </div>
         </section>
 
-        <section className="section-wrap" id="ui-docs">
+        <section className="section-wrap" id="docs">
           <div className="section-head">
             <p className="section-label">Infrastructure</p>
-            <h2>UI Documentation</h2>
+            <h2>Documentation</h2>
             <p>Explore comprehensive technical blueprints that power the SkillSync ecosystem.</p>
           </div>
           <div className="docs-grid">
-            {uiDocs.map((doc, index) => (
+            {docsLinks.map((doc, index) => (
               <a
                 key={doc.title}
                 href={doc.href}

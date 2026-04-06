@@ -8,7 +8,7 @@ const DiscoverMentorsPage = () => {
   const navigate = useNavigate();
   
   const [draftFilters, setDraftFilters] = useState({ skill: '', rating: '', priceRange: '' });
-  const [filters, setFilters] = useState({ skill: '', rating: '', minPrice: '', maxPrice: '' });
+
   const [page, setPage] = useState(0);
   
   const [mentorsList, setMentorsList] = useState<any[]>([]);
@@ -23,18 +23,18 @@ const DiscoverMentorsPage = () => {
         const res = await api.get('/api/skills');
         return res.data;
       } catch {
-        return ['Java', 'React', 'System Design', 'Python', 'AWS', 'Node.js', 'Spring Boot'];
+        return [];
       }
     }
   });
 
-  const skills = Array.isArray(skillsData) ? skillsData : ['Java', 'React', 'System Design', 'Python', 'AWS', 'Node.js', 'Spring Boot'];
+  const skills = Array.isArray(skillsData) ? skillsData : [];
 
   // Fetch Mentors
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['mentors', filters.skill, filters.rating, filters.minPrice, filters.maxPrice, page],
+    queryKey: ['mentors', page],
     queryFn: async () => {
-      const res = await api.get(`/api/mentors/search?skill=${filters.skill}&rating=${filters.rating}&minPrice=${filters.minPrice}&maxPrice=${filters.maxPrice}&page=${page}&size=9`);
+      const res = await api.get(`/api/users?role=MENTOR&page=${page}&size=9`);
       return res.data;
     }
   });
@@ -55,25 +55,15 @@ const DiscoverMentorsPage = () => {
   }, [data, page]);
 
   const applyFilters = () => {
-    let min = '';
-    let max = '';
-    if (draftFilters.priceRange === 'under50') max = '50';
-    if (draftFilters.priceRange === '50to100') { min = '50'; max = '100'; }
-    if (draftFilters.priceRange === 'over100') min = '100';
 
-    setFilters({
-      skill: draftFilters.skill === 'All Skills' ? '' : draftFilters.skill,
-      rating: draftFilters.rating,
-      minPrice: min,
-      maxPrice: max
-    });
+
     setPage(0);
     setTimeout(() => refetch(), 0);
   };
 
   const clearFilters = () => {
     setDraftFilters({ skill: '', rating: '', priceRange: '' });
-    setFilters({ skill: '', rating: '', minPrice: '', maxPrice: '' });
+
     setPage(0);
   };
 

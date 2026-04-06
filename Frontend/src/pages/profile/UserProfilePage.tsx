@@ -20,9 +20,7 @@ const UserProfilePage = () => {
     bio: '',
     phone: '',
     location: '',
-    avatarUrl: '',
   });
-  const [previewUrl, setPreviewUrl] = useState<string>('');
   const [canSaveEdits, setCanSaveEdits] = useState(false);
 
   // Fetch user profile
@@ -40,9 +38,7 @@ const UserProfilePage = () => {
       bio: profile.bio || '',
       phone: profile.phone || '',
       location: profile.location || '',
-      avatarUrl: profile.avatarUrl || '',
     });
-    setPreviewUrl(profile.avatarUrl || '');
   }, [profile]);
 
   useEffect(() => {
@@ -65,7 +61,6 @@ const UserProfilePage = () => {
         bio: formData.bio.trim() || undefined,
         phone: formData.phone.trim() || undefined,
         location: formData.location.trim() || undefined,
-        avatarUrl: formData.avatarUrl.trim() || undefined,
       };
 
       return userService.updateProfile(cleanedPayload);
@@ -81,10 +76,6 @@ const UserProfilePage = () => {
     },
   });
 
-  const handleAvatarUrlChange = (value: string) => {
-    setFormData({ ...formData, avatarUrl: value });
-    setPreviewUrl(value);
-  };
 
   const handleSubmit = () => {
     if (!isEditing || !canSaveEdits) {
@@ -129,19 +120,9 @@ const UserProfilePage = () => {
             {/* Profile Picture */}
             <div className="flex flex-col items-center">
               <div className="relative">
-                <img
-                  src={previewUrl || profile?.avatarUrl || 'https://via.placeholder.com/150'}
-                  alt="Profile"
-                  className="w-32 h-32 rounded-full object-cover border-4 border-gray-200"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150';
-                  }}
-                />
-                {isEditing && (
-                  <span className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full">
-                    <span className="material-symbols-outlined text-[18px]">photo_camera</span>
-                  </span>
-                )}
+                <div className="w-32 h-32 rounded-full bg-blue-500 text-white flex items-center justify-center text-4xl font-bold border-4 border-gray-200">
+                  {(profile?.firstName?.[0] || '') + (profile?.lastName?.[0] || '') || 'U'}
+                </div>
               </div>
               <div className="text-center mt-4">
                 <p className="font-semibold text-gray-900">
@@ -157,17 +138,6 @@ const UserProfilePage = () => {
             {/* Profile Form */}
             <div className="flex-1">
               <form className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Profile Image URL</label>
-                  <input
-                    type="url"
-                    value={formData.avatarUrl}
-                    onChange={(e) => handleAvatarUrlChange(e.target.value)}
-                    disabled={!isEditing}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-                    placeholder="https://example.com/avatar.jpg"
-                  />
-                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>

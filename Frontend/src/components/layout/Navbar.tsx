@@ -33,16 +33,6 @@ const Navbar = () => {
   return (
     <header className="h-16 w-full glass-nav bg-surface-container-lowest/80 border-b border-outline-variant/10 flex items-center justify-between px-4 lg:px-8 z-30 sticky top-0 transition-all">
       <div className="flex-1 flex items-center">
-        <div className="relative group hidden sm:block">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors">
-            search
-          </span>
-          <input 
-            type="text" 
-            placeholder="Search skills or mentors..." 
-            className="w-full sm:w-64 h-10 pl-10 pr-4 bg-surface-container rounded-full text-sm font-medium outline-none border border-transparent focus:border-primary/30 focus:ring-1 focus:ring-primary/20 transition-all placeholder:text-on-surface-variant/70"
-          />
-        </div>
       </div>
 
       <div className="flex items-center space-x-4">

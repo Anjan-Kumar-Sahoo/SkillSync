@@ -31,15 +31,6 @@ const LearnerDashboardPage = () => {
     }
   });
 
-  const { data: compSessions } = useQuery({
-    queryKey: ['sessions', 'completed'],
-    queryFn: async () => {
-      const res = await api.get('/api/sessions/learner?page=0&size=50');
-      const allSessions = res.data?.content || [];
-      const completed = allSessions.filter((s: any) => s.status === 'COMPLETED');
-      return { ...res.data, content: completed.slice(0, 1), totalElements: completed.length };
-    }
-  });
 
   const { data: mentors, isLoading: loadingMentors } = useQuery({
     queryKey: ['mentors', 'recommended'],
@@ -207,26 +198,7 @@ const LearnerDashboardPage = () => {
         )}
       </div>
 
-      <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/15">
-        <h3 className="font-bold text-lg text-on-surface mb-4">Quick Stats</h3>
-        <div className="mb-6 space-y-2 text-sm font-bold text-on-surface-variant">
-          <p>● Sessions Completed — <span className="text-on-surface">{compSessions?.totalElements || 0}</span></p>
-          <p>● Skills Tagged — <span className="text-on-surface">{user?.skills?.length || 0}</span></p>
-        </div>
-        
-        <div className="bg-surface-container-low rounded-xl p-4">
-          <p className="text-xs font-semibold text-on-surface-variant mb-4 text-center">Activity (Last 7 Days)</p>
-          <div className="flex items-end justify-between h-20 gap-1.5">
-            <div className="flex-1 bg-primary/20 rounded-t-sm" style={{ height: '30%' }}></div>
-            <div className="flex-1 bg-primary/30 rounded-t-sm" style={{ height: '50%' }}></div>
-            <div className="flex-1 bg-primary/20 rounded-t-sm" style={{ height: '20%' }}></div>
-            <div className="flex-1 bg-primary/40 rounded-t-sm" style={{ height: '70%' }}></div>
-            <div className="flex-1 bg-primary/20 rounded-t-sm" style={{ height: '40%' }}></div>
-            <div className="flex-1 bg-primary/30 rounded-t-sm" style={{ height: '60%' }}></div>
-            <div className="flex-1 bg-primary rounded-t-sm shadow-sm" style={{ height: '90%' }}></div>
-          </div>
-        </div>
-      </div>
+
     </>
   );
 
@@ -329,16 +301,7 @@ const LearnerDashboardPage = () => {
           <h1 className="text-3xl font-extrabold text-on-surface tracking-tight">Welcome back, {user?.firstName}!</h1>
           <p className="text-on-surface-variant font-medium mt-1">You're making great progress. Keep it up.</p>
         </div>
-        <div className="flex gap-4 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
-          <div className="bg-surface-container-lowest border border-outline-variant/10 rounded-xl px-5 py-3 shadow-sm text-center shrink-0 min-w-[140px]">
-            <p className="text-[10px] text-on-surface-variant uppercase tracking-widest font-bold mb-1">Upcoming Sessions</p>
-            <p className="text-2xl font-black text-on-surface">{upSessions?.totalElements || 0}</p>
-          </div>
-          <div className="bg-surface-container-lowest border border-outline-variant/10 rounded-xl px-5 py-3 shadow-sm text-center shrink-0 min-w-[140px]">
-            <p className="text-[10px] text-on-surface-variant uppercase tracking-widest font-bold mb-1">Joined Groups</p>
-            <p className="text-2xl font-black text-on-surface">{groups.length}</p>
-          </div>
-        </div>
+
       </section>
 
       {/* Upcoming Sessions Section */}

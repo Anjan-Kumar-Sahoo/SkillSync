@@ -1,3 +1,9 @@
+﻿# Presentation Sync Note
+
+Updated for final presentation on 2026-04-06. Start with docs/00_Presentation_Playbook.md for the guided narrative, then use this document for deep details.
+
+---
+
 # 10 Production Readiness and Incident Reports
 
 
@@ -338,7 +344,7 @@ All items requested have been completed and are ready for validation.
 
 ## Content from: skillsync_production_audit_report.md
 
-# 🔒 SkillSync Production Audit Report
+# ðŸ”’ SkillSync Production Audit Report
 
 **Date:** 2026-04-01  
 **Auditor Scope:** Security, DevOps, Architecture, Frontend Integration  
@@ -350,7 +356,7 @@ All items requested have been completed and are ready for validation.
 
 ```mermaid
 graph LR
-  FE["Frontend<br>skillsync.mraks.dev<br>(Vercel)"] -->|HTTPS + Cookies| GW["API Gateway<br>api.skillsync.mraks.dev<br>(EC2, port 80→8080)"]
+  FE["Frontend<br>skillsync.mraks.dev<br>(Vercel)"] -->|HTTPS + Cookies| GW["API Gateway<br>api.skillsync.mraks.dev<br>(EC2, port 80â†’8080)"]
   GW --> AUTH[auth-service:8081]
   GW --> USER[user-service:8082]
   GW --> SKILL[skill-service:8084]
@@ -362,54 +368,54 @@ graph LR
 ```
 
 > [!IMPORTANT]
-> **NGINX has been removed** from the architecture. The API Gateway is the sole ingress point. The `Backend/nginx/` directory is empty. SSL termination for `api.skillsync.mraks.dev` is handled externally (Cloudflare proxy or Certbot on EC2 host — **not within Docker Compose**).
+> **NGINX has been removed** from the architecture. The API Gateway is the sole ingress point. The `Backend/nginx/` directory is empty. SSL termination for `api.skillsync.mraks.dev` is handled externally (Cloudflare proxy or Certbot on EC2 host â€” **not within Docker Compose**).
 
 ---
 
-## ✅ WHAT IS CORRECT
+## âœ… WHAT IS CORRECT
 
 | # | Component | Status | Evidence |
 |---|-----------|--------|----------|
-| 1 | **Cookie attributes** | ✅ Correct | `HttpOnly=true`, `Secure=true`, `SameSite=None`, `Domain=.mraks.dev`, `Path=/`, `MaxAge` set — [AuthController.java:116-126](file:///f:/SkillSync/Backend/auth-service/src/main/java/com/skillsync/auth/controller/AuthController.java#L116-L126) |
-| 2 | **CORS configuration** | ✅ Correct | Origins from `ALLOWED_ORIGINS` env, `allowCredentials=true`, no wildcard `*`, methods locked — [CorsConfig.java](file:///f:/SkillSync/Backend/api-gateway/src/main/java/com/skillsync/apigateway/config/CorsConfig.java) |
-| 3 | **JWT token generation** | ✅ Correct | HMAC-SHA, 15min access / 7d refresh, subject=userId, claims=email+role — [JwtTokenProvider.java](file:///f:/SkillSync/Backend/auth-service/src/main/java/com/skillsync/auth/security/JwtTokenProvider.java) |
-| 4 | **Gateway JWT filter** | ✅ Correct | Header → cookie fallback, extracts claims as `X-User-Id`/`X-User-Email`/`X-User-Role` — [JwtAuthenticationFilter.java](file:///f:/SkillSync/Backend/api-gateway/src/main/java/com/skillsync/apigateway/filter/JwtAuthenticationFilter.java) |
-| 5 | **Frontend axios client** | ✅ Correct | `withCredentials: true`, base URL = `https://api.skillsync.mraks.dev`, Bearer token in header — [axios.ts](file:///f:/SkillSync/Frontend/src/services/axios.ts) |
-| 6 | **Token refresh retry queue** | ✅ Correct | Queues concurrent 401s, retries with new token, prevents refresh loops — [axios.ts:22-80](file:///f:/SkillSync/Frontend/src/services/axios.ts#L22-L80) |
-| 7 | **Rate limiting** | ✅ Present | GlobalFilter with per-category limits (OTP=5, Login=10, Authenticated=100 req/min) — [RateLimitingFilter.java](file:///f:/SkillSync/Backend/api-gateway/src/main/java/com/skillsync/apigateway/filter/RateLimitingFilter.java) |
-| 8 | **Forward headers strategy** | ✅ Enabled | `server.forward-headers-strategy=framework` on gateway — [application.properties:188](file:///f:/SkillSync/Backend/api-gateway/src/main/resources/application.properties#L188) |
-| 9 | **Error response consistency** | ✅ Correct | All 6 services have `GlobalExceptionHandler` with `{timestamp, status, error, message}` structure |
-| 10 | **No HTTP calls from frontend** | ✅ Verified | Zero `http://` references in `Frontend/src/` (all HTTPS) |
-| 11 | **No hardcoded IPs** | ✅ Verified | Zero raw IPs in `.java` or `.properties` (all use env vars with Docker DNS defaults) |
-| 12 | **No `@CrossOrigin` on controllers** | ✅ Correct | CORS is centralized at gateway, not scattered across services |
-| 13 | **Refresh token rotation** | ✅ Correct | Old token deleted on refresh, max 5 per user (FIFO eviction) — [AuthService.java:86-100](file:///f:/SkillSync/Backend/auth-service/src/main/java/com/skillsync/auth/service/AuthService.java#L86-L100) |
-| 14 | **Password hashing** | ✅ Correct | BCrypt with cost 12 — [SecurityConfig.java:58-60](file:///f:/SkillSync/Backend/auth-service/src/main/java/com/skillsync/auth/config/SecurityConfig.java#L58-L60) |
-| 15 | **WebSocket CORS** | ✅ Correct | Uses `ALLOWED_ORIGINS` env, not wildcard — [WebSocketConfig.java:14-28](file:///f:/SkillSync/Backend/notification-service/src/main/java/com/skillsync/notification/config/WebSocketConfig.java#L14-L28) |
-| 16 | **`.gitignore`** | ✅ Correct | `.env`, `.env.*`, `*.pem`, `*.key` all excluded — [.gitignore:76-87](file:///f:/SkillSync/.gitignore#L76-L87) |
-| 17 | **Health endpoint** | ✅ Present | `/health` returns `{"status":"UP"}` — [HealthController.java](file:///f:/SkillSync/Backend/api-gateway/src/main/java/com/skillsync/apigateway/controller/HealthController.java) |
+| 1 | **Cookie attributes** | âœ… Correct | `HttpOnly=true`, `Secure=true`, `SameSite=None`, `Domain=.mraks.dev`, `Path=/`, `MaxAge` set â€” [AuthController.java:116-126](file:///f:/SkillSync/Backend/auth-service/src/main/java/com/skillsync/auth/controller/AuthController.java#L116-L126) |
+| 2 | **CORS configuration** | âœ… Correct | Origins from `ALLOWED_ORIGINS` env, `allowCredentials=true`, no wildcard `*`, methods locked â€” [CorsConfig.java](file:///f:/SkillSync/Backend/api-gateway/src/main/java/com/skillsync/apigateway/config/CorsConfig.java) |
+| 3 | **JWT token generation** | âœ… Correct | HMAC-SHA, 15min access / 7d refresh, subject=userId, claims=email+role â€” [JwtTokenProvider.java](file:///f:/SkillSync/Backend/auth-service/src/main/java/com/skillsync/auth/security/JwtTokenProvider.java) |
+| 4 | **Gateway JWT filter** | âœ… Correct | Header â†’ cookie fallback, extracts claims as `X-User-Id`/`X-User-Email`/`X-User-Role` â€” [JwtAuthenticationFilter.java](file:///f:/SkillSync/Backend/api-gateway/src/main/java/com/skillsync/apigateway/filter/JwtAuthenticationFilter.java) |
+| 5 | **Frontend axios client** | âœ… Correct | `withCredentials: true`, base URL = `https://api.skillsync.mraks.dev`, Bearer token in header â€” [axios.ts](file:///f:/SkillSync/Frontend/src/services/axios.ts) |
+| 6 | **Token refresh retry queue** | âœ… Correct | Queues concurrent 401s, retries with new token, prevents refresh loops â€” [axios.ts:22-80](file:///f:/SkillSync/Frontend/src/services/axios.ts#L22-L80) |
+| 7 | **Rate limiting** | âœ… Present | GlobalFilter with per-category limits (OTP=5, Login=10, Authenticated=100 req/min) â€” [RateLimitingFilter.java](file:///f:/SkillSync/Backend/api-gateway/src/main/java/com/skillsync/apigateway/filter/RateLimitingFilter.java) |
+| 8 | **Forward headers strategy** | âœ… Enabled | `server.forward-headers-strategy=framework` on gateway â€” [application.properties:188](file:///f:/SkillSync/Backend/api-gateway/src/main/resources/application.properties#L188) |
+| 9 | **Error response consistency** | âœ… Correct | All 6 services have `GlobalExceptionHandler` with `{timestamp, status, error, message}` structure |
+| 10 | **No HTTP calls from frontend** | âœ… Verified | Zero `http://` references in `Frontend/src/` (all HTTPS) |
+| 11 | **No hardcoded IPs** | âœ… Verified | Zero raw IPs in `.java` or `.properties` (all use env vars with Docker DNS defaults) |
+| 12 | **No `@CrossOrigin` on controllers** | âœ… Correct | CORS is centralized at gateway, not scattered across services |
+| 13 | **Refresh token rotation** | âœ… Correct | Old token deleted on refresh, max 5 per user (FIFO eviction) â€” [AuthService.java:86-100](file:///f:/SkillSync/Backend/auth-service/src/main/java/com/skillsync/auth/service/AuthService.java#L86-L100) |
+| 14 | **Password hashing** | âœ… Correct | BCrypt with cost 12 â€” [SecurityConfig.java:58-60](file:///f:/SkillSync/Backend/auth-service/src/main/java/com/skillsync/auth/config/SecurityConfig.java#L58-L60) |
+| 15 | **WebSocket CORS** | âœ… Correct | Uses `ALLOWED_ORIGINS` env, not wildcard â€” [WebSocketConfig.java:14-28](file:///f:/SkillSync/Backend/notification-service/src/main/java/com/skillsync/notification/config/WebSocketConfig.java#L14-L28) |
+| 16 | **`.gitignore`** | âœ… Correct | `.env`, `.env.*`, `*.pem`, `*.key` all excluded â€” [.gitignore:76-87](file:///f:/SkillSync/.gitignore#L76-L87) |
+| 17 | **Health endpoint** | âœ… Present | `/health` returns `{"status":"UP"}` â€” [HealthController.java](file:///f:/SkillSync/Backend/api-gateway/src/main/java/com/skillsync/apigateway/controller/HealthController.java) |
 
 ---
 
-## 🚨 SECURITY RISKS (Critical + High)
+## ðŸš¨ SECURITY RISKS (Critical + High)
 
-### CRIT-1: `updateUserRole` endpoint is publicly accessible — **Privilege Escalation**
+### CRIT-1: `updateUserRole` endpoint is publicly accessible â€” **Privilege Escalation**
 
 > [!CAUTION]
-> **Severity: CRITICAL** — An attacker can promote any user to `ROLE_ADMIN` or `ROLE_MENTOR` without authentication.
+> **Severity: CRITICAL** â€” An attacker can promote any user to `ROLE_ADMIN` or `ROLE_MENTOR` without authentication.
 
 **Evidence:**  
 - [AuthController.java:110-114](file:///f:/SkillSync/Backend/auth-service/src/main/java/com/skillsync/auth/controller/AuthController.java#L110-L114): `@PutMapping("/users/{id}/role")` has NO authentication check
-- [SecurityConfig.java:33-49](file:///f:/SkillSync/Backend/auth-service/src/main/java/com/skillsync/auth/config/SecurityConfig.java#L33-L49): The `/api/auth/**` path is NOT in the `permitAll()` block, but the auth-service's SecurityFilterChain catches it with `.anyRequest().authenticated()` — **however**, the gateway routes `auth-service` API calls **without** the `JwtAuthenticationFilter`:
+- [SecurityConfig.java:33-49](file:///f:/SkillSync/Backend/auth-service/src/main/java/com/skillsync/auth/config/SecurityConfig.java#L33-L49): The `/api/auth/**` path is NOT in the `permitAll()` block, but the auth-service's SecurityFilterChain catches it with `.anyRequest().authenticated()` â€” **however**, the gateway routes `auth-service` API calls **without** the `JwtAuthenticationFilter`:
 
 ```properties
 # application.properties line 41-43
 spring.cloud.gateway.routes[0].id=auth-service-api
 spring.cloud.gateway.routes[0].uri=lb://auth-service
 spring.cloud.gateway.routes[0].predicates[0]=Path=/api/auth/**
-# ← NO JwtAuthenticationFilter applied
+# â† NO JwtAuthenticationFilter applied
 ```
 
-While the auth-service has its own Spring Security, the `updateUserRole` endpoint is protected by the auth-service's `JwtAuthenticationFilter` which only checks Bearer tokens. But the endpoint does NOT verify the caller's role — **any authenticated user can change any other user's role**.
+While the auth-service has its own Spring Security, the `updateUserRole` endpoint is protected by the auth-service's `JwtAuthenticationFilter` which only checks Bearer tokens. But the endpoint does NOT verify the caller's role â€” **any authenticated user can change any other user's role**.
 
 **Exploit scenario:**
 ```bash
@@ -422,7 +428,7 @@ curl -X PUT "https://api.skillsync.mraks.dev/api/auth/users/1/role?role=ROLE_ADM
 ```java
 // AuthController.java - Add @PreAuthorize annotation
 @PutMapping("/users/{id}/role")
-@PreAuthorize("hasRole('ADMIN')")  // ← ADD THIS
+@PreAuthorize("hasRole('ADMIN')")  // â† ADD THIS
 public ResponseEntity<Void> updateUserRole(@PathVariable Long id, @RequestParam String role) {
     authService.updateUserRole(id, role);
     return ResponseEntity.ok().build();
@@ -444,15 +450,15 @@ public void updateUserRole(Long userId, String role) {
 
 ---
 
-### CRIT-2: `getUserById` internal endpoint exposed publicly — **Information Disclosure**
+### CRIT-2: `getUserById` internal endpoint exposed publicly â€” **Information Disclosure**
 
 > [!CAUTION]
-> **Severity: CRITICAL** — The `/api/auth/internal/users/{id}` endpoint is accessible from the internet without authentication.
+> **Severity: CRITICAL** â€” The `/api/auth/internal/users/{id}` endpoint is accessible from the internet without authentication.
 
 **Evidence:**  
 - [AuthController.java:70-73](file:///f:/SkillSync/Backend/auth-service/src/main/java/com/skillsync/auth/controller/AuthController.java#L70-L73): `@GetMapping("/internal/users/{id}")` returns user email, role, name
 - Gateway routes `Path=/api/auth/**` to auth-service without JWT filter
-- Auth-service SecurityConfig does NOT list `/api/auth/internal/**` as a matcher — but it falls under `.anyRequest().authenticated()`. **However**, the naming suggests it's for internal service-to-service calls, yet it's reachable via the public gateway.
+- Auth-service SecurityConfig does NOT list `/api/auth/internal/**` as a matcher â€” but it falls under `.anyRequest().authenticated()`. **However**, the naming suggests it's for internal service-to-service calls, yet it's reachable via the public gateway.
 
 **Exploit:**
 ```bash
@@ -473,14 +479,14 @@ spring.cloud.gateway.routes[0].filters[0]=SetStatus=403
 
 ---
 
-### CRIT-3: CSRF vulnerability with `SameSite=None` cookies — **Cross-Site Request Forgery**
+### CRIT-3: CSRF vulnerability with `SameSite=None` cookies â€” **Cross-Site Request Forgery**
 
 > [!CAUTION]
-> **Severity: CRITICAL** — `SameSite=None` + no CSRF token = any malicious website can forge authenticated requests.
+> **Severity: CRITICAL** â€” `SameSite=None` + no CSRF token = any malicious website can forge authenticated requests.
 
 **Evidence:**
-- Cookies set with `sameSite("None")` — [AuthController.java:118](file:///f:/SkillSync/Backend/auth-service/src/main/java/com/skillsync/auth/controller/AuthController.java#L118)
-- CSRF explicitly disabled: `.csrf(AbstractHttpConfigurer::disable)` — [SecurityConfig.java:30](file:///f:/SkillSync/Backend/auth-service/src/main/java/com/skillsync/auth/config/SecurityConfig.java#L30)
+- Cookies set with `sameSite("None")` â€” [AuthController.java:118](file:///f:/SkillSync/Backend/auth-service/src/main/java/com/skillsync/auth/controller/AuthController.java#L118)
+- CSRF explicitly disabled: `.csrf(AbstractHttpConfigurer::disable)` â€” [SecurityConfig.java:30](file:///f:/SkillSync/Backend/auth-service/src/main/java/com/skillsync/auth/config/SecurityConfig.java#L30)
 - No CSRF token mechanism anywhere in the codebase
 - `withCredentials: true` means cookies are sent with every cross-origin request
 
@@ -490,12 +496,12 @@ spring.cloud.gateway.routes[0].filters[0]=SetStatus=403
 <form action="https://api.skillsync.mraks.dev/api/auth/users/1/role?role=ROLE_ADMIN" method="POST">
   <input type="submit" value="Claim Free Prize">
 </form>
-<!-- Victim clicks → their auth cookies are sent with the request → role changed -->
+<!-- Victim clicks â†’ their auth cookies are sent with the request â†’ role changed -->
 ```
 
 **Mitigation (pick one or combine):**
 
-1. **Best: Double-submit cookie pattern** — Generate a CSRF token, set it in a non-HttpOnly cookie, and require it in a header:
+1. **Best: Double-submit cookie pattern** â€” Generate a CSRF token, set it in a non-HttpOnly cookie, and require it in a header:
 ```java
 // Add to a gateway GlobalFilter
 String csrfToken = UUID.randomUUID().toString();
@@ -506,7 +512,7 @@ response.addHeader("Set-Cookie", ResponseCookie.from("XSRF-TOKEN", csrfToken)
 // Backend verifies header matches cookie
 ```
 
-2. **Alternative: Verify Origin header** — Add a global filter that rejects requests where `Origin` doesn't match allowed origins:
+2. **Alternative: Verify Origin header** â€” Add a global filter that rejects requests where `Origin` doesn't match allowed origins:
 ```java
 @Component
 public class CsrfOriginFilter implements GlobalFilter, Ordered {
@@ -537,12 +543,12 @@ public class CsrfOriginFilter implements GlobalFilter, Ordered {
 ### CRIT-4: JWT Secret is weak and committed to repository
 
 > [!CAUTION]
-> **Severity: CRITICAL** — The JWT signing key is a human-readable string committed in `.env` (tracked file pattern).
+> **Severity: CRITICAL** â€” The JWT signing key is a human-readable string committed in `.env` (tracked file pattern).
 
 **Evidence:**
-- `.env` contains: `JWT_SECRET=c2tpbGxzeW5jLXNlY3JldC1rZXk...` — [.env:53](file:///f:/SkillSync/Backend/.env#L53)
+- `.env` contains: `JWT_SECRET=c2tpbGxzeW5jLXNlY3JldC1rZXk...` â€” [.env:53](file:///f:/SkillSync/Backend/.env#L53)
 - Decoded value: `skillsync-secret-key-for-jwt-token-generation-must-be-at-least-256-bits`
-- This is a **predictable, dictionary-based secret** — anyone reading the repo can forge tokens
+- This is a **predictable, dictionary-based secret** â€” anyone reading the repo can forge tokens
 
 **Impact:** Complete authentication bypass. An attacker can:
 1. Create JWTs for any userId/email/role
@@ -558,19 +564,19 @@ openssl rand -base64 64
 # Update .env on EC2:
 JWT_SECRET=<output-from-openssl>
 ```
-Ensure `.env` is **never committed** to git. Verified that `.gitignore` does exclude it — but the `.env` file exists in the workspace at `Backend/.env`, suggesting it was committed previously or is being tracked.
+Ensure `.env` is **never committed** to git. Verified that `.gitignore` does exclude it â€” but the `.env` file exists in the workspace at `Backend/.env`, suggesting it was committed previously or is being tracked.
 
 ---
 
-### HIGH-1: `setupPassword` endpoint has no authentication — **Account Takeover**
+### HIGH-1: `setupPassword` endpoint has no authentication â€” **Account Takeover**
 
 > [!WARNING]
-> **Severity: HIGH** — Any unauthenticated user can set the password for any OAuth user.
+> **Severity: HIGH** â€” Any unauthenticated user can set the password for any OAuth user.
 
 **Evidence:**
 - [SecurityConfig.java:42](file:///f:/SkillSync/Backend/auth-service/src/main/java/com/skillsync/auth/config/SecurityConfig.java#L42): `/api/auth/setup-password` is in `permitAll()` list
 - [AuthController.java:103-108](file:///f:/SkillSync/Backend/auth-service/src/main/java/com/skillsync/auth/controller/AuthController.java#L103-L108): Accepts email + password, no auth check
-- Only guard is `user.isPasswordSet()` — but for new OAuth users, this is `false`
+- Only guard is `user.isPasswordSet()` â€” but for new OAuth users, this is `false`
 
 **Exploit:**
 ```bash
@@ -582,15 +588,15 @@ curl -X POST https://api.skillsync.mraks.dev/api/auth/setup-password \
 
 **Fix:** Require authentication for setup-password:
 ```java
-// SecurityConfig.java — Remove from permitAll():
+// SecurityConfig.java â€” Remove from permitAll():
 .requestMatchers(
     "/api/auth/register",
     "/api/auth/login",
-    // "/api/auth/setup-password",  ← REMOVE THIS
+    // "/api/auth/setup-password",  â† REMOVE THIS
     // ... rest
 ).permitAll()
 
-// AuthController.java — Get email from JWT, not request body:
+// AuthController.java â€” Get email from JWT, not request body:
 @PostMapping("/setup-password")
 public ResponseEntity<?> setupPassword(
     @RequestHeader("Authorization") String authHeader,
@@ -605,13 +611,13 @@ public ResponseEntity<?> setupPassword(
 
 ---
 
-### HIGH-2: No SSL termination in Docker Compose — **Unencrypted backend traffic**
+### HIGH-2: No SSL termination in Docker Compose â€” **Unencrypted backend traffic**
 
 > [!WARNING]
-> **Severity: HIGH** — The API Gateway listens on port 80 (HTTP). SSL must be terminated externally.
+> **Severity: HIGH** â€” The API Gateway listens on port 80 (HTTP). SSL must be terminated externally.
 
 **Evidence:**
-- [docker-compose.yml:260](file:///f:/SkillSync/Backend/docker-compose.yml#L260): `ports: "80:8080"` — plain HTTP
+- [docker-compose.yml:260](file:///f:/SkillSync/Backend/docker-compose.yml#L260): `ports: "80:8080"` â€” plain HTTP
 - No Certbot/NGINX SSL configs found in the repository
 - No `.conf` files found anywhere in the codebase
 - `nginx/` directory is empty
@@ -660,9 +666,9 @@ server {
 ### HIGH-3: No security response headers on API responses
 
 > [!WARNING]
-> **Severity: HIGH** — Missing `X-Frame-Options`, `X-Content-Type-Options`, `X-XSS-Protection`, `Strict-Transport-Security`.
+> **Severity: HIGH** â€” Missing `X-Frame-Options`, `X-Content-Type-Options`, `X-XSS-Protection`, `Strict-Transport-Security`.
 
-**Evidence:** Searched entire backend codebase — zero results for any security header. No `SecurityWebFilterChain` in the gateway.
+**Evidence:** Searched entire backend codebase â€” zero results for any security header. No `SecurityWebFilterChain` in the gateway.
 
 **Fix:** Add a global response header filter in the gateway:
 
@@ -693,7 +699,7 @@ public class SecurityHeadersFilter implements GlobalFilter, Ordered {
 ### HIGH-4: X-User-Id header can be spoofed if services are accessed directly
 
 > [!WARNING]
-> **Severity: HIGH (architecture risk)** — Downstream services blindly trust `X-User-Id` header.
+> **Severity: HIGH (architecture risk)** â€” Downstream services blindly trust `X-User-Id` header.
 
 **Evidence:** All downstream services (user, session, notification, payment) use `@RequestHeader("X-User-Id") Long userId` with zero validation that it came from the gateway.
 
@@ -716,26 +722,26 @@ ServerHttpRequest sanitizedRequest = request.mutate()
 
 ---
 
-### HIGH-5: Tokens stored in localStorage — **XSS → Full Account Compromise**
+### HIGH-5: Tokens stored in localStorage â€” **XSS â†’ Full Account Compromise**
 
 > [!WARNING]
-> **Severity: HIGH** — If any XSS vulnerability exists (even in a dependency), all tokens are stolen.
+> **Severity: HIGH** â€” If any XSS vulnerability exists (even in a dependency), all tokens are stolen.
 
 **Evidence:**
 - [authSlice.ts:44-45](file:///f:/SkillSync/Frontend/src/store/slices/authSlice.ts#L44-L45): `localStorage.setItem('skillsync_access_token', accessToken)`
 - [AuthLoader.tsx:17-18](file:///f:/SkillSync/Frontend/src/components/layout/AuthLoader.tsx#L17-L18): Reads tokens from localStorage on mount
 
-**Contradiction:** Cookies are `HttpOnly` (good — JS can't read them), but the JWT is ALSO returned in the response body and stored in localStorage. This defeats the purpose of HttpOnly cookies because the token is readable via `localStorage.getItem()`.
+**Contradiction:** Cookies are `HttpOnly` (good â€” JS can't read them), but the JWT is ALSO returned in the response body and stored in localStorage. This defeats the purpose of HttpOnly cookies because the token is readable via `localStorage.getItem()`.
 
 **Fix (choose one approach):**
 
-**Option A — Cookie-only auth (recommended):**
+**Option A â€” Cookie-only auth (recommended):**
 - Stop returning tokens in the JSON response body
 - Remove localStorage persistence entirely
 - Rely solely on HttpOnly cookies for auth
-- Gateway already reads cookies as fallback — make it primary
+- Gateway already reads cookies as fallback â€” make it primary
 
-**Option B — Accept dual-mode but minimize risk:**
+**Option B â€” Accept dual-mode but minimize risk:**
 - Keep current approach but add Content-Security-Policy headers to prevent XSS
 - Shorten access token TTL to 5 minutes
 - Add `Content-Security-Policy: default-src 'self'; script-src 'self'` header
@@ -745,7 +751,7 @@ ServerHttpRequest sanitizedRequest = request.mutate()
 ### HIGH-6: Backend is currently DOWN (502)
 
 > [!WARNING]
-> **Severity: HIGH (availability)** — `https://api.skillsync.mraks.dev/health` returns HTTP 502.
+> **Severity: HIGH (availability)** â€” `https://api.skillsync.mraks.dev/health` returns HTTP 502.
 
 **Evidence:** Live HTTP request to health endpoint returned `status code 502`.
 
@@ -765,13 +771,13 @@ docker compose up -d
 
 ---
 
-## ⚠️ ISSUES FOUND (Medium + Low)
+## âš ï¸ ISSUES FOUND (Medium + Low)
 
-### MED-1: Dual CORS configuration — redundancy risk
+### MED-1: Dual CORS configuration â€” redundancy risk
 
 **Evidence:** CORS is configured in TWO places:
-1. [CorsConfig.java](file:///f:/SkillSync/Backend/api-gateway/src/main/java/com/skillsync/apigateway/config/CorsConfig.java) — Java `CorsWebFilter` bean
-2. [application.properties:26-36](file:///f:/SkillSync/Backend/api-gateway/src/main/resources/application.properties#L26-L36) — `spring.cloud.gateway.globalcors.*`
+1. [CorsConfig.java](file:///f:/SkillSync/Backend/api-gateway/src/main/java/com/skillsync/apigateway/config/CorsConfig.java) â€” Java `CorsWebFilter` bean
+2. [application.properties:26-36](file:///f:/SkillSync/Backend/api-gateway/src/main/resources/application.properties#L26-L36) â€” `spring.cloud.gateway.globalcors.*`
 
 **Risk:** If they conflict, behavior is unpredictable. Some requests may get double CORS headers.
 
@@ -784,7 +790,7 @@ docker compose up -d
 
 ---
 
-### MED-2: Rate limiter is in-memory — cluster-unsafe
+### MED-2: Rate limiter is in-memory â€” cluster-unsafe
 
 **Evidence:** [RateLimitingFilter.java:33](file:///f:/SkillSync/Backend/api-gateway/src/main/java/com/skillsync/apigateway/filter/RateLimitingFilter.java#L33) uses `ConcurrentHashMap`. If gateway scales to multiple instances, each has independent counters.
 
@@ -797,9 +803,9 @@ spring.cloud.gateway.redis-rate-limiter.burst-capacity=20
 
 ---
 
-### MED-3: Rate limiter memory leak — buckets never evicted
+### MED-3: Rate limiter memory leak â€” buckets never evicted
 
-**Evidence:** [RateLimitingFilter.java:33](file:///f:/SkillSync/Backend/api-gateway/src/main/java/com/skillsync/apigateway/filter/RateLimitingFilter.java#L33) — `ConcurrentHashMap<String, RateLimitBucket>` grows indefinitely. Old windows are only replaced when the same key is accessed again. Unique IP+path combinations accumulate without cleanup.
+**Evidence:** [RateLimitingFilter.java:33](file:///f:/SkillSync/Backend/api-gateway/src/main/java/com/skillsync/apigateway/filter/RateLimitingFilter.java#L33) â€” `ConcurrentHashMap<String, RateLimitBucket>` grows indefinitely. Old windows are only replaced when the same key is accessed again. Unique IP+path combinations accumulate without cleanup.
 
 **Fix:** Add a scheduled cleanup:
 ```java
@@ -812,7 +818,7 @@ public void cleanExpiredBuckets() {
 
 ---
 
-### MED-4: `Vercel.json` rewrites empty — SPA routing broken
+### MED-4: `Vercel.json` rewrites empty â€” SPA routing broken
 
 **Evidence:** [vercel.json](file:///f:/SkillSync/Frontend/vercel.json) has `"rewrites": []`. For a React SPA with client-side routing, all paths need to rewrite to `index.html`.
 
@@ -890,33 +896,33 @@ ports:
 
 ---
 
-## 🔧 FIXES REQUIRED (Priority Order)
+## ðŸ”§ FIXES REQUIRED (Priority Order)
 
 | Priority | Issue | Fix Location | Effort |
 |----------|-------|-------------|--------|
-| 🔴 P0 | CRIT-1: `updateUserRole` no RBAC | `AuthController.java` + `SecurityConfig.java` | 5 min |
-| 🔴 P0 | CRIT-3: CSRF with SameSite=None | New `CsrfOriginFilter.java` in gateway | 30 min |
-| 🔴 P0 | CRIT-4: Weak JWT secret | `.env` on EC2 (regenerate) | 2 min |
-| 🔴 P0 | HIGH-1: `setupPassword` unauthenticated | `SecurityConfig.java` + `AuthController.java` | 15 min |
-| 🟠 P1 | CRIT-2: Internal routes exposed | `application.properties` (gateway) | 5 min |
-| 🟠 P1 | HIGH-2: Add SSL termination on EC2 | Host NGINX + Certbot | 30 min |
-| 🟠 P1 | HIGH-3: Add security headers | New `SecurityHeadersFilter.java` | 15 min |
-| 🟠 P1 | HIGH-4: Strip X-User-Id on ingress | `JwtAuthenticationFilter.java` (gateway) | 10 min |
-| 🟡 P2 | HIGH-5: Tokens in localStorage | `authSlice.ts` + `AuthController.java` | 2 hours |
-| 🟡 P2 | HIGH-6: Backend is DOWN (502) | EC2 SSH | 10 min |
-| 🟡 P2 | MED-1: Dual CORS config | `application.properties` | 5 min |
-| 🟡 P2 | MED-4: Vercel SPA rewrites | `vercel.json` | 2 min |
-| 🟡 P2 | MED-5: DDL auto=update | `.env` | 2 min |
-| ⚪ P3 | MED-2/3: Rate limiter improvements | `RateLimitingFilter.java` | 1 hour |
-| ⚪ P3 | LOW-1/2/3: Weak credentials | `.env` | 5 min |
-| ⚪ P3 | LOW-4: Debug ports exposed | `docker-compose.yml` | 10 min |
+| ðŸ”´ P0 | CRIT-1: `updateUserRole` no RBAC | `AuthController.java` + `SecurityConfig.java` | 5 min |
+| ðŸ”´ P0 | CRIT-3: CSRF with SameSite=None | New `CsrfOriginFilter.java` in gateway | 30 min |
+| ðŸ”´ P0 | CRIT-4: Weak JWT secret | `.env` on EC2 (regenerate) | 2 min |
+| ðŸ”´ P0 | HIGH-1: `setupPassword` unauthenticated | `SecurityConfig.java` + `AuthController.java` | 15 min |
+| ðŸŸ  P1 | CRIT-2: Internal routes exposed | `application.properties` (gateway) | 5 min |
+| ðŸŸ  P1 | HIGH-2: Add SSL termination on EC2 | Host NGINX + Certbot | 30 min |
+| ðŸŸ  P1 | HIGH-3: Add security headers | New `SecurityHeadersFilter.java` | 15 min |
+| ðŸŸ  P1 | HIGH-4: Strip X-User-Id on ingress | `JwtAuthenticationFilter.java` (gateway) | 10 min |
+| ðŸŸ¡ P2 | HIGH-5: Tokens in localStorage | `authSlice.ts` + `AuthController.java` | 2 hours |
+| ðŸŸ¡ P2 | HIGH-6: Backend is DOWN (502) | EC2 SSH | 10 min |
+| ðŸŸ¡ P2 | MED-1: Dual CORS config | `application.properties` | 5 min |
+| ðŸŸ¡ P2 | MED-4: Vercel SPA rewrites | `vercel.json` | 2 min |
+| ðŸŸ¡ P2 | MED-5: DDL auto=update | `.env` | 2 min |
+| âšª P3 | MED-2/3: Rate limiter improvements | `RateLimitingFilter.java` | 1 hour |
+| âšª P3 | LOW-1/2/3: Weak credentials | `.env` | 5 min |
+| âšª P3 | LOW-4: Debug ports exposed | `docker-compose.yml` | 10 min |
 
 ---
 
-## 🧠 ARCHITECTURAL IMPROVEMENTS
+## ðŸ§  ARCHITECTURAL IMPROVEMENTS
 
 ### 1. Move to cookie-only authentication
-Remove token body responses and localStorage persistence. Let HttpOnly cookies be the sole auth mechanism. The gateway already supports cookie-based auth as a fallback — make it primary.
+Remove token body responses and localStorage persistence. Let HttpOnly cookies be the sole auth mechanism. The gateway already supports cookie-based auth as a fallback â€” make it primary.
 
 ### 2. Add API versioning
 All routes are `/api/{resource}`. Add versioning: `/api/v1/{resource}` for future evolution.
@@ -942,11 +948,11 @@ The CI/CD pipeline should verify health after deployment:
   run: |
     for i in {1..30}; do
       if curl -fs https://api.skillsync.mraks.dev/health; then
-        echo "✅ Healthy"; exit 0
+        echo "âœ… Healthy"; exit 0
       fi
       sleep 10
     done
-    echo "❌ Health check failed"; exit 1
+    echo "âŒ Health check failed"; exit 1
 ```
 
 ### 6. NGINX as host-level reverse proxy
@@ -954,12 +960,12 @@ Even though NGINX was removed from Docker Compose (correct decision to reduce la
 - SSL termination (Certbot)
 - Security headers
 - Request logging
-- HTTP → HTTPS redirect
+- HTTP â†’ HTTPS redirect
 - An additional security boundary
 
 ---
 
-## 📊 AUDIT SUMMARY
+## ðŸ“Š AUDIT SUMMARY
 
 | Category | Score | Notes |
 |----------|-------|-------|
@@ -970,8 +976,9 @@ Even though NGINX was removed from Docker Compose (correct decision to reduce la
 | **Network Security** | 4/10 | No SSL in Docker, no security headers, debug ports exposed |
 | **Frontend Security** | 6/10 | Good interceptors, but localStorage token storage |
 | **CI/CD** | 7/10 | Good pipeline, missing post-deploy health check |
-| **Observability** | 8/10 | Prometheus, Grafana, Loki, Zipkin — well integrated |
+| **Observability** | 8/10 | Prometheus, Grafana, Loki, Zipkin â€” well integrated |
 | **Error Handling** | 8/10 | Consistent structure across all services |
 | **Architecture** | 7/10 | Clean microservices, good service discovery, simplified ingress |
 
-**Overall Production Readiness: 5.9/10** — Significant security fixes required before production traffic.
+**Overall Production Readiness: 5.9/10** â€” Significant security fixes required before production traffic.
+

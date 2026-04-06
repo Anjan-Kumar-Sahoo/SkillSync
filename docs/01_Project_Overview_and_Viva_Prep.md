@@ -1,3 +1,9 @@
+﻿# Presentation Sync Note
+
+Updated for final presentation on 2026-04-06. Start with docs/00_Presentation_Playbook.md for the guided narrative, then use this document for deep details.
+
+---
+
 # 01 Project Overview and Viva Prep
 
 
@@ -6,19 +12,19 @@
 
 ## Content from: doc1_project_overview.md
 
-# 📄 DOCUMENT 1: PROJECT OVERVIEW
+# ðŸ“„ DOCUMENT 1: PROJECT OVERVIEW
 
 > [!IMPORTANT]
 > **Architecture Update (March 2026):** The following services have been merged:
-> - **Mentor Service + Group Service → User Service** (port 8082) — mentor onboarding, groups, and user profiles now live in one service
-> - **Review Service → Session Service** (port 8085) — reviews and sessions share the same service and database
+> - **Mentor Service + Group Service â†’ User Service** (port 8082) â€” mentor onboarding, groups, and user profiles now live in one service
+> - **Review Service â†’ Session Service** (port 8085) â€” reviews and sessions share the same service and database
 >
 > **Payment Microservice Extraction (March 2026):** Razorpay payment processing has been extracted from User Service into a dedicated **Payment Service** (port 8086) with event-driven Saga orchestration via RabbitMQ. The Saga publishes `payment.business.action` events consumed by User Service to execute business actions (e.g., mentor approval), replacing direct service coupling.
 >
 > **CQRS + Redis Caching (March 2026):** All business services now implement the **CQRS pattern** (Command/Query separation) with **Redis 7.2** as a distributed cache layer for read optimization. See `doc6_cqrs_redis_architecture.md` for the full design.
 > **Enterprise Hardening (March 2026):** Implemented a dedicated Mapper layer to decouple CQRS Command/Query services. Added tiered API Gateway Rate Limiting using resilience4j. Deployed a full observability stack with Prometheus, Grafana (auto-provisioned dashboards), and Loki (log aggregation) alongside Zipkin. CI/CD pipeline hardened with SonarQube integration and strict failure rules.
 >
-> 🚀 **Frontend Completed (March 2026):** The React 18 frontend is now fully scaffolded and operational.
+> ðŸš€ **Frontend Completed (March 2026):** The React 18 frontend is now fully scaffolded and operational.
 > - **Tech**: React 18, Vite, TypeScript, Tailwind v4
 > - **State Management**: Redux Toolkit for Auth (JWT token persistence), React Query for Data fetching
 > - **Pages Built**: Auth (Login, Register), Learner Dashboard, Mentor Discovery, 
@@ -26,7 +32,7 @@
 >
 > The original 11-service design below reflects the initial architecture. See `service_architecture_summary.md` for the current 9-service topology.
 
-## SkillSync — Peer Learning & Mentor Matching Platform
+## SkillSync â€” Peer Learning & Mentor Matching Platform
 
 ---
 
@@ -50,15 +56,15 @@ The system is built on a **Spring Boot microservices architecture** with an **AP
 
 Learners struggle to find **qualified, available mentors** who match their specific skill requirements. Existing platforms lack:
 
-1. **Granular discovery** — No way to filter mentors by a combination of skill, price, experience, and real-time availability
-2. **Session lifecycle management** — No structured workflow from request → acceptance → completion → review
-3. **Peer learning** — No integrated mechanism for group-based collaborative learning
-4. **Quality assurance** — No post-session rating system to surface high-quality mentors
-5. **Scalability** — Monolithic architectures fail under high user load
+1. **Granular discovery** â€” No way to filter mentors by a combination of skill, price, experience, and real-time availability
+2. **Session lifecycle management** â€” No structured workflow from request â†’ acceptance â†’ completion â†’ review
+3. **Peer learning** â€” No integrated mechanism for group-based collaborative learning
+4. **Quality assurance** â€” No post-session rating system to surface high-quality mentors
+5. **Scalability** â€” Monolithic architectures fail under high user load
 
 ### The Solution
 
-SkillSync addresses every gap with a purpose-built, microservices-based platform that handles the full mentoring lifecycle — from discovery to review — while supporting horizontal scalability for millions of concurrent users.
+SkillSync addresses every gap with a purpose-built, microservices-based platform that handles the full mentoring lifecycle â€” from discovery to review â€” while supporting horizontal scalability for millions of concurrent users.
 
 ---
 
@@ -68,20 +74,20 @@ SkillSync addresses every gap with a purpose-built, microservices-based platform
 
 | Capability | ROLE_LEARNER | ROLE_MENTOR | ROLE_ADMIN |
 |---|:---:|:---:|:---:|
-| Register / Login | ✅ | ✅ | ✅ |
-| Create / Edit Profile | ✅ | ✅ | ✅ |
-| Search Mentors | ✅ | ❌ | ✅ |
-| Request Sessions | ✅ | ❌ | ❌ |
-| Accept / Reject Sessions | ❌ | ✅ | ❌ |
-| Set Availability | ❌ | ✅ | ❌ |
-| Create Mentor Profile | ❌ | ✅ | ❌ |
-| Rate Mentors | ✅ | ❌ | ❌ |
-| Join Peer Groups | ✅ | ✅ | ❌ |
-| Create Peer Groups | ✅ | ✅ | ❌ |
-| Manage Users | ❌ | ❌ | ✅ |
-| Approve Mentors | ❌ | ❌ | ✅ |
-| Moderate Groups | ❌ | ❌ | ✅ |
-| View Analytics | ❌ | ❌ | ✅ |
+| Register / Login | âœ… | âœ… | âœ… |
+| Create / Edit Profile | âœ… | âœ… | âœ… |
+| Search Mentors | âœ… | âŒ | âœ… |
+| Request Sessions | âœ… | âŒ | âŒ |
+| Accept / Reject Sessions | âŒ | âœ… | âŒ |
+| Set Availability | âŒ | âœ… | âŒ |
+| Create Mentor Profile | âŒ | âœ… | âŒ |
+| Rate Mentors | âœ… | âŒ | âŒ |
+| Join Peer Groups | âœ… | âœ… | âŒ |
+| Create Peer Groups | âœ… | âœ… | âŒ |
+| Manage Users | âŒ | âŒ | âœ… |
+| Approve Mentors | âŒ | âŒ | âœ… |
+| Moderate Groups | âŒ | âŒ | âœ… |
+| View Analytics | âŒ | âŒ | âœ… |
 
 ### Detailed Role Descriptions
 
@@ -123,17 +129,17 @@ SkillSync addresses every gap with a purpose-built, microservices-based platform
 ### Feature 3: Mentor Onboarding
 ```
 Workflow:
-  User (ROLE_LEARNER) → Submits Mentor Application
-    → Application includes: bio, experience, hourly_rate, skills[], certifications
-    → Status: PENDING
-  User pays ₹9 Mentor Onboarding Fee via Razorpay
-    → Backend creates Razorpay order (amount: 900 paise)
-    → Frontend completes checkout
-    → Backend verifies payment signature
-    → On SUCCESS → triggers mentor approval
+  User (ROLE_LEARNER) â†’ Submits Mentor Application
+    â†’ Application includes: bio, experience, hourly_rate, skills[], certifications
+    â†’ Status: PENDING
+  User pays â‚¹9 Mentor Onboarding Fee via Razorpay
+    â†’ Backend creates Razorpay order (amount: 900 paise)
+    â†’ Frontend completes checkout
+    â†’ Backend verifies payment signature
+    â†’ On SUCCESS â†’ triggers mentor approval
   Admin reviews application (if manual approval required)
-    → APPROVED → User gains ROLE_MENTOR, profile activated
-    → REJECTED → User notified with rejection reason
+    â†’ APPROVED â†’ User gains ROLE_MENTOR, profile activated
+    â†’ REJECTED â†’ User notified with rejection reason
 ```
 
 ### Feature 4: Skill Management
@@ -157,29 +163,29 @@ Workflow:
 ```
 State Machine:
 
-  ┌──────────┐     Learner requests    ┌───────────┐
-  │          │ ──────────────────────▶  │           │
-  │  [INIT]  │                         │ REQUESTED │
-  │          │                         │           │
-  └──────────┘                         └─────┬─────┘
-                                             │
-                              ┌──────────────┼──────────────┐
-                              │              │              │
+  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”     Learner requests    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+  â”‚          â”‚ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶  â”‚           â”‚
+  â”‚  [INIT]  â”‚                         â”‚ REQUESTED â”‚
+  â”‚          â”‚                         â”‚           â”‚
+  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜                         â””â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”˜
+                                             â”‚
+                              â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                              â”‚              â”‚              â”‚
                         Mentor accepts  Mentor rejects  Learner cancels
-                              │              │              │
-                              ▼              ▼              ▼
-                        ┌──────────┐   ┌──────────┐   ┌──────────┐
-                        │ ACCEPTED │   │ REJECTED │   │CANCELLED │
-                        └────┬─────┘   └──────────┘   └──────────┘
-                             │
-                    ┌────────┼────────┐
-                    │                 │
+                              â”‚              â”‚              â”‚
+                              â–¼              â–¼              â–¼
+                        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                        â”‚ ACCEPTED â”‚   â”‚ REJECTED â”‚   â”‚CANCELLED â”‚
+                        â””â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”˜   â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜   â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                             â”‚
+                    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”
+                    â”‚                 â”‚
               Session done      Either cancels
-                    │                 │
-                    ▼                 ▼
-              ┌──────────┐     ┌──────────┐
-              │COMPLETED │     │CANCELLED │
-              └──────────┘     └──────────┘
+                    â”‚                 â”‚
+                    â–¼                 â–¼
+              â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+              â”‚COMPLETED â”‚     â”‚CANCELLED â”‚
+              â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 - Session includes: mentor, learner, date/time, duration, topic, meeting link
@@ -195,7 +201,7 @@ State Machine:
 
 ### Feature 8: Reviews & Ratings
 - Learners submit reviews after COMPLETED sessions
-- Review includes: star rating (1–5), written comment
+- Review includes: star rating (1â€“5), written comment
 - One review per session (enforced)
 - Mentor's average rating recalculated on each new review
 - Reviews displayed on mentor profile (paginated, newest first)
@@ -203,42 +209,42 @@ State Machine:
 ### Feature 9: Notifications
 - Event-driven via RabbitMQ
 - Notification types:
-  - `SESSION_REQUESTED` — Mentor notified of new request
-  - `SESSION_ACCEPTED` / `SESSION_REJECTED` — Learner notified
-  - `SESSION_REMINDER` — Both parties, 24h & 1h before
-  - `MENTOR_APPROVED` / `MENTOR_REJECTED` — Applicant notified
-  - `PAYMENT_SUCCESS` — User notified of successful payment + business action
-  - `PAYMENT_FAILED` — User notified of payment verification failure
-  - `PAYMENT_COMPENSATED` — User notified when payment succeeded but business action failed
-  - `NEW_REVIEW` — Mentor notified of new review
-  - `GROUP_JOINED` — Group owner notified
+  - `SESSION_REQUESTED` â€” Mentor notified of new request
+  - `SESSION_ACCEPTED` / `SESSION_REJECTED` â€” Learner notified
+  - `SESSION_REMINDER` â€” Both parties, 24h & 1h before
+  - `MENTOR_APPROVED` / `MENTOR_REJECTED` â€” Applicant notified
+  - `PAYMENT_SUCCESS` â€” User notified of successful payment + business action
+  - `PAYMENT_FAILED` â€” User notified of payment verification failure
+  - `PAYMENT_COMPENSATED` â€” User notified when payment succeeded but business action failed
+  - `NEW_REVIEW` â€” Mentor notified of new review
+  - `GROUP_JOINED` â€” Group owner notified
 - Delivery: In-app (WebSocket) + email (future)
 - Read/unread status tracking
 
-### Feature 10: Payment Gateway (Razorpay) — Dedicated Microservice with Event-Driven Saga
+### Feature 10: Payment Gateway (Razorpay) â€” Dedicated Microservice with Event-Driven Saga
 - Runs as a **standalone Payment Service** (port 8086, `com.skillsync.payment`)
 - Two payment use cases:
-  1. **Mentor Onboarding Fee** — ₹9 to apply as mentor
-  2. **Session Booking Fee** — ₹9 to book a session with a mentor
+  1. **Mentor Onboarding Fee** â€” â‚¹9 to apply as mentor
+  2. **Session Booking Fee** â€” â‚¹9 to book a session with a mentor
 - **Event-driven Saga orchestration:**
   - Payment Service creates Razorpay order (amount: 900 paise)
   - Frontend completes checkout via Razorpay SDK
-  - Payment Service verifies HMAC-SHA256 signature → marks VERIFIED
+  - Payment Service verifies HMAC-SHA256 signature â†’ marks VERIFIED
   - Saga orchestrator publishes `payment.business.action` event to RabbitMQ
   - User Service consumes the event and executes business action (mentor approval / session gate)
-  - On success → marks SUCCESS + publishes `payment.success` notification event
-  - On failure → triggers compensation + publishes `payment.compensated` event
-- **Payment status lifecycle:** `CREATED → VERIFIED → SUCCESS_PENDING → SUCCESS / COMPENSATED`
+  - On success â†’ marks SUCCESS + publishes `payment.success` notification event
+  - On failure â†’ triggers compensation + publishes `payment.compensated` event
+- **Payment status lifecycle:** `CREATED â†’ VERIFIED â†’ SUCCESS_PENDING â†’ SUCCESS / COMPENSATED`
 - **Reference mapping:** Every payment is linked to a business entity via `referenceId` + `referenceType`
 - **Compensation strategy:** Business effects are reversed if saga fails (mentor revert, session gate)
-- **Decoupling:** Payment Service has ZERO direct dependencies on User Service — all coordination is event-driven via RabbitMQ
+- **Decoupling:** Payment Service has ZERO direct dependencies on User Service â€” all coordination is event-driven via RabbitMQ
 - **Security:**
-  - userId ALWAYS from JWT header (X-User-Id) — never from request params
+  - userId ALWAYS from JWT header (X-User-Id) â€” never from request params
   - Razorpay API key and secret from environment variables
   - Amount fixed server-side (never trust client-sent amounts)
   - Signature verification prevents tampering
   - Ownership validation on all payment queries
-- **Notification events:** payment.success, payment.failed, payment.compensated via RabbitMQ → Notification Service
+- **Notification events:** payment.success, payment.failed, payment.compensated via RabbitMQ â†’ Notification Service
 - Edge cases: duplicate prevention (per reference), idempotent verification, amount mismatch detection
 
 ---
@@ -248,8 +254,8 @@ State Machine:
 | Goal | Metric | Target |
 |---|---|---|
 | User Acquisition | Monthly active users | 100K+ within Year 1 |
-| Mentor Quality | Avg mentor rating | ≥ 4.0 / 5.0 |
-| Session Completion | Booking → Completed rate | ≥ 75% |
+| Mentor Quality | Avg mentor rating | â‰¥ 4.0 / 5.0 |
+| Session Completion | Booking â†’ Completed rate | â‰¥ 75% |
 | Platform Reliability | Uptime | 99.9% |
 | Latency | API p95 response time | < 200ms |
 | Scalability | Concurrent users | 50K+ |
@@ -259,79 +265,79 @@ State Machine:
 ## 1.6 High-Level Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           CLIENT LAYER                                  │
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │              React + TypeScript SPA                              │    │
-│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────────┐   │    │
-│  │  │ Auth     │ │ Mentor   │ │ Session  │ │ Admin Dashboard  │   │    │
-│  │  │ Module   │ │ Discovery│ │ Booking  │ │                  │   │    │
-│  │  └──────────┘ └──────────┘ └──────────┘ └──────────────────┘   │    │
-│  └─────────────────────────┬───────────────────────────────────────┘    │
-│                            │ HTTPS / WSS                                │
-└────────────────────────────┼────────────────────────────────────────────┘
-                             │
-┌────────────────────────────┼────────────────────────────────────────────┐
-│                    GATEWAY LAYER                                        │
-│  ┌─────────────────────────┴───────────────────────────────────────┐    │
-│  │              Spring Cloud Gateway                                │    │
-│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────────┐   │    │
-│  │  │ JWT      │ │ Rate     │ │ Route    │ │ Load Balancing   │   │    │
-│  │  │ Validate │ │ Limiting │ │ Config   │ │                  │   │    │
-│  │  └──────────┘ └──────────┘ └──────────┘ └──────────────────┘   │    │
-│  └─────────────────────────┬───────────────────────────────────────┘    │
-│                            │                                            │
-└────────────────────────────┼────────────────────────────────────────────┘
-                             │
-┌────────────────────────────┼────────────────────────────────────────────┐
-│                    SERVICE LAYER                                        │
-│                            │                                            │
-│  ┌────────────┐ ┌──────────────────────┐ ┌──────────────┐              │
-│  │ Auth       │ │ User Service :8082   │ │ Skill        │              │
-│  │ Service    │ │ (+ Mentor + Group)   │ │ Service      │              │
-│  │ :8081      │ └──────────────────────┘ │ :8084        │              │
-│  └────────────┘                          └──────────────┘              │
-│                                                                        │
-│  ┌──────────────────────┐  ┌──────────────┐  ┌──────────────┐          │
-│  │ Session Service :8085│  │ Payment      │  │ Notification │          │
-│  │ (+ Review)           │  │ Service      │  │ Service      │          │
-│  └──────────────────────┘  │ :8086        │  │ :8088        │          │
-│                            └──────────────┘  └──────────────┘          │
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │                    Eureka Service Discovery (:8761)              │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-                             │
-┌────────────────────────────┼────────────────────────────────────────────┐
-│                    CACHING LAYER (Redis 7.2)                            │
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │  Cache-Aside Pattern: QueryService → Redis → PostgreSQL         │    │
-│  │  CommandService → PostgreSQL write → Redis invalidation         │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-                             │
-┌────────────────────────────┼────────────────────────────────────────────┐
-│                    DATA & MESSAGING LAYER                               │
-│                                                                         │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐                  │
-│  │ Auth DB  │ │ User DB  │ │Mentor DB │ │Skill DB  │  (PostgreSQL)    │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘                  │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐                  │
-│  │Session DB│ │ Group DB │ │Review DB │ │Notif DB  │  (PostgreSQL)    │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘                  │
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │                    RabbitMQ Message Broker                        │    │
-│  │  Exchanges: session, mentor, review, skill, payment              │    │
-│  │  Saga Events: payment.business.action (Payment → User Service)   │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                           CLIENT LAYER                                  â”‚
+â”‚                                                                         â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”‚
+â”‚  â”‚              React + TypeScript SPA                              â”‚    â”‚
+â”‚  â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”   â”‚    â”‚
+â”‚  â”‚  â”‚ Auth     â”‚ â”‚ Mentor   â”‚ â”‚ Session  â”‚ â”‚ Admin Dashboard  â”‚   â”‚    â”‚
+â”‚  â”‚  â”‚ Module   â”‚ â”‚ Discoveryâ”‚ â”‚ Booking  â”‚ â”‚                  â”‚   â”‚    â”‚
+â”‚  â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜   â”‚    â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â”‚
+â”‚                            â”‚ HTTPS / WSS                                â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                             â”‚
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                    GATEWAY LAYER                                        â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”‚
+â”‚  â”‚              Spring Cloud Gateway                                â”‚    â”‚
+â”‚  â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”   â”‚    â”‚
+â”‚  â”‚  â”‚ JWT      â”‚ â”‚ Rate     â”‚ â”‚ Route    â”‚ â”‚ Load Balancing   â”‚   â”‚    â”‚
+â”‚  â”‚  â”‚ Validate â”‚ â”‚ Limiting â”‚ â”‚ Config   â”‚ â”‚                  â”‚   â”‚    â”‚
+â”‚  â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜   â”‚    â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â”‚
+â”‚                            â”‚                                            â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                             â”‚
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                    SERVICE LAYER                                        â”‚
+â”‚                            â”‚                                            â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”              â”‚
+â”‚  â”‚ Auth       â”‚ â”‚ User Service :8082   â”‚ â”‚ Skill        â”‚              â”‚
+â”‚  â”‚ Service    â”‚ â”‚ (+ Mentor + Group)   â”‚ â”‚ Service      â”‚              â”‚
+â”‚  â”‚ :8081      â”‚ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â”‚ :8084        â”‚              â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜                          â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜              â”‚
+â”‚                                                                        â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”          â”‚
+â”‚  â”‚ Session Service :8085â”‚  â”‚ Payment      â”‚  â”‚ Notification â”‚          â”‚
+â”‚  â”‚ (+ Review)           â”‚  â”‚ Service      â”‚  â”‚ Service      â”‚          â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â”‚ :8086        â”‚  â”‚ :8088        â”‚          â”‚
+â”‚                            â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜          â”‚
+â”‚                                                                         â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”‚
+â”‚  â”‚                    Eureka Service Discovery (:8761)              â”‚    â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â”‚
+â”‚                                                                         â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                             â”‚
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                    CACHING LAYER (Redis 7.2)                            â”‚
+â”‚                                                                         â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”‚
+â”‚  â”‚  Cache-Aside Pattern: QueryService â†’ Redis â†’ PostgreSQL         â”‚    â”‚
+â”‚  â”‚  CommandService â†’ PostgreSQL write â†’ Redis invalidation         â”‚    â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â”‚
+â”‚                                                                         â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                             â”‚
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                    DATA & MESSAGING LAYER                               â”‚
+â”‚                                                                         â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”                  â”‚
+â”‚  â”‚ Auth DB  â”‚ â”‚ User DB  â”‚ â”‚Mentor DB â”‚ â”‚Skill DB  â”‚  (PostgreSQL)    â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜                  â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”                  â”‚
+â”‚  â”‚Session DBâ”‚ â”‚ Group DB â”‚ â”‚Review DB â”‚ â”‚Notif DB  â”‚  (PostgreSQL)    â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜                  â”‚
+â”‚                                                                         â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”‚
+â”‚  â”‚                    RabbitMQ Message Broker                        â”‚    â”‚
+â”‚  â”‚  Exchanges: session, mentor, review, skill, payment              â”‚    â”‚
+â”‚  â”‚  Saga Events: payment.business.action (Payment â†’ User Service)   â”‚    â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â”‚
+â”‚                                                                         â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ---
@@ -341,94 +347,94 @@ State Machine:
 ### Workflow 1: Mentor Discovery (with Redis Cache)
 
 ```
-┌──────────┐     GET /api/mentors/search         ┌──────────────┐
-│          │ ──────────────────────────────────▶  │              │
-│ Learner  │     ?skill=Java&minRating=4          │ API Gateway  │
-│ (React)  │     &maxPrice=50&page=0              │              │
-│          │ ◀──────────────────────────────────  │              │
-└──────────┘     Paginated mentor list            └──────┬───────┘
-                                                         │
-                                                         ▼
-                                                  ┌──────────────┐
-                                                  │ User Service │
-                                                  │ (MentorQuery │
-                                                  │    Service)  │
-                                                  │              │
-                                                  │ 1. Parse     │
-                                                  │    filters   │
-                                                  │ 2. Check     │
-                                                  │    Redis     │
-                                                  │ 3. MISS →    │
-                                                  │    Query DB  │
-                                                  │    (indexed) │
-                                                  │ 4. Cache in  │
-                                                  │    Redis     │
-                                                  │ 5. Paginate  │
-                                                  │ 6. Return    │
-                                                  └──────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”     GET /api/mentors/search         â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚          â”‚ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶  â”‚              â”‚
+â”‚ Learner  â”‚     ?skill=Java&minRating=4          â”‚ API Gateway  â”‚
+â”‚ (React)  â”‚     &maxPrice=50&page=0              â”‚              â”‚
+â”‚          â”‚ â—€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€  â”‚              â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜     Paginated mentor list            â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜
+                                                         â”‚
+                                                         â–¼
+                                                  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                                                  â”‚ User Service â”‚
+                                                  â”‚ (MentorQuery â”‚
+                                                  â”‚    Service)  â”‚
+                                                  â”‚              â”‚
+                                                  â”‚ 1. Parse     â”‚
+                                                  â”‚    filters   â”‚
+                                                  â”‚ 2. Check     â”‚
+                                                  â”‚    Redis     â”‚
+                                                  â”‚ 3. MISS â†’    â”‚
+                                                  â”‚    Query DB  â”‚
+                                                  â”‚    (indexed) â”‚
+                                                  â”‚ 4. Cache in  â”‚
+                                                  â”‚    Redis     â”‚
+                                                  â”‚ 5. Paginate  â”‚
+                                                  â”‚ 6. Return    â”‚
+                                                  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ### Workflow 2: Session Booking Flow
 
 ```
 Learner                API Gateway         Session Service       Mentor Service       RabbitMQ        Notification Service
-  │                        │                     │                     │                  │                    │
-  │ POST /api/sessions     │                     │                     │                  │                    │
-  │ {mentorId, date, topic}│                     │                     │                  │                    │
-  │───────────────────────▶│                     │                     │                  │                    │
-  │                        │ Validate JWT        │                     │                  │                    │
-  │                        │ Route to service    │                     │                  │                    │
-  │                        │────────────────────▶│                     │                  │                    │
-  │                        │                     │ Validate mentor     │                  │                    │
-  │                        │                     │ exists & available  │                  │                    │
-  │                        │                     │────────────────────▶│                  │                    │
-  │                        │                     │◀────────────────────│                  │                    │
-  │                        │                     │                     │                  │                    │
-  │                        │                     │ Check time conflict │                  │                    │
-  │                        │                     │ Create session      │                  │                    │
-  │                        │                     │ (status=REQUESTED)  │                  │                    │
-  │                        │                     │                     │                  │                    │
-  │                        │                     │ Publish event       │                  │                    │
-  │                        │                     │─────────────────────────────────────▶  │                    │
-  │                        │                     │                     │  SESSION_REQUESTED│                    │
-  │                        │                     │                     │                  │───────────────────▶│
-  │                        │                     │                     │                  │                    │
-  │                        │  201 Created         │                     │                  │  Notify mentor     │
-  │◀───────────────────────│◀────────────────────│                     │                  │  (WebSocket)       │
-  │                        │                     │                     │                  │                    │
+  â”‚                        â”‚                     â”‚                     â”‚                  â”‚                    â”‚
+  â”‚ POST /api/sessions     â”‚                     â”‚                     â”‚                  â”‚                    â”‚
+  â”‚ {mentorId, date, topic}â”‚                     â”‚                     â”‚                  â”‚                    â”‚
+  â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚                     â”‚                     â”‚                  â”‚                    â”‚
+  â”‚                        â”‚ Validate JWT        â”‚                     â”‚                  â”‚                    â”‚
+  â”‚                        â”‚ Route to service    â”‚                     â”‚                  â”‚                    â”‚
+  â”‚                        â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚                     â”‚                  â”‚                    â”‚
+  â”‚                        â”‚                     â”‚ Validate mentor     â”‚                  â”‚                    â”‚
+  â”‚                        â”‚                     â”‚ exists & available  â”‚                  â”‚                    â”‚
+  â”‚                        â”‚                     â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚                  â”‚                    â”‚
+  â”‚                        â”‚                     â”‚â—€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚                  â”‚                    â”‚
+  â”‚                        â”‚                     â”‚                     â”‚                  â”‚                    â”‚
+  â”‚                        â”‚                     â”‚ Check time conflict â”‚                  â”‚                    â”‚
+  â”‚                        â”‚                     â”‚ Create session      â”‚                  â”‚                    â”‚
+  â”‚                        â”‚                     â”‚ (status=REQUESTED)  â”‚                  â”‚                    â”‚
+  â”‚                        â”‚                     â”‚                     â”‚                  â”‚                    â”‚
+  â”‚                        â”‚                     â”‚ Publish event       â”‚                  â”‚                    â”‚
+  â”‚                        â”‚                     â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶  â”‚                    â”‚
+  â”‚                        â”‚                     â”‚                     â”‚  SESSION_REQUESTEDâ”‚                    â”‚
+  â”‚                        â”‚                     â”‚                     â”‚                  â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚
+  â”‚                        â”‚                     â”‚                     â”‚                  â”‚                    â”‚
+  â”‚                        â”‚  201 Created         â”‚                     â”‚                  â”‚  Notify mentor     â”‚
+  â”‚â—€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚â—€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚                     â”‚                  â”‚  (WebSocket)       â”‚
+  â”‚                        â”‚                     â”‚                     â”‚                  â”‚                    â”‚
 ```
 
 ### Workflow 3: Mentor Approval Flow
 
 ```
 User                 API Gateway         Mentor Service          RabbitMQ        Notification Service
-  │                      │                     │                     │                    │
-  │ POST /api/mentors    │                     │                     │                    │
-  │ /apply               │                     │                     │                    │
-  │─────────────────────▶│                     │                     │                    │
-  │                      │────────────────────▶│                     │                    │
-  │                      │                     │ Create mentor       │                    │
-  │                      │                     │ (status=PENDING)    │                    │
-  │◀─────────────────────│◀────────────────────│                     │                    │
-  │                      │                     │                     │                    │
-  │                      │                     │                     │                    │
+  â”‚                      â”‚                     â”‚                     â”‚                    â”‚
+  â”‚ POST /api/mentors    â”‚                     â”‚                     â”‚                    â”‚
+  â”‚ /apply               â”‚                     â”‚                     â”‚                    â”‚
+  â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚                     â”‚                     â”‚                    â”‚
+  â”‚                      â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚                     â”‚                    â”‚
+  â”‚                      â”‚                     â”‚ Create mentor       â”‚                    â”‚
+  â”‚                      â”‚                     â”‚ (status=PENDING)    â”‚                    â”‚
+  â”‚â—€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚â—€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚                     â”‚                    â”‚
+  â”‚                      â”‚                     â”‚                     â”‚                    â”‚
+  â”‚                      â”‚                     â”‚                     â”‚                    â”‚
 
 Admin                API Gateway         Mentor Service          RabbitMQ        Notification Service
-  │                      │                     │                     │                    │
-  │ PUT /api/mentors     │                     │                     │                    │
-  │ /{id}/approve        │                     │                     │                    │
-  │─────────────────────▶│                     │                     │                    │
-  │                      │ Validate ROLE_ADMIN │                     │                    │
-  │                      │────────────────────▶│                     │                    │
-  │                      │                     │ Update status       │                    │
-  │                      │                     │ (APPROVED)          │                    │
-  │                      │                     │ Update user role    │                    │
-  │                      │                     │ Publish event       │                    │
-  │                      │                     │────────────────────▶│                    │
-  │                      │                     │                     │ MENTOR_APPROVED    │
-  │                      │                     │                     │───────────────────▶│
-  │◀─────────────────────│◀────────────────────│                     │                    │
-  │                      │                     │                     │   Notify user      │
+  â”‚                      â”‚                     â”‚                     â”‚                    â”‚
+  â”‚ PUT /api/mentors     â”‚                     â”‚                     â”‚                    â”‚
+  â”‚ /{id}/approve        â”‚                     â”‚                     â”‚                    â”‚
+  â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚                     â”‚                     â”‚                    â”‚
+  â”‚                      â”‚ Validate ROLE_ADMIN â”‚                     â”‚                    â”‚
+  â”‚                      â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚                     â”‚                    â”‚
+  â”‚                      â”‚                     â”‚ Update status       â”‚                    â”‚
+  â”‚                      â”‚                     â”‚ (APPROVED)          â”‚                    â”‚
+  â”‚                      â”‚                     â”‚ Update user role    â”‚                    â”‚
+  â”‚                      â”‚                     â”‚ Publish event       â”‚                    â”‚
+  â”‚                      â”‚                     â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚                    â”‚
+  â”‚                      â”‚                     â”‚                     â”‚ MENTOR_APPROVED    â”‚
+  â”‚                      â”‚                     â”‚                     â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚
+  â”‚â—€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚â—€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚                     â”‚                    â”‚
+  â”‚                      â”‚                     â”‚                     â”‚   Notify user      â”‚
 ```
 
 ---
@@ -469,13 +475,13 @@ Admin                API Gateway         Mentor Service          RabbitMQ       
 
 ## Content from: skillsync_viva_preparation.md
 
-# SkillSync — Complete Viva Preparation Guide
+# SkillSync â€” Complete Viva Preparation Guide
 
-> **Everything you need to know — architecture, layers, entities, design decisions, technologies, flows, and Swagger UI testing.**
+> **Everything you need to know â€” architecture, layers, entities, design decisions, technologies, flows, and Swagger UI testing.**
 
 ---
 
-## 📋 Table of Contents
+## ðŸ“‹ Table of Contents
 
 1. [How to Use Swagger UI](#1-how-to-use-swagger-ui)
 2. [Architecture & Layers](#2-architecture--layers)
@@ -501,7 +507,7 @@ Admin                API Gateway         Mentor Service          RabbitMQ       
 ### What is Swagger UI?
 An **interactive API docs tool** auto-generated from your controllers using `springdoc-openapi`. It lets you see all endpoints, view request/response schemas, and **execute API calls directly from the browser**.
 
-### Swagger UI — Single Entry Point (API Gateway)
+### Swagger UI â€” Single Entry Point (API Gateway)
 
 > **IMPORTANT:** Swagger UI is available **only** through the API Gateway at port **8080**. Individual service ports are NOT exposed.
 
@@ -524,34 +530,34 @@ Use the **dropdown at the top-right** to switch between services:
 2. **Open** `http://localhost:8080/swagger-ui.html` in browser
 3. **Select a service** from the dropdown (e.g., "Auth Service")
 4. **Expand an endpoint** (e.g., `POST /api/auth/register`)
-5. **Click "Try it out"** → fill JSON body + required headers
-6. **Click "Execute"** → see response, curl command, status code
+5. **Click "Try it out"** â†’ fill JSON body + required headers
+6. **Click "Execute"** â†’ see response, curl command, status code
 
 ### Testing Order (all via Gateway at 8080)
 
 ```
- 1. Auth Service      → POST /api/auth/register (learner)
- 2. Auth Service      → POST /api/auth/verify-otp
- 3. Auth Service      → POST /api/auth/register (mentor user)
- 4. Auth Service      → POST /api/auth/verify-otp
- 5. Auth Service      → POST /api/auth/register (admin)
- 6. Auth Service      → POST /api/auth/verify-otp
- 7. Auth Service      → PUT /api/auth/users/3/role?role=ROLE_ADMIN
- 8. Skill Service     → POST /api/skills (Java, Spring Boot, React, Python)
- 9. User Service      → PUT /api/users/me (+ Authorization: Bearer <token>)
-10. User Service      → POST /api/users/me/skills
-11. User Service      → POST /api/mentors/apply
-12. Session Service   → POST /api/sessions (book session)
-13. Payment Service   → POST /api/payments/create-order (Pay SESSION_BOOKING)
-14. Payment Service   → POST /api/payments/verify (Verifies → publishes event)
-14. User Service      → POST /api/mentors/me/availability
-15. Session Service   → POST /api/sessions
-16. Session Service   → PUT /api/sessions/1/accept
-17. Session Service   → PUT /api/sessions/1/complete
-18. Session Service   → POST /api/reviews
-19. Notification Svc  → GET /api/notifications
-20. User Service      → POST /api/groups
-21. User Service      → POST /api/groups/1/discussions
+ 1. Auth Service      â†’ POST /api/auth/register (learner)
+ 2. Auth Service      â†’ POST /api/auth/verify-otp
+ 3. Auth Service      â†’ POST /api/auth/register (mentor user)
+ 4. Auth Service      â†’ POST /api/auth/verify-otp
+ 5. Auth Service      â†’ POST /api/auth/register (admin)
+ 6. Auth Service      â†’ POST /api/auth/verify-otp
+ 7. Auth Service      â†’ PUT /api/auth/users/3/role?role=ROLE_ADMIN
+ 8. Skill Service     â†’ POST /api/skills (Java, Spring Boot, React, Python)
+ 9. User Service      â†’ PUT /api/users/me (+ Authorization: Bearer <token>)
+10. User Service      â†’ POST /api/users/me/skills
+11. User Service      â†’ POST /api/mentors/apply
+12. Session Service   â†’ POST /api/sessions (book session)
+13. Payment Service   â†’ POST /api/payments/create-order (Pay SESSION_BOOKING)
+14. Payment Service   â†’ POST /api/payments/verify (Verifies â†’ publishes event)
+14. User Service      â†’ POST /api/mentors/me/availability
+15. Session Service   â†’ POST /api/sessions
+16. Session Service   â†’ PUT /api/sessions/1/accept
+17. Session Service   â†’ PUT /api/sessions/1/complete
+18. Session Service   â†’ POST /api/reviews
+19. Notification Svc  â†’ GET /api/notifications
+20. User Service      â†’ POST /api/groups
+21. User Service      â†’ POST /api/groups/1/discussions
 ```
 
 ---
@@ -562,9 +568,9 @@ Use the **dropdown at the top-right** to switch between services:
 
 | # | Service | Port | Database |
 |---|---------|------|----------|
-| 1 | Eureka Server | 8761 | — |
-| 2 | Config Server | 8888 | — |
-| 3 | API Gateway | 8080 | — |
+| 1 | Eureka Server | 8761 | â€” |
+| 2 | Config Server | 8888 | â€” |
+| 3 | API Gateway | 8080 | â€” |
 | 4 | Auth Service | 8081 | skillsync_auth |
 | 5 | User Service | 8082 | skillsync_user |
 | 6 | Payment Service | 8086 | skillsync_payment |
@@ -576,28 +582,28 @@ Use the **dropdown at the top-right** to switch between services:
 
 ```
 com.skillsync.<service>/
-├── controller/   ← REST endpoints (HTTP entry points)
-├── service/
-│   ├── command/  ← Write operations + cache invalidation (CQRS)
-│   └── query/   ← Read operations + cache-aside from Redis (CQRS)
-├── cache/        ← RedisConfig + CacheService (generic cache wrapper)
-├── repository/   ← Data access (Spring Data JPA)
-├── entity/       ← JPA entities (DB tables)
-├── dto/          ← Data Transfer Objects (Java Records)
-├── enums/        ← Enums (Roles, Statuses)
-├── config/       ← Configuration (OpenAPI, RabbitMQ, WebSocket)
-├── exception/    ← Global error handling
-├── event/        ← RabbitMQ event POJOs
-├── consumer/     ← RabbitMQ message listeners
-├── feign/        ← Inter-service HTTP clients
-└── security/     ← JWT (Auth only)
+â”œâ”€â”€ controller/   â† REST endpoints (HTTP entry points)
+â”œâ”€â”€ service/
+â”‚   â”œâ”€â”€ command/  â† Write operations + cache invalidation (CQRS)
+â”‚   â””â”€â”€ query/   â† Read operations + cache-aside from Redis (CQRS)
+â”œâ”€â”€ cache/        â† RedisConfig + CacheService (generic cache wrapper)
+â”œâ”€â”€ repository/   â† Data access (Spring Data JPA)
+â”œâ”€â”€ entity/       â† JPA entities (DB tables)
+â”œâ”€â”€ dto/          â† Data Transfer Objects (Java Records)
+â”œâ”€â”€ enums/        â† Enums (Roles, Statuses)
+â”œâ”€â”€ config/       â† Configuration (OpenAPI, RabbitMQ, WebSocket)
+â”œâ”€â”€ exception/    â† Global error handling
+â”œâ”€â”€ event/        â† RabbitMQ event POJOs
+â”œâ”€â”€ consumer/     â† RabbitMQ message listeners
+â”œâ”€â”€ feign/        â† Inter-service HTTP clients
+â””â”€â”€ security/     â† JWT (Auth only)
 ```
 
 ### Request Flow
 
 ```
-Read:  Client → Gateway (JWT) → Controller → QueryService → Redis → (miss?) → Repository → PostgreSQL → cache in Redis
-Write: Client → Gateway (JWT) → Controller → CommandService → Repository → PostgreSQL → evict from Redis
+Read:  Client â†’ Gateway (JWT) â†’ Controller â†’ QueryService â†’ Redis â†’ (miss?) â†’ Repository â†’ PostgreSQL â†’ cache in Redis
+Write: Client â†’ Gateway (JWT) â†’ Controller â†’ CommandService â†’ Repository â†’ PostgreSQL â†’ evict from Redis
 ```
 
 ### Tech Stack
@@ -642,10 +648,10 @@ Write: Client → Gateway (JWT) → Controller → CommandService → Repository
 | otp | 6-digit code (SecureRandom) |
 | expiresAt | 5-minute expiry |
 | used | Prevents reuse |
-| attempts | Max 5 wrong tries → brute-force protection |
+| attempts | Max 5 wrong tries â†’ brute-force protection |
 
 **RefreshToken** (table: `auth.refresh_tokens`)
-- `@ManyToOne` → AuthUser; token String (unique); 7-day expiry
+- `@ManyToOne` â†’ AuthUser; token String (unique); 7-day expiry
 - Max 5 per user (FIFO eviction) to prevent abuse
 
 ### Services
@@ -655,9 +661,9 @@ Write: Client → Gateway (JWT) → Controller → CommandService → Repository
 
 ### Flow
 ```
-Register → hash password → save AuthUser → generate OTP → send email
-Verify OTP → validate code + attempts → isVerified = true
-Login → authenticate → check isVerified → issue JWT + refresh token
+Register â†’ hash password â†’ save AuthUser â†’ generate OTP â†’ send email
+Verify OTP â†’ validate code + attempts â†’ isVerified = true
+Login â†’ authenticate â†’ check isVerified â†’ issue JWT + refresh token
 ```
 
 ---
@@ -672,33 +678,33 @@ Login → authenticate → check isVerified → issue JWT + refresh token
 
 ### Entities
 
-**Profile** (`users.profiles`) — firstName, lastName, bio, phone, location, profileCompletePct (calculated: 5 fields × 20%)
+**Profile** (`users.profiles`) â€” firstName, lastName, bio, phone, location, profileCompletePct (calculated: 5 fields Ã— 20%)
 
-**UserSkill** (`users.user_skills`) — userId + skillId + proficiency (BEGINNER/INTERMEDIATE/ADVANCED). Junction table for many-to-many.
+**UserSkill** (`users.user_skills`) â€” userId + skillId + proficiency (BEGINNER/INTERMEDIATE/ADVANCED). Junction table for many-to-many.
 
 **MentorProfile** (`mentors.mentor_profiles`)
-- status: PENDING → APPROVED/REJECTED/SUSPENDED
-- `@OneToMany` → MentorSkill (skills taught), AvailabilitySlot (free hours)
+- status: PENDING â†’ APPROVED/REJECTED/SUSPENDED
+- `@OneToMany` â†’ MentorSkill (skills taught), AvailabilitySlot (free hours)
 - avgRating, totalReviews, totalSessions (aggregate counters)
 
-**MentorSkill** (`mentors.mentor_skills`) — `@ManyToOne` → MentorProfile + skillId
+**MentorSkill** (`mentors.mentor_skills`) â€” `@ManyToOne` â†’ MentorProfile + skillId
 
-**AvailabilitySlot** (`mentors.availability_slots`) — `@ManyToOne` → MentorProfile, dayOfWeek, startTime, endTime
+**AvailabilitySlot** (`mentors.availability_slots`) â€” `@ManyToOne` â†’ MentorProfile, dayOfWeek, startTime, endTime
 
-**LearningGroup** (`groups.learning_groups`) — name, maxMembers, `@OneToMany` → GroupMember
+**LearningGroup** (`groups.learning_groups`) â€” name, maxMembers, `@OneToMany` â†’ GroupMember
 
-**GroupMember** (`groups.group_members`) — `@ManyToOne` → LearningGroup, userId, role (OWNER/ADMIN/MEMBER), unique(group_id, user_id)
+**GroupMember** (`groups.group_members`) â€” `@ManyToOne` â†’ LearningGroup, userId, role (OWNER/ADMIN/MEMBER), unique(group_id, user_id)
 
-**Discussion** (`groups.discussions`) — `@ManyToOne` → LearningGroup, authorId, content, **self-referencing** `parent` → Discussion (for threaded replies). parent=null means top-level post.
+**Discussion** (`groups.discussions`) â€” `@ManyToOne` â†’ LearningGroup, authorId, content, **self-referencing** `parent` â†’ Discussion (for threaded replies). parent=null means top-level post.
 
 ### Services
-- **UserService**: createOrUpdateProfile, addSkill. Uses **Feign → SkillService** to fetch skill names.
-- **MentorService**: apply (PENDING), approveMentor (→ APPROVED + **Feign → AuthService** to change role + **RabbitMQ event**), rejectMentor, addAvailability
+- **UserService**: createOrUpdateProfile, addSkill. Uses **Feign â†’ SkillService** to fetch skill names.
+- **MentorService**: apply (PENDING), approveMentor (â†’ APPROVED + **Feign â†’ AuthService** to change role + **RabbitMQ event**), rejectMentor, addAvailability
 - **GroupService**: createGroup (auto OWNER), joinGroup (checks full), postDiscussion (members only, threaded)
 
 ### Inter-Service Communication
-- `AuthServiceClient` (Feign) → updates role to ROLE_MENTOR on approval
-- `SkillServiceClient` (Feign) → gets skill name/category for display
+- `AuthServiceClient` (Feign) â†’ updates role to ROLE_MENTOR on approval
+- `SkillServiceClient` (Feign) â†’ gets skill name/category for display
 - RabbitMQ: publishes `MentorApprovedEvent`, `MentorRejectedEvent`
 
 ---
@@ -708,8 +714,8 @@ Login → authenticate → check isVerified → issue JWT + refresh token
 **Purpose:** Centralized skill catalog. Referenced by User + Session services.
 
 ### Entities
-**Skill** (`skills.skills`) — name (unique), category, description, isActive
-**Category** (`skills.categories`) — name, self-referencing `parent` (tree structure for nested categories)
+**Skill** (`skills.skills`) â€” name (unique), category, description, isActive
+**Category** (`skills.categories`) â€” name, self-referencing `parent` (tree structure for nested categories)
 
 ### Why separate service?
 Single source of truth for skill names. Prevents inconsistency if skills were defined in each service independently.
@@ -724,41 +730,41 @@ Single source of truth for skill names. Prevents inconsistency if skills were de
 
 ### Entities
 
-**Session** (`sessions.sessions`) — mentorId, learnerId, topic, sessionDate, durationMinutes, status, cancelReason
+**Session** (`sessions.sessions`) â€” mentorId, learnerId, topic, sessionDate, durationMinutes, status, cancelReason
 
-**SessionStatus** — **State Machine Enum**:
+**SessionStatus** â€” **State Machine Enum**:
 ```
-REQUESTED → ACCEPTED, REJECTED, CANCELLED
-ACCEPTED  → COMPLETED, CANCELLED
-REJECTED  → (terminal)
-COMPLETED → (terminal)
-CANCELLED → (terminal)
+REQUESTED â†’ ACCEPTED, REJECTED, CANCELLED
+ACCEPTED  â†’ COMPLETED, CANCELLED
+REJECTED  â†’ (terminal)
+COMPLETED â†’ (terminal)
+CANCELLED â†’ (terminal)
 ```
 The enum has `canTransitionTo()` method with an `ALLOWED_TRANSITIONS` map. Enforces valid state changes at domain level.
 
-**Review** (`reviews.reviews`) — sessionId (**unique** — one review per session), mentorId, reviewerId, rating (1-5), comment
+**Review** (`reviews.reviews`) â€” sessionId (**unique** â€” one review per session), mentorId, reviewerId, rating (1-5), comment
 
 ### Services
 - **SessionService**: createSession (validates: not self, 24h future, no conflicts), accept/reject/complete/cancel (ownership + state transition validation). Publishes events to RabbitMQ for each state change.
 - **ReviewService**: submitReview (only learner of COMPLETED session), getMentorRatingSummary (avg, total, distribution)
 
 ### Events Published
-Session events → `session.exchange` with keys: `session.requested/accepted/rejected/cancelled/completed`
-Review events → `review.exchange` with key: `review.submitted`
+Session events â†’ `session.exchange` with keys: `session.requested/accepted/rejected/cancelled/completed`
+Review events â†’ `review.exchange` with key: `review.submitted`
 
 ---
 
 ## 7. Notification Service
 
-**Purpose:** Listens to RabbitMQ events → saves notifications → pushes via WebSocket.
+**Purpose:** Listens to RabbitMQ events â†’ saves notifications â†’ pushes via WebSocket.
 
 ### Entity
-**Notification** (`notifications.notifications`) — userId, type, title, message, data (TEXT), isRead
+**Notification** (`notifications.notifications`) â€” userId, type, title, message, data (TEXT), isRead
 
 ### Consumer Layer (RabbitMQ Listeners)
-- **SessionEventConsumer**: 5 handlers (requested→notify mentor, accepted/rejected/completed→notify learner, cancelled→notify both)
-- **MentorEventConsumer**: approved→notify user, rejected→notify user with reason
-- **ReviewEventConsumer**: submitted→notify mentor with star count
+- **SessionEventConsumer**: 5 handlers (requestedâ†’notify mentor, accepted/rejected/completedâ†’notify learner, cancelledâ†’notify both)
+- **MentorEventConsumer**: approvedâ†’notify user, rejectedâ†’notify user with reason
+- **ReviewEventConsumer**: submittedâ†’notify mentor with star count
 
 ### RabbitMQ Config
 - 3 Topic Exchanges: `session.exchange`, `mentor.exchange`, `review.exchange`
@@ -774,8 +780,8 @@ Server pushes via: SimpMessagingTemplate.convertAndSendToUser()
 
 ### Flow
 ```
-Event published → RabbitMQ → Consumer receives → NotificationService.createAndPush()
-  → Saves to DB + WebSocketService.pushToUser() → Real-time push to frontend
+Event published â†’ RabbitMQ â†’ Consumer receives â†’ NotificationService.createAndPush()
+  â†’ Saves to DB + WebSocketService.pushToUser() â†’ Real-time push to frontend
 ```
 
 ---
@@ -784,10 +790,10 @@ Event published → RabbitMQ → Consumer receives → NotificationService.creat
 
 ### API Gateway (port 8080)
 - Routes requests by path pattern to services via Eureka (`lb://service-name`)
-- **JwtAuthenticationFilter**: extracts JWT → validates → adds X-User-Id/Email/Role headers
+- **JwtAuthenticationFilter**: extracts JWT â†’ validates â†’ adds X-User-Id/Email/Role headers
 - Auth & Skill routes: **no** JWT required. All others: JWT required.
 - WebSocket route: `lb:ws://notification-service` for `/ws/**`
-- **Swagger UI**: Aggregated at `http://localhost:8080/swagger-ui.html` — proxies `/v3/api-docs` from each service. Individual service ports are NOT exposed.
+- **Swagger UI**: Aggregated at `http://localhost:8080/swagger-ui.html` â€” proxies `/v3/api-docs` from each service. Individual service ports are NOT exposed.
 
 ### Eureka Server (port 8761)
 - Service registry. All services register at startup. Gateway resolves `lb://auth-service` to actual host:port.
@@ -809,13 +815,13 @@ All DTOs use Java Records (`record ClassName(fields) {}`):
 | **Semantic** | `record` keyword = "this is a data carrier" |
 | **Validation works** | Supports `@NotNull`, `@Size`, `@Min`, etc. |
 
-**Why NOT Records for Entities?** JPA needs mutable objects (setters), no-args constructor, proxy-based lazy loading — all incompatible with records.
+**Why NOT Records for Entities?** JPA needs mutable objects (setters), no-args constructor, proxy-based lazy loading â€” all incompatible with records.
 
 ---
 
 ## 10. Why WebSocket?
 
-**Problem:** Without WebSocket, frontend must **poll** every few seconds → wasteful.
+**Problem:** Without WebSocket, frontend must **poll** every few seconds â†’ wasteful.
 
 **Solution:** WebSocket = persistent bidirectional connection. Server pushes only when there's a new notification.
 
@@ -832,9 +838,9 @@ All DTOs use Java Records (`record ClassName(fields) {}`):
 
 ## 11. Why RabbitMQ?
 
-**Problem:** Without broker, SessionService must directly call NotificationService → tight coupling, failure cascades.
+**Problem:** Without broker, SessionService must directly call NotificationService â†’ tight coupling, failure cascades.
 
-**Solution:** Publish event to RabbitMQ → it delivers to consumers asynchronously.
+**Solution:** Publish event to RabbitMQ â†’ it delivers to consumers asynchronously.
 
 | Benefit | Explanation |
 |---------|------------|
@@ -844,30 +850,30 @@ All DTOs use Java Records (`record ClassName(fields) {}`):
 | Extensibility | New consumer = zero changes to publisher |
 | Async | Main operation returns immediately |
 
-**Topic Exchange:** Routes by routing key patterns. `session.requested` → `notification.session.requested.queue`.
+**Topic Exchange:** Routes by routing key patterns. `session.requested` â†’ `notification.session.requested.queue`.
 
 ---
 
 ## 12. End-to-End Flow
 
 ```
-1. Register → Auth saves user + sends OTP email
-2. Verify OTP → Auth marks isVerified=true
-3. Login → Auth returns JWT (15min access + 7day refresh)
-4. Create skills → Skill Service saves skill catalog
-5. Update profile → User Service creates Profile
-6. Apply as mentor → User Service creates PENDING MentorProfile
-7. Pay mentor fee → Payment Service creates Razorpay order, verifies signature
-   → On SUCCESS: Payment Service publishes payment.business.action event
-   → User Service consumes event → sets status=APPROVED
-   → Feign call to Auth: role=ROLE_MENTOR
-   → RabbitMQ event → Notification Service: "Approved!" push
-8. Book session → Session Service validates + saves REQUESTED session
-   → RabbitMQ event → Notification: "New request" to mentor
-9. Mentor accepts → status=ACCEPTED → Notification to learner
-10. Mentor completes → status=COMPLETED → Notification to learner
-11. Learner reviews → Review saved + RabbitMQ → Notification to mentor
-12. Check notifications → REST API or real-time via WebSocket
+1. Register â†’ Auth saves user + sends OTP email
+2. Verify OTP â†’ Auth marks isVerified=true
+3. Login â†’ Auth returns JWT (15min access + 7day refresh)
+4. Create skills â†’ Skill Service saves skill catalog
+5. Update profile â†’ User Service creates Profile
+6. Apply as mentor â†’ User Service creates PENDING MentorProfile
+7. Pay mentor fee â†’ Payment Service creates Razorpay order, verifies signature
+   â†’ On SUCCESS: Payment Service publishes payment.business.action event
+   â†’ User Service consumes event â†’ sets status=APPROVED
+   â†’ Feign call to Auth: role=ROLE_MENTOR
+   â†’ RabbitMQ event â†’ Notification Service: "Approved!" push
+8. Book session â†’ Session Service validates + saves REQUESTED session
+   â†’ RabbitMQ event â†’ Notification: "New request" to mentor
+9. Mentor accepts â†’ status=ACCEPTED â†’ Notification to learner
+10. Mentor completes â†’ status=COMPLETED â†’ Notification to learner
+11. Learner reviews â†’ Review saved + RabbitMQ â†’ Notification to mentor
+12. Check notifications â†’ REST API or real-time via WebSocket
 ```
 
 ---
@@ -884,14 +890,14 @@ All DTOs use Java Records (`record ClassName(fields) {}`):
 | RabbitMQ for async | Notifications don't need sync response |
 | **CQRS pattern** | **Separate read/write for independent optimization and scaling** |
 | **Redis Cache-Aside** | **Read optimization without affecting write correctness** |
-| **Graceful degradation** | **Redis down → fallback to DB, zero data loss** |
+| **Graceful degradation** | **Redis down â†’ fallback to DB, zero data loss** |
 | **Event-driven cache sync** | **Cross-service cache invalidation via RabbitMQ** |
 | State machine enum | Domain-level enforcement of valid transitions |
 | Soft references (userId as Long) | No cross-DB foreign keys in microservices |
 | Payment as dedicated service | **Separation of Concerns:** payment logic, Razorpay SDK, and saga orchestration are isolated in their own service with event-driven coordination |
-| Event-driven Saga | Payment → RabbitMQ → User Service decouples payment lifecycle from business actions, enabling independent deployment/scaling |
+| Event-driven Saga | Payment â†’ RabbitMQ â†’ User Service decouples payment lifecycle from business actions, enabling independent deployment/scaling |
 | @CreatedDate/@LastModifiedDate | Auto timestamp management |
-| Profile completeness % | Gamification (5 fields × 20%) |
+| Profile completeness % | Gamification (5 fields Ã— 20%) |
 | Builder pattern (Lombok) | Fluent, readable object construction |
 | Self-referencing entities | Tree structures: Discussion threads, Category hierarchy |
 
@@ -907,7 +913,7 @@ All DTOs use Java Records (`record ClassName(fields) {}`):
 
 **Q: Why API Gateway?** A: Single entry point. Centralized auth, routing, CORS. Clients don't need to know every service address.
 
-**Q: How does JWT work?** A: Server signs token with secret → client sends in header → Gateway validates signature → extracts user info → forwards to services.
+**Q: How does JWT work?** A: Server signs token with secret â†’ client sends in header â†’ Gateway validates signature â†’ extracts user info â†’ forwards to services.
 
 **Q: Why BCrypt?** A: One-way hash with salt. Even if DB is breached, passwords can't be reversed.
 
@@ -915,7 +921,7 @@ All DTOs use Java Records (`record ClassName(fields) {}`):
 
 **Q: Why userId is Long not FK?** A: Cross-service FKs impossible (different DBs). Soft reference.
 
-**Q: What is self-referencing ManyToOne?** A: Discussion.parent → Discussion. Creates tree for threaded replies.
+**Q: What is self-referencing ManyToOne?** A: Discussion.parent â†’ Discussion. Creates tree for threaded replies.
 
 **Q: Feign vs RabbitMQ?** A: Feign = sync (need response). RabbitMQ = async (fire & forget).
 
@@ -943,7 +949,7 @@ All DTOs use Java Records (`record ClassName(fields) {}`):
 
 **Q: What is @EntityListeners(AuditingEntityListener)?** A: Auto-fills @CreatedDate and @LastModifiedDate timestamps.
 
-**Q: How does Gateway route?** A: `lb://service-name` → asks Eureka for address → forwards request.
+**Q: How does Gateway route?** A: `lb://service-name` â†’ asks Eureka for address â†’ forwards request.
 
 **Q: Why use `lb://service-name` instead of `spring.cloud.gateway.discovery.locator.enabled=true`?**
 A: Four reasons:
@@ -952,19 +958,19 @@ A: Four reasons:
 3. **Merged Routes**: We map `/api/mentors/**` and `/api/groups/**` to the User Service. Auto-discovery cannot infer this logical routing.
 4. **Encapsulation**: The frontend shouldn't know our internal microservice names. The Gateway hides our architecture.
 
-> **Viva Tip:** For any feature, explain: WHAT it does → WHY we chose it → HOW it works → ALTERNATIVES considered.
+> **Viva Tip:** For any feature, explain: WHAT it does â†’ WHY we chose it â†’ HOW it works â†’ ALTERNATIVES considered.
 
 ---
 
 ## 15. CQRS + Redis (Cache Details)
 
-### 🧩 Why CQRS?
+### ðŸ§© Why CQRS?
 **Command Query Responsibility Segregation** separates operations that **change state** (Commands) from those that **read state** (Queries).
 - **Command side**: Optimizes for write performance, consistency, and execution of business logic (PostgreSQL).
 - **Query side**: Optimizes for read performance using indexed searches and aggressive Redis caching.
 - **Benefit**: SkillSync is read-heavy (~80:20 ratio). CQRS allows us to scale the Query side independently and apply complex caching logic without complicating the write logic.
 
-### 🏢 The 3 Cache Layers
+### ðŸ¢ The 3 Cache Layers
 
 | Layer | Type | Implementation | Purpose |
 |-------|------|----------------|---------|
@@ -972,17 +978,17 @@ A: Four reasons:
 | **L2** | **Distributed Cache** | **Redis 7.2** (In-Memory) | **Global Shared Cache**: High-speed data sharing across all microservice instances. |
 | **L3** | **Persistence** | **PostgreSQL** | **Source of Truth**: Used as fallback during a cache miss or if Redis is unavailable. |
 
-### 🛠️ How we use Caching — Scenarios
+### ðŸ› ï¸ How we use Caching â€” Scenarios
 
 1.  **Cache-Aside (Lazy Loading)**:
-    - `QueryService.getOrLoad()`: Application checks Redis → (miss?) → gets from PostgreSQL → updates Redis → returns.
+    - `QueryService.getOrLoad()`: Application checks Redis â†’ (miss?) â†’ gets from PostgreSQL â†’ updates Redis â†’ returns.
 2.  **Explicit Invalidation (Write-through Eviction)**:
-    - `CommandService.save/delete()`: Main operation updates PostgreSQL → `cacheService.evict(key)` or `evictByPattern(pattern)`.
+    - `CommandService.save/delete()`: Main operation updates PostgreSQL â†’ `cacheService.evict(key)` or `evictByPattern(pattern)`.
 3.  **Cross-Service Cache Sync (Event-Driven)**:
     - **Scenario**: A review is submitted in `Session Service`.
-    - **Sync**: `Session Service` publishes `review.submitted` event → `User Service` consumes it → updates Mentor's `avgRating` in DB → **evicts** Mentor's profile from Redis. This ensures the profile reflects the latest rating immediately across services.
+    - **Sync**: `Session Service` publishes `review.submitted` event â†’ `User Service` consumes it â†’ updates Mentor's `avgRating` in DB â†’ **evicts** Mentor's profile from Redis. This ensures the profile reflects the latest rating immediately across services.
 
-### 🛡️ Cache Safety Strategies
+### ðŸ›¡ï¸ Cache Safety Strategies
 
 | Strategy | Purpose | Implementation |
 |----------|---------|----------------|
@@ -1047,3 +1053,4 @@ A: We use **layered TTLs** based on data volatility:
 **Q: How did you implement Razorpay on the frontend?** A: When a user books a session, we first hit `/api/payments/order` to get an order ID asynchronously. Then we instantiate `new window.Razorpay(options)` which opens the official checkout modal over our app. Upon capturing the `razorpay_signature` in the success handler, we send it to our backend to natively link payment success to the session booking.
 
 **Q: How do you protect routes?** A: We use React Router v6 with custom Wrapper Guards (`AuthGuard`, `GuestGuard`, `RoleGuard`). These evaluate the Redux state before rendering children. If unauthorized, they trigger a `<Navigate to="/login" replace />`.
+

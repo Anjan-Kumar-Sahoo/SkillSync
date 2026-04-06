@@ -1,3 +1,9 @@
+﻿# Presentation Sync Note
+
+Updated for final presentation on 2026-04-06. Start with docs/00_Presentation_Playbook.md for the guided narrative, then use this document for deep details.
+
+---
+
 # 08 Observability and Monitoring
 
 
@@ -6,9 +12,9 @@
 
 ## Content from: doc8_observability.md
 
-# 📊 DOCUMENT 8: OBSERVABILITY — ZIPKIN + ACTUATOR + MICROMETER
+# ðŸ“Š DOCUMENT 8: OBSERVABILITY â€” ZIPKIN + ACTUATOR + MICROMETER
 
-## SkillSync — Distributed Tracing, Metrics, and Monitoring Architecture
+## SkillSync â€” Distributed Tracing, Metrics, and Monitoring Architecture
 
 ---
 
@@ -25,12 +31,12 @@ SkillSync implements a full observability stack across all microservices:
 | **Logging** | SLF4J + Loki + Promtail (optional) | Centralized, correlated logs with traceId/spanId aggregation |
 
 ```text
-Request → API Gateway → auth-service → user-service → ...
-              ↓               ↓              ↓
+Request â†’ API Gateway â†’ auth-service â†’ user-service â†’ ...
+              â†“               â†“              â†“
         [traceId propagated across all services]
-              ↓               ↓              ↓
+              â†“               â†“              â†“
            Zipkin Server (collects all spans)
-              ↓
+              â†“
         Zipkin UI (http://localhost:9411)
 ```
 
@@ -91,7 +97,7 @@ Zipkin is a distributed tracing system that helps track requests as they flow ac
 ### Spring Boot Configuration (ALL services)
 
 ```properties
-# Tracing — 100% sampling for development, reduce in production
+# Tracing â€” 100% sampling for development, reduce in production
 management.tracing.sampling.probability=1.0
 management.zipkin.tracing.endpoint=http://${ZIPKIN_HOST:localhost}:9411/api/v2/spans
 ```
@@ -179,10 +185,10 @@ curl http://localhost:8082/actuator/prometheus
 
 | Metric | What It Tells You |
 |--------|-------------------|
-| `cache.operations{result=hit}` | Cache hit count — should be high |
-| `cache.operations{result=miss}` | Cache miss count — triggers DB query |
+| `cache.operations{result=hit}` | Cache hit count â€” should be high |
+| `cache.operations{result=miss}` | Cache miss count â€” triggers DB query |
 | `cache.operations{result=evict}` | Eviction count (explicit invalidation) |
-| `cache.operations{result=error}` | Redis errors — should be near zero |
+| `cache.operations{result=error}` | Redis errors â€” should be near zero |
 | `http.server.requests` | API response time (auto-tracked by Actuator) |
 | `jvm.memory.used` | JVM heap usage |
 | `system.cpu.usage` | CPU utilization |
@@ -261,49 +267,49 @@ ZIPKIN_HOST=zipkin
 
 | Service | Actuator Port | Prometheus | Zipkin Tracing |
 |---------|--------------|------------|----------------|
-| API Gateway | 8080 | ✅ | ✅ |
-| Auth Service | 8081 | ✅ | ✅ |
-| User Service | 8082 | ✅ | ✅ |
-| Skill Service | 8084 | ✅ | ✅ |
-| Session Service | 8085 | ✅ | ✅ |
-| Notification Service | 8088 | ✅ | ✅ |
-| Payment Service | 8086 | ✅ | ✅ |
-| Eureka Server | 8761 | ✅ | ✅ |
-| Config Server | 8888 | ✅ | ✅ |
+| API Gateway | 8080 | âœ… | âœ… |
+| Auth Service | 8081 | âœ… | âœ… |
+| User Service | 8082 | âœ… | âœ… |
+| Skill Service | 8084 | âœ… | âœ… |
+| Session Service | 8085 | âœ… | âœ… |
+| Notification Service | 8088 | âœ… | âœ… |
+| Payment Service | 8086 | âœ… | âœ… |
+| Eureka Server | 8761 | âœ… | âœ… |
+| Config Server | 8888 | âœ… | âœ… |
 
 ---
 
 ## 8.8 Architecture Diagram
 
 ```text
-┌──────────────┐
-│   Client     │
-└──────┬───────┘
-       │ traceId: abc123
-       ▼
-┌──────────────┐    ┌──────────────┐
-│  API Gateway │───►│  Zipkin      │
-│  (port 8080) │    │  (port 9411) │
-└──────┬───────┘    └──────▲───────┘
-       │                   │
-       ├─────────┬─────────┤
-       ▼         ▼         │
-┌──────────┐ ┌──────────┐  │
-│  Auth    │ │  User    │──┘
-│  Service │ │  Service │
-└──────────┘ └──────────┘
-       ├─────────┤
-       ▼         ▼
-┌──────────┐ ┌──────────────┐
-│  Session │ │ Notification │
-│  Service │ │  Service     │
-└──────────┘ └──────────────┘
-       │
-       ▼
-┌──────────┐
-│  Skill   │
-│  Service │
-└──────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚   Client     â”‚
+â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜
+       â”‚ traceId: abc123
+       â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚  API Gateway â”‚â”€â”€â”€â–ºâ”‚  Zipkin      â”‚
+â”‚  (port 8080) â”‚    â”‚  (port 9411) â”‚
+â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜    â””â”€â”€â”€â”€â”€â”€â–²â”€â”€â”€â”€â”€â”€â”€â”˜
+       â”‚                   â”‚
+       â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+       â–¼         â–¼         â”‚
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”‚
+â”‚  Auth    â”‚ â”‚  User    â”‚â”€â”€â”˜
+â”‚  Service â”‚ â”‚  Service â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+       â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+       â–¼         â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚  Session â”‚ â”‚ Notification â”‚
+â”‚  Service â”‚ â”‚  Service     â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+       â”‚
+       â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚  Skill   â”‚
+â”‚  Service â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 All services report spans to Zipkin with the same `traceId`, enabling full request tracing.
@@ -323,15 +329,16 @@ All services report spans to Zipkin with the same `traceId`, enabling full reque
 
 ## 8.10 Future Enhancements
 
-1. **Grafana Dashboard** — Visualize Prometheus metrics with Grafana
-2. **ELK Stack** — Centralized log aggregation (Elasticsearch + Logstash + Kibana)
-3. **JSON Structured Logging** — Add `logstash-logback-encoder` for machine-parseable logs
-4. **Alert Rules** — Prometheus alerting for error rate spikes, high latency, Redis failures
-5. **Elasticsearch for Zipkin** — Persistent trace storage for production
-6. **Custom RabbitMQ Metrics** — Track event processing time and queue depth
+1. **Grafana Dashboard** â€” Visualize Prometheus metrics with Grafana
+2. **ELK Stack** â€” Centralized log aggregation (Elasticsearch + Logstash + Kibana)
+3. **JSON Structured Logging** â€” Add `logstash-logback-encoder` for machine-parseable logs
+4. **Alert Rules** â€” Prometheus alerting for error rate spikes, high latency, Redis failures
+5. **Elasticsearch for Zipkin** â€” Persistent trace storage for production
+6. **Custom RabbitMQ Metrics** â€” Track event processing time and queue depth
 
 ---
 
 > [!NOTE]
 > This document is the authoritative reference for all observability and monitoring architecture decisions in SkillSync.
 > All services follow the patterns described here. Any deviations must be documented with rationale.
+

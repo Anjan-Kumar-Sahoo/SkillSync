@@ -1,3 +1,9 @@
+﻿# Presentation Sync Note
+
+Updated for final presentation on 2026-04-06. Start with docs/00_Presentation_Playbook.md for the guided narrative, then use this document for deep details.
+
+---
+
 # 03 Frontend Design and API Contract
 
 
@@ -6,22 +12,22 @@
 
 ## Content from: doc3_frontend_design.md
 
-# 📄 DOCUMENT 3: FRONTEND DESIGN (REACT + EXCEPTIONS)
+# ðŸ“„ DOCUMENT 3: FRONTEND DESIGN (REACT + EXCEPTIONS)
 
 > [!IMPORTANT]
 > **Architecture Update (March 2026):** The following backend services have been merged to simplify the architecture:
-> - **Mentor Service + Group Service → User Service** (port 8082)
-> - **Review Service → Session Service** (port 8085)
+> - **Mentor Service + Group Service â†’ User Service** (port 8082)
+> - **Review Service â†’ Session Service** (port 8085)
 >
 > **CQRS + Redis Caching (March 2026):** Backend services now use Redis distributed caching with the CQRS pattern.
 >
-> 🚀 **Frontend Completed (March 2026):** The React 18 frontend is now fully scaffolded and operational.
+> ðŸš€ **Frontend Completed (March 2026):** The React 18 frontend is now fully scaffolded and operational.
 > - **Tech**: React 18, Vite, TypeScript, Tailwind v4
 > - **State Management**: Redux Toolkit for Auth (JWT token persistence), React Query for Data fetching
 > - **Pages Built**: Auth (Login, Register), Learner Dashboard, Mentor Discovery, 
 >   My Sessions (multi-tab mapping), Checkout (Razorpay SDK Flow), and Mentor Dashboard (availability logic).
 
-## SkillSync — React Frontend Architecture
+## SkillSync â€” React Frontend Architecture
 
 ---
 
@@ -50,218 +56,218 @@
 
 ```
 src/
-├── app/
-│   ├── store.ts                    # Redux store configuration
-│   ├── rootReducer.ts              # Combined reducers
-│   └── hooks.ts                    # Typed useAppDispatch, useAppSelector
-│
-├── assets/
-│   ├── images/
-│   ├── icons/
-│   └── fonts/
-│
-├── components/
-│   ├── atoms/                      # Smallest reusable pieces
-│   │   ├── Button/
-│   │   │   ├── Button.tsx
-│   │   │   ├── Button.test.tsx
-│   │   │   └── index.ts
-│   │   ├── Input/
-│   │   ├── Badge/
-│   │   ├── Avatar/
-│   │   ├── Spinner/
-│   │   ├── StarRating/
-│   │   └── StatusBadge/
-│   │
-│   ├── molecules/                  # Composed atomic components
-│   │   ├── SearchBar/
-│   │   ├── MentorCard/
-│   │   ├── SessionCard/
-│   │   ├── ReviewCard/
-│   │   ├── NotificationItem/
-│   │   ├── GroupCard/
-│   │   ├── SkillTag/
-│   │   ├── FilterPanel/
-│   │   └── PaginationBar/
-│   │
-│   ├── organisms/                  # Complex UI sections
-│   │   ├── Navbar/
-│   │   ├── Sidebar/
-│   │   ├── Footer/
-│   │   ├── MentorGrid/
-│   │   ├── SessionList/
-│   │   ├── ReviewSection/
-│   │   ├── NotificationPanel/
-│   │   └── GroupDiscussion/
-│   │
-│   └── templates/                  # Page layout wrappers
-│       ├── DashboardLayout/
-│       ├── AuthLayout/
-│       └── AdminLayout/
-│
-├── features/                       # Feature-based modules
-│   ├── auth/
-│   │   ├── components/
-│   │   │   ├── LoginForm.tsx
-│   │   │   ├── RegisterForm.tsx
-│   │   │   └── ForgotPasswordForm.tsx
-│   │   ├── hooks/
-│   │   │   └── useAuth.ts
-│   │   ├── services/
-│   │   │   └── authApi.ts
-│   │   ├── slices/
-│   │   │   └── authSlice.ts
-│   │   ├── types/
-│   │   │   └── auth.types.ts
-│   │   └── pages/
-│   │       ├── LoginPage.tsx
-│   │       ├── RegisterPage.tsx
-│   │       └── ForgotPasswordPage.tsx
-│   │
-│   ├── dashboard/
-│   │   ├── components/
-│   │   │   ├── LearnerDashboard.tsx
-│   │   │   ├── MentorDashboard.tsx
-│   │   │   ├── StatsCard.tsx
-│   │   │   └── UpcomingSessions.tsx
-│   │   └── pages/
-│   │       └── DashboardPage.tsx
-│   │
-│   ├── mentor/
-│   │   ├── components/
-│   │   │   ├── MentorProfileCard.tsx
-│   │   │   ├── MentorFilters.tsx
-│   │   │   ├── MentorSearchResults.tsx
-│   │   │   ├── AvailabilityEditor.tsx
-│   │   │   └── MentorApplicationForm.tsx
-│   │   ├── hooks/
-│   │   │   ├── useMentorSearch.ts
-│   │   │   └── useMentorProfile.ts
-│   │   ├── services/
-│   │   │   └── mentorApi.ts
-│   │   ├── slices/
-│   │   │   └── mentorSlice.ts
-│   │   └── pages/
-│   │       ├── MentorDiscoveryPage.tsx
-│   │       ├── MentorProfilePage.tsx
-│   │       └── MentorApplicationPage.tsx
-│   │
-│   ├── session/
-│   │   ├── components/
-│   │   │   ├── BookSessionModal.tsx
-│   │   │   ├── SessionCard.tsx
-│   │   │   ├── SessionDetailsModal.tsx
-│   │   │   └── SessionStatusBadge.tsx
-│   │   ├── hooks/
-│   │   │   └── useSessions.ts
-│   │   ├── services/
-│   │   │   └── sessionApi.ts
-│   │   ├── slices/
-│   │   │   └── sessionSlice.ts
-│   │   └── pages/
-│   │       └── MySessionsPage.tsx
-│   │
-│   ├── group/
-│   │   ├── components/
-│   │   │   ├── CreateGroupForm.tsx
-│   │   │   ├── GroupMemberList.tsx
-│   │   │   ├── DiscussionThread.tsx
-│   │   │   └── PostDiscussionForm.tsx
-│   │   ├── services/
-│   │   │   └── groupApi.ts
-│   │   └── pages/
-│   │       ├── GroupListPage.tsx
-│   │       ├── GroupDetailPage.tsx
-│   │       └── CreateGroupPage.tsx
-│   │
-│   ├── review/
-│   │   ├── components/
-│   │   │   ├── ReviewForm.tsx
-│   │   │   ├── ReviewList.tsx
-│   │   │   └── RatingDistribution.tsx
-│   │   └── services/
-│   │       └── reviewApi.ts
-│   │
-│   ├── notification/
-│   │   ├── components/
-│   │   │   ├── NotificationBell.tsx
-│   │   │   ├── NotificationDropdown.tsx
-│   │   │   └── NotificationItem.tsx
-│   │   ├── hooks/
-│   │   │   └── useNotifications.ts
-│   │   ├── services/
-│   │   │   └── notificationApi.ts
-│   │   └── slices/
-│   │       └── notificationSlice.ts
-│   │
-│   ├── payment/
-│   │   ├── components/
-│   │   │   ├── CheckoutModal.tsx
-│   │   │   └── PaymentHistoryTable.tsx
-│   │   ├── hooks/
-│   │   │   └── useRazorpay.ts
-│   │   ├── services/
-│   │   │   └── paymentApi.ts
-│   │   └── pages/
-│   │       └── PaymentHistoryPage.tsx
-│   │
-│   ├── profile/
-│   │   ├── components/
-│   │   │   ├── ProfileForm.tsx
-│   │   │   ├── AvatarUpload.tsx
-│   │   │   └── SkillSelector.tsx
-│   │   └── pages/
-│   │       └── ProfilePage.tsx
-│   │
-│   └── admin/
-│       ├── components/
-│       │   ├── UserTable.tsx
-│       │   ├── MentorApprovalList.tsx
-│       │   ├── GroupModerationList.tsx
-│       │   └── PlatformStats.tsx
-│       └── pages/
-│           ├── AdminDashboardPage.tsx
-│           ├── UserManagementPage.tsx
-│           ├── MentorApprovalPage.tsx
-│           └── GroupModerationPage.tsx
-│
-├── lib/
-│   ├── api/
-│   │   ├── axiosInstance.ts        # Axios config + interceptors
-│   │   ├── apiClient.ts           # Generic API call helpers
-│   │   └── endpoints.ts           # API endpoint constants
-│   ├── websocket/
-│   │   ├── stompClient.ts         # WebSocket connection manager
-│   │   └── useWebSocket.ts        # WebSocket React hook
-│   └── utils/
-│       ├── formatters.ts          # Date, currency formatters
-│       ├── validators.ts          # Zod schemas
-│       └── constants.ts           # App constants
-│
-├── guards/
-│   ├── AuthGuard.tsx              # Redirect if not authenticated
-│   ├── RoleGuard.tsx              # Redirect if insufficient role
-│   └── GuestGuard.tsx             # Redirect if already authenticated
-│
-├── errors/
-│   ├── ErrorBoundary.tsx          # Global error boundary
-│   ├── ApiError.ts                # API error class
-│   ├── errorHandler.ts            # Centralized error handler
-│   └── ErrorFallback.tsx          # Error UI component
-│
-├── types/
-│   ├── api.types.ts               # API response types
-│   ├── user.types.ts
-│   ├── mentor.types.ts
-│   ├── session.types.ts
-│   ├── group.types.ts
-│   ├── review.types.ts
-│   └── notification.types.ts
-│
-├── App.tsx                         # Root app with providers
-├── Router.tsx                      # Route definitions
-├── main.tsx                        # Entry point
-└── index.css                       # Tailwind directives
+â”œâ”€â”€ app/
+â”‚   â”œâ”€â”€ store.ts                    # Redux store configuration
+â”‚   â”œâ”€â”€ rootReducer.ts              # Combined reducers
+â”‚   â””â”€â”€ hooks.ts                    # Typed useAppDispatch, useAppSelector
+â”‚
+â”œâ”€â”€ assets/
+â”‚   â”œâ”€â”€ images/
+â”‚   â”œâ”€â”€ icons/
+â”‚   â””â”€â”€ fonts/
+â”‚
+â”œâ”€â”€ components/
+â”‚   â”œâ”€â”€ atoms/                      # Smallest reusable pieces
+â”‚   â”‚   â”œâ”€â”€ Button/
+â”‚   â”‚   â”‚   â”œâ”€â”€ Button.tsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ Button.test.tsx
+â”‚   â”‚   â”‚   â””â”€â”€ index.ts
+â”‚   â”‚   â”œâ”€â”€ Input/
+â”‚   â”‚   â”œâ”€â”€ Badge/
+â”‚   â”‚   â”œâ”€â”€ Avatar/
+â”‚   â”‚   â”œâ”€â”€ Spinner/
+â”‚   â”‚   â”œâ”€â”€ StarRating/
+â”‚   â”‚   â””â”€â”€ StatusBadge/
+â”‚   â”‚
+â”‚   â”œâ”€â”€ molecules/                  # Composed atomic components
+â”‚   â”‚   â”œâ”€â”€ SearchBar/
+â”‚   â”‚   â”œâ”€â”€ MentorCard/
+â”‚   â”‚   â”œâ”€â”€ SessionCard/
+â”‚   â”‚   â”œâ”€â”€ ReviewCard/
+â”‚   â”‚   â”œâ”€â”€ NotificationItem/
+â”‚   â”‚   â”œâ”€â”€ GroupCard/
+â”‚   â”‚   â”œâ”€â”€ SkillTag/
+â”‚   â”‚   â”œâ”€â”€ FilterPanel/
+â”‚   â”‚   â””â”€â”€ PaginationBar/
+â”‚   â”‚
+â”‚   â”œâ”€â”€ organisms/                  # Complex UI sections
+â”‚   â”‚   â”œâ”€â”€ Navbar/
+â”‚   â”‚   â”œâ”€â”€ Sidebar/
+â”‚   â”‚   â”œâ”€â”€ Footer/
+â”‚   â”‚   â”œâ”€â”€ MentorGrid/
+â”‚   â”‚   â”œâ”€â”€ SessionList/
+â”‚   â”‚   â”œâ”€â”€ ReviewSection/
+â”‚   â”‚   â”œâ”€â”€ NotificationPanel/
+â”‚   â”‚   â””â”€â”€ GroupDiscussion/
+â”‚   â”‚
+â”‚   â””â”€â”€ templates/                  # Page layout wrappers
+â”‚       â”œâ”€â”€ DashboardLayout/
+â”‚       â”œâ”€â”€ AuthLayout/
+â”‚       â””â”€â”€ AdminLayout/
+â”‚
+â”œâ”€â”€ features/                       # Feature-based modules
+â”‚   â”œâ”€â”€ auth/
+â”‚   â”‚   â”œâ”€â”€ components/
+â”‚   â”‚   â”‚   â”œâ”€â”€ LoginForm.tsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ RegisterForm.tsx
+â”‚   â”‚   â”‚   â””â”€â”€ ForgotPasswordForm.tsx
+â”‚   â”‚   â”œâ”€â”€ hooks/
+â”‚   â”‚   â”‚   â””â”€â”€ useAuth.ts
+â”‚   â”‚   â”œâ”€â”€ services/
+â”‚   â”‚   â”‚   â””â”€â”€ authApi.ts
+â”‚   â”‚   â”œâ”€â”€ slices/
+â”‚   â”‚   â”‚   â””â”€â”€ authSlice.ts
+â”‚   â”‚   â”œâ”€â”€ types/
+â”‚   â”‚   â”‚   â””â”€â”€ auth.types.ts
+â”‚   â”‚   â””â”€â”€ pages/
+â”‚   â”‚       â”œâ”€â”€ LoginPage.tsx
+â”‚   â”‚       â”œâ”€â”€ RegisterPage.tsx
+â”‚   â”‚       â””â”€â”€ ForgotPasswordPage.tsx
+â”‚   â”‚
+â”‚   â”œâ”€â”€ dashboard/
+â”‚   â”‚   â”œâ”€â”€ components/
+â”‚   â”‚   â”‚   â”œâ”€â”€ LearnerDashboard.tsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ MentorDashboard.tsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ StatsCard.tsx
+â”‚   â”‚   â”‚   â””â”€â”€ UpcomingSessions.tsx
+â”‚   â”‚   â””â”€â”€ pages/
+â”‚   â”‚       â””â”€â”€ DashboardPage.tsx
+â”‚   â”‚
+â”‚   â”œâ”€â”€ mentor/
+â”‚   â”‚   â”œâ”€â”€ components/
+â”‚   â”‚   â”‚   â”œâ”€â”€ MentorProfileCard.tsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ MentorFilters.tsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ MentorSearchResults.tsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ AvailabilityEditor.tsx
+â”‚   â”‚   â”‚   â””â”€â”€ MentorApplicationForm.tsx
+â”‚   â”‚   â”œâ”€â”€ hooks/
+â”‚   â”‚   â”‚   â”œâ”€â”€ useMentorSearch.ts
+â”‚   â”‚   â”‚   â””â”€â”€ useMentorProfile.ts
+â”‚   â”‚   â”œâ”€â”€ services/
+â”‚   â”‚   â”‚   â””â”€â”€ mentorApi.ts
+â”‚   â”‚   â”œâ”€â”€ slices/
+â”‚   â”‚   â”‚   â””â”€â”€ mentorSlice.ts
+â”‚   â”‚   â””â”€â”€ pages/
+â”‚   â”‚       â”œâ”€â”€ MentorDiscoveryPage.tsx
+â”‚   â”‚       â”œâ”€â”€ MentorProfilePage.tsx
+â”‚   â”‚       â””â”€â”€ MentorApplicationPage.tsx
+â”‚   â”‚
+â”‚   â”œâ”€â”€ session/
+â”‚   â”‚   â”œâ”€â”€ components/
+â”‚   â”‚   â”‚   â”œâ”€â”€ BookSessionModal.tsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ SessionCard.tsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ SessionDetailsModal.tsx
+â”‚   â”‚   â”‚   â””â”€â”€ SessionStatusBadge.tsx
+â”‚   â”‚   â”œâ”€â”€ hooks/
+â”‚   â”‚   â”‚   â””â”€â”€ useSessions.ts
+â”‚   â”‚   â”œâ”€â”€ services/
+â”‚   â”‚   â”‚   â””â”€â”€ sessionApi.ts
+â”‚   â”‚   â”œâ”€â”€ slices/
+â”‚   â”‚   â”‚   â””â”€â”€ sessionSlice.ts
+â”‚   â”‚   â””â”€â”€ pages/
+â”‚   â”‚       â””â”€â”€ MySessionsPage.tsx
+â”‚   â”‚
+â”‚   â”œâ”€â”€ group/
+â”‚   â”‚   â”œâ”€â”€ components/
+â”‚   â”‚   â”‚   â”œâ”€â”€ CreateGroupForm.tsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ GroupMemberList.tsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ DiscussionThread.tsx
+â”‚   â”‚   â”‚   â””â”€â”€ PostDiscussionForm.tsx
+â”‚   â”‚   â”œâ”€â”€ services/
+â”‚   â”‚   â”‚   â””â”€â”€ groupApi.ts
+â”‚   â”‚   â””â”€â”€ pages/
+â”‚   â”‚       â”œâ”€â”€ GroupListPage.tsx
+â”‚   â”‚       â”œâ”€â”€ GroupDetailPage.tsx
+â”‚   â”‚       â””â”€â”€ CreateGroupPage.tsx
+â”‚   â”‚
+â”‚   â”œâ”€â”€ review/
+â”‚   â”‚   â”œâ”€â”€ components/
+â”‚   â”‚   â”‚   â”œâ”€â”€ ReviewForm.tsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ ReviewList.tsx
+â”‚   â”‚   â”‚   â””â”€â”€ RatingDistribution.tsx
+â”‚   â”‚   â””â”€â”€ services/
+â”‚   â”‚       â””â”€â”€ reviewApi.ts
+â”‚   â”‚
+â”‚   â”œâ”€â”€ notification/
+â”‚   â”‚   â”œâ”€â”€ components/
+â”‚   â”‚   â”‚   â”œâ”€â”€ NotificationBell.tsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ NotificationDropdown.tsx
+â”‚   â”‚   â”‚   â””â”€â”€ NotificationItem.tsx
+â”‚   â”‚   â”œâ”€â”€ hooks/
+â”‚   â”‚   â”‚   â””â”€â”€ useNotifications.ts
+â”‚   â”‚   â”œâ”€â”€ services/
+â”‚   â”‚   â”‚   â””â”€â”€ notificationApi.ts
+â”‚   â”‚   â””â”€â”€ slices/
+â”‚   â”‚       â””â”€â”€ notificationSlice.ts
+â”‚   â”‚
+â”‚   â”œâ”€â”€ payment/
+â”‚   â”‚   â”œâ”€â”€ components/
+â”‚   â”‚   â”‚   â”œâ”€â”€ CheckoutModal.tsx
+â”‚   â”‚   â”‚   â””â”€â”€ PaymentHistoryTable.tsx
+â”‚   â”‚   â”œâ”€â”€ hooks/
+â”‚   â”‚   â”‚   â””â”€â”€ useRazorpay.ts
+â”‚   â”‚   â”œâ”€â”€ services/
+â”‚   â”‚   â”‚   â””â”€â”€ paymentApi.ts
+â”‚   â”‚   â””â”€â”€ pages/
+â”‚   â”‚       â””â”€â”€ PaymentHistoryPage.tsx
+â”‚   â”‚
+â”‚   â”œâ”€â”€ profile/
+â”‚   â”‚   â”œâ”€â”€ components/
+â”‚   â”‚   â”‚   â”œâ”€â”€ ProfileForm.tsx
+â”‚   â”‚   â”‚   â”œâ”€â”€ AvatarUpload.tsx
+â”‚   â”‚   â”‚   â””â”€â”€ SkillSelector.tsx
+â”‚   â”‚   â””â”€â”€ pages/
+â”‚   â”‚       â””â”€â”€ ProfilePage.tsx
+â”‚   â”‚
+â”‚   â””â”€â”€ admin/
+â”‚       â”œâ”€â”€ components/
+â”‚       â”‚   â”œâ”€â”€ UserTable.tsx
+â”‚       â”‚   â”œâ”€â”€ MentorApprovalList.tsx
+â”‚       â”‚   â”œâ”€â”€ GroupModerationList.tsx
+â”‚       â”‚   â””â”€â”€ PlatformStats.tsx
+â”‚       â””â”€â”€ pages/
+â”‚           â”œâ”€â”€ AdminDashboardPage.tsx
+â”‚           â”œâ”€â”€ UserManagementPage.tsx
+â”‚           â”œâ”€â”€ MentorApprovalPage.tsx
+â”‚           â””â”€â”€ GroupModerationPage.tsx
+â”‚
+â”œâ”€â”€ lib/
+â”‚   â”œâ”€â”€ api/
+â”‚   â”‚   â”œâ”€â”€ axiosInstance.ts        # Axios config + interceptors
+â”‚   â”‚   â”œâ”€â”€ apiClient.ts           # Generic API call helpers
+â”‚   â”‚   â””â”€â”€ endpoints.ts           # API endpoint constants
+â”‚   â”œâ”€â”€ websocket/
+â”‚   â”‚   â”œâ”€â”€ stompClient.ts         # WebSocket connection manager
+â”‚   â”‚   â””â”€â”€ useWebSocket.ts        # WebSocket React hook
+â”‚   â””â”€â”€ utils/
+â”‚       â”œâ”€â”€ formatters.ts          # Date, currency formatters
+â”‚       â”œâ”€â”€ validators.ts          # Zod schemas
+â”‚       â””â”€â”€ constants.ts           # App constants
+â”‚
+â”œâ”€â”€ guards/
+â”‚   â”œâ”€â”€ AuthGuard.tsx              # Redirect if not authenticated
+â”‚   â”œâ”€â”€ RoleGuard.tsx              # Redirect if insufficient role
+â”‚   â””â”€â”€ GuestGuard.tsx             # Redirect if already authenticated
+â”‚
+â”œâ”€â”€ errors/
+â”‚   â”œâ”€â”€ ErrorBoundary.tsx          # Global error boundary
+â”‚   â”œâ”€â”€ ApiError.ts                # API error class
+â”‚   â”œâ”€â”€ errorHandler.ts            # Centralized error handler
+â”‚   â””â”€â”€ ErrorFallback.tsx          # Error UI component
+â”‚
+â”œâ”€â”€ types/
+â”‚   â”œâ”€â”€ api.types.ts               # API response types
+â”‚   â”œâ”€â”€ user.types.ts
+â”‚   â”œâ”€â”€ mentor.types.ts
+â”‚   â”œâ”€â”€ session.types.ts
+â”‚   â”œâ”€â”€ group.types.ts
+â”‚   â”œâ”€â”€ review.types.ts
+â”‚   â””â”€â”€ notification.types.ts
+â”‚
+â”œâ”€â”€ App.tsx                         # Root app with providers
+â”œâ”€â”€ Router.tsx                      # Route definitions
+â”œâ”€â”€ main.tsx                        # Entry point
+â””â”€â”€ index.css                       # Tailwind directives
 ```
 
 ---
@@ -460,23 +466,23 @@ export const RoleGuard = ({ allowedRoles, children }: RoleGuardProps) => {
 ### Atomic Design Hierarchy
 
 ```
-┌──────────────────────────────────────────────────────┐
-│                    TEMPLATES                          │
-│  DashboardLayout, AuthLayout, AdminLayout            │
-│  ┌────────────────────────────────────────────────┐  │
-│  │                  ORGANISMS                      │  │
-│  │  Navbar, Sidebar, MentorGrid, SessionList      │  │
-│  │  ┌──────────────────────────────────────────┐  │  │
-│  │  │              MOLECULES                    │  │  │
-│  │  │  MentorCard, SessionCard, FilterPanel     │  │  │
-│  │  │  ┌────────────────────────────────────┐  │  │  │
-│  │  │  │            ATOMS                    │  │  │  │
-│  │  │  │  Button, Input, Badge, Avatar,      │  │  │  │
-│  │  │  │  Spinner, StarRating, StatusBadge   │  │  │  │
-│  │  │  └────────────────────────────────────┘  │  │  │
-│  │  └──────────────────────────────────────────┘  │  │
-│  └────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                    TEMPLATES                          â”‚
+â”‚  DashboardLayout, AuthLayout, AdminLayout            â”‚
+â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”‚
+â”‚  â”‚                  ORGANISMS                      â”‚  â”‚
+â”‚  â”‚  Navbar, Sidebar, MentorGrid, SessionList      â”‚  â”‚
+â”‚  â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”‚  â”‚
+â”‚  â”‚  â”‚              MOLECULES                    â”‚  â”‚  â”‚
+â”‚  â”‚  â”‚  MentorCard, SessionCard, FilterPanel     â”‚  â”‚  â”‚
+â”‚  â”‚  â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”‚  â”‚  â”‚
+â”‚  â”‚  â”‚  â”‚            ATOMS                    â”‚  â”‚  â”‚  â”‚
+â”‚  â”‚  â”‚  â”‚  Button, Input, Badge, Avatar,      â”‚  â”‚  â”‚  â”‚
+â”‚  â”‚  â”‚  â”‚  Spinner, StarRating, StatusBadge   â”‚  â”‚  â”‚  â”‚
+â”‚  â”‚  â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â”‚  â”‚  â”‚
+â”‚  â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â”‚  â”‚
+â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ### Key Component Examples
@@ -706,7 +712,7 @@ export const apiClient = axios.create({
   },
 });
 
-// Request interceptor — attach JWT
+// Request interceptor â€” attach JWT
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = store.getState().auth.accessToken;
@@ -720,7 +726,7 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor — handle token refresh
+// Response interceptor â€” handle token refresh
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (token: string) => void;
@@ -1285,7 +1291,7 @@ export const connectWebSocket = (userId: string): void => {
         
         // Show toast for new notification
         toast(notification.title, {
-          icon: '🔔',
+          icon: 'ðŸ””',
           duration: 4000,
         });
       });
@@ -1316,78 +1322,78 @@ export const disconnectWebSocket = (): void => {
 ### Flow 1: Session Booking
 
 ```
-┌───────────────┐     ┌───────────────┐     ┌───────────────┐
-│  1. Mentor    │     │  2. Mentor    │     │  3. Book      │
-│  Discovery    │────▶│  Profile      │────▶│  Session      │
-│  Page         │     │  Page         │     │  Modal        │
-│               │     │               │     │               │
-│ • Search bar  │     │ • Full bio    │     │ • Date picker │
-│ • Filters     │     │ • Skills      │     │ • Time slots  │
-│ • Mentor grid │     │ • Reviews     │     │ • Topic input │
-│ • Pagination  │     │ • Availability│     │ • Confirm btn │
-└───────────────┘     │ • Book CTA    │     └───────┬───────┘
-                      └───────────────┘             │
-                                                    │ On submit
-                                                    ▼
-                      ┌───────────────┐     ┌───────────────┐
-                      │  5. Sessions  │     │  4. Success   │
-                      │  List (status │◀────│  Toast +      │
-                      │  = REQUESTED) │     │  Redirect     │
-                      └───────────────┘     └───────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚  1. Mentor    â”‚     â”‚  2. Mentor    â”‚     â”‚  3. Book      â”‚
+â”‚  Discovery    â”‚â”€â”€â”€â”€â–¶â”‚  Profile      â”‚â”€â”€â”€â”€â–¶â”‚  Session      â”‚
+â”‚  Page         â”‚     â”‚  Page         â”‚     â”‚  Modal        â”‚
+â”‚               â”‚     â”‚               â”‚     â”‚               â”‚
+â”‚ â€¢ Search bar  â”‚     â”‚ â€¢ Full bio    â”‚     â”‚ â€¢ Date picker â”‚
+â”‚ â€¢ Filters     â”‚     â”‚ â€¢ Skills      â”‚     â”‚ â€¢ Time slots  â”‚
+â”‚ â€¢ Mentor grid â”‚     â”‚ â€¢ Reviews     â”‚     â”‚ â€¢ Topic input â”‚
+â”‚ â€¢ Pagination  â”‚     â”‚ â€¢ Availabilityâ”‚     â”‚ â€¢ Confirm btn â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜     â”‚ â€¢ Book CTA    â”‚     â””â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜
+                      â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜             â”‚
+                                                    â”‚ On submit
+                                                    â–¼
+                      â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                      â”‚  5. Sessions  â”‚     â”‚  4. Success   â”‚
+                      â”‚  List (status â”‚â—€â”€â”€â”€â”€â”‚  Toast +      â”‚
+                      â”‚  = REQUESTED) â”‚     â”‚  Redirect     â”‚
+                      â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ### Flow 2: Mentor Discovery with Filters
 
 ```
 User types in search bar
-        │
-        ▼
-┌─────────────────┐     Debounce 300ms     ┌─────────────────┐
-│ Update URL      │────────────────────────▶│ Trigger API     │
-│ query params    │                         │ call via         │
-│ (?skill=Java    │                         │ React Query     │
-│  &minRating=4)  │                         └────────┬────────┘
-└─────────────────┘                                  │
-                                                     ▼
-                               ┌───────────────────────────────┐
-                               │ Show results:                 │
-                               │ • Loading skeleton while fetch│
-                               │ • Mentor cards (cached)       │
-                               │ • Empty state if no results   │
-                               │ • Error state if API fails    │
-                               │   → "Retry" button            │
-                               └───────────────────────────────┘
+        â”‚
+        â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”     Debounce 300ms     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ Update URL      â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚ Trigger API     â”‚
+â”‚ query params    â”‚                         â”‚ call via         â”‚
+â”‚ (?skill=Java    â”‚                         â”‚ React Query     â”‚
+â”‚  &minRating=4)  â”‚                         â””â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜                                  â”‚
+                                                     â–¼
+                               â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                               â”‚ Show results:                 â”‚
+                               â”‚ â€¢ Loading skeleton while fetchâ”‚
+                               â”‚ â€¢ Mentor cards (cached)       â”‚
+                               â”‚ â€¢ Empty state if no results   â”‚
+                               â”‚ â€¢ Error state if API fails    â”‚
+                               â”‚   â†’ "Retry" button            â”‚
+                               â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ### Flow 3: Login with Error Handling
 
 ```
-┌───────────┐     Submit        ┌──────────┐     API Call    ┌──────────┐
-│ Login     │──────────────────▶│ Validate │────────────────▶│ Auth     │
-│ Form      │                   │ (Zod)    │                 │ Service  │
-│           │                   │          │                 │          │
-│ email     │                   │ Client   │                 │          │
-│ password  │                   │ errors?  │                 │          │
-│           │                   └──────┬───┘                 └────┬─────┘
-└───────────┘                          │                          │
-                                       │                          │
-                              ┌────────┴────────┐       ┌────────┴────────┐
-                              │ Yes: Show       │       │ 200: Store JWT  │
-                              │ inline errors   │       │  → redirect to  │
-                              │ (field-level)   │       │  dashboard      │
-                              └─────────────────┘       │                 │
-                                                        │ 401: Show       │
-                                                        │  "Invalid       │
-                                                        │  credentials"   │
-                                                        │                 │
-                                                        │ 403: Show       │
-                                                        │  "Account       │
-                                                        │  locked"        │
-                                                        │                 │
-                                                        │ 500/Network:    │
-                                                        │  Toast error +  │
-                                                        │  retry button   │
-                                                        └─────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”     Submit        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”     API Call    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ Login     â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚ Validate â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚ Auth     â”‚
+â”‚ Form      â”‚                   â”‚ (Zod)    â”‚                 â”‚ Service  â”‚
+â”‚           â”‚                   â”‚          â”‚                 â”‚          â”‚
+â”‚ email     â”‚                   â”‚ Client   â”‚                 â”‚          â”‚
+â”‚ password  â”‚                   â”‚ errors?  â”‚                 â”‚          â”‚
+â”‚           â”‚                   â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”˜                 â””â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”˜
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜                          â”‚                          â”‚
+                                       â”‚                          â”‚
+                              â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”       â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”
+                              â”‚ Yes: Show       â”‚       â”‚ 200: Store JWT  â”‚
+                              â”‚ inline errors   â”‚       â”‚  â†’ redirect to  â”‚
+                              â”‚ (field-level)   â”‚       â”‚  dashboard      â”‚
+                              â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜       â”‚                 â”‚
+                                                        â”‚ 401: Show       â”‚
+                                                        â”‚  "Invalid       â”‚
+                                                        â”‚  credentials"   â”‚
+                                                        â”‚                 â”‚
+                                                        â”‚ 403: Show       â”‚
+                                                        â”‚  "Account       â”‚
+                                                        â”‚  locked"        â”‚
+                                                        â”‚                 â”‚
+                                                        â”‚ 500/Network:    â”‚
+                                                        â”‚  Toast error +  â”‚
+                                                        â”‚  retry button   â”‚
+                                                        â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ---
@@ -1407,7 +1413,7 @@ User types in search bar
 
 # SkillSync Frontend API Integration Contract
 
-## 🧩 PART 1 — GLOBAL RULES
+## ðŸ§© PART 1 â€” GLOBAL RULES
 
 * **Base URL (Production)**: `https://skillsync.mraks.dev` (same-origin routes like `/api/*`, `/auth/*` proxied to backend)
 * **Base URL (Local Dev)**: `http://localhost:8080` (via Vite proxy / Docker gateway)
@@ -1420,7 +1426,7 @@ User types in search bar
 
 ---
 
-## 🧩 PART 2 — AUTHENTICATION DETAILS (CRITICAL)
+## ðŸ§© PART 2 â€” AUTHENTICATION DETAILS (CRITICAL)
 
 ### 1. JWT Structure
 * **Header**: Sent in the `Authorization` header.
@@ -1445,14 +1451,14 @@ User types in search bar
 * **Action**: Update global Redux state/localStorage with new tokens and transparently retry the original failed request.
 
 ### 4. 401 & 403 Handling
-* **401 Unauthorized during Refresh**: If `/api/auth/refresh` itself throws 401 (token expired/blacklisted) — **Force Logout**: clear local storage and redirect user to `/login` with session expiry toast.
+* **401 Unauthorized during Refresh**: If `/api/auth/refresh` itself throws 401 (token expired/blacklisted) â€” **Force Logout**: clear local storage and redirect user to `/login` with session expiry toast.
 * **403 Forbidden**: Token is valid, but user lacks necessary role (e.g., Learner trying to access Admin endpoints). Route to a Not Authorized view.
 
 ---
 
-## 🧩 PART 3 & PART 4 — API FORMAT & ENDPOINTS BY FEATURE
+## ðŸ§© PART 3 & PART 4 â€” API FORMAT & ENDPOINTS BY FEATURE
 
-### 🔹 AUTH APIs
+### ðŸ”¹ AUTH APIs
 
 #### Endpoint: `POST /api/auth/register`
 **Description**: Registers a new user. Default role is Learner.
@@ -1616,7 +1622,7 @@ User types in search bar
 
 ---
 
-### 🔹 USER / PROFILE APIs
+### ðŸ”¹ USER / PROFILE APIs
 
 #### Endpoint: `GET /api/users/profile`
 **Description**: Retrieves the authenticated user's profile.
@@ -1690,7 +1696,7 @@ User types in search bar
 
 ---
 
-### 🔹 MENTOR APIs
+### ðŸ”¹ MENTOR APIs
 
 #### Endpoint: `GET /api/mentors`
 **Description**: Search mentors with filtering and standard pagination structure.
@@ -1824,7 +1830,7 @@ User types in search bar
 
 ---
 
-### 🔹 SESSION APIs
+### ðŸ”¹ SESSION APIs
 
 #### Endpoint: `POST /api/sessions`
 **Description**: Learner requests a new session with a Mentor.
@@ -1940,7 +1946,7 @@ User types in search bar
 
 ---
 
-### 🔹 PAYMENT APIs
+### ðŸ”¹ PAYMENT APIs
 
 #### Endpoint: `POST /api/payments/order`
 **Description**: Creates a Razorpay order before initiating payment on the frontend.
@@ -1991,7 +1997,7 @@ User types in search bar
 
 ---
 
-### 🔹 REVIEW APIs
+### ðŸ”¹ REVIEW APIs
 
 #### Endpoint: `POST /api/reviews`
 **Description**: Submits a review for a completed session.
@@ -2048,7 +2054,7 @@ User types in search bar
 
 ---
 
-### 🔹 NOTIFICATION APIs
+### ðŸ”¹ NOTIFICATION APIs
 
 #### Endpoint: `GET /api/notifications`
 **Description**: Get paginated notifications for the user.
@@ -2116,7 +2122,7 @@ User types in search bar
 
 ---
 
-## 🧩 PART 5 — PAGINATION & FILTERING
+## ðŸ§© PART 5 â€” PAGINATION & FILTERING
 
 Define clearly:
 
@@ -2149,7 +2155,7 @@ Provide sample query params lookup:
 
 ---
 
-## 🧩 PART 6 — WEBSOCKET / REAL-TIME
+## ðŸ§© PART 6 â€” WEBSOCKET / REAL-TIME
 
 * **WebSocket endpoint**: `ws://localhost:8080/ws`
 * **Connection method**: SockJS with STOMP client
@@ -2169,7 +2175,7 @@ Provide sample query params lookup:
 
 ---
 
-## 🧩 PART 7 — ERROR HANDLING (IMPORTANT)
+## ðŸ§© PART 7 â€” ERROR HANDLING (IMPORTANT)
 
 **Global Error Format**:
 Any response HTTP status > 299 maps to this strict formal failure payload.
@@ -2197,7 +2203,7 @@ Any response HTTP status > 299 maps to this strict formal failure payload.
 
 ---
 
-## 🧩 PART 8 — RATE LIMITING & EDGE CASES
+## ðŸ§© PART 8 â€” RATE LIMITING & EDGE CASES
 
 * **Payment APIs Restrictions**: Rate limited logic restricts redundant Razorpay order generation logic to avoid split-second double charges on the user. Frontends must immediately lock inputs/buttons (disable state) until `/api/payments/verify` finishes its pass gracefully.
 * **Auth Rate Limits**: Gateway applies aggressive rate-limits globally limiting brute force requests to `/api/auth/*` routes. Yields standard 429 when max bucket is triggered.
@@ -2205,7 +2211,7 @@ Any response HTTP status > 299 maps to this strict formal failure payload.
 
 ---
 
-## 🧩 PART 9 — SAMPLE END-TO-END FLOW
+## ðŸ§© PART 9 â€” SAMPLE END-TO-END FLOW
 
 Here is one fully verified example of a cross-system workflow logic combining tokens, calls, and realtime components:
 
@@ -2238,3 +2244,16 @@ Here is one fully verified example of a cross-system workflow logic combining to
    * Learner is hit with async WebSocket payload notifying `SESSION_BOOKED: Your session is confirmed.`
 
 ---
+
+
+ 
+ #   L A T E S T   U P D A T E S :   M A N U A L   T E S T E R   F I X E S 
+ -   * * F r o n t e n d   A r c h i t e c t u r e   &   D a t a   H y d r a t i o n * * :   R e m o v e d   a l l   l o c a l i z e d   m o c k   d a t a ,   p s e u d o - c o u n t s ,   a n d   f r o n t e n d - o n l y   s t a t e   ( i n c l u d i n g   A v a t a r s   a n d   g e n e r i c   l o c a l   s t a t i s t i c s ) . 
+ -   * * A d m i n   F l o w   &   U I * * :   D e p r e c a t e d   m i s s i n g   g e n e r i c   ' R e p o r t s '   a n d   ' S y s t e m   S e t t i n g s '   v i e w s .   A d d e d   e x p l i c i t l y   v e r i f i e d   ' / a d m i n / u s e r s '   a n d   ' / a d m i n / m e n t o r - a p p r o v a l s '   p a g e s   h o o k e d   t o   ' G E T   / a p i / a d m i n / u s e r s '   a n d   ' G E T   / a p i / a d m i n / m e n t o r s / p e n d i n g ' .   D a s h b o a r d   d i r e c t l y   s t r e a m s   f r o m   ' G E T   / a p i / a d m i n / s t a t s ' . 
+ -   * * R o l e   U I   B e h a v i o r s * * :   
+     -   * L e a r n e r s *   n o   l o n g e r   s e e   m o c k   ' Q u i c k   S t a t s '   o n   d a s h b o a r d .   M e n t o r s   l i s t   s t r i c t l y   p o p u l a t e d   v i a   ' G E T   / a p i / u s e r s ? r o l e = M E N T O R ' . 
+     -   * M e n t o r s *   n o   l o n g e r   s e e   l e a r n e r - o r i e n t e d   ' F i n d   M e n t o r '   a c t i o n s   o n   t h e i r   s e s s i o n s   v i e w . 
+     -   * G l o b a l * :   R e m o v e d   n a v   s e a r c h   b a r s   a n d   a v a t a r   u p l o a d   s t a t e s ;   d e f a u l t e d   t o   i n i t i a l i z e d   p r o f i l e   c o l o r s   e x c l u s i v e l y   d r i v e n   b y   u s e r   ' f i r s t N a m e '   a n d   ' l a s t N a m e '   p a y l o a d   d a t a . 
+ -   * * M e n t o r   A v a i l a b i l i t y   C o n t r a c t * * :   M i g r a t e d   f r o m   m o c k e d   v o l a t i l e   s t a t e s   t o   r o b u s t   b a c k e n d   p e r s i s t e n c e   e n d p o i n t s :   ' G E T   / a p i / u s e r s / m e n t o r / a v a i l a b i l i t y ' ,   ' P O S T   / a p i / u s e r s / m e n t o r / a v a i l a b i l i t y ' ,   ' D E L E T E   / a p i / u s e r s / m e n t o r / a v a i l a b i l i t y / { i d } ' . 
+  
+ 

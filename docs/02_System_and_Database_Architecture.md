@@ -1,3 +1,9 @@
+﻿# Presentation Sync Note
+
+Updated for final presentation on 2026-04-06. Start with docs/00_Presentation_Playbook.md for the guided narrative, then use this document for deep details.
+
+---
+
 # 02 System and Database Architecture
 
 
@@ -6,16 +12,16 @@
 
 ## Content from: doc2_database_backend_design.md
 
-# 📄 DOCUMENT 2: DATABASE + BACKEND DESIGN
+# ðŸ“„ DOCUMENT 2: DATABASE + BACKEND DESIGN
 
 > [!IMPORTANT]
 > **CQRS + Redis Caching (March 2026):** All business services (User, Skill, Session, Notification) now implement the **CQRS pattern** with **Redis 7.2** distributed caching. Service layers have been split into `service.command` (write operations + cache invalidation) and `service.query` (read operations + cache-aside). See `doc6_cqrs_redis_architecture.md` for the full design.
 >
-> **Architecture Update (March 2026):** Mentor Service + Group Service → User Service (port 8082). Review Service → Session Service (port 8085).
+> **Architecture Update (March 2026):** Mentor Service + Group Service â†’ User Service (port 8082). Review Service â†’ Session Service (port 8085).
 >
 > **Enterprise Hardening (March 2026):** Implemented a dedicated Mapper layer to decouple CQRS Command/Query services. Added tiered API Gateway Rate Limiting using resilience4j.
 
-## SkillSync — Database & Microservices Architecture
+## SkillSync â€” Database & Microservices Architecture
 
 ---
 
@@ -23,7 +29,7 @@
 
 ### Database-per-Service Strategy
 
-Each microservice owns its dedicated PostgreSQL database. No cross-service joins — all inter-service communication happens via REST APIs or RabbitMQ events.
+Each microservice owns its dedicated PostgreSQL database. No cross-service joins â€” all inter-service communication happens via REST APIs or RabbitMQ events.
 
 | Service | Database | Schema |
 |---|---|---|
@@ -135,11 +141,11 @@ public record UserSummary(
 ```
 
 #### Business Logic
-- Password must contain: ≥8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 special char
+- Password must contain: â‰¥8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 special char
 - Access token TTL: 15 minutes
 - Refresh token TTL: 7 days
 - Max 5 active refresh tokens per user (FIFO eviction)
-- Failed login lockout: 5 attempts → 15 min lockout
+- Failed login lockout: 5 attempts â†’ 15 min lockout
 - Email verification required before first login
 
 ---
@@ -225,9 +231,9 @@ public interface OtpTokenRepository extends JpaRepository<OtpToken, Long> {
 }
 ```
 
-**Service Layer** â€” `AuthService` orchestrates: register (hash password + save user + send verification email), login (validate credentials + generate JWT pair), refresh (validate refresh token + issue new access token), logout (delete refresh token). `JwtTokenProvider` handles all JWT creation/parsing. `UserDetailsServiceImpl` implements Spring Security's `UserDetailsService`.
+**Service Layer** Ã¢â‚¬â€ `AuthService` orchestrates: register (hash password + save user + send verification email), login (validate credentials + generate JWT pair), refresh (validate refresh token + issue new access token), logout (delete refresh token). `JwtTokenProvider` handles all JWT creation/parsing. `UserDetailsServiceImpl` implements Spring Security's `UserDetailsService`.
 
-**Inter-Service**: Auth Service is called BY other services (via Gateway JWT validation) but does NOT call other services via Feign. The Gateway calls `GET /api/auth/validate` internally. Mentor Service calls `PUT /api/auth/users/{id}/role` to update role on approval â€” this is exposed as an INTERNAL endpoint.
+**Inter-Service**: Auth Service is called BY other services (via Gateway JWT validation) but does NOT call other services via Feign. The Gateway calls `GET /api/auth/validate` internally. Mentor Service calls `PUT /api/auth/users/{id}/role` to update role on approval Ã¢â‚¬â€ this is exposed as an INTERNAL endpoint.
 
 
 ### 2.2.2 User Service
@@ -350,7 +356,7 @@ public interface SkillServiceClient {
 
 **Service Layer** -- `UserService`: getProfile (fetch profile + enrich with skills via SkillServiceClient), updateProfile (partial update + recalculate completeness %), addSkill (validate skill exists via Feign, then save UserSkill), removeSkill.
 
-#### Event Consumption — Payment Business Actions
+#### Event Consumption â€” Payment Business Actions
 
 > **Architecture Note:** Payment processing has been extracted to a dedicated **Payment Service** (port 8086). User Service now consumes `payment.business.action` events via RabbitMQ (`PaymentEventConsumer`) to execute post-payment business logic (e.g., mentor approval). See [payment_implementation.md](file:///f:/SkillSync/docs/payment_implementation.md).
 
@@ -426,7 +432,7 @@ public record AvailabilitySlotRequest(
 
 #### Business Logic
 - Only ROLE_LEARNER can apply (checked via JWT role claim)
-- Application requires ≥50 char bio, ≥1 skill, hourly rate $5–$500
+- Application requires â‰¥50 char bio, â‰¥1 skill, hourly rate $5â€“$500
 - Admin sees paginated pending applications, newest first
 - On approval: user role updated to ROLE_MENTOR via inter-service call to Auth Service
 - On rejection: reason stored, user can re-apply after 30 days
@@ -520,9 +526,9 @@ public interface SkillServiceClient {
 }
 ```
 
-**Service Layer** â€” `MentorService`: apply (validate role=LEARNER, validate skills via Feign, save PENDING profile), approve (update status + call AuthServiceClient to change role to ROLE_MENTOR + publish MENTOR_APPROVED event), reject (store reason + publish MENTOR_REJECTED event). `MentorSearchService`: uses `MentorSearchSpecification` to build dynamic JPA queries from filter params, enriches results with user profile data via UserServiceClient. `AvailabilityService`: CRUD for time slots with overlap validation.
+**Service Layer** Ã¢â‚¬â€ `MentorService`: apply (validate role=LEARNER, validate skills via Feign, save PENDING profile), approve (update status + call AuthServiceClient to change role to ROLE_MENTOR + publish MENTOR_APPROVED event), reject (store reason + publish MENTOR_REJECTED event). `MentorSearchService`: uses `MentorSearchSpecification` to build dynamic JPA queries from filter params, enriches results with user profile data via UserServiceClient. `AvailabilityService`: CRUD for time slots with overlap validation.
 
-**RabbitMQ Events Published**: `MENTOR_APPROVED`, `MENTOR_REJECTED` â†’ consumed by Notification Service.
+**RabbitMQ Events Published**: `MENTOR_APPROVED`, `MENTOR_REJECTED` Ã¢â€ â€™ consumed by Notification Service.
 
 
 ### 2.2.4 Skill Service
@@ -598,7 +604,7 @@ public interface SkillRepository extends JpaRepository<Skill, Long> {
 }
 ```
 
-**Service Layer** â€” `SkillService`: CRUD operations, autocomplete search using trigram similarity. `CategoryService`: hierarchical category management. **No Feign clients** â€” Skill Service is a provider, called by User/Mentor/Group services.
+**Service Layer** Ã¢â‚¬â€ `SkillService`: CRUD operations, autocomplete search using trigram similarity. `CategoryService`: hierarchical category management. **No Feign clients** Ã¢â‚¬â€ Skill Service is a provider, called by User/Mentor/Group services.
 
 
 ### 2.2.5 Session Service
@@ -662,17 +668,17 @@ public record SessionFilterRequest(
 ```
 
 #### Business Logic & Validation
-- **Conflict Detection**: Before creating session → check mentor's existing ACCEPTED sessions for time overlap
+- **Conflict Detection**: Before creating session â†’ check mentor's existing ACCEPTED sessions for time overlap
 - **State Machine Enforcement**:
-  - `REQUESTED → ACCEPTED` (mentor only)
-  - `REQUESTED → REJECTED` (mentor only)
-  - `REQUESTED → CANCELLED` (learner only)
-  - `ACCEPTED → COMPLETED` (mentor only, after session_date)
-  - `ACCEPTED → CANCELLED` (either party)
+  - `REQUESTED â†’ ACCEPTED` (mentor only)
+  - `REQUESTED â†’ REJECTED` (mentor only)
+  - `REQUESTED â†’ CANCELLED` (learner only)
+  - `ACCEPTED â†’ COMPLETED` (mentor only, after session_date)
+  - `ACCEPTED â†’ CANCELLED` (either party)
 - Invalid transitions throw `InvalidStateTransitionException`
-- Session date must be ≥24 hours in the future
-- Duration: 15–240 minutes
-- On state change → publish event to RabbitMQ
+- Session date must be â‰¥24 hours in the future
+- Duration: 15â€“240 minutes
+- On state change â†’ publish event to RabbitMQ
 
 #### Events Published
 
@@ -762,7 +768,7 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
 }
 ```
 
-**Service Layer** â€” `SessionService`: create (validate mentor via Feign + conflict detection query + save REQUESTED + publish event), accept/reject/cancel/complete (validate state transition + update + publish event). `SessionEventPublisher`: publishes typed events to RabbitMQ `session.exchange`.
+**Service Layer** Ã¢â‚¬â€ `SessionService`: create (validate mentor via Feign + conflict detection query + save REQUESTED + publish event), accept/reject/cancel/complete (validate state transition + update + publish event). `SessionEventPublisher`: publishes typed events to RabbitMQ `session.exchange`.
 
 
 ### 2.2.6 Group Service
@@ -865,7 +871,7 @@ public interface UserServiceClient {
 }
 ```
 
-**Service Layer** â€” `GroupService`: create (set creator as OWNER), update/delete (validate ownership). `MembershipService`: join (check max members + check not already member), leave (OWNER cannot leave), listMembers (enrich with user profiles via Feign). `DiscussionService`: post (validate membership), getThreaded (fetch by group, ordered by createdAt, nested by parent_id), delete (OWNER/ADMIN only).
+**Service Layer** Ã¢â‚¬â€ `GroupService`: create (set creator as OWNER), update/delete (validate ownership). `MembershipService`: join (check max members + check not already member), leave (OWNER cannot leave), listMembers (enrich with user profiles via Feign). `DiscussionService`: post (validate membership), getThreaded (fetch by group, ordered by createdAt, nested by parent_id), delete (OWNER/ADMIN only).
 
 
 ### 2.2.7 Review Service
@@ -916,7 +922,7 @@ public record MentorRatingSummary(
 #### Business Logic
 - Only the learner of a COMPLETED session can submit a review
 - One review per session (enforced by unique constraint on session_id)
-- After review submission → recalculate mentor's avg_rating via event to Mentor Service
+- After review submission â†’ recalculate mentor's avg_rating via event to Mentor Service
 - Rating distribution calculated on-read (or cached)
 
 #### Events Published
@@ -996,7 +1002,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 }
 ```
 
-**Service Layer** â€” `ReviewService`: submitReview (validate session is COMPLETED via Feign + validate reviewer is the learner + check no duplicate + save + publish REVIEW_SUBMITTED event), getMentorReviews (paginated, enriched with reviewer name/avatar via UserServiceClient), calculateRatingSummary. `ReviewEventPublisher`: publishes to `review.exchange` â†’ consumed by Mentor Service (to update avg_rating) and Notification Service.
+**Service Layer** Ã¢â‚¬â€ `ReviewService`: submitReview (validate session is COMPLETED via Feign + validate reviewer is the learner + check no duplicate + save + publish REVIEW_SUBMITTED event), getMentorReviews (paginated, enriched with reviewer name/avatar via UserServiceClient), calculateRatingSummary. `ReviewEventPublisher`: publishes to `review.exchange` Ã¢â€ â€™ consumed by Mentor Service (to update avg_rating) and Notification Service.
 
 
 ### 2.2.8 Notification Service
@@ -1095,18 +1101,18 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 }
 ```
 
-**Service Layer** â€” `NotificationService`: getNotifications (paginated), getUnreadCount, markAsRead, markAllAsRead, deleteNotification, createNotification (called by consumers). `WebSocketService`: pushToUser (sends notification via STOMP to `/user/{userId}/queue/notifications`).
+**Service Layer** Ã¢â‚¬â€ `NotificationService`: getNotifications (paginated), getUnreadCount, markAsRead, markAllAsRead, deleteNotification, createNotification (called by consumers). `WebSocketService`: pushToUser (sends notification via STOMP to `/user/{userId}/queue/notifications`).
 
-**RabbitMQ Consumers** â€” `SessionEventConsumer`: listens on session.*.queue, creates notifications for:
-- SESSION_REQUESTED â†’ notify mentor
-- SESSION_ACCEPTED/REJECTED â†’ notify learner
-- SESSION_CANCELLED â†’ notify other party
-- SESSION_COMPLETED â†’ notify learner (prompt for review)
+**RabbitMQ Consumers** Ã¢â‚¬â€ `SessionEventConsumer`: listens on session.*.queue, creates notifications for:
+- SESSION_REQUESTED Ã¢â€ â€™ notify mentor
+- SESSION_ACCEPTED/REJECTED Ã¢â€ â€™ notify learner
+- SESSION_CANCELLED Ã¢â€ â€™ notify other party
+- SESSION_COMPLETED Ã¢â€ â€™ notify learner (prompt for review)
 
-`MentorEventConsumer`: listens on mentor.*.queue â†’ MENTOR_APPROVED/REJECTED â†’ notify applicant.
-`ReviewEventConsumer`: listens on review.submitted.queue â†’ notify mentor of new review.
+`MentorEventConsumer`: listens on mentor.*.queue Ã¢â€ â€™ MENTOR_APPROVED/REJECTED Ã¢â€ â€™ notify applicant.
+`ReviewEventConsumer`: listens on review.submitted.queue Ã¢â€ â€™ notify mentor of new review.
 
-**No OpenFeign Clients** â€” Notification Service is purely event-driven, receives all data it needs via event payloads.
+**No OpenFeign Clients** Ã¢â‚¬â€ Notification Service is purely event-driven, receives all data it needs via event payloads.
 
 
 ## 2.3 CQRS + Redis Caching Layer
@@ -1118,23 +1124,23 @@ All business services follow the **Command Query Responsibility Segregation** pa
 ```
 Traditional:                       CQRS:
   Controller                        Controller
-      │                                 │
-      ▼                            ┌────┴────┐
-   Service                         │         │
-      │                            ▼         ▼
-      ▼                      CommandService  QueryService
-  Repository                  │    │          │    │
-      │                       │    ▼          │    ▼
-      ▼                       │  Repository   │  Redis Cache
-  PostgreSQL                  │    │          │    │ (miss)
-                              │    ▼          │    ▼
-                              │  PostgreSQL   │  Repository
-                              │               │    │
-                              │  evict cache  │    ▼
-                              └──► Redis      │  PostgreSQL
-                                              │    │
-                                              │  store in cache
-                                              └──► Redis
+      â”‚                                 â”‚
+      â–¼                            â”Œâ”€â”€â”€â”€â”´â”€â”€â”€â”€â”
+   Service                         â”‚         â”‚
+      â”‚                            â–¼         â–¼
+      â–¼                      CommandService  QueryService
+  Repository                  â”‚    â”‚          â”‚    â”‚
+      â”‚                       â”‚    â–¼          â”‚    â–¼
+      â–¼                       â”‚  Repository   â”‚  Redis Cache
+  PostgreSQL                  â”‚    â”‚          â”‚    â”‚ (miss)
+                              â”‚    â–¼          â”‚    â–¼
+                              â”‚  PostgreSQL   â”‚  Repository
+                              â”‚               â”‚    â”‚
+                              â”‚  evict cache  â”‚    â–¼
+                              â””â”€â”€â–º Redis      â”‚  PostgreSQL
+                                              â”‚    â”‚
+                                              â”‚  store in cache
+                                              â””â”€â”€â–º Redis
 ```
 
 ### 2.3.2 Redis Configuration
@@ -1142,7 +1148,7 @@ Traditional:                       CQRS:
 Each service contains a `cache/` package with:
 
 ```java
-// RedisConfig.java — Shared across all cached services
+// RedisConfig.java â€” Shared across all cached services
 @Configuration
 public class RedisConfig {
     @Bean
@@ -1157,7 +1163,7 @@ public class RedisConfig {
     }
 }
 
-// CacheService.java — Generic cache wrapper with graceful degradation
+// CacheService.java â€” Generic cache wrapper with graceful degradation
 @Service
 public class CacheService {
     private final RedisTemplate<String, Object> redisTemplate;
@@ -1205,189 +1211,189 @@ public class CacheService {
 Cross-service cache consistency is maintained via RabbitMQ events:
 
 ```
-Session Service → review.submitted event → User Service (ReviewEventCacheSyncConsumer)
-                                            │
-                                            ├─ Update mentor avgRating in DB
-                                            └─ Evict user:mentor:{mentorId} from Redis
+Session Service â†’ review.submitted event â†’ User Service (ReviewEventCacheSyncConsumer)
+                                            â”‚
+                                            â”œâ”€ Update mentor avgRating in DB
+                                            â””â”€ Evict user:mentor:{mentorId} from Redis
 ```
 
 ---
 
 ## 2.4 UML Diagrams
 
-### 2.4.1 Class Diagram — Session Entity
+### 2.4.1 Class Diagram â€” Session Entity
 
 ```
-┌──────────────────────────────────────────────┐
-│                  Session                      │
-├──────────────────────────────────────────────┤
-│ - id: Long                                    │
-│ - mentorId: Long                              │
-│ - learnerId: Long                             │
-│ - topic: String                               │
-│ - description: String                         │
-│ - sessionDate: LocalDateTime                  │
-│ - durationMinutes: int                        │
-│ - meetingLink: String                         │
-│ - status: SessionStatus                       │
-│ - cancelReason: String                        │
-│ - createdAt: LocalDateTime                    │
-│ - updatedAt: LocalDateTime                    │
-├──────────────────────────────────────────────┤
-│ + requestSession(dto): Session                │
-│ + accept(): void                              │
-│ + reject(reason: String): void                │
-│ + cancel(reason: String): void                │
-│ + complete(): void                            │
-│ + isTransitionAllowed(target): boolean        │
-├──────────────────────────────────────────────┤
-│ «enum» SessionStatus                         │
-│   REQUESTED, ACCEPTED, REJECTED,              │
-│   COMPLETED, CANCELLED                        │
-└──────────────────────────────────────────────┘
-           │                        │
-           │ uses                   │ uses
-           ▼                        ▼
-┌──────────────────┐    ┌───────────────────────┐
-│ SessionService   │    │ SessionRepository     │
-├──────────────────┤    ├───────────────────────┤
-│ + create()       │    │ + findById()          │
-│ + accept()       │    │ + findByMentorId()    │
-│ + reject()       │    │ + findByLearnerId()   │
-│ + cancel()       │    │ + findConflicting()   │
-│ + complete()     │    │ + findByStatus()      │
-│ + getById()      │    └───────────────────────┘
-│ + getMySession() │
-└──────────────────┘
-           │
-           │ publishes events
-           ▼
-┌──────────────────────────┐
-│ SessionEventPublisher    │
-├──────────────────────────┤
-│ + publishRequested()     │
-│ + publishAccepted()      │
-│ + publishRejected()      │
-│ + publishCancelled()     │
-│ + publishCompleted()     │
-└──────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                  Session                      â”‚
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚ - id: Long                                    â”‚
+â”‚ - mentorId: Long                              â”‚
+â”‚ - learnerId: Long                             â”‚
+â”‚ - topic: String                               â”‚
+â”‚ - description: String                         â”‚
+â”‚ - sessionDate: LocalDateTime                  â”‚
+â”‚ - durationMinutes: int                        â”‚
+â”‚ - meetingLink: String                         â”‚
+â”‚ - status: SessionStatus                       â”‚
+â”‚ - cancelReason: String                        â”‚
+â”‚ - createdAt: LocalDateTime                    â”‚
+â”‚ - updatedAt: LocalDateTime                    â”‚
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚ + requestSession(dto): Session                â”‚
+â”‚ + accept(): void                              â”‚
+â”‚ + reject(reason: String): void                â”‚
+â”‚ + cancel(reason: String): void                â”‚
+â”‚ + complete(): void                            â”‚
+â”‚ + isTransitionAllowed(target): boolean        â”‚
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚ Â«enumÂ» SessionStatus                         â”‚
+â”‚   REQUESTED, ACCEPTED, REJECTED,              â”‚
+â”‚   COMPLETED, CANCELLED                        â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+           â”‚                        â”‚
+           â”‚ uses                   â”‚ uses
+           â–¼                        â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ SessionService   â”‚    â”‚ SessionRepository     â”‚
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤    â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚ + create()       â”‚    â”‚ + findById()          â”‚
+â”‚ + accept()       â”‚    â”‚ + findByMentorId()    â”‚
+â”‚ + reject()       â”‚    â”‚ + findByLearnerId()   â”‚
+â”‚ + cancel()       â”‚    â”‚ + findConflicting()   â”‚
+â”‚ + complete()     â”‚    â”‚ + findByStatus()      â”‚
+â”‚ + getById()      â”‚    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+â”‚ + getMySession() â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+           â”‚
+           â”‚ publishes events
+           â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ SessionEventPublisher    â”‚
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚ + publishRequested()     â”‚
+â”‚ + publishAccepted()      â”‚
+â”‚ + publishRejected()      â”‚
+â”‚ + publishCancelled()     â”‚
+â”‚ + publishCompleted()     â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
-### 2.3.2 Class Diagram — Review Flow
+### 2.3.2 Class Diagram â€” Review Flow
 
 ```
-┌─────────────────────────────┐
-│      ReviewController       │
-├─────────────────────────────┤
-│ + submitReview()            │
-│ + getMentorReviews()        │
-│ + getMyReviews()            │
-└────────────┬────────────────┘
-             │
-             ▼
-┌─────────────────────────────┐    ┌───────────────────────┐
-│      ReviewService          │───▶│ SessionServiceClient  │
-├─────────────────────────────┤    │ (Feign / RestTemplate)│
-│ + submitReview()            │    ├───────────────────────┤
-│   - validate session exists │    │ + getSession(id)      │
-│   - validate COMPLETED      │    │ + validateLearner()   │
-│   - check duplicate         │    └───────────────────────┘
-│   - save review             │
-│   - publish event           │    ┌───────────────────────┐
-│ + getMentorReviews()        │───▶│ ReviewRepository      │
-│ + calculateAvgRating()      │    ├───────────────────────┤
-│ + getRatingDistribution()   │    │ + findByMentorId()    │
-└────────────┬────────────────┘    │ + findBySessionId()   │
-             │                     │ + avgRatingByMentor() │
-             │ publishes           └───────────────────────┘
-             ▼
-┌─────────────────────────────┐
-│  ReviewEventPublisher       │
-├─────────────────────────────┤
-│ + publishReviewSubmitted()  │──── ▶ RabbitMQ
-└─────────────────────────────┘       │
-                                      ▼
-                             ┌─────────────────────┐
-                             │ Mentor Service       │
-                             │ (Consumer)           │
-                             │ - updateAvgRating()  │
-                             └─────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚      ReviewController       â”‚
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚ + submitReview()            â”‚
+â”‚ + getMentorReviews()        â”‚
+â”‚ + getMyReviews()            â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+             â”‚
+             â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚      ReviewService          â”‚â”€â”€â”€â–¶â”‚ SessionServiceClient  â”‚
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤    â”‚ (Feign / RestTemplate)â”‚
+â”‚ + submitReview()            â”‚    â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚   - validate session exists â”‚    â”‚ + getSession(id)      â”‚
+â”‚   - validate COMPLETED      â”‚    â”‚ + validateLearner()   â”‚
+â”‚   - check duplicate         â”‚    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+â”‚   - save review             â”‚
+â”‚   - publish event           â”‚    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ + getMentorReviews()        â”‚â”€â”€â”€â–¶â”‚ ReviewRepository      â”‚
+â”‚ + calculateAvgRating()      â”‚    â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚ + getRatingDistribution()   â”‚    â”‚ + findByMentorId()    â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â”‚ + findBySessionId()   â”‚
+             â”‚                     â”‚ + avgRatingByMentor() â”‚
+             â”‚ publishes           â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+             â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚  ReviewEventPublisher       â”‚
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚ + publishReviewSubmitted()  â”‚â”€â”€â”€â”€ â–¶ RabbitMQ
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜       â”‚
+                                      â–¼
+                             â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                             â”‚ Mentor Service       â”‚
+                             â”‚ (Consumer)           â”‚
+                             â”‚ - updateAvgRating()  â”‚
+                             â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
-### 2.3.3 Sequence Diagram — Session Booking Flow
+### 2.3.3 Sequence Diagram â€” Session Booking Flow
 
 ```
  Learner          Gateway         SessionService       MentorService        RabbitMQ       NotificationSvc
-   │                 │                  │                    │                  │                │
-   │ POST /sessions  │                  │                    │                  │                │
-   │ {mentorId,date} │                  │                    │                  │                │
-   │────────────────▶│                  │                    │                  │                │
-   │                 │ validate JWT     │                    │                  │                │
-   │                 │ extract userId   │                    │                  │                │
-   │                 │─────────────────▶│                    │                  │                │
-   │                 │                  │                    │                  │                │
-   │                 │                  │ GET /mentors/{id}  │                  │                │
-   │                 │                  │───────────────────▶│                  │                │
-   │                 │                  │                    │                  │                │
-   │                 │                  │ MentorProfile      │                  │                │
-   │                 │                  │◀───────────────────│                  │                │
-   │                 │                  │                    │                  │                │
-   │                 │                  │ validate:                             │                │
-   │                 │                  │  - mentor APPROVED                    │                │
-   │                 │                  │  - date ≥ 24h future                 │                │
-   │                 │                  │  - no time conflict                  │                │
-   │                 │                  │  - learner ≠ mentor                  │                │
-   │                 │                  │                    │                  │                │
-   │                 │                  │ save(REQUESTED)    │                  │                │
-   │                 │                  │                    │                  │                │
-   │                 │                  │ publish SESSION_REQUESTED             │                │
-   │                 │                  │─────────────────────────────────────▶│                │
-   │                 │                  │                    │                  │                │
-   │                 │  201 Created     │                    │                  │ consume event  │
-   │◀────────────────│◀─────────────────│                    │                  │───────────────▶│
-   │                 │                  │                    │                  │                │
-   │                 │                  │                    │                  │   push to      │
-   │                 │                  │                    │                  │   mentor via   │
-   │                 │                  │                    │                  │   WebSocket    │
+   â”‚                 â”‚                  â”‚                    â”‚                  â”‚                â”‚
+   â”‚ POST /sessions  â”‚                  â”‚                    â”‚                  â”‚                â”‚
+   â”‚ {mentorId,date} â”‚                  â”‚                    â”‚                  â”‚                â”‚
+   â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚                  â”‚                    â”‚                  â”‚                â”‚
+   â”‚                 â”‚ validate JWT     â”‚                    â”‚                  â”‚                â”‚
+   â”‚                 â”‚ extract userId   â”‚                    â”‚                  â”‚                â”‚
+   â”‚                 â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚                    â”‚                  â”‚                â”‚
+   â”‚                 â”‚                  â”‚                    â”‚                  â”‚                â”‚
+   â”‚                 â”‚                  â”‚ GET /mentors/{id}  â”‚                  â”‚                â”‚
+   â”‚                 â”‚                  â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚                  â”‚                â”‚
+   â”‚                 â”‚                  â”‚                    â”‚                  â”‚                â”‚
+   â”‚                 â”‚                  â”‚ MentorProfile      â”‚                  â”‚                â”‚
+   â”‚                 â”‚                  â”‚â—€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚                  â”‚                â”‚
+   â”‚                 â”‚                  â”‚                    â”‚                  â”‚                â”‚
+   â”‚                 â”‚                  â”‚ validate:                             â”‚                â”‚
+   â”‚                 â”‚                  â”‚  - mentor APPROVED                    â”‚                â”‚
+   â”‚                 â”‚                  â”‚  - date â‰¥ 24h future                 â”‚                â”‚
+   â”‚                 â”‚                  â”‚  - no time conflict                  â”‚                â”‚
+   â”‚                 â”‚                  â”‚  - learner â‰  mentor                  â”‚                â”‚
+   â”‚                 â”‚                  â”‚                    â”‚                  â”‚                â”‚
+   â”‚                 â”‚                  â”‚ save(REQUESTED)    â”‚                  â”‚                â”‚
+   â”‚                 â”‚                  â”‚                    â”‚                  â”‚                â”‚
+   â”‚                 â”‚                  â”‚ publish SESSION_REQUESTED             â”‚                â”‚
+   â”‚                 â”‚                  â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚                â”‚
+   â”‚                 â”‚                  â”‚                    â”‚                  â”‚                â”‚
+   â”‚                 â”‚  201 Created     â”‚                    â”‚                  â”‚ consume event  â”‚
+   â”‚â—€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚â—€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚                    â”‚                  â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚
+   â”‚                 â”‚                  â”‚                    â”‚                  â”‚                â”‚
+   â”‚                 â”‚                  â”‚                    â”‚                  â”‚   push to      â”‚
+   â”‚                 â”‚                  â”‚                    â”‚                  â”‚   mentor via   â”‚
+   â”‚                 â”‚                  â”‚                    â”‚                  â”‚   WebSocket    â”‚
 ```
 
-### 2.3.4 Sequence Diagram — Mentor Approval Flow
+### 2.3.4 Sequence Diagram â€” Mentor Approval Flow
 
 ```
  User            Gateway         MentorService        AuthService         RabbitMQ       NotificationSvc
-   │                │                  │                    │                  │                │
-   │ POST /mentors  │                  │                    │                  │                │
-   │ /apply         │                  │                    │                  │                │
-   │───────────────▶│                  │                    │                  │                │
-   │                │ validate JWT     │                    │                  │                │
-   │                │ role=LEARNER     │                    │                  │                │
-   │                │─────────────────▶│                    │                  │                │
-   │                │                  │ validate DTO       │                  │                │
-   │                │                  │ save(PENDING)      │                  │                │
-   │                │  202 Accepted    │                    │                  │                │
-   │◀───────────────│◀─────────────────│                    │                  │                │
-   │                │                  │                    │                  │                │
+   â”‚                â”‚                  â”‚                    â”‚                  â”‚                â”‚
+   â”‚ POST /mentors  â”‚                  â”‚                    â”‚                  â”‚                â”‚
+   â”‚ /apply         â”‚                  â”‚                    â”‚                  â”‚                â”‚
+   â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚                  â”‚                    â”‚                  â”‚                â”‚
+   â”‚                â”‚ validate JWT     â”‚                    â”‚                  â”‚                â”‚
+   â”‚                â”‚ role=LEARNER     â”‚                    â”‚                  â”‚                â”‚
+   â”‚                â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚                    â”‚                  â”‚                â”‚
+   â”‚                â”‚                  â”‚ validate DTO       â”‚                  â”‚                â”‚
+   â”‚                â”‚                  â”‚ save(PENDING)      â”‚                  â”‚                â”‚
+   â”‚                â”‚  202 Accepted    â”‚                    â”‚                  â”‚                â”‚
+   â”‚â—€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚â—€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚                    â”‚                  â”‚                â”‚
+   â”‚                â”‚                  â”‚                    â”‚                  â”‚                â”‚
 
  Admin           Gateway         MentorService        AuthService         RabbitMQ       NotificationSvc
-   │                │                  │                    │                  │                │
-   │ PUT /mentors   │                  │                    │                  │                │
-   │ /{id}/approve  │                  │                    │                  │                │
-   │───────────────▶│                  │                    │                  │                │
-   │                │ validate JWT     │                    │                  │                │
-   │                │ role=ADMIN       │                    │                  │                │
-   │                │─────────────────▶│                    │                  │                │
-   │                │                  │ update(APPROVED)   │                  │                │
-   │                │                  │                    │                  │                │
-   │                │                  │ PUT /auth/users    │                  │                │
-   │                │                  │ /{id}/role=MENTOR  │                  │                │
-   │                │                  │───────────────────▶│                  │                │
-   │                │                  │◀───────────────────│                  │                │
-   │                │                  │                    │                  │                │
-   │                │                  │ publish MENTOR_APPROVED               │                │
-   │                │                  │─────────────────────────────────────▶│                │
-   │                │                  │                    │                  │  notify user   │
-   │                │  200 OK          │                    │                  │───────────────▶│
-   │◀───────────────│◀─────────────────│                    │                  │                │
+   â”‚                â”‚                  â”‚                    â”‚                  â”‚                â”‚
+   â”‚ PUT /mentors   â”‚                  â”‚                    â”‚                  â”‚                â”‚
+   â”‚ /{id}/approve  â”‚                  â”‚                    â”‚                  â”‚                â”‚
+   â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚                  â”‚                    â”‚                  â”‚                â”‚
+   â”‚                â”‚ validate JWT     â”‚                    â”‚                  â”‚                â”‚
+   â”‚                â”‚ role=ADMIN       â”‚                    â”‚                  â”‚                â”‚
+   â”‚                â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚                    â”‚                  â”‚                â”‚
+   â”‚                â”‚                  â”‚ update(APPROVED)   â”‚                  â”‚                â”‚
+   â”‚                â”‚                  â”‚                    â”‚                  â”‚                â”‚
+   â”‚                â”‚                  â”‚ PUT /auth/users    â”‚                  â”‚                â”‚
+   â”‚                â”‚                  â”‚ /{id}/role=MENTOR  â”‚                  â”‚                â”‚
+   â”‚                â”‚                  â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚                  â”‚                â”‚
+   â”‚                â”‚                  â”‚â—€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚                  â”‚                â”‚
+   â”‚                â”‚                  â”‚                    â”‚                  â”‚                â”‚
+   â”‚                â”‚                  â”‚ publish MENTOR_APPROVED               â”‚                â”‚
+   â”‚                â”‚                  â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚                â”‚
+   â”‚                â”‚                  â”‚                    â”‚                  â”‚  notify user   â”‚
+   â”‚                â”‚  200 OK          â”‚                    â”‚                  â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚
+   â”‚â—€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚â—€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”‚                    â”‚                  â”‚                â”‚
 ```
 
 ---
@@ -1854,7 +1860,7 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
 ### Centralized Log Aggregation
 
 ```
-Services → JSON stdout → Docker → ELK Stack (Elasticsearch + Logstash + Kibana)
+Services â†’ JSON stdout â†’ Docker â†’ ELK Stack (Elasticsearch + Logstash + Kibana)
 ```
 
 Each log entry includes:
@@ -1881,14 +1887,14 @@ Each log entry includes:
 
 ## Content from: service_architecture_summary.md
 
-# SkillSync Backend — Service Architecture Summary
+# SkillSync Backend â€” Service Architecture Summary
 
 > **Branch:** `trail1` | **Base Package:** `com.skillsync` | **ID Type:** Long (all services)
 > **Note:** mentor-service and group-service have been **merged into user-service** (March 2026).
 > **Payment Extraction:** Payment logic has been **extracted from user-service into a dedicated payment-service** (port 8086) with event-driven Saga orchestration (March 2026).
 > **CQRS + Redis:** All business services implement **Command/Query separation** with **Redis 7.2** distributed caching (March 2026).
 
-## ✅ 9 Active Services (after merges + payment extraction)
+## âœ… 9 Active Services (after merges + payment extraction)
 
 | # | Service | Port | Package | Key Features |
 |---|---------|------|---------|-------------|
@@ -1896,34 +1902,34 @@ Each log entry includes:
 | 2 | **Config Server** | 8888 | `com.skillsync.configserver` | Git-backed config (`SkillSync-config` repo), Eureka registered |
 | 3 | **API Gateway** | 8080 | `com.skillsync.apigateway` | JWT validation filter, CORS, routes to all microservices |
 | 4 | **Auth Service** | 8081 | `com.skillsync.auth` | Registration with **OTP rollback**, **Password Reset (OTP)**, **Google OAuth**, JWT (access + refresh), Redis cache invalidation, role management, BCrypt |
-| 5 | **User Service** | 8082 | `com.skillsync.user` | Profile CRUD, skill tagging, **mentor onboarding/approval**, **peer learning groups**, consumes `payment.business.action` events for mentor approval, Feign → Skill/Auth, Redis cache-aside (CQRS) |
+| 5 | **User Service** | 8082 | `com.skillsync.user` | Profile CRUD, skill tagging, **mentor onboarding/approval**, **peer learning groups**, consumes `payment.business.action` events for mentor approval, Feign â†’ Skill/Auth, Redis cache-aside (CQRS) |
 | 6 | **Payment Service** | 8086 | `com.skillsync.payment` | **Razorpay payment processing**, Saga orchestration, publishes `payment.business.action` events, payment lifecycle management |
 | 7 | **Skill Service** | 8084 | `com.skillsync.skill` | Skill catalog CRUD, category management, search |
 | 8 | **Session Service** | 8085 | `com.skillsync.session` | Booking lifecycle, conflict detection, **review submission & rating**, RabbitMQ events |
 | 9 | **Notification Service** | 8088 | `com.skillsync.notification` | RabbitMQ consumers, **WebSocket push + Asynchronous Email**, Thymeleaf templates |
 
-> ~~**Mentor Service** (8083)~~ — Merged into User Service
-> ~~**Group Service** (8086)~~ — Merged into User Service (port 8086 now used by Payment Service)
-> ~~**Review Service** (8087)~~ — Merged into Session Service
+> ~~**Mentor Service** (8083)~~ â€” Merged into User Service
+> ~~**Group Service** (8086)~~ â€” Merged into User Service (port 8086 now used by Payment Service)
+> ~~**Review Service** (8087)~~ â€” Merged into Session Service
 
 ## Architecture Layers (per service)
 
 ```
-controller/      → REST endpoints with validation
-dto/             → Records (request/response DTOs)
-entity/          → JPA entities with Long IDs + auditing
-enums/           → Status and role enums
-repository/      → Spring Data JPA repositories
+controller/      â†’ REST endpoints with validation
+dto/             â†’ Records (request/response DTOs)
+entity/          â†’ JPA entities with Long IDs + auditing
+enums/           â†’ Status and role enums
+repository/      â†’ Spring Data JPA repositories
 service/
-  command/       → Write operations + cache invalidation (CQRS)
-  query/         → Read operations + cache-aside (CQRS)
-cache/           → RedisConfig + CacheService (Redis wrapper)
-config/          → Security, RabbitMQ, WebSocket configs
-feign/           → OpenFeign inter-service clients
-event/           → RabbitMQ event DTOs
-consumer/        → RabbitMQ listeners (Notification Service)
-exception/       → Global exception handlers
-security/        → JWT filter, token provider (Auth Service)
+  command/       â†’ Write operations + cache invalidation (CQRS)
+  query/         â†’ Read operations + cache-aside (CQRS)
+cache/           â†’ RedisConfig + CacheService (Redis wrapper)
+config/          â†’ Security, RabbitMQ, WebSocket configs
+feign/           â†’ OpenFeign inter-service clients
+event/           â†’ RabbitMQ event DTOs
+consumer/        â†’ RabbitMQ listeners (Notification Service)
+exception/       â†’ Global exception handlers
+security/        â†’ JWT filter, token provider (Auth Service)
 ```
 
 ## Inter-Service Communication
@@ -2021,3 +2027,4 @@ graph TD
 - **OpenFeign** for inter-service REST calls
 - **Lombok** for boilerplate reduction
 - All config uses [application.properties](file:///f:/SkillSync/api-gateway/src/main/resources/application.properties) format
+
