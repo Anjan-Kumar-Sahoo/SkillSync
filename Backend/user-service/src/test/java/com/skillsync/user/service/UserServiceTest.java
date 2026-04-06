@@ -114,7 +114,7 @@ class UserServiceTest {
     @Test
     @DisplayName("Create or update profile - invalidates cache")
     void createOrUpdateProfile_shouldSaveAndInvalidateCache() {
-        UpdateProfileRequest request = new UpdateProfileRequest("Jane", "Doe", "Bio", "9876543210", "LA");
+        UpdateProfileRequest request = new UpdateProfileRequest("Jane", "Doe", "Bio", "https://example.com/avatar.jpg", "9876543210", "LA");
         when(profileRepository.findByUserId(100L)).thenReturn(Optional.of(testProfile));
         when(profileRepository.save(any(Profile.class))).thenReturn(testProfile);
 

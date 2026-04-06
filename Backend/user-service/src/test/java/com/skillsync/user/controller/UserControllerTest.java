@@ -42,7 +42,7 @@ class UserControllerTest {
     @Test
     @DisplayName("PUT /api/users/me - updates profile")
     void updateMyProfile_shouldReturn200() throws Exception {
-        UpdateProfileRequest request = new UpdateProfileRequest("Jane", "Doe", "Bio", "123", "LA");
+        UpdateProfileRequest request = new UpdateProfileRequest("Jane", "Doe", "Bio", "https://example.com/avatar.jpg", "123", "LA");
         ProfileResponse response = new ProfileResponse(1L, 100L, "Jane", "Doe", null, "Bio", null, "123", "LA", 100, Collections.emptyList(), LocalDateTime.now());
         when(userCommandService.createOrUpdateProfile(eq(100L), any())).thenReturn(response);
 

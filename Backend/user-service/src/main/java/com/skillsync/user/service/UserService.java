@@ -47,6 +47,7 @@ public class UserService {
         if (request.firstName() != null) profile.setFirstName(request.firstName());
         if (request.lastName() != null) profile.setLastName(request.lastName());
         if (request.bio() != null) profile.setBio(request.bio());
+        if (request.avatarUrl() != null) profile.setAvatarUrl(request.avatarUrl());
         if (request.phone() != null) profile.setPhone(request.phone());
         if (request.location() != null) profile.setLocation(request.location());
 

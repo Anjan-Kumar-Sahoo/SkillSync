@@ -24,7 +24,7 @@ const ForgotPasswordPage = () => {
         type: 'success',
       });
       reset();
-      navigate('/verify-otp', { state: { email: variables.email, flow: 'forgot-password' } });
+      navigate('/reset-password', { state: { email: variables.email } });
     },
     onError: () => {
       showToast({

@@ -22,6 +22,7 @@ export const AuthLoader = ({ children }: { children: ReactNode }) => {
         path === '/login' ||
         path === '/register' ||
         path === '/verify-otp' ||
+        path === '/reset-password' ||
         path === '/setup-password' ||
         path === '/forgot-password';
 

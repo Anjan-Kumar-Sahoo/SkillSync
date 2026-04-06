@@ -16,8 +16,15 @@ const VerifyOtpPage = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   
-  const email = location.state?.email || 'your email';
-  const flow = location.state?.flow;
+  const email = location.state?.email || '';
+
+  const hasValidEmail = /^\S+@\S+\.\S+$/.test(email);
+
+  useEffect(() => {
+    if (hasValidEmail) return;
+    showToast({ message: 'Session expired. Please restart the flow.', type: 'error' });
+    navigate('/register', { replace: true });
+  }, [hasValidEmail, navigate, showToast]);
 
   // Countdown timer logic
   useEffect(() => {
@@ -34,12 +41,6 @@ const VerifyOtpPage = () => {
       return response.data;
     },
     onSuccess: () => {
-      if (flow === 'forgot-password') {
-        showToast({ message: 'OTP verified. Set your new password.', type: 'success' });
-        navigate('/setup-password', { state: { email } });
-        return;
-      }
-
       showToast({ message: 'Email verified successfully!', type: 'success' });
       navigate('/login');
     },
@@ -47,8 +48,8 @@ const VerifyOtpPage = () => {
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
       if (newAttempts >= 5) {
-        showToast({ message: flow === 'forgot-password' ? 'Too many attempts. Please restart password reset.' : 'Too many attempts. Please register again.', type: 'error' });
-        setTimeout(() => navigate(flow === 'forgot-password' ? '/forgot-password' : '/register'), 3000);
+        showToast({ message: 'Too many attempts. Please register again.', type: 'error' });
+        setTimeout(() => navigate('/register'), 3000);
       } else {
         showToast({ message: `Invalid OTP. Attempts left: ${5 - newAttempts}`, type: 'error' });
       }
@@ -57,7 +58,7 @@ const VerifyOtpPage = () => {
 
   const resendMutation = useMutation({
     mutationFn: async (emailPayload: { email: string }) => {
-      const response = await api.post('/api/auth/resend-otp', emailPayload);
+      const response = await api.post('/api/auth/resend-otp', emailPayload, { _skipErrorRedirect: true } as any);
       return response.data;
     },
     onSuccess: () => {
@@ -66,8 +67,9 @@ const VerifyOtpPage = () => {
       setOtp(Array(6).fill(''));
       showToast({ message: 'OTP resent successfully.', type: 'success' });
     },
-    onError: () => {
-      showToast({ message: 'Failed to resend OTP.', type: 'error' });
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || 'Failed to resend OTP.';
+      showToast({ message, type: 'error' });
     }
   });
 
@@ -99,12 +101,16 @@ const VerifyOtpPage = () => {
 
   const handleSubmit = () => {
     const otpCode = otp.join('');
-    if (otpCode.length !== 6) return;
+    if (otpCode.length !== 6) {
+      showToast({ message: 'Please enter the 6-digit OTP.', type: 'error' });
+      return;
+    }
+
     verifyMutation.mutate({ email, otp: otpCode });
   };
 
   const handleResend = () => {
-    if (timeLeft > 0) return;
+    if (timeLeft > 0 || !hasValidEmail) return;
     resendMutation.mutate({ email });
   };
 
@@ -121,7 +127,7 @@ const VerifyOtpPage = () => {
       <div className="w-full bg-surface-container-lowest p-8 md:p-10 rounded-xl shadow-sm border border-outline-variant/15 transition-all">
         <h2 className="text-xl font-bold text-on-surface mb-2">Verify your email</h2>
         <p className="text-sm text-on-surface-variant font-medium mb-8">
-          We sent a 6-digit code to <span className="font-bold text-on-surface">{email}</span>.
+          We sent a 6-digit code to <span className="font-bold text-on-surface">{email || 'your email'}</span>.
         </p>
         
         <div className="flex justify-between mb-8 space-x-2">

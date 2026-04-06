@@ -10,6 +10,7 @@ import LoginPage from './pages/auth/LoginPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import VerifyOtpPage from './pages/auth/VerifyOtpPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import SetupPasswordPage from './pages/auth/SetupPasswordPage';
 import UnauthorizedPage from './pages/auth/UnauthorizedPage';
 import ServerErrorPage from './pages/error/ServerErrorPage';
@@ -55,6 +56,7 @@ function App() {
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/verify-otp" element={<VerifyOtpPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/setup-password" element={<SetupPasswordPage />} />
             </Route>
 

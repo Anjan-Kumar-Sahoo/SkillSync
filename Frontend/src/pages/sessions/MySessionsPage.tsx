@@ -139,7 +139,7 @@ const MySessionsPage = () => {
               {activeTab === 'Completed' && 'No completed sessions yet'}
               {activeTab === 'Cancelled' && 'No cancelled sessions'}
             </p>
-            {['Pending', 'Upcoming'].includes(activeTab) && (
+            {!isMentor && ['Pending', 'Upcoming'].includes(activeTab) && (
               <button onClick={() => navigate('/mentors')} className="mt-4 gradient-btn text-white px-6 py-2.5 rounded-xl font-bold shadow-sm hover:shadow-md transition-all active:scale-95">
                 Find a Mentor
               </button>

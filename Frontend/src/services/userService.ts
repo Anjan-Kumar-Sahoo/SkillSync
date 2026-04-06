@@ -20,6 +20,7 @@ export interface UpdateProfilePayload {
   bio?: string;
   phone?: string;
   location?: string;
+  avatarUrl?: string;
 }
 
 export interface ChangePasswordPayload {
@@ -50,17 +51,6 @@ class UserService {
 
   async updateProfile(payload: UpdateProfilePayload): Promise<UserProfile> {
     const res = await api.put('/api/users/me', payload);
-    return res.data;
-  }
-
-  async uploadProfileImage(file: File): Promise<{ imageUrl: string }> {
-    const formData = new FormData();
-    formData.append('file', file);
-    const res = await api.post('/api/users/me/upload-image', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
     return res.data;
   }
 
