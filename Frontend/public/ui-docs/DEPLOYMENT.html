@@ -1,195 +1,433 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deployment Architecture</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Inter', sans-serif; }</style>
+    <title>SkillSync Deployment & DevOps Architecture</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: #eff6ff;
+            --primary-dark: #1e40af;
+            --accent: #10b981;
+            --bg: #f4f7f9;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        #progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            z-index: 1001;
+            background: #e2e8f0;
+        }
+
+        #progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            transition: width 0.1s ease-out;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header-text h1 {
+            margin: 0;
+            font-size: 1.6rem;
+            color: var(--primary-dark);
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .header-text p {
+            margin: 2px 0 0 0;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .time-badge {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            border: 1px solid #bfdbfe;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+        }
+
+        aside {
+            width: 320px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 90px;
+            background: var(--card);
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        aside::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        aside::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .nav-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        nav li {
+            margin-bottom: 6px;
+        }
+
+        nav a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: var(--text);
+            font-size: 0.9rem;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            background: #f1f5f9;
+            color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        nav a.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+            font-weight: 600;
+        }
+
+        main {
+            flex-grow: 1;
+            min-width: 0;
+        }
+
+        .section-card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+            scroll-margin-top: 100px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .section-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            color: var(--text);
+            margin-top: 0;
+            margin-bottom: 12px;
+            font-weight: 700;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-desc {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            font-weight: 400;
+            line-height: 1.6;
+        }
+
+        .block-title {
+            font-size: 1.1rem;
+            color: var(--text);
+            font-weight: 700;
+            display: inline-block;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .block-title::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: -4px;
+            width: 100%;
+            height: 2px;
+            background: var(--primary);
+            opacity: 0.2;
+        }
+
+        .theory-box {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .theory-box p {
+            margin: 0 0 12px 0;
+        }
+
+        .theory-box p:last-child {
+            margin: 0;
+        }
+
+        .theory-box strong {
+            color: var(--primary-dark);
+        }
+
+        .impl-box {
+            background: linear-gradient(to right, #eff6ff, #ffffff);
+            border-left: 4px solid var(--primary);
+            border-radius: 0 12px 12px 0;
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .impl-box strong {
+            color: var(--primary);
+        }
+
+        .code-term {
+            font-family: 'Fira Code', monospace;
+            background: #e2e8f0;
+            color: #334155;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
+        .diag-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+        }
+
+        .diag-box {
+            background: #ffffff;
+            border: 2px solid var(--primary);
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            color: var(--primary-dark);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .diag-box.event {
+            border-color: #f59e0b;
+            color: #b45309;
+            background: #fffbeb;
+            border-radius: 20px;
+        }
+
+        .diag-box.db {
+            border-radius: 50% 50% 50% 50% / 12% 12% 12% 12%;
+            border-color: #10b981;
+            color: #047857;
+            background: #ecfdf5;
+            padding: 20px 16px;
+        }
+
+        .diag-arrow {
+            color: #94a3b8;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                flex-direction: column;
+                padding: 20px;
+            }
+
+            aside {
+                width: 100%;
+                position: static;
+                max-height: 300px;
+                margin-bottom: 20px;
+            }
+
+            header {
+                padding: 15px 20px;
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+
+            .section-card {
+                padding: 24px;
+                scroll-margin-top: 140px;
+            }
+        }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-800 antialiased p-4 md:p-10">
-    <div class="max-w-7xl mx-auto space-y-20">
-        
-        <div class="text-center space-y-6 pt-10">
-            <h1 class="text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-indigo-600 tracking-tight">Cloud & DevOps Infrastructure</h1>
-            <p class="text-xl text-gray-500 max-w-3xl mx-auto leading-relaxed">The CI/CD delivery pipelines, Network Ingress pathways, and Docker-Compose orchestration topologies mapping physical AWS resources to the sub-services.</p>
-        </div>
 
-        <!-- Ingress Flow Diagram -->
-        <section class="bg-slate-900 rounded-3xl p-6 md:p-12 shadow-2xl border border-slate-800">
-            <h2 class="text-3xl font-bold mb-10 text-white flex items-center border-b border-slate-700 pb-4">
-                <span class="mr-4 text-blue-400">🚥</span> Internet Traffic Routing (Ingress Flow)
-            </h2>
-            
-            <div class="flex flex-col items-center w-full relative space-y-6">
-                
-                <div class="flex space-x-4">
-                    <div class="bg-slate-800 border border-slate-600 text-white p-3 rounded-lg shadow font-mono text-sm text-center w-32">Browser (React)</div>
-                </div>
-
-                <div class="text-blue-500 font-bold">WAN / HTTPS Traffic ↓</div>
-                
-                <!-- Cloud Level -->
-                <div class="w-full max-w-lg bg-slate-800 border border-blue-500 rounded-2xl p-6 shadow-[0_0_20px_rgba(59,130,246,0.2)] z-10 text-center">
-                    <div class="text-xs text-blue-400 font-bold font-mono tracking-wider mb-2">AWS PUBLIC SUBNET</div>
-                    <div class="font-bold text-2xl text-white">Route 53 DNS & Load Balancer</div>
-                    <p class="text-slate-400 text-sm mt-2">Terminates SSL Certificates and directs incoming packets exclusively to the EC2 bound Nginx instance securely via VPC routes.</p>
-                </div>
-
-                <div class="text-blue-500 font-bold">AWS Internal VPC ↓</div>
-
-                <!-- EC2 Node Level -->
-                <div class="w-full max-w-2xl bg-slate-800 border border-indigo-500 rounded-2xl p-6 shadow-[0_0_20px_rgba(99,102,241,0.2)] z-10 flex flex-col items-center">
-                    <div class="text-xs text-indigo-400 font-bold font-mono tracking-wider mb-2">UBUNTU EC2 NODE (DOCKER ENGINE)</div>
-                    
-                    <div class="bg-indigo-900/40 border border-indigo-600 p-4 rounded-xl text-center w-full max-w-md mb-6 relative overflow-hidden">
-                        <div class="absolute inset-0 bg-blue-500/10 mix-blend-overlay"></div>
-                        <span class="font-bold text-lg text-indigo-200 block mb-1">Nginx Reverse Proxy (:80)</span>
-                        <span class="text-xs font-mono text-indigo-300">ProxyPass -> ec2-backend:8080/</span>
-                    </div>
-
-                    <div class="text-indigo-400 mb-6 font-bold">↓ Container Bridge Network ↓</div>
-
-                    <div class="w-full grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div class="bg-slate-700 border border-slate-600 rounded pt-3 pb-2 text-center shadow">
-                            <span class="block text-white font-bold text-sm">Auth :8081</span>
-                        </div>
-                        <div class="bg-slate-700 border border-slate-600 rounded pt-3 pb-2 text-center shadow">
-                            <span class="block text-white font-bold text-sm">User :8082</span>
-                        </div>
-                        <div class="bg-slate-700 border border-slate-600 rounded pt-3 pb-2 text-center shadow">
-                            <span class="block text-white font-bold text-sm">Session :8085</span>
-                        </div>
-                        <div class="bg-slate-700 border border-slate-600 rounded pt-3 pb-2 text-center text-xs font-mono flex items-center justify-center shadow">
-                            <span class="text-slate-400">+ 5 Sub-Services</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Pipeline Execution Flow -->
-        <section class="bg-white rounded-3xl p-6 md:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
-            <h2 class="text-3xl font-bold mb-10 text-gray-800 flex items-center border-b pb-4">
-                <span class="mr-4">🤖</span> GitHub Actions (CI/CD) Delivery Flow
-            </h2>
-
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 w-full text-center">
-                <!-- Step 1 -->
-                <div class="flex flex-col items-center relative z-10">
-                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center font-bold text-2xl shadow border-2 border-gray-300 z-10">1</div>
-                    <h4 class="font-bold text-gray-800 mt-4 mb-2">Commit Push</h4>
-                    <p class="text-xs text-gray-500">Code pushed to `main` branch. GitHub Action triggers webhook.</p>
-                </div>
-                <!-- Step 2 -->
-                <div class="flex flex-col items-center relative z-10">
-                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center font-bold text-2xl shadow border-2 border-blue-300 z-10">2</div>
-                    <h4 class="font-bold text-gray-800 mt-4 mb-2">Compile & Test</h4>
-                    <p class="text-xs text-gray-500">Maven downloads dependencies, runs JUnit suites (`mvn test`). Fails branch if tests break.</p>
-                </div>
-                <!-- Step 3 -->
-                <div class="flex flex-col items-center relative z-10">
-                    <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center font-bold text-2xl shadow border-2 border-purple-300 z-10">3</div>
-                    <h4 class="font-bold text-gray-800 mt-4 mb-2">Docker Build</h4>
-                    <p class="text-xs text-gray-500">Constructs isolated JVM layered Dockerfiles. Optimizes image caches.</p>
-                </div>
-                <!-- Step 4 -->
-                <div class="flex flex-col items-center relative z-10">
-                    <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center font-bold text-2xl shadow border-2 border-amber-300 z-10">4</div>
-                    <h4 class="font-bold text-gray-800 mt-4 mb-2">Secure SCP</h4>
-                    <p class="text-xs text-gray-500">Uploads updated config files to AWS EC2 via SSH key pairs injected via Secrets.</p>
-                </div>
-                <!-- Step 5 -->
-                <div class="flex flex-col items-center relative z-10">
-                    <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center font-bold text-2xl shadow border-2 border-emerald-300 z-10">5</div>
-                    <h4 class="font-bold text-gray-800 mt-4 mb-2">Zero-Downtime Rollout</h4>
-                    <p class="text-xs text-gray-500">Executes `docker-compose up -d --build` securely within EC2. Replaces containers seamlessly.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Hardware Dependencies Overview -->
-        <section class="grid grid-cols-1 md:grid-cols-2 gap-10">
-            <div class="border border-green-200 bg-green-50/30 rounded-3xl p-10 overflow-hidden shadow-sm">
-                 <h2 class="text-2xl font-bold mb-4 text-green-900">⚙️ Required Datastores</h2>
-                 <p class="text-green-800 text-sm mb-6">These core internal infrastructure components are bootstrapped sequentially via the `docker-compose` topology before any microservice begins executing JVM profiles.</p>
-                 <ul class="space-y-4">
-                     <li class="flex items-center text-sm"><span class="bg-blue-100 text-blue-700 font-bold px-2 py-1 rounded mr-3 w-32 text-center">PostgreSQL :5432</span> Used strictly for generic physical persistence.</li>
-                     <li class="flex items-center text-sm"><span class="bg-orange-100 text-orange-700 font-bold px-2 py-1 rounded mr-3 w-32 text-center">RabbitMQ :5672</span> Broker protocol routing message queues between disconnected nodes.</li>
-                     <li class="flex items-center text-sm"><span class="bg-red-100 text-red-700 font-bold px-2 py-1 rounded mr-3 w-32 text-center">Redis :6379</span> LRU volatile caching and real-time pub/sub features.</li>
-                 </ul>
-            </div>
-            
-            <div class="border border-blue-200 bg-blue-50/30 rounded-3xl p-10 overflow-hidden shadow-sm">
-                 <h2 class="text-2xl font-bold mb-4 text-blue-900">🔑 `.env` File Secret Security</h2>
-                 <p class="text-blue-800 text-sm mb-6">No credentials or configuration states reside passively in GitHub or compiled source codes. Spring Boot configurations hook variables mapping to the deployment `.env` file instance directly located only inside the EC2.</p>
-                 
-                 <div class="bg-slate-900 p-5 rounded-xl font-mono text-sm leading-relaxed text-blue-300">
-                    <span class="text-slate-500"># Production EC2 Profile .env</span><br>
-                    PG_USER=<span class="text-yellow-300">postgres</span><br>
-                    PG_PASSWORD=<span class="text-green-400">**************</span><br>
-                    RABBITMQ_HOST=<span class="text-yellow-300">skillsync-rabbitmq</span><br>
-                    JWT_SECRET=<span class="text-green-400">**************</span><br>
-                    RAZORPAY_API_KEY=<span class="text-yellow-300">rzp_live_**********</span><br>
-                    AWS_REGION=<span class="text-yellow-300">ap-south-1</span>
-                 </div>
-            </div>
-        </section>
-
-        <!-- Advanced Deployment Deep Dive -->
-        <section class="bg-white rounded-3xl p-6 md:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
-            <h2 class="text-3xl font-bold mb-10 text-gray-800 flex items-center border-b pb-4">
-                <span class="mr-4">🔍</span> Infrastructure Deep-Dive
-            </h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <!-- AWS EC2 Details -->
-                <div class="bg-gradient-to-br from-indigo-50 to-blue-50 p-8 rounded-2xl border border-indigo-100 text-indigo-900 transition hover:shadow-md">
-                    <h3 class="font-bold text-xl mb-3 flex items-center"><span class="mr-2 text-2xl">☁️</span> AWS EC2 Instance</h3>
-                    <p class="text-sm leading-relaxed mb-4">The entire microservices topology, datastores, and message brokers are orchestrated onto a single high-performance Linux EC2 machine (e.g., <code>t3.xlarge</code>) inside a private VPC, protected strictly via AWS Security Groups.</p>
-                    <ul class="text-xs space-y-2 font-mono">
-                        <li>> SG Rule: ALLOW Inbound 443 (HTTPS)</li>
-                        <li>> SG Rule: ALLOW Inbound 80 (HTTP) -> Redirect 443</li>
-                        <li>> ALL other internal ports (8081, 5432, 6379) BLOCKED externally.</li>
-                    </ul>
-                </div>
-
-                <!-- Docker Networking Details -->
-                <div class="bg-gradient-to-br from-sky-50 to-cyan-50 p-8 rounded-2xl border border-sky-100 text-sky-900 transition hover:shadow-md">
-                    <h3 class="font-bold text-xl mb-3 flex items-center"><span class="mr-2 text-2xl">🐳</span> Docker Orchestration</h3>
-                    <p class="text-sm leading-relaxed mb-4">Containers are bound strictly to a custom Docker bridge network. Service resolution happens via internal Docker DNS, meaning the Gateway routes to <code>http://user-service:8082</code> without needing physical IP lookups.</p>
-                    <ul class="text-xs space-y-2 font-mono">
-                        <li>> Healthchecks implemented for boot sequencing.</li>
-                        <li>> Restart: always policy ensures immediate crash recovery.</li>
-                    </ul>
-                </div>
-
-                <!-- Nginx Tuning -->
-                <div class="bg-gradient-to-br from-emerald-50 to-teal-50 p-8 rounded-2xl border border-emerald-100 text-emerald-900 transition hover:shadow-md">
-                    <h3 class="font-bold text-xl mb-3 flex items-center"><span class="mr-2 text-2xl">🛡️</span> Nginx Deep Proxy</h3>
-                    <p class="text-sm leading-relaxed mb-4">Nginx runs natively on the EC2 host (outside Docker) acting as the ultimate boundary. It implements GZIP compression, limits payload sizes to prevent DDoS bursts, and proxies specific path prefixes to the Internal Gateway.</p>
-                    <ul class="text-xs space-y-2 font-mono">
-                        <li>> ProxyPass <code>/api/</code> -> <code>http://ec2-backend:8080/</code></li>
-                        <li>> Rate_limit: 10r/s per user IP zone.</li>
-                    </ul>
-                </div>
-
-                <!-- System Monitoring -->
-                <div class="bg-gradient-to-br from-purple-50 to-fuchsia-50 p-8 rounded-2xl border border-purple-100 text-purple-900 transition hover:shadow-md">
-                    <h3 class="font-bold text-xl mb-3 flex items-center"><span class="mr-2 text-2xl">📊</span> Metrics & Monitoring</h3>
-                    <p class="text-sm leading-relaxed mb-4">Each Spring Boot application exposes standard <code>/actuator/prometheus</code> endpoints. A localized Prometheus time-series database scrapes memory, GC metrics, and HTTP latency intervals every 15s.</p>
-                    <ul class="text-xs space-y-2 font-mono">
-                        <li>> Grafana Dashboard securely mounted visualizing TPS.</li>
-                        <li>> Alerts configured on >90% JVM Heap limits.</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-
-        <div class="mt-20 border-t border-gray-200 pt-8 text-center text-sm text-gray-400 font-medium">
-            Ensure all project documentation is updated whenever system changes are made, and add new sections if required.
-        </div>
+<body>
+    <div id="progress-container">
+        <div id="progress-bar"></div>
     </div>
+    <header>
+        <div class="header-text">
+            <h1>SkillSync Deployment & DevOps</h1>
+            <p>Presentation Ready Deep-Dive Masterclass</p>
+        </div>
+        <div class="time-badge">Est. Presentation: 60 mins</div>
+    </header>
+    <div class="container">
+        <aside>
+            <div class="nav-title">Presentation Agenda</div>
+            <nav>
+                <ul id="navlist"></ul>
+            </nav>
+        </aside>
+        <main id="content"></main>
+    </div>
+    <script>
+        const db = [
+            { id: "overview", title: "1. Deployment Overview", desc: "How we move code from local machines to global users.", theory: "<p><strong>Why DevOps?</strong> Writing code is 50%. Deploying it reliably is the other 50%.</p>", impl: "<div class='diag-container'><div class='diag-box'>Git Push</div><div class='diag-arrow'>→</div><div class='diag-box'>GitHub Actions</div><div class='diag-arrow'>→</div><div class='diag-box'>Docker Deploy</div></div>" },
+            { id: "infra", title: "2. Infrastructure Architecture", desc: "The physical server topology.", theory: "<p><strong>Cloud Computing:</strong> We need a machine that never sleeps and has a static IP address.</p>", impl: "<p><strong>AWS Ecosystem:</strong> We leverage a virtual private server hosting our entire Dockerized microservices stack.</p>" },
+            { id: "ec2", title: "3. AWS EC2 Setup", desc: "Provisioning our compute power.", theory: "<p><strong>Virtual Machines:</strong> EC2 provides raw compute without underlying OS restrictions.</p>", impl: "<p><strong>Instance Config:</strong> We spun up an Ubuntu instance. Configured Security Groups to only allow Port 80 (HTTP) and 443 (HTTPS) ingress.</p>" },
+            { id: "docker", title: "4. Docker Architecture", desc: "Packaging apps uniformly.", theory: "<p><strong>Containers vs VMs:</strong> Containers share the host OS kernel but isolate dependencies perfectly.</p>", impl: "<div class='diag-container'><div class='diag-box'>App.jar</div><div class='diag-arrow'>+</div><div class='diag-box'>Java 21 Run</div><div class='diag-arrow'>=</div><div class='diag-box'>Immutable Image</div></div>" },
+            { id: "compose", title: "5. Docker Compose Services", desc: "Orchestrating multi-container environments.", theory: "<p><strong>Service Networking:</strong> 15 containers need to speak to each other by name, not IP.</p>", impl: "<p><strong>compose.yaml:</strong> Defines all 9 services, 4 databases, metrics, and message brokers inside a single custom bridge network.</p>" },
+            { id: "cicd", title: "6. CI/CD Pipeline", desc: "Continuous Integration & Deployment.", theory: "<p><strong>Automation:</strong> Humans make mistakes when deploying. Automation does not.</p>", impl: "<p><strong>Pipeline Goals:</strong> Every push triggers a build verify, test run, container build, and remote SSH push.</p>" },
+            { id: "actions", title: "7. GitHub Actions Workflow", desc: "The engine driving our automation.", theory: "<p><strong>Event Driven CI:</strong> GitHub listens for push events and spins up ephemeral Ubuntu runners to execute scripts.</p>", impl: "<p>Runs tests via Maven, builds the Frontend with Vite, and reports status to SonarCloud.</p>" },
+            { id: "build", title: "8. Build Pipeline", desc: "Compiling the code.", theory: "<p><strong>Immutable Artifacts:</strong> Never compile on the production server. Build it once, deploy it everywhere.</p>", impl: "<p><strong>Maven & NPM:</strong> Action runners execute <code>mvn clean package</code> and <code>npm run build</code>, saving the resulting artifacts.</p>" },
+            { id: "image", title: "9. Image Build Flow", desc: "Baking artifacts into Docker Images.", theory: "<p><strong>Layer Caching:</strong> Docker builds are layered. Unchanged dependencies are cached to save time.</p>", impl: "<p>Built images are tagged with the Git Commit SHA and pushed to Docker Hub.</p>" },
+            { id: "startup", title: "10. Container Startup Flow", desc: "Booting services in the correct order.", theory: "<p><strong>Dependency Chains:</strong> API Gateway cannot start if Eureka is dead.</p>", impl: "<p><strong>depends_on:</strong> Compose file dictates that Eureka starts first, then Config Server, then downstream services.</p>" },
+            { id: "env", title: "11. Environment Variables", desc: "Configuring apps without changing code.", theory: "<p><strong>12 Factor Apps:</strong> Configuration must be decoupled from the core application logic.</p>", impl: "<p>We utilize a central <code>.env</code> file on the EC2 instance mapped into the Compose variables natively.</p>" },
+            { id: "secrets", title: "12. Secrets Management", desc: "Hiding passwords from the public.", theory: "<p><strong>Never Commit Secrets:</strong> Git history is forever. Passwords in codebase lead to breaches.</p>", impl: "<p>All DB passwords and Stripe keys are held in GitHub Secrets and injected only at runtime.</p>" },
+            { id: "proxy", title: "13. Reverse Proxy / Nginx", desc: "Routing traffic from Port 80 to proper containers.", theory: "<p><strong>Why Reverse Proxy?</strong> Direct exposing Tomcat servers is insecure and hard to scale.</p>", impl: "<div class='diag-container'><div class='diag-box'>Internet</div><div class='diag-arrow'>→</div><div class='diag-box'>Nginx (:80)</div><div class='diag-arrow'>→</div><div class='diag-box'>FE / Gateway</div></div>" },
+            { id: "ssl", title: "14. SSL Setup", desc: "Encrypting traffic with Let's Encrypt.", theory: "<p><strong>HTTPS encryption:</strong> Protects data payloads from Man In The Middle attacks.</p>", impl: "<p>We deployed Certbot on Nginx to automatically issue and renew TLS certificates. Traffic is locked over HTTPS.</p>" },
+            { id: "health", title: "15. Health Checks", desc: "Monitoring node life signs.", theory: "<p><strong>Why ping?</strong> A container might technically be running, but its Java runtime is frozen.</p>", impl: "<p><strong>Docker Healthchecks:</strong> We ping Spring Actuator <code>/health</code> endpoints. Containers aren't marked ready until returning 200 OK.</p>" },
+            { id: "networking", title: "16. Container Networking", desc: "Internal DNS isolation.", theory: "<p><strong>Bridge Networks:</strong> Prevents random containers from talking to each other if not authorized.</p>", impl: "<p>We utilize a unified <code>skillsync_network</code>. Eureka magically resolves hostnames to IPs internally.</p>" },
+            { id: "rolling", title: "17. Rolling Deployment", desc: "Deploying updates without breaking.", theory: "<p><strong>Rolling Updates:</strong> Bring down 1 container, spin up a new one, move to the next.</p>", impl: "<p>Docker Compose seamlessly restarts updated images while retaining volume state.</p>" },
+            { id: "zero", title: "18. Zero Downtime Strategy", desc: "Ensuring 99.9% uptime.", theory: "<p><strong>Blue/Green Deploy:</strong> Run old and new code simultaneously, shift router traffic.</p>", impl: "<p>API Gateway enables seamless routing if replica counts increase.</p>" },
+            { id: "logs", title: "19. Monitoring & Logs", desc: "Knowing what fails in production.", theory: "<p><strong>Centralized Logging:</strong> SSHing into 9 containers to read logs is impossible.</p>", impl: "<p>We use Prometheus to scrape metrics and Grafana to visualize load and CPU spikes.</p>" },
+            { id: "fail", title: "20. Failure Recovery", desc: "Bouncing back from crashes.", theory: "<p><strong>Restart Policies:</strong> If a machine runs out of RAM, the app shouldn't stay dead forever.</p>", impl: "<p>Docker restart policy <code>unless-stopped</code> ensures apps natively reboot if underlying compute crashes.</p>" },
+            { id: "backup", title: "21. Backup Strategy", desc: "Protecting data persistence.", theory: "<p><strong>Ephemeral vs Persistent:</strong> Destroying a container destroys all data unless Volumes are attached.</p>", impl: "<p>PostgreSQL nodes use explicit named volumes mounted directly into EC2 storage drives.</p>" },
+            { id: "hardening", title: "22. Security Hardening", desc: "Locking down ports.", theory: "<p><strong>Attack Surface:</strong> Open ports are targets for botnets.</p>", impl: "<p>Postgres, RabbitMQ, and Eureka ports are locked locally. Only Nginx is exposed.</p>" },
+            { id: "prod", title: "23. Production Readiness", desc: "Memory limits and JVM tuning.", theory: "<p><strong>OOM Kills:</strong> Java will eat all memory if you let it.</p>", impl: "<p>We strictly limited services to <code>512M</code> memory limits natively in Compose to prevent Host starvation.</p>" },
+            { id: "e2e-deploy", title: "24. End to End Deployment Flow", desc: "The automated journey from commit to production.", theory: "<p><strong>Pipeline execution sequence:</strong> Predictable deployment breeds release confidence.</p>", impl: "<p>1. User pushes. 2. Github Actions builds Maven. 3. Docker build runs. 4. SSH into EC2. 5. Pull new images. 6. Start containers. 7. Run Health checks.</p>" }
+        ];
+
+        function renderPage() {
+            const navlist = document.getElementById("navlist");
+            const content = document.getElementById("content");
+            db.forEach((block) => {
+                const li = document.createElement("li");
+                const a = document.createElement("a");
+                a.href = "#" + block.id; a.id = "link-" + block.id; a.innerHTML = block.title.split('. ')[1] || block.title;
+                li.appendChild(a); navlist.appendChild(li);
+                const article = document.createElement("article");
+                article.className = "section-card"; article.id = block.id;
+                article.innerHTML = '<h2>' + block.title + '</h2><div class="section-desc">' + block.desc + '</div><div class="block-title">Explanation</div><div class="theory-box">' + block.theory + '</div><div class="block-title">Deployment Steps & Notes</div><div class="impl-box">' + block.impl + '</div>';
+                content.appendChild(article);
+            });
+            if (db.length) document.getElementById("link-" + db[0].id).classList.add("active");
+        }
+
+        function initScrollSpy() {
+            const sections = document.querySelectorAll(".section-card");
+            const navLinks = document.querySelectorAll("nav a");
+            const progressBar = document.getElementById("progress-bar");
+            window.addEventListener("scroll", () => {
+                let current = "";
+                const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+                const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+                progressBar.style.width = ((winScroll / height) * 100) + "%";
+                sections.forEach((sec) => { if (pageYOffset >= sec.offsetTop - 200) current = sec.getAttribute("id"); });
+                navLinks.forEach((link) => {
+                    link.classList.remove("active");
+                    if (link.getAttribute("href") === "#" + current) link.classList.add("active");
+                });
+            });
+        }
+        document.addEventListener("DOMContentLoaded", () => { renderPage(); initScrollSpy(); });
+    </script>
 </body>
+
 </html>

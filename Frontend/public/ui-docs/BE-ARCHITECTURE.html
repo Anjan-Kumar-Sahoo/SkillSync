@@ -1,311 +1,433 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkillSync Backend Architecture</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Inter', sans-serif; }</style>
+    <title>SkillSync Backend Architecture - Master Document</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: #eff6ff;
+            --primary-dark: #1e40af;
+            --accent: #10b981;
+            --bg: #f4f7f9;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        #progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            z-index: 1001;
+            background: #e2e8f0;
+        }
+
+        #progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            transition: width 0.1s ease-out;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header-text h1 {
+            margin: 0;
+            font-size: 1.6rem;
+            color: var(--primary-dark);
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .header-text p {
+            margin: 2px 0 0 0;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .time-badge {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            border: 1px solid #bfdbfe;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+        }
+
+        aside {
+            width: 320px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 90px;
+            background: var(--card);
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        aside::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        aside::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .nav-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        nav li {
+            margin-bottom: 6px;
+        }
+
+        nav a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: var(--text);
+            font-size: 0.9rem;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            background: #f1f5f9;
+            color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        nav a.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+            font-weight: 600;
+        }
+
+        main {
+            flex-grow: 1;
+            min-width: 0;
+        }
+
+        .section-card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+            scroll-margin-top: 100px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .section-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            color: var(--text);
+            margin-top: 0;
+            margin-bottom: 12px;
+            font-weight: 700;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-desc {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            font-weight: 400;
+            line-height: 1.6;
+        }
+
+        .block-title {
+            font-size: 1.1rem;
+            color: var(--text);
+            font-weight: 700;
+            display: inline-block;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .block-title::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: -4px;
+            width: 100%;
+            height: 2px;
+            background: var(--primary);
+            opacity: 0.2;
+        }
+
+        .theory-box {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .theory-box p {
+            margin: 0 0 12px 0;
+        }
+
+        .theory-box p:last-child {
+            margin: 0;
+        }
+
+        .theory-box strong {
+            color: var(--primary-dark);
+        }
+
+        .impl-box {
+            background: linear-gradient(to right, #eff6ff, #ffffff);
+            border-left: 4px solid var(--primary);
+            border-radius: 0 12px 12px 0;
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .impl-box strong {
+            color: var(--primary);
+        }
+
+        .code-term {
+            font-family: 'Fira Code', monospace;
+            background: #e2e8f0;
+            color: #334155;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
+        .diag-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+        }
+
+        .diag-box {
+            background: #ffffff;
+            border: 2px solid var(--primary);
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            color: var(--primary-dark);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .diag-box.event {
+            border-color: #f59e0b;
+            color: #b45309;
+            background: #fffbeb;
+            border-radius: 20px;
+        }
+
+        .diag-box.db {
+            border-radius: 50% 50% 50% 50% / 12% 12% 12% 12%;
+            border-color: #10b981;
+            color: #047857;
+            background: #ecfdf5;
+            padding: 20px 16px;
+        }
+
+        .diag-arrow {
+            color: #94a3b8;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                flex-direction: column;
+                padding: 20px;
+            }
+
+            aside {
+                width: 100%;
+                position: static;
+                max-height: 300px;
+                margin-bottom: 20px;
+            }
+
+            header {
+                padding: 15px 20px;
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+
+            .section-card {
+                padding: 24px;
+                scroll-margin-top: 140px;
+            }
+        }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-800 antialiased p-4 md:p-10">
-    <div class="max-w-7xl mx-auto space-y-20">
-        
-        <!-- Hero Section -->
-        <div class="text-center space-y-6 pt-10">
-            <h1 class="text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-600 tracking-tight">SkillSync Backend Architecture</h1>
-            <p class="text-xl text-gray-500 max-w-3xl mx-auto leading-relaxed">A comprehensive, deep-dive into the highly available, fault-tolerant, and eventual consistent microservices topology of the SkillSync platform.</p>
-        </div>
 
-        <!-- System Flow Control Diagram -->
-        <section class="bg-white rounded-3xl p-6 md:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
-            <h2 class="text-3xl font-bold mb-10 text-gray-800 flex items-center border-b pb-4">
-                <span class="mr-4">🚀</span> Global Flow Control Diagram
-            </h2>
-            
-            <div class="flex flex-col items-center w-full relative space-y-4">
-                
-                <!-- Client -->
-                <div class="w-full max-w-sm bg-gradient-to-r from-gray-800 to-gray-900 text-white rounded-xl p-4 shadow-lg flex items-center justify-between border border-gray-700 z-10">
-                    <div class="font-bold text-lg">🌐 Client Application</div>
-                    <div class="text-xs bg-gray-700 px-2 py-1 rounded">React SPA</div>
-                </div>
-
-                <div class="flex flex-col items-center text-blue-500 font-bold">
-                    <span>HTTPS / REST / JSON</span>
-                    <span>↓</span>
-                </div>
-
-                <!-- API Gateway -->
-                <div class="w-full max-w-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl p-6 shadow-xl border border-blue-500 z-10 flex flex-col items-center">
-                    <div class="font-bold text-2xl mb-2 text-center">🛡️ API Gateway (Port 8080) / Nginx</div>
-                    <p class="text-blue-100 text-sm mb-4 text-center">Global entry point. Handles rate limiting, CORS, and JWT Authorization.</p>
-                    <div class="bg-blue-800/50 p-3 rounded-lg w-full text-xs font-mono">
-                        Rule: Extract `Bearer <Token>`, Validate Signature → Inject `X-User-Id` Header
-                    </div>
-                </div>
-
-                <div class="flex justify-center items-center text-blue-500 font-bold w-full my-4">
-                    <span>↓ Internal Network Routing ↓</span>
-                </div>
-
-                <!-- Services Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
-                    
-                    <!-- Auth -->
-                    <div class="bg-white border-2 border-indigo-100 rounded-2xl p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden group hover:border-indigo-400 transition-colors">
-                        <div class="absolute top-0 left-0 w-full h-1 bg-indigo-500"></div>
-                        <span class="text-4xl mb-4 mt-2">🔐</span>
-                        <h3 class="font-bold text-xl text-gray-800 mb-2">Auth Service</h3>
-                        <p class="text-sm text-gray-500 mb-4">Registration, Login, OTP Email Verification, JWT Issue/Refresh.</p>
-                        <div class="mt-auto bg-gray-50 w-full py-2 rounded-lg text-xs font-mono text-gray-500 border border-gray-200">Port 8081 | DB: skillsync_auth</div>
-                    </div>
-
-                    <!-- User -->
-                    <div class="bg-white border-2 border-green-100 rounded-2xl p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden group hover:border-green-400 transition-colors">
-                        <div class="absolute top-0 left-0 w-full h-1 bg-green-500"></div>
-                        <span class="text-4xl mb-4 mt-2">🧑‍🏫</span>
-                        <h3 class="font-bold text-xl text-gray-800 mb-2">User Service</h3>
-                        <p class="text-sm text-gray-500 mb-4">Profile Mgmt, Mentor Applications, Mentor Approvals, Study Groups.</p>
-                        <div class="mt-auto bg-gray-50 w-full py-2 rounded-lg text-xs font-mono text-gray-500 border border-gray-200">Port 8082 | DB: skillsync_user</div>
-                    </div>
-
-                    <!-- Session -->
-                    <div class="bg-white border-2 border-purple-100 rounded-2xl p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden group hover:border-purple-400 transition-colors">
-                        <div class="absolute top-0 left-0 w-full h-1 bg-purple-500"></div>
-                        <span class="text-4xl mb-4 mt-2">📅</span>
-                        <h3 class="font-bold text-xl text-gray-800 mb-2">Session Service</h3>
-                        <p class="text-sm text-gray-500 mb-4">Session Booking, Availability, Peer Reviews, Rating Aggregation.</p>
-                        <div class="mt-auto bg-gray-50 w-full py-2 rounded-lg text-xs font-mono text-gray-500 border border-gray-200">Port 8085 | DB: skillsync_session</div>
-                    </div>
-
-                    <!-- Payment -->
-                    <div class="bg-white border-2 border-emerald-100 rounded-2xl p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden group hover:border-emerald-400 transition-colors">
-                        <div class="absolute top-0 left-0 w-full h-1 bg-emerald-500"></div>
-                        <span class="text-4xl mb-4 mt-2">💳</span>
-                        <h3 class="font-bold text-xl text-gray-800 mb-2">Payment Service</h3>
-                        <p class="text-sm text-gray-500 mb-4">Razorpay Orders, Verification, Saga Orchestration, Outbox Tables.</p>
-                        <div class="mt-auto bg-gray-50 w-full py-2 rounded-lg text-xs font-mono text-gray-500 border border-gray-200">Port 8086 | DB: skillsync_payment</div>
-                    </div>
-
-                    <!-- Skill -->
-                    <div class="bg-white border-2 border-amber-100 rounded-2xl p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden group hover:border-amber-400 transition-colors">
-                        <div class="absolute top-0 left-0 w-full h-1 bg-amber-500"></div>
-                        <span class="text-4xl mb-4 mt-2">📚</span>
-                        <h3 class="font-bold text-xl text-gray-800 mb-2">Skill Service</h3>
-                        <p class="text-sm text-gray-500 mb-4">Skill Master Data, Categories, Search Autocomplete.</p>
-                        <div class="mt-auto bg-gray-50 w-full py-2 rounded-lg text-xs font-mono text-gray-500 border border-gray-200">Port 8084 | DB: skillsync_skill</div>
-                    </div>
-
-                    <!-- Notification -->
-                    <div class="bg-white border-2 border-rose-100 rounded-2xl p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden group hover:border-rose-400 transition-colors">
-                        <div class="absolute top-0 left-0 w-full h-1 bg-rose-500"></div>
-                        <span class="text-4xl mb-4 mt-2">🔔</span>
-                        <h3 class="font-bold text-xl text-gray-800 mb-2">Notification Service</h3>
-                        <p class="text-sm text-gray-500 mb-4">Real-time alerts, Email queuing, In-app inbox management.</p>
-                        <div class="mt-auto bg-gray-50 w-full py-2 rounded-lg text-xs font-mono text-gray-500 border border-gray-200">Port 8088 | DB: skillsync_notification</div>
-                    </div>
-
-                    <!-- Observability -->
-                    <div class="bg-gray-900 border-2 border-teal-500 rounded-2xl p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden group hover:border-teal-300 transition-colors col-span-1 md:col-span-2 lg:col-span-1">
-                        <div class="absolute top-0 left-0 w-full h-1 bg-teal-400"></div>
-                        <span class="text-4xl mb-4 mt-2">📊</span>
-                        <h3 class="font-bold text-xl text-white mb-2">Observability Services</h3>
-                        <p class="text-sm text-gray-400 mb-4">Prometheus (Metrics), Grafana (Dashboards), and Zipkin (Distributed Tracing).</p>
-                        <div class="mt-auto bg-gray-800 w-full py-2 rounded-lg text-xs font-mono text-teal-300 border border-teal-800">Ports 9090 / 3000 / 9411</div>
-                    </div>
-
-                </div>
-
-                <div class="flex flex-col items-center text-orange-500 font-bold my-4 w-full">
-                    <span>↕ Asynchronous Event Publishing / Consuming ↕</span>
-                </div>
-
-                <!-- Message Broker -->
-                <div class="w-full bg-gradient-to-r from-orange-500 to-rose-500 text-white rounded-2xl p-6 shadow-xl border border-orange-400 z-10 flex justify-between items-center text-left">
-                    <div>
-                        <div class="font-bold text-2xl mb-1">🐰 RabbitMQ Event Bus</div>
-                        <p class="text-orange-100 text-sm">Decouples domain boundaries. Exchanges route domain events (e.g., `payment.success.v1`) to specific queues. Guaranteed delivery with Dead Letter Queues (DLQ).</p>
-                    </div>
-                </div>
-
-            </div>
-        </section>
-
-        <!-- Global Entity Relationship (ER) Diagram -->
-        <section class="bg-white rounded-3xl p-6 md:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
-            <h2 class="text-3xl font-bold mb-4 text-gray-800 flex items-center">
-                <span class="mr-4">🗄️</span> Global Database Schemas (ER Model)
-            </h2>
-            <p class="text-gray-500 mb-10">SkillSync follows the <strong>Database-per-Service</strong> pattern strictly. Foreign keys across distinct service boundaries are logical (soft references) rather than physical database constraints.</p>
-            
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                
-                <!-- Auth Service DB -->
-                <div class="border border-indigo-200 bg-indigo-50/30 rounded-2xl overflow-hidden shadow-sm">
-                    <div class="bg-indigo-100 px-6 py-4 border-b border-indigo-200 font-bold text-indigo-900 flex justify-between">
-                        <span>Database: skillsync_auth</span>
-                        <span class="text-xs font-mono bg-indigo-200 px-2 py-1 rounded">PostgreSQL</span>
-                    </div>
-                    <div class="p-6">
-                        <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
-                            <div class="bg-gray-800 text-white px-4 py-2 text-sm font-bold flex justify-between rounded-t-lg">
-                                <span>Table: auth.users</span>
-                            </div>
-                            <table class="w-full text-sm text-left">
-                                <tr class="border-b border-gray-100 bg-yellow-50/50"><td class="py-2 px-4 font-mono font-bold w-32">id</td><td class="py-2 px-4 text-gray-500">BIGINT (PK)</td></tr>
-                                <tr class="border-b border-gray-100"><td class="py-2 px-4 font-mono">email</td><td class="py-2 px-4 text-gray-500">VARCHAR (Unique)</td></tr>
-                                <tr class="border-b border-gray-100"><td class="py-2 px-4 font-mono">password</td><td class="py-2 px-4 text-gray-500">VARCHAR</td></tr>
-                                <tr class="border-b border-gray-100"><td class="py-2 px-4 font-mono">role</td><td class="py-2 px-4 text-gray-500">VARCHAR (LEARNER, MENTOR)</td></tr>
-                                <tr><td class="py-2 px-4 font-mono">is_verified</td><td class="py-2 px-4 text-gray-500">BOOLEAN</td></tr>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- User Service DB -->
-                <div class="border border-green-200 bg-green-50/30 rounded-2xl overflow-hidden shadow-sm">
-                    <div class="bg-green-100 px-6 py-4 border-b border-green-200 font-bold text-green-900 flex justify-between">
-                        <span>Database: skillsync_user</span>
-                        <span class="text-xs font-mono bg-green-200 px-2 py-1 rounded">PostgreSQL</span>
-                    </div>
-                    <div class="p-6 space-y-6">
-                        <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
-                            <div class="bg-gray-800 text-white px-4 py-2 text-sm font-bold flex justify-between rounded-t-lg">
-                                <span>Table: users.profiles</span>
-                            </div>
-                            <table class="w-full text-sm text-left">
-                                <tr class="border-b border-gray-100 bg-yellow-50/50"><td class="py-2 px-4 font-mono font-bold w-32">user_id</td><td class="py-2 px-4 text-gray-500">BIGINT (PK)</td></tr>
-                                <tr class="border-b border-gray-100"><td class="py-2 px-4 font-mono">first_name</td><td class="py-2 px-4 text-gray-500">VARCHAR</td></tr>
-                                <tr class="border-b border-gray-100"><td class="py-2 px-4 font-mono">last_name</td><td class="py-2 px-4 text-gray-500">VARCHAR</td></tr>
-                                <tr><td class="py-2 px-4 font-mono">bio</td><td class="py-2 px-4 text-gray-500">TEXT</td></tr>
-                            </table>
-                        </div>
-
-                        <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
-                            <div class="bg-gray-800 text-white px-4 py-2 text-sm font-bold flex justify-between rounded-t-lg">
-                                <span>Table: mentors.mentor_profiles</span>
-                            </div>
-                            <table class="w-full text-sm text-left">
-                                <tr class="border-b border-gray-100 bg-yellow-50/50"><td class="py-2 px-4 font-mono font-bold w-32">id</td><td class="py-2 px-4 text-gray-500">BIGINT (PK)</td></tr>
-                                <tr class="border-b border-gray-100 bg-blue-50/50"><td class="py-2 px-4 font-mono">user_id</td><td class="py-2 px-4 text-blue-600">BIGINT (Logical FK -> profiles)</td></tr>
-                                <tr class="border-b border-gray-100"><td class="py-2 px-4 font-mono">experience_years</td><td class="py-2 px-4 text-gray-500">INT</td></tr>
-                                <tr><td class="py-2 px-4 font-mono">status</td><td class="py-2 px-4 text-gray-500">VARCHAR (PENDING, APPROVED)</td></tr>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Session Service DB -->
-                <div class="border border-purple-200 bg-purple-50/30 rounded-2xl overflow-hidden shadow-sm">
-                    <div class="bg-purple-100 px-6 py-4 border-b border-purple-200 font-bold text-purple-900 flex justify-between">
-                        <span>Database: skillsync_session</span>
-                        <span class="text-xs font-mono bg-purple-200 px-2 py-1 rounded">PostgreSQL</span>
-                    </div>
-                    <div class="p-6">
-                        <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
-                            <div class="bg-gray-800 text-white px-4 py-2 text-sm font-bold flex justify-between rounded-t-lg">
-                                <span>Table: sessions.session_requests</span>
-                            </div>
-                            <table class="w-full text-sm text-left">
-                                <tr class="border-b border-gray-100 bg-yellow-50/50"><td class="py-2 px-4 font-mono font-bold w-32">id</td><td class="py-2 px-4 text-gray-500">BIGINT (PK)</td></tr>
-                                <tr class="border-b border-gray-100 bg-blue-50/50"><td class="py-2 px-4 font-mono">learner_id</td><td class="py-2 px-4 text-blue-600">BIGINT (Logical FK)</td></tr>
-                                <tr class="border-b border-gray-100 bg-blue-50/50"><td class="py-2 px-4 font-mono">mentor_id</td><td class="py-2 px-4 text-blue-600">BIGINT (Logical FK)</td></tr>
-                                <tr class="border-b border-gray-100"><td class="py-2 px-4 font-mono">topic</td><td class="py-2 px-4 text-gray-500">VARCHAR</td></tr>
-                                <tr class="border-b border-gray-100"><td class="py-2 px-4 font-mono">session_date</td><td class="py-2 px-4 text-gray-500">TIMESTAMP</td></tr>
-                                <tr><td class="py-2 px-4 font-mono">status</td><td class="py-2 px-4 text-gray-500">VARCHAR (PENDING, ACCEPTED, COMPLETED)</td></tr>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Payment Service DB -->
-                <div class="border border-emerald-200 bg-emerald-50/30 rounded-2xl overflow-hidden shadow-sm">
-                    <div class="bg-emerald-100 px-6 py-4 border-b border-emerald-200 font-bold text-emerald-900 flex justify-between">
-                        <span>Database: skillsync_payment</span>
-                        <span class="text-xs font-mono bg-emerald-200 px-2 py-1 rounded">PostgreSQL</span>
-                    </div>
-                    <div class="p-6">
-                        <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
-                            <div class="bg-gray-800 text-white px-4 py-2 text-sm font-bold flex justify-between rounded-t-lg">
-                                <span>Table: payments.payments</span>
-                            </div>
-                            <table class="w-full text-sm text-left">
-                                <tr class="border-b border-gray-100 bg-yellow-50/50"><td class="py-2 px-4 font-mono font-bold w-32">id</td><td class="py-2 px-4 text-gray-500">BIGINT (PK)</td></tr>
-                                <tr class="border-b border-gray-100 bg-blue-50/50"><td class="py-2 px-4 font-mono">user_id</td><td class="py-2 px-4 text-blue-600">BIGINT (Logical FK)</td></tr>
-                                <tr class="border-b border-gray-100"><td class="py-2 px-4 font-mono">amount</td><td class="py-2 px-4 text-gray-500">INT (Paise)</td></tr>
-                                <tr class="border-b border-gray-100"><td class="py-2 px-4 font-mono">razorpay_order_id</td><td class="py-2 px-4 text-gray-500">VARCHAR</td></tr>
-                                <tr class="border-b border-gray-100"><td class="py-2 px-4 font-mono">status</td><td class="py-2 px-4 text-gray-500">VARCHAR (CREATED, VERIFIED, SUCCESS)</td></tr>
-                                <tr><td class="py-2 px-4 font-mono">reference_id</td><td class="py-2 px-4 text-gray-500">BIGINT (E.g. session_id)</td></tr>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </section>
-
-        <!-- Structural Deep Dive & CQRS -->
-        <section class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-            <div class="bg-white rounded-3xl p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800 flex items-center">
-                    <span class="mr-3">🔄</span> CQRS Read/Write Separation
-                </h2>
-                <div class="space-y-6">
-                    <div class="p-5 bg-gray-50 border border-gray-200 rounded-2xl shadow-sm relative overflow-hidden">
-                        <div class="absolute left-0 top-0 h-full w-2 bg-blue-500"></div>
-                        <h4 class="font-bold text-blue-800 text-lg">Command Flow (Mutations)</h4>
-                        <p class="text-sm text-gray-600 mt-2">POST, PUT, DELETE requests always hit the primary PostgreSQL instance. If a record updates, the CommandService automatically calls the Redis Cache Manager to evict (<code>@CacheEvict</code>) the stale record keys, guaranteeing eventual consistency.</p>
-                    </div>
-                    <div class="p-5 bg-gray-50 border border-gray-200 rounded-2xl shadow-sm relative overflow-hidden">
-                        <div class="absolute left-0 top-0 h-full w-2 bg-emerald-500"></div>
-                        <h4 class="font-bold text-emerald-800 text-lg">Query Flow (Cache-Aside)</h4>
-                        <p class="text-sm text-gray-600 mt-2">GET requests prioritize the Redis Cache layer (<code>@Cacheable</code>). The system employs advanced resilient failovers: if Redis crashes or is evicted, the QueryService gracefully catches the timeout, queries PostgreSQL synchronously, and returns the response seamlessly to the client.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Key Infrastructure Decisions -->
-            <div class="bg-white rounded-3xl p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800 flex items-center">
-                    <span class="mr-3">⚡</span> Fault Tolerance Architecture
-                </h2>
-                <ul class="space-y-6">
-                    <li class="flex items-start bg-gray-50 p-4 rounded-xl border border-gray-100">
-                        <div class="bg-purple-100 text-purple-600 p-3 rounded-lg mr-4 text-xl">🛡️</div>
-                        <div>
-                            <strong class="block text-gray-800 text-lg">Resilience4j Circuit Breakers</strong>
-                            <p class="text-sm text-gray-500 mt-1">External calls (like Razorpay API interactions or synchronous Feign requests) are wrapped in Circuit Breakers. If failure rates exceed 50%, the circuit trips to OPEN, instantly rejecting requests to protect cascading thread pool exhaustion.</p>
-                        </div>
-                    </li>
-                    <li class="flex items-start bg-gray-50 p-4 rounded-xl border border-gray-100">
-                        <div class="bg-amber-100 text-amber-600 p-3 rounded-lg mr-4 text-xl">📡</div>
-                        <div>
-                            <strong class="block text-gray-800 text-lg">Eureka Service Discovery</strong>
-                            <p class="text-sm text-gray-500 mt-1">Hardcoded IPs are non-existent. The Gateway delegates load balancing dynamically by pulling healthy instance registries from Eureka Server. Dead nodes are automatically delisted.</p>
-                        </div>
-                    </li>
-                    <li class="flex items-start bg-gray-50 p-4 rounded-xl border border-gray-100">
-                        <div class="bg-sky-100 text-sky-600 p-3 rounded-lg mr-4 text-xl">⚙️</div>
-                        <div>
-                            <strong class="block text-gray-800 text-lg">Centralized Config Server</strong>
-                            <p class="text-sm text-gray-500 mt-1">Spring Cloud Config serves properties to all instances asynchronously at runtime, enabling zero-downtime credential rotations.</p>
-                        </div>
-                    </li>
-                    <li class="flex items-start bg-gray-50 p-4 rounded-xl border border-gray-100">
-                        <div class="bg-teal-100 text-teal-600 p-3 rounded-lg mr-4 text-xl">📊</div>
-                        <div>
-                            <strong class="block text-gray-800 text-lg">Monitoring & Distributed Tracing</strong>
-                            <p class="text-sm text-gray-500 mt-1">Every isolated microservice automatically streams span logs to <b>Zipkin</b> via Micrometer. The correlation IDs (`traceId`) injected at the API Gateway allow visualizing the entire hop-by-hop journey of a request across the cluster. Performance metrics (Memory/GC) are actively scraped by <b>Prometheus</b> and visualized on custom <b>Grafana</b> dashboards to catch high latency anomalies early.</p>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </section>
-
-        <div class="mt-20 border-t border-gray-200 pt-8 text-center text-sm text-gray-400 font-medium">
-            Ensure all project documentation is updated whenever system changes are made, and add new sections if required.
-        </div>
+<body>
+    <div id="progress-container">
+        <div id="progress-bar"></div>
     </div>
+    <header>
+        <div class="header-text">
+            <h1>SkillSync Backend Architecture</h1>
+            <p>Presentation Ready Deep-Dive Masterclass</p>
+        </div>
+        <div class="time-badge">Est. Presentation: 60 mins</div>
+    </header>
+    <div class="container">
+        <aside>
+            <div class="nav-title">Presentation Agenda</div>
+            <nav>
+                <ul id="navlist"></ul>
+            </nav>
+        </aside>
+        <main id="content"></main>
+    </div>
+    <script>
+        const db = [
+            { id: "overview", title: "1. System Overview", desc: "Bird's eye view of the ecosystem.", theory: "<p><strong>Why Microservices?</strong> Monoliths bundle all domains. Microservices decouple these domains.</p>", impl: "<div class='diag-container'><div class='diag-box'>Client UI</div><div class='diag-arrow'>→</div><div class='diag-box'>Gateway</div><div class='diag-arrow'>→</div><div class='diag-box'>Microservices</div></div>" },
+            { id: "microservices", title: "2. Microservices Architecture", desc: "Explicit responsibility of every service.", theory: "<p><strong>Domain-Driven Design:</strong> Each microservice completely owns its data and domain.</p>", impl: "<p>We run Gateway, Eureka, Auth, User, Session, Payment, Notif. Each has a distinct database schema.</p>" },
+            { id: "gateway", title: "3. API Gateway Flow", desc: "The single entry point coordinating all inbound frontend requests.", theory: "<p><strong>What is an API Gateway?</strong> The Gateway is a reverse proxy taking requests on port 8080 and internally routing them.</p>", impl: "<div class='diag-container'><div class='diag-box'>FE</div><div class='diag-arrow'>→</div><div class='diag-box'>Gateway (:8080)</div><div class='diag-arrow'>→</div><div class='diag-box'>Session-Service</div></div>" },
+            { id: "auth", title: "4. Authentication Service", desc: "Verify identities of incoming requests.", theory: "<p><strong>Stateless Auth:</strong> We issue signed JSON Web Tokens (JWT) containing identity.</p>", impl: "<p><strong>Global Token Verification:</strong> Gateway catches the request, verifies JWT signature, and forwards authentic requests.</p>" },
+            { id: "rbac", title: "5. Authorization & Roles", desc: "Restricting actions strictly to those who have permission.", theory: "<p><strong>RBAC:</strong> Authenticated means you are registered. Authorized means you are allowed.</p>", impl: "<p><strong>Method-Level Security:</strong> We utilize <code>@PreAuthorize</code> annotations. If an unauthorized user hits an endpoint, Spring Security intercepts it.</p>" },
+            { id: "user", title: "6. User Service", desc: "Managing profile metadata and roles.", theory: "<p><strong>Identity vs Profile:</strong> Auth Service manages passwords, User service handles heavy profile data.</p>", impl: "<p>Maintains the central catalog of all users. Handles upgrading LEARNER to MENTOR, and broadcasts UserUpdatedEvents.</p>" },
+            { id: "session", title: "7. Session Service", desc: "The core domain representing P2P mentor-learner interaction schedules.", theory: "<p><strong>Timezone Standardization:</strong> All data is saved in UTC.</p>", impl: "<p><strong>Scheduling Logic:</strong> Validates time overlaps. Times are strictly ZonedDateTime (UTC) in Postgres.</p>" },
+            { id: "booking", title: "8. Booking Flow", desc: "Synchronous bridge between establishing a session and locking it.", theory: "<p><strong>Distributed Transactions:</strong> Transactions are spread across multiple databases.</p>", impl: "<div class='diag-container'><div class='diag-box'>Click Book</div><div class='diag-arrow'>→</div><div class='diag-box'>State: PENDING</div><div class='diag-arrow'>→</div><div class='diag-box'>Await Payment</div></div>" },
+            { id: "payment", title: "9. Payment Service", desc: "Handling Stripe gateway integrations securely.", theory: "<p><strong>Idempotency:</strong> Backend must mathematically ensure a user is never charged twice.</p>", impl: "<p><strong>Stripe Integration:</strong> Explict Idempotency Keys on all Stripe API calls so duplicated payloads are safely ignored.</p>" },
+            { id: "saga", title: "10. Payment Saga", desc: "Orchestrating complex multi-service guarantees.", theory: "<p><strong>Saga Pattern:</strong> A Saga implements sequence-based transactions with compensating fallbacks.</p>", impl: "<div class='diag-container'><div class='diag-box'>Session Init</div><div class='diag-arrow'>⇄</div><div class='diag-box'>Payment Sub</div><div class='diag-arrow'>↘</div><div class='diag-box'>Refund (Fallback)</div></div>" },
+            { id: "cqrs", title: "11. CQRS Implementation", desc: "Separating reads from writes.", theory: "<p><strong>CQRS:</strong> Reading a session happens 100x more often than creating one. CQRS splits the code.</p>", impl: "<p>Repositories distinguish Command operations and Query operations using specific DTO projections.</p>" },
+            { id: "command", title: "12. Command Flow", desc: "Mutating state with strict validation.", theory: "<p><strong>The Write Path:</strong> Writes must be perfectly validated.</p>", impl: "<p><strong>Spring Validation:</strong> Commands enter via REST Post with @Valid and custom annotations.</p>" },
+            { id: "query", title: "13. Query Flow", desc: "Highly-performant data extraction.", theory: "<p><strong>The N+1 Problem:</strong> Naive ORM reads fetch a list of 10 sessions, then query 10 more times causing lag.</p>", impl: "<p><strong>Optimized Reads:</strong> We leverage Spring Data JPA with @EntityGraph to formulate singular LEFT JOIN queries.</p>" },
+            { id: "events", title: "14. Event Driven Comm", desc: "Decoupling services through Pub/Sub.", theory: "<p><strong>Synchronous vs Asynchronous:</strong> If Notif service is down, User registration shouldn't fail.</p>", impl: "<div class='diag-container'><div class='diag-box'>Create User</div><div class='diag-arrow'>→</div><div class='diag-box event'>Event: UserCreated</div><div class='diag-arrow'>→</div><div class='diag-box'>Notif Service</div></div>" },
+            { id: "kafka", title: "15. Messaging / RabbitMQ", desc: "The backbone of inter-service asynchronous data flow.", theory: "<p><strong>Message Brokers:</strong> Topics fan-out messages. Queues ensure round-robin distribution.</p>", impl: "<p><strong>RabbitMQ Ecosystem:</strong> We established Topic Exchanges. Services inject RabbitTemplate to publish and @RabbitListener to consume.</p>" },
+            { id: "notif", title: "16. Notification Service", desc: "Centralizing all outbound alerts.", theory: "<p><strong>Single Responsibility:</strong> Only Notification service uses SMTP server or WebSocket hub.</p>", impl: "<p>Listens to every event in the system. Formats HTML templates using Thymeleaf and pushes alerts.</p>" },
+            { id: "flow", title: "17. Email + InApp Flow", desc: "Dual-channel alerts for maximum visibility.", theory: "<p><strong>Channel Diversification:</strong> Critical alerts go to Email. Transitory alerts go to In-App bells.</p>", impl: "<p>Uses JavaMailSender for external emails, and saves an internal SystemNotification entity to PostgreSQL for the bell icon.</p>" },
+            { id: "db", title: "18. Database Design", desc: "Polyglot persistence and strict referential integrity.", theory: "<p><strong>Database per Service:</strong> Sharing a single db across microservices is an anti-pattern.</p>", impl: "<div class='diag-container'><div class='diag-box'>Auth Service</div><div class='diag-arrow'>↔</div><div class='diag-box db'>auth_db</div><div class='diag-box'>Session Service</div><div class='diag-arrow'>↔</div><div class='diag-box db'>session_db</div></div>" },
+            { id: "service-comm", title: "19. Service Communication", desc: "Direct Synchronous interactions.", theory: "<p><strong>Sometimes you just need an answer NOW:</strong> Event buses are great, but synchronous checks are needed sometimes.</p>", impl: "<p><strong>OpenFeign Clients:</strong> We utilize declarative Spring Cloud OpenFeign. Eureka dynamically resolves IPs.</p>" },
+            { id: "security", title: "20. Security Architecture", desc: "Protecting the infrastructure.", theory: "<p><strong>Defense in Depth:</strong> Layers of protection assuming the layer before it will eventually fall.</p>", impl: "<p>1. Edge strips CORS. 2. JWTs validate identity. 3. BCrypt hashes passwords. 4. Eureka hides internal endpoints.</p>" },
+            { id: "retry", title: "21. Retry & Idempotency", desc: "Handling network blips.", theory: "<p><strong>Transient Failures:</strong> You shouldn't fail a booking for a momentary blip.</p>", impl: "<p><strong>Resilience4j:</strong> Retry interceptors sleep for 500ms and try again up to 3 times for failed HTTP calls.</p>" },
+            { id: "caching", title: "22. Caching Strategy", desc: "Saving database IOPS.", theory: "<p><strong>The Speed of RAM:</strong> Memory is 100x faster than disk.</p>", impl: "<p><strong>Spring Cache:</strong> Attach @Cacheable to endpoints. Bypasses the DB completely.</p>" },
+            { id: "observability", title: "23. Observability & Logging", desc: "Knowing exactly what is breaking.", theory: "<p><strong>Distributed Tracing:</strong> How do you track an error across 4 machines?</p>", impl: "<p><strong>Zipkin + Sleuth:</strong> Requests get a globally unique TraceID injected into headers and Queues.</p>" },
+            { id: "e2e", title: "24. End to End Transaction", desc: "Life cycle of a user action.", theory: "<p><strong>The Final Symphony:</strong> Bringing every concept together.</p>", impl: "<p>1. Edge Gateway. 2. Proxy Session. 3. Sync Comm Mentor check. 4. Payment Saga. 5. DB Save. 6. Async Event. 7. Email Notif.</p>" }
+        ];
+
+        function renderPage() {
+            const navlist = document.getElementById("navlist");
+            const content = document.getElementById("content");
+            db.forEach((block) => {
+                const li = document.createElement("li");
+                const a = document.createElement("a");
+                a.href = "#" + block.id; a.id = "link-" + block.id; a.innerHTML = block.title.split('. ')[1] || block.title;
+                li.appendChild(a); navlist.appendChild(li);
+                const article = document.createElement("article");
+                article.className = "section-card"; article.id = block.id;
+                article.innerHTML = '<h2>' + block.title + '</h2><div class="section-desc">' + block.desc + '</div><div class="block-title">Deep-Dive Theory</div><div class="theory-box">' + block.theory + '</div><div class="block-title">SkillSync Implementation</div><div class="impl-box">' + block.impl + '</div>';
+                content.appendChild(article);
+            });
+            if (db.length) document.getElementById("link-" + db[0].id).classList.add("active");
+        }
+
+        function initScrollSpy() {
+            const sections = document.querySelectorAll(".section-card");
+            const navLinks = document.querySelectorAll("nav a");
+            const progressBar = document.getElementById("progress-bar");
+            window.addEventListener("scroll", () => {
+                let current = "";
+                const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+                const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+                progressBar.style.width = ((winScroll / height) * 100) + "%";
+                sections.forEach((sec) => { if (pageYOffset >= sec.offsetTop - 200) current = sec.getAttribute("id"); });
+                navLinks.forEach((link) => {
+                    link.classList.remove("active");
+                    if (link.getAttribute("href") === "#" + current) link.classList.add("active");
+                });
+            });
+        }
+        document.addEventListener("DOMContentLoaded", () => { renderPage(); initScrollSpy(); });
+    </script>
 </body>
+
 </html>

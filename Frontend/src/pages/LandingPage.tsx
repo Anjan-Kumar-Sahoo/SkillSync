@@ -37,7 +37,7 @@ const docsLinks: DocLink[] = [
     href: '/ui-docs/PAYMENT_SAGA.html',
   },
   {
-    title: 'Deployment',
+    title: 'Deployment & DevOps',
     description: 'Container runtime, ingress, CI/CD and observability setup.',
     href: '/ui-docs/DEPLOYMENT.html',
   },

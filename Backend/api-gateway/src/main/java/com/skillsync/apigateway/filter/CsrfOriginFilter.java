@@ -15,7 +15,7 @@ import java.util.Set;
 @Component
 public class CsrfOriginFilter implements GlobalFilter, Ordered {
 
-    @Value("${app.cors.allowed-origins:https://skillsync.mraks.dev}")
+    @Value("${app.cors.allowed-origins:https://skillsync.mraks.dev,https://skillsync.udayasri.dev}")
     private String allowedOrigins;
 
     @Override
