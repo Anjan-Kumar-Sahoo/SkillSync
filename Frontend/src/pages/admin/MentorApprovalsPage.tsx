@@ -29,7 +29,7 @@ const MentorApprovalsPage = () => {
 
   const rejectMutation = useMutation({
     mutationFn: async (id: number) => {
-      await api.post(`/api/admin/mentors/${id}/reject`);
+      await api.post(`/api/admin/mentors/${id}/reject?reason=Rejected+by+admin`);
     },
     onSuccess: () => {
       showToast({ message: 'Mentor rejected', type: 'success' });
@@ -61,20 +61,24 @@ const MentorApprovalsPage = () => {
             {mentorsList.map((mentor: any) => (
               <div key={mentor.id} className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex flex-col justify-between">
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900">{mentor.name || `${mentor.firstName} ${mentor.lastName}`}</h3>
-                  <p className="text-sm text-gray-500 mb-4">{mentor.email}</p>
+                  <h3 className="text-lg font-bold text-gray-900">{mentor.firstName && mentor.lastName ? `${mentor.firstName} ${mentor.lastName}` : mentor.name || `Mentor #${mentor.id}`}</h3>
+                  <p className="text-sm text-gray-500 mb-4">{mentor.email || `User ID: ${mentor.userId}`}</p>
                   
                   <div className="space-y-3 mb-6">
                     <div>
                       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Experience</p>
-                      <p className="text-sm text-gray-800 font-medium">{mentor.experienceYears || mentor.experience} years</p>
+                      <p className="text-sm text-gray-800 font-medium">{mentor.experienceYears || 0} years</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Bio</p>
+                      <p className="text-sm text-gray-700 line-clamp-3">{mentor.bio || 'No bio provided'}</p>
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Skills</p>
                       <div className="flex flex-wrap gap-2">
-                        {(mentor.skills || []).map((skill: string, index: number) => (
+                        {(mentor.skills || []).map((skill: any, index: number) => (
                           <span key={index} className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded font-medium">
-                            {skill}
+                            {typeof skill === 'string' ? skill : skill.name || `Skill #${skill.skillId || skill.id}`}
                           </span>
                         ))}
                         {(!mentor.skills || mentor.skills.length === 0) && (

@@ -340,4 +340,26 @@ public class AuthService {
                 user.getFirstName(),
                 user.getLastName());
     }
+
+    public Map<String, Object> getAllUsers(int page, int size) {
+        var pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        var usersPage = authUserRepository.findAll(pageable);
+        var content = usersPage.getContent().stream()
+                .map(u -> new UserSummary(u.getId(), u.getEmail(), u.getRole().name(),
+                        u.getFirstName(), u.getLastName()))
+                .toList();
+        return Map.of(
+                "content", content,
+                "totalElements", usersPage.getTotalElements(),
+                "totalPages", usersPage.getTotalPages(),
+                "number", usersPage.getNumber()
+        );
+    }
+
+    public long getUserCount(String role) {
+        if (role != null && !role.isBlank()) {
+            return authUserRepository.countByRole(Role.valueOf(role));
+        }
+        return authUserRepository.count();
+    }
 }

@@ -3,15 +3,10 @@ import api from '../../services/axios';
 import PageLayout from '../../components/layout/PageLayout';
 
 interface AdminStats {
-  users?: number;
-  mentors?: number;
-  sessions?: number;
-  pendingApprovals?: number;
-  totalUsers?: number;
-  totalMentors?: number;
-  totalSessions?: number;
-  totalRevenue?: number;
-  pendingMentorApprovals?: number;
+  totalUsers: number;
+  totalMentors: number;
+  totalSessions: number;
+  pendingMentorApprovals: number;
 }
 
 const AdminDashboardPage = () => {
@@ -27,8 +22,7 @@ const AdminDashboardPage = () => {
           totalUsers: 0,
           totalMentors: 0,
           totalSessions: 0,
-          totalRevenue: 0,
-          pendingApprovals: 0,
+          pendingMentorApprovals: 0,
         } as AdminStats;
       }
     },
@@ -58,19 +52,19 @@ const AdminDashboardPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
               <div className="text-sm text-gray-500 mb-2">Total Users</div>
-              <div className="text-3xl font-bold text-gray-900">{stats.users ?? stats.totalUsers ?? 0}</div>
+              <div className="text-3xl font-bold text-gray-900">{stats.totalUsers}</div>
             </div>
             <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
               <div className="text-sm text-gray-500 mb-2">Mentors</div>
-              <div className="text-3xl font-bold text-blue-600">{stats.mentors ?? stats.totalMentors ?? 0}</div>
+              <div className="text-3xl font-bold text-blue-600">{stats.totalMentors}</div>
             </div>
             <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
               <div className="text-sm text-gray-500 mb-2">Total Sessions</div>
-              <div className="text-3xl font-bold text-green-600">{stats.sessions ?? stats.totalSessions ?? 0}</div>
+              <div className="text-3xl font-bold text-green-600">{stats.totalSessions}</div>
             </div>
             <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
               <div className="text-sm text-gray-500 mb-2">Pending Approvals</div>
-              <div className="text-3xl font-bold text-orange-600">{stats.pendingApprovals ?? stats.pendingMentorApprovals ?? 0}</div>
+              <div className="text-3xl font-bold text-orange-600">{stats.pendingMentorApprovals}</div>
             </div>
           </div>
         )}

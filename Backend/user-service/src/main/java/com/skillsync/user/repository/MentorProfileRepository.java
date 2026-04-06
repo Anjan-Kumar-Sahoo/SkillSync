@@ -15,4 +15,5 @@ public interface MentorProfileRepository extends JpaRepository<MentorProfile, Lo
     Optional<MentorProfile> findByUserId(Long userId);
     boolean existsByUserId(Long userId);
     Page<MentorProfile> findByStatus(MentorStatus status, Pageable pageable);
+    long countByStatus(MentorStatus status);
 }

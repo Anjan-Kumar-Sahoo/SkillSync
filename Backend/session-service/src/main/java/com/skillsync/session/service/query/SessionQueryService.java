@@ -48,6 +48,10 @@ public class SessionQueryService {
                 .map(SessionQueryService::mapToResponse);
     }
 
+    public long getSessionCount() {
+        return sessionRepository.count();
+    }
+
     public Page<SessionResponse> getSessionsByMentor(Long mentorId, Pageable pageable) {
         return sessionRepository.findByMentorId(mentorId, pageable)
                 .map(SessionQueryService::mapToResponse);

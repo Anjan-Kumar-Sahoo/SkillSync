@@ -22,19 +22,9 @@ const UsersCenterPage = () => {
     onSuccess: () => {
       showToast({ message: 'User role updated', type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
     },
     onError: () => showToast({ message: 'Failed to update role', type: 'error' }),
-  });
-
-  const statusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      await api.put(`/api/admin/users/${id}/status`, { status });
-    },
-    onSuccess: () => {
-      showToast({ message: 'User status updated', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
-    },
-    onError: () => showToast({ message: 'Failed to update status', type: 'error' }),
   });
 
   const users = usersData?.content || [];
@@ -60,7 +50,6 @@ const UsersCenterPage = () => {
                     <th className="text-left py-4 px-6 font-semibold text-gray-700">Name</th>
                     <th className="text-left py-4 px-6 font-semibold text-gray-700">Email</th>
                     <th className="text-left py-4 px-6 font-semibold text-gray-700">Role</th>
-                    <th className="text-left py-4 px-6 font-semibold text-gray-700">Status</th>
                     <th className="text-left py-4 px-6 font-semibold text-gray-700">Actions</th>
                   </tr>
                 </thead>
@@ -75,11 +64,6 @@ const UsersCenterPage = () => {
                         </span>
                       </td>
                       <td className="py-4 px-6">
-                        <span className={`inline-block px-2 py-1 rounded text-xs font-bold ${user.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                          {user.status || 'ACTIVE'}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6">
                         <div className="flex gap-2">
                           {user.role === 'ROLE_LEARNER' && (
                             <button
@@ -89,19 +73,12 @@ const UsersCenterPage = () => {
                               Promote to Mentor
                             </button>
                           )}
-                          {user.status !== 'BANNED' && user.status !== 'INACTIVE' ? (
+                          {user.role === 'ROLE_MENTOR' && (
                             <button
-                              onClick={() => statusMutation.mutate({ id: user.id, status: 'BANNED' })}
-                              className="text-xs bg-red-100 text-red-700 hover:bg-red-200 px-3 py-1.5 rounded font-bold transition"
+                              onClick={() => roleMutation.mutate({ id: user.id, role: 'ROLE_LEARNER' })}
+                              className="text-xs bg-orange-100 text-orange-700 hover:bg-orange-200 px-3 py-1.5 rounded font-bold transition"
                             >
-                              Ban User
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => statusMutation.mutate({ id: user.id, status: 'ACTIVE' })}
-                              className="text-xs bg-green-100 text-green-700 hover:bg-green-200 px-3 py-1.5 rounded font-bold transition"
-                            >
-                              Activate User
+                              Demote to Learner
                             </button>
                           )}
                         </div>

@@ -35,7 +35,7 @@ export const useMentors = () => {
   return useQuery({
     queryKey: ['mentors', 'ROLE_MENTOR'],
     queryFn: async () => {
-      const { data } = await api.get('/api/users?role=MENTOR');
+      const { data } = await api.get('/api/mentors/search');
       return data;
     },
   });
@@ -45,7 +45,7 @@ export const useAvailability = () => {
   return useQuery({
     queryKey: ['mentor', 'availability'],
     queryFn: async () => {
-      const { data } = await api.get('/api/users/mentor/availability');
+      const { data } = await api.get('/api/mentors/me/availability');
       return data;
     },
   });

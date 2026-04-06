@@ -92,6 +92,18 @@ public class AuthController {
         return ResponseEntity.ok(authService.getUserById(id));
     }
 
+    @GetMapping("/internal/users")
+    public ResponseEntity<?> getAllUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size) {
+        return ResponseEntity.ok(authService.getAllUsers(page, size));
+    }
+
+    @GetMapping("/internal/users/count")
+    public ResponseEntity<Long> getUserCount(@RequestParam(required = false) String role) {
+        return ResponseEntity.ok(authService.getUserCount(role));
+    }
+
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         authService.forgotPassword(request);
@@ -137,6 +149,12 @@ public class AuthController {
     @PutMapping("/users/{id}/role")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> updateUserRole(@PathVariable Long id, @RequestParam String role) {
+        authService.updateUserRole(id, role);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/internal/users/{id}/role")
+    public ResponseEntity<Void> updateUserRoleInternal(@PathVariable Long id, @RequestParam String role) {
         authService.updateUserRole(id, role);
         return ResponseEntity.ok().build();
     }

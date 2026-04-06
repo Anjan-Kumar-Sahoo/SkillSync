@@ -47,7 +47,7 @@ public class MentorCommandService {
                 .experienceYears(request.experienceYears())
                 .hourlyRate(request.hourlyRate())
                 .avgRating(0.0).totalReviews(0).totalSessions(0)
-                .status(MentorStatus.APPROVED)
+                .status(MentorStatus.PENDING)
                 .skills(new ArrayList<>()).slots(new ArrayList<>())
                 .build();
 
@@ -60,18 +60,13 @@ public class MentorCommandService {
         }
         profile = mentorProfileRepository.save(profile);
 
-        try {
-            authServiceClient.updateUserRole(profile.getUserId(), "ROLE_MENTOR");
-        } catch (Exception e) {
-            log.error("Failed to update role for userId: {}", profile.getUserId(), e);
-        }
-
-        rabbitTemplate.convertAndSend(RabbitMQConfig.MENTOR_EXCHANGE, "mentor.approved",
-                new MentorApprovedEvent(profile.getId(), profile.getUserId(), null));
+        // Do NOT auto-approve or update role here.
+        // The admin will approve via AdminController -> approveMentor()
+        // which updates status to APPROVED and changes the user's role.
 
         cacheService.evictByPattern(CacheService.vKey("user:mentor:pending:*"));
         invalidateMentorCaches(profile.getId(), profile.getUserId());
-        log.info("[CQRS:COMMAND] Mentor application auto-approved for userId: {}. Cache invalidated.", userId);
+        log.info("[CQRS:COMMAND] Mentor application submitted (PENDING) for userId: {}. Awaiting admin approval.", userId);
         return MentorMapper.toResponse(profile);
     }
 
@@ -83,11 +78,10 @@ public class MentorCommandService {
         profile.setStatus(MentorStatus.APPROVED);
         mentorProfileRepository.save(profile);
 
-        try {
-            authServiceClient.updateUserRole(profile.getUserId(), "ROLE_MENTOR");
-        } catch (Exception e) {
-            log.error("Failed to update role for userId: {}", profile.getUserId(), e);
-        }
+        // If this fails, it MUST throw an exception to trigger a @Transactional rollback.
+        // We cannot allow the profile to be APPROVED if the role update fails, 
+        // as that destroys data consistency.
+        authServiceClient.updateUserRole(profile.getUserId(), "ROLE_MENTOR");
 
         rabbitTemplate.convertAndSend(RabbitMQConfig.MENTOR_EXCHANGE, "mentor.approved",
                 new MentorApprovedEvent(mentorId, profile.getUserId(), null));

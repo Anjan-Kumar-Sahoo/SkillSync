@@ -18,7 +18,7 @@ const MentorAvailabilityPage = () => {
   const { data: slots = [], isLoading } = useQuery({
     queryKey: ['mentor', 'availability'],
     queryFn: async () => {
-      const res = await api.get('/api/users/mentor/availability');
+      const res = await api.get('/api/mentors/me/availability');
       return res.data;
     },
   });
@@ -26,7 +26,7 @@ const MentorAvailabilityPage = () => {
   const addSlotMutation = useMutation({
     mutationFn: async () =>
       api.post(
-        '/api/users/mentor/availability',
+        '/api/mentors/me/availability',
         {
           dayOfWeek: Number(dayOfWeek),
           startTime: `${startTime}:00`,
@@ -36,6 +36,7 @@ const MentorAvailabilityPage = () => {
     onSuccess: () => {
       showToast({ message: 'Availability slot added.', type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['mentor', 'availability'] });
+      queryClient.invalidateQueries({ queryKey: ['mentor', 'my'] });
     },
     onError: () => {
       showToast({ message: 'Failed to add availability slot.', type: 'error' });
@@ -43,10 +44,11 @@ const MentorAvailabilityPage = () => {
   });
 
   const deleteSlotMutation = useMutation({
-    mutationFn: async (slotId: number) => api.delete(`/api/users/mentor/availability/${slotId}`),
+    mutationFn: async (slotId: number) => api.delete(`/api/mentors/me/availability/${slotId}`),
     onSuccess: () => {
       showToast({ message: 'Availability slot removed.', type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['mentor', 'availability'] });
+      queryClient.invalidateQueries({ queryKey: ['mentor', 'my'] });
     },
     onError: () => {
       showToast({ message: 'Failed to remove slot.', type: 'error' });

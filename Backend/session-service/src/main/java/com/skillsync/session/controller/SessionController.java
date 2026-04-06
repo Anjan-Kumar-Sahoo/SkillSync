@@ -40,6 +40,12 @@ public class SessionController {
 
     // ─── COMMANDS ───
 
+    @GetMapping("/count")
+    public ResponseEntity<Long> getSessionCount() {
+        return ResponseEntity.ok(sessionQueryService.getSessionCount());
+    }
+
+
     @PostMapping
     public ResponseEntity<SessionResponse> createSession(
             @RequestHeader("X-User-Id") Long userId,

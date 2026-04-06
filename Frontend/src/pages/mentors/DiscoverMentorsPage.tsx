@@ -34,7 +34,7 @@ const DiscoverMentorsPage = () => {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['mentors', page],
     queryFn: async () => {
-      const res = await api.get(`/api/users?role=MENTOR&page=${page}&size=9`);
+      const res = await api.get(`/api/mentors/search?page=${page}&size=9`);
       return res.data;
     }
   });

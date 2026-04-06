@@ -147,11 +147,23 @@ const LearnerDashboardPage = () => {
       <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/15">
         <h3 className="font-bold text-lg text-on-surface mb-2">Apply As Mentor</h3>
         {mentorApplied ? (
-          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+          <div className={`rounded-xl border p-4 ${
+            mentorStatus === 'APPROVED' ? 'border-green-300 bg-green-50' :
+            mentorStatus === 'REJECTED' ? 'border-red-300 bg-red-50' :
+            'border-amber-300 bg-amber-50'
+          }`}>
             <p className="text-sm font-semibold text-on-surface">
-              Application Status: <span className="text-primary">{mentorStatus || 'PENDING'}</span>
+              Application Status: <span className={`font-bold ${
+                mentorStatus === 'APPROVED' ? 'text-green-600' :
+                mentorStatus === 'REJECTED' ? 'text-red-600' :
+                'text-amber-600'
+              }`}>{mentorStatus || 'PENDING'}</span>
             </p>
-            <p className="text-xs text-on-surface-variant mt-2">You already have a mentor profile/application in the system.</p>
+            <p className="text-xs text-on-surface-variant mt-2">
+              {mentorStatus === 'APPROVED' ? 'Congratulations! You are now a mentor. Log out and back in to access your mentor dashboard.' :
+               mentorStatus === 'REJECTED' ? 'Your application was not approved. You may contact support for more details.' :
+               'Your application is under review by an admin. You will be notified once it is approved.'}
+            </p>
           </div>
         ) : (
           <>

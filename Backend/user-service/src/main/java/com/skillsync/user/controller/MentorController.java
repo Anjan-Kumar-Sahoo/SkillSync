@@ -41,6 +41,16 @@ public class MentorController {
         return ResponseEntity.ok(mentorQueryService.getPendingApplications(pageable));
     }
 
+    @GetMapping("/me/availability")
+    public ResponseEntity<?> getMyAvailability(@RequestHeader("X-User-Id") Long userId) {
+        MentorProfileResponse profile = mentorQueryService.getMentorByUserId(userId);
+        if (profile == null) {
+            return ResponseEntity.ok(java.util.List.of());
+        }
+        return ResponseEntity.ok(profile.availability());
+    }
+
+
     // ─── COMMANDS ───
 
     @PostMapping("/apply")
