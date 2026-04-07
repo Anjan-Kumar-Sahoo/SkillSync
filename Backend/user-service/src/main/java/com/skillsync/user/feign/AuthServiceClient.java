@@ -22,4 +22,7 @@ public interface AuthServiceClient {
 
     @DeleteMapping("/api/auth/internal/users/{id}")
     void deleteUser(@PathVariable("id") Long id);
+
+    @GetMapping("/api/auth/internal/users/{id}")
+    Map<String, Object> getUserById(@PathVariable("id") Long id);
 }

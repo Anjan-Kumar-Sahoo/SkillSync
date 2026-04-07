@@ -181,7 +181,7 @@ public class MentorService {
 
         return new MentorProfileResponse(
                 profile.getId(), profile.getUserId(),
-                null, null, null,
+                null, null, null, null,
                 profile.getBio(), profile.getExperienceYears(),
                 profile.getHourlyRate(), profile.getAvgRating(),
                 profile.getTotalReviews(), profile.getTotalSessions(),

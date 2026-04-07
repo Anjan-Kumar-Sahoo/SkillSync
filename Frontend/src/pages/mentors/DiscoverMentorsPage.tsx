@@ -183,9 +183,9 @@ const DiscoverMentorsPage = () => {
                   </p>
                   
                   <div className="flex flex-wrap gap-1.5 mb-6 mt-auto">
-                    {(mentor.skills || []).slice(0, 3).map((skill: string, i: number) => (
+                    {(mentor.skills || []).slice(0, 3).map((skill: any, i: number) => (
                       <span key={i} className="bg-surface-container-low text-on-surface-variant text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider border border-outline-variant/10">
-                        {skill}
+                        {typeof skill === 'string' ? skill : (skill.name || `Skill #${skill.skillId}`)}
                       </span>
                     ))}
                     {(mentor.skills?.length > 3) && (

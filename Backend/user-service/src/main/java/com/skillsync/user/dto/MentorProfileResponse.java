@@ -8,6 +8,7 @@ public record MentorProfileResponse(
         Long userId,
         String firstName,
         String lastName,
+        String email,
         String avatarUrl,
         String bio,
         int experienceYears,

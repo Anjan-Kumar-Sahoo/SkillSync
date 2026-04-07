@@ -30,7 +30,7 @@ public final class MentorMapper {
 
         return new MentorProfileResponse(
                 profile.getId(), profile.getUserId(),
-                null, null, null,
+                null, null, null, null,
                 profile.getBio(), profile.getExperienceYears(),
                 profile.getHourlyRate() != null
                         ? profile.getHourlyRate()

@@ -176,9 +176,9 @@ const MentorProfilePage = () => {
             <section className="bg-surface-container-lowest p-8 rounded-2xl shadow-sm border border-outline-variant/10">
               <h2 className="text-2xl font-extrabold text-on-surface mb-4">Expertise</h2>
               <div className="flex flex-wrap gap-2">
-                {(mentor.skills || []).map((skill: string, idx: number) => (
+                {(mentor.skills || []).map((skill: any, idx: number) => (
                   <span key={idx} className="bg-secondary-container/20 text-on-secondary-container border border-primary/20 rounded-full px-4 py-1.5 text-sm font-extrabold uppercase tracking-wider shadow-sm">
-                    {skill}
+                    {typeof skill === 'string' ? skill : (skill.name || `Skill #${skill.skillId || skill.id}`)}
                   </span>
                 ))}
                 {!mentor.skills?.length && <span className="text-on-surface-variant font-medium">No specific skills listed.</span>}
