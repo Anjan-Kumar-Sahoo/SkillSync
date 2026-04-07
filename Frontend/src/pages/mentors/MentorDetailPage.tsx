@@ -23,6 +23,10 @@ const MentorDetailPage = () => {
   const [bookingDuration, setBookingDuration] = useState(60);
   const [loadingStep, setLoadingStep] = useState<'' | 'session' | 'order' | 'verify'>('');
 
+  const tzOffset = new Date().getTimezoneOffset() * 60000;
+  const localIsoDate = new Date(Date.now() - tzOffset).toISOString().split('T')[0];
+  const [selectedDateStr, setSelectedDateStr] = useState<string>(localIsoDate);
+
   // Load Razorpay SDK
   useEffect(() => {
     const script = document.createElement('script');
@@ -50,6 +54,20 @@ const MentorDetailPage = () => {
     enabled: !!id,
   });
 
+  // Fetch booked sessions to filter out unavailable slots
+  const { data: bookedSessionsData } = useQuery({
+    queryKey: ['sessions', 'booked', id],
+    queryFn: async () => {
+      try {
+        const res = await api.get(`/api/sessions/public/mentor/${id}/booked`, { _skipErrorRedirect: true } as any);
+        return res.data;
+      } catch { return []; }
+    },
+    enabled: !!id,
+    refetchInterval: 10000, // Refresh every 10 seconds
+  });
+  const bookedSessions = bookedSessionsData || [];
+
   const verifyPaymentMutation = useMutation({
     mutationFn: async (paymentDetails: any) => api.post('/api/payments/verify', paymentDetails),
     onSuccess: () => {
@@ -71,14 +89,8 @@ const MentorDetailPage = () => {
     const m = mentor as any;
     const mentorName = `${m.firstName || ''} ${m.lastName || ''}`.trim() || `Mentor #${m.id}`;
 
-    // Build a session date from the slot's day + time
-    const now = new Date();
-    const currentDay = now.getDay();
-    let targetDay = selectedSlot.dayOfWeek;
-    let daysUntil = targetDay - currentDay;
-    if (daysUntil <= 0) daysUntil += 7;
-    const sessionDate = new Date(now);
-    sessionDate.setDate(now.getDate() + daysUntil);
+    // Build a session date from the selectedDateStr + slot time
+    const sessionDate = new Date(selectedDateStr);
     const [hours, minutes] = String(selectedSlot.startTime).split(':');
     sessionDate.setHours(Number(hours), Number(minutes), 0, 0);
 
@@ -101,7 +113,8 @@ const MentorDetailPage = () => {
       const orderRes = await api.post('/api/payments/create-order', {
         type: 'SESSION_BOOKING',
         referenceId: sessionId,
-        referenceType: 'SESSION_BOOKING'
+        referenceType: 'SESSION_BOOKING',
+        amount: estimatedCost
       }, { _skipErrorRedirect: true } as any);
       const { orderId, amount, currency, keyId } = orderRes.data;
 
@@ -265,24 +278,56 @@ const MentorDetailPage = () => {
 
         {/* Available Sessions (was "Weekly Availability") */}
         <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/10">
-          <h2 className="text-lg font-extrabold text-on-surface mb-2">Available Sessions</h2>
-          <p className="text-sm text-on-surface-variant mb-4">Select a session slot to book and pay</p>
-          {slots.length > 0 ? (
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-lg font-extrabold text-on-surface">Available Sessions</h2>
+              <p className="text-sm text-on-surface-variant">Select a date and time to book</p>
+            </div>
+            <div>
+               <input 
+                 type="date" 
+                 value={selectedDateStr}
+                 min={localIsoDate}
+                 onChange={(e) => {
+                    setSelectedDateStr(e.target.value);
+                    setSelectedSlot(null);
+                 }}
+                 className="h-10 bg-surface-container border border-outline-variant/30 rounded-lg px-3 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary outline-none"
+               />
+            </div>
+          </div>
+
+          {slots.filter((s: any) => s.dayOfWeek === new Date(selectedDateStr).getDay()).length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {[...slots]
-                .sort((a: any, b: any) => {
-                  if (a.dayOfWeek !== b.dayOfWeek) return a.dayOfWeek - b.dayOfWeek;
-                  return String(a.startTime).localeCompare(String(b.startTime));
-                })
+                .filter((s: any) => s.dayOfWeek === new Date(selectedDateStr).getDay())
+                .sort((a: any, b: any) => String(a.startTime).localeCompare(String(b.startTime)))
                 .map((slot: any) => {
                   const isSelected = selectedSlot?.id === slot.id;
+                  const pad = (n: number) => n.toString().padStart(2, '0');
+                  const [h, m] = String(slot.startTime).split(':');
+                  const slotDateTimeStr = `${selectedDateStr}T${pad(Number(h))}:${pad(Number(m))}:00`;
+                  const slotStartEpoch = new Date(slotDateTimeStr).getTime();
+                  const slotEndEpoch = slotStartEpoch + bookingDuration * 60000;
+                  
+                  // Check against booked sessions
+                  const isBooked = bookedSessions.some((bs: any) => {
+                      const bsStart = new Date(bs.sessionDate).getTime();
+                      const bsEnd = bsStart + Number(bs.durationMinutes) * 60000;
+                      // Conflict occurs if the slots overlap in time
+                      return (slotStartEpoch < bsEnd && slotEndEpoch > bsStart);
+                  });
+
+                  // Ensure we don't show slots in the past for today
+                  const isPast = slotStartEpoch < Date.now();
+                  const isUnavailable = isBooked || isPast;
                   return (
                     <button
                       key={slot.id}
                       onClick={() => setSelectedSlot(isSelected ? null : slot)}
-                      disabled={slot.isBooked}
+                      disabled={isUnavailable}
                       className={`flex items-center justify-between rounded-xl border p-4 transition-all text-left w-full ${
-                        slot.isBooked
+                        isUnavailable
                           ? 'bg-red-50 border-red-200 opacity-60 cursor-not-allowed'
                           : isSelected
                             ? 'bg-primary/10 border-primary ring-2 ring-primary/30 shadow-md'
@@ -298,8 +343,10 @@ const MentorDetailPage = () => {
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        {slot.isBooked ? (
-                          <span className="text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md bg-red-100 text-red-700 border border-red-200">Booked</span>
+                        {isUnavailable ? (
+                          <span className="text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md bg-red-100 text-red-700 border border-red-200">
+                              {isBooked ? 'Booked' : 'Passed'}
+                          </span>
                         ) : isSelected ? (
                           <span className="material-symbols-outlined text-primary text-[22px]">check_circle</span>
                         ) : (
@@ -311,10 +358,10 @@ const MentorDetailPage = () => {
                 })}
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed border-outline-variant/30 p-8 text-center text-on-surface-variant">
-              <span className="material-symbols-outlined text-3xl text-outline-variant mb-2 block">calendar_month</span>
-              <p className="font-semibold">No available sessions</p>
-              <p className="text-sm mt-1">This mentor hasn't configured their availability schedule yet.</p>
+            <div className="rounded-xl border border-dashed border-outline-variant/30 p-8 text-center text-on-surface-variant flex flex-col items-center">
+              <span className="material-symbols-outlined text-4xl text-outline-variant/50 mb-3 block">calendar_month</span>
+              <p className="font-bold text-on-surface">No slots on this date</p>
+              <p className="text-sm mt-1">Try selecting another date to see the mentor's availability.</p>
             </div>
           )}
         </div>

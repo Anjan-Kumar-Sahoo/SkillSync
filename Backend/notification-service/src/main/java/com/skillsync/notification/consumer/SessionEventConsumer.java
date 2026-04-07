@@ -32,6 +32,16 @@ public class SessionEventConsumer {
         notificationCommandService.createAndPush(mentorId, "SESSION_REQUESTED",
                 "New Session Request",
                 "You have a new session request for: " + topic);
+        try {
+            UserSummary mentor = authServiceClient.getUserById(mentorId);
+            emailService.sendEmail(mentor.email(), "New Session Request on SkillSync!", "session-booked",
+                    Map.of("recipientName", mentor.firstName(),
+                            "message", "A learner has requested a session for topic: '" + topic + "'. Please review and accept it from your dashboard.",
+                            "actionUrl", appBaseUrl + "/mentor/sessions",
+                            "actionText", "View Requests"));
+        } catch (Exception e) {
+            log.error("Failed to send session requested email to mentor {}: {}", mentorId, e.getMessage());
+        }
         log.info("Processed SESSION_REQUESTED event for mentor {}", mentorId);
     }
 
