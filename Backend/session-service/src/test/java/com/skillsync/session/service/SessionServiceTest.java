@@ -5,6 +5,8 @@ import com.skillsync.session.dto.CreateSessionRequest;
 import com.skillsync.session.dto.SessionResponse;
 import com.skillsync.session.entity.Session;
 import com.skillsync.session.enums.SessionStatus;
+import com.skillsync.session.feign.AuthServiceClient;
+import com.skillsync.session.feign.MentorProfileClient;
 import com.skillsync.session.repository.SessionRepository;
 import com.skillsync.session.service.command.SessionCommandService;
 import com.skillsync.session.service.query.SessionQueryService;
@@ -19,6 +21,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -31,6 +34,8 @@ class SessionServiceTest {
     @Mock private SessionRepository sessionRepository;
     @Mock private RabbitTemplate rabbitTemplate;
     @Mock private CacheService cacheService;
+    @Mock private AuthServiceClient authServiceClient;
+    @Mock private MentorProfileClient mentorProfileClient;
 
     @InjectMocks private SessionCommandService sessionCommandService;
     @InjectMocks private SessionQueryService sessionQueryService;
@@ -52,6 +57,7 @@ class SessionServiceTest {
         CreateSessionRequest request = new CreateSessionRequest(2L, "Java Basics", "Learn Java",
                 LocalDateTime.now().plusDays(2), 60);
 
+        when(authServiceClient.getUserById(2L)).thenReturn(Map.of("role", "ROLE_MENTOR"));
         when(sessionRepository.save(any(Session.class))).thenReturn(testSession);
 
         SessionResponse response = sessionCommandService.createSession(3L, request);
