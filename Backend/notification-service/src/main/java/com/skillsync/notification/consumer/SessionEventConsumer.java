@@ -48,23 +48,41 @@ public class SessionEventConsumer {
     @RabbitListener(queues = RabbitMQConfig.SESSION_NOTIFICATION_ACCEPTED_QUEUE)
     public void handleSessionAccepted(Map<String, Object> event) {
         Long learnerId = toLong(event.get("learnerId"));
+        Long mentorId = toLong(event.get("mentorId"));
         String topic = (String) event.get("topic");
 
         notificationCommandService.createAndPush(learnerId, "SESSION_ACCEPTED",
-                "Session Accepted!",
-                "Your session request for '" + topic + "' has been accepted.");
+                "Session Confirmed!",
+                "Your session for '" + topic + "' is confirmed.");
 
-        // Email notification
+        notificationCommandService.createAndPush(mentorId, "SESSION_ACCEPTED",
+                "New Session Booked!",
+                "A learner has booked and confirmed a session for '" + topic + "'.");
+
+        // Email notification to Learner
         try {
-            UserSummary user = authServiceClient.getUserById(learnerId);
-            emailService.sendEmail(user.email(), "SkillSync Session Accepted!", "session-booked",
-                    Map.of("recipientName", user.firstName(),
-                            "message", "Your session request for '" + topic + "' has been accepted by the mentor.",
+            UserSummary learner = authServiceClient.getUserById(learnerId);
+            emailService.sendEmail(learner.email(), "SkillSync Session Confirmed!", "session-booked",
+                    Map.of("recipientName", learner.firstName(),
+                            "message", "Your session for '" + topic + "' has been successfully booked and paid for.",
                             "actionUrl", appBaseUrl + "/learner/sessions",
                             "actionText", "View Sessions"));
         } catch (Exception e) {
             log.error("Failed to send session accepted email to learner {}: {}", learnerId, e.getMessage());
         }
+
+        // Email notification to Mentor
+        try {
+            UserSummary mentor = authServiceClient.getUserById(mentorId);
+            emailService.sendEmail(mentor.email(), "New Session Booked on SkillSync!", "session-booked",
+                    Map.of("recipientName", mentor.firstName(),
+                            "message", "A learner has successfully booked and paid for a session with you on topic: '" + topic + "'.",
+                            "actionUrl", appBaseUrl + "/mentor/sessions",
+                            "actionText", "View Schedule"));
+        } catch (Exception e) {
+            log.error("Failed to send session accepted email to mentor {}: {}", mentorId, e.getMessage());
+        }
+        log.info("Processed SESSION_ACCEPTED event for learner {} and mentor {}", learnerId, mentorId);
     }
 
     @RabbitListener(queues = RabbitMQConfig.SESSION_NOTIFICATION_REJECTED_QUEUE)
