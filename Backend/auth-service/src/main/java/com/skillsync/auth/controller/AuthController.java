@@ -87,6 +87,28 @@ public class AuthController {
         return ResponseEntity.ok("Token is valid");
     }
 
+    /**
+     * Returns the authenticated user's identity from the JWT cookie.
+     * Used by the frontend AuthLoader on page refresh to restore role state.
+     */
+    @GetMapping("/me")
+    public ResponseEntity<UserSummary> getCurrentUser(
+            @CookieValue(value = "accessToken", required = false) String accessToken,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        String token = null;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7);
+        } else if (accessToken != null) {
+            token = accessToken;
+        }
+        if (token == null || !jwtTokenProvider.isTokenValid(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Long userId = jwtTokenProvider.extractUserId(token);
+        UserSummary user = authService.getUserById(userId);
+        return ResponseEntity.ok(user);
+    }
+
     @GetMapping("/internal/users/{id}")
     public ResponseEntity<UserSummary> getUserById(@PathVariable Long id) {
         return ResponseEntity.ok(authService.getUserById(id));
@@ -95,13 +117,21 @@ public class AuthController {
     @GetMapping("/internal/users")
     public ResponseEntity<?> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "100") int size) {
-        return ResponseEntity.ok(authService.getAllUsers(page, size));
+            @RequestParam(defaultValue = "100") int size,
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false) String search) {
+        return ResponseEntity.ok(authService.getAllUsersFiltered(page, size, role, search));
     }
 
     @GetMapping("/internal/users/count")
     public ResponseEntity<Long> getUserCount(@RequestParam(required = false) String role) {
         return ResponseEntity.ok(authService.getUserCount(role));
+    }
+
+    @DeleteMapping("/internal/users/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        authService.deleteUser(id);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/forgot-password")

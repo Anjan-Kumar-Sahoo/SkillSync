@@ -20,7 +20,7 @@ const MentorApprovalsPage = () => {
       await api.post(`/api/admin/mentors/${id}/approve`);
     },
     onSuccess: () => {
-      showToast({ message: 'Mentor approved', type: 'success' });
+      showToast({ message: 'Mentor approved successfully', type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['admin', 'mentors', 'pending'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
     },
@@ -45,61 +45,96 @@ const MentorApprovalsPage = () => {
   return (
     <PageLayout>
       <div className="space-y-6">
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-          <h1 className="text-2xl font-bold text-gray-900">Approve Mentors</h1>
-          <p className="text-gray-600 mt-2">Review and manage pending mentor applications</p>
+        <div className="bg-surface-container-lowest border border-outline-variant/10 rounded-2xl p-6 shadow-sm">
+          <h1 className="text-3xl font-extrabold text-on-surface tracking-tight">Mentor Approvals</h1>
+          <p className="text-on-surface-variant mt-2">Review and manage pending mentor applications</p>
+          {!isLoading && (
+            <p className="mt-3 text-sm font-bold text-primary bg-primary/10 inline-block px-3 py-1 rounded-full">
+              {mentorsList.length} pending application{mentorsList.length !== 1 ? 's' : ''}
+            </p>
+          )}
         </div>
 
         {isLoading ? (
-          <div className="text-center text-gray-500 py-10">Loading pending mentors...</div>
+          <div className="text-center py-10">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-3"></div>
+            <p className="text-on-surface-variant">Loading pending mentors...</p>
+          </div>
         ) : mentorsList.length === 0 ? (
-          <div className="text-center text-gray-500 py-10 bg-white rounded-xl border border-gray-200">
-            No pending mentor applications.
+          <div className="text-center py-16 bg-surface-container-lowest rounded-2xl border border-outline-variant/10 shadow-sm">
+            <span className="material-symbols-outlined text-5xl text-outline-variant mb-3 block">how_to_reg</span>
+            <h3 className="text-lg font-bold text-on-surface mb-1">All caught up!</h3>
+            <p className="text-sm text-on-surface-variant">No pending mentor applications to review.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {mentorsList.map((mentor: any) => (
-              <div key={mentor.id} className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex flex-col justify-between">
+              <div key={mentor.id} className="bg-surface-container-lowest border border-outline-variant/10 rounded-2xl p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900">{mentor.firstName && mentor.lastName ? `${mentor.firstName} ${mentor.lastName}` : mentor.name || `Mentor #${mentor.id}`}</h3>
-                  <p className="text-sm text-gray-500 mb-4">{mentor.email || `User ID: ${mentor.userId}`}</p>
-                  
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-extrabold text-on-surface">
+                        {mentor.firstName && mentor.lastName
+                          ? `${mentor.firstName} ${mentor.lastName}`
+                          : `Mentor #${mentor.id}`}
+                      </h3>
+                      <p className="text-xs font-semibold text-on-surface-variant">
+                        {mentor.email || `User ID: ${mentor.userId}`}
+                      </p>
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md bg-amber-100 text-amber-700 border border-amber-200">
+                      Pending
+                    </span>
+                  </div>
+
                   <div className="space-y-3 mb-6">
-                    <div>
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Experience</p>
-                      <p className="text-sm text-gray-800 font-medium">{mentor.experienceYears || 0} years</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-surface-container rounded-lg p-3">
+                        <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-0.5">Experience</p>
+                        <p className="text-sm font-bold text-on-surface">{mentor.experienceYears || 0} years</p>
+                      </div>
+                      <div className="bg-surface-container rounded-lg p-3">
+                        <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-0.5">Hourly Rate</p>
+                        <p className="text-sm font-bold text-primary">₹{mentor.hourlyRate || 'N/A'}/hr</p>
+                      </div>
                     </div>
+
                     <div>
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Bio</p>
-                      <p className="text-sm text-gray-700 line-clamp-3">{mentor.bio || 'No bio provided'}</p>
+                      <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-1">Bio</p>
+                      <p className="text-sm text-on-surface-variant line-clamp-3">{mentor.bio || 'No bio provided'}</p>
                     </div>
+
                     <div>
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Skills</p>
-                      <div className="flex flex-wrap gap-2">
+                      <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-1">Skills</p>
+                      <div className="flex flex-wrap gap-1.5">
                         {(mentor.skills || []).map((skill: any, index: number) => (
-                          <span key={index} className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded font-medium">
+                          <span key={index} className="bg-surface-container text-on-surface-variant text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider border border-outline-variant/10">
                             {typeof skill === 'string' ? skill : skill.name || `Skill #${skill.skillId || skill.id}`}
                           </span>
                         ))}
                         {(!mentor.skills || mentor.skills.length === 0) && (
-                          <span className="text-sm text-gray-400">None listed</span>
+                          <span className="text-xs text-on-surface-variant/50">None listed</span>
                         )}
                       </div>
                     </div>
                   </div>
                 </div>
-                
-                <div className="flex gap-3 pt-4 border-t border-gray-100 mt-auto">
+
+                <div className="flex gap-3 pt-4 border-t border-outline-variant/10 mt-auto">
                   <button
                     onClick={() => approveMutation.mutate(mentor.id)}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition"
+                    disabled={approveMutation.isPending}
+                    className="flex-1 h-10 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                   >
+                    <span className="material-symbols-outlined text-[18px]">check_circle</span>
                     Approve
                   </button>
                   <button
                     onClick={() => rejectMutation.mutate(mentor.id)}
-                    className="flex-1 bg-red-100 hover:bg-red-200 text-red-700 font-bold py-2 px-4 rounded-lg transition"
+                    disabled={rejectMutation.isPending}
+                    className="flex-1 h-10 bg-red-100 hover:bg-red-200 text-red-700 font-bold rounded-xl transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                   >
+                    <span className="material-symbols-outlined text-[18px]">cancel</span>
                     Reject
                   </button>
                 </div>

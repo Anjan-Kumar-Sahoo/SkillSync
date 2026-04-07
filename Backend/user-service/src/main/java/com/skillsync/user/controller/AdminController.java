@@ -60,9 +60,11 @@ public class AdminController {
     @GetMapping("/users")
     public ResponseEntity<?> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "100") int size) {
+            @RequestParam(defaultValue = "100") int size,
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false) String search) {
         try {
-            Map<String, Object> users = authServiceClient.getAllUsers(page, size);
+            Map<String, Object> users = authServiceClient.getAllUsers(page, size, role, search);
             return ResponseEntity.ok(users);
         } catch (Exception e) {
             log.error("Failed to fetch users from auth-service: {}", e.getMessage());
@@ -75,6 +77,27 @@ public class AdminController {
             @PathVariable Long id, @RequestBody Map<String, String> body) {
         String role = body.get("role");
         authServiceClient.updateUserRole(id, role);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/users/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        // First clean up mentor profile + slots in user-service if exists
+        try {
+            mentorProfileRepository.findByUserId(id).ifPresent(profile -> {
+                mentorProfileRepository.delete(profile); // cascades to slots + skills
+                log.info("Deleted mentor profile for userId: {}", id);
+            });
+        } catch (Exception e) {
+            log.warn("Failed to clean up mentor data for userId {}: {}", id, e.getMessage());
+        }
+        // Then delete the auth user (cascade: refresh tokens)
+        try {
+            authServiceClient.deleteUser(id);
+        } catch (Exception e) {
+            log.error("Failed to delete user from auth-service: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
         return ResponseEntity.ok().build();
     }
 

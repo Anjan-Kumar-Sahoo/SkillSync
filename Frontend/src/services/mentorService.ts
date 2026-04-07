@@ -16,6 +16,15 @@ export interface MentorApplicationPayload {
   skillIds: number[];
 }
 
+export interface AvailabilitySlot {
+  id: number;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  isActive: boolean;
+  isBooked?: boolean;
+}
+
 interface PaginatedResponse<T> {
   content: T[];
   totalElements: number;
@@ -70,16 +79,25 @@ class MentorService {
     return res.data;
   }
 
-  async getMentorAvailability(mentorId: number): Promise<string[]> {
-    const res = await api.get(`/api/mentors/${mentorId}/availability`);
+  // ─── Availability ───
+
+  async getMyAvailability(): Promise<AvailabilitySlot[]> {
+    const res = await api.get('/api/mentors/me/availability');
     return res.data;
   }
 
-  async updateMentorAvailability(
-    mentorId: number,
-    availability: string[]
-  ): Promise<void> {
-    await api.put(`/api/mentors/${mentorId}/availability`, { availability });
+  async addMyAvailability(slot: { dayOfWeek: number; startTime: string; endTime: string }): Promise<AvailabilitySlot> {
+    const res = await api.post('/api/mentors/me/availability', slot);
+    return res.data;
+  }
+
+  async removeMyAvailability(slotId: number): Promise<void> {
+    await api.delete(`/api/mentors/me/availability/${slotId}`);
+  }
+
+  async getMentorAvailability(mentorId: number): Promise<AvailabilitySlot[]> {
+    const res = await api.get(`/api/mentors/${mentorId}/availability`);
+    return res.data;
   }
 
   async getTopMentors(limit: number = 5): Promise<MentorData[]> {
@@ -89,3 +107,4 @@ class MentorService {
 }
 
 export default new MentorService();
+

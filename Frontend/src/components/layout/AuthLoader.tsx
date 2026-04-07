@@ -31,14 +31,15 @@ export const AuthLoader = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      // If user isn't loaded yet, try to fetch profile using cookies
+      // If user isn't loaded yet, try to fetch identity using cookies
       if (!user) {
         try {
-          const { data } = await api.get('/api/users/me', {
+          // Use /api/auth/me which extracts user from JWT cookie and returns UserSummary with role
+          const { data } = await api.get('/api/auth/me', {
             _skipErrorRedirect: true,
             _skipAuthRedirect: true,
           } as any);
-          if (mounted) {
+          if (mounted && data) {
             dispatch(setCredentials({ accessToken: '', refreshToken: '', user: data }));
           }
         } catch (error) {

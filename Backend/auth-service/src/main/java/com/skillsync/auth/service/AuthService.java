@@ -342,8 +342,16 @@ public class AuthService {
     }
 
     public Map<String, Object> getAllUsers(int page, int size) {
+        return getAllUsersFiltered(page, size, null, null);
+    }
+
+    public Map<String, Object> getAllUsersFiltered(int page, int size, String role, String search) {
         var pageable = org.springframework.data.domain.PageRequest.of(page, size);
-        var usersPage = authUserRepository.findAll(pageable);
+        Role roleEnum = null;
+        if (role != null && !role.isBlank()) {
+            try { roleEnum = Role.valueOf(role); } catch (IllegalArgumentException ignored) {}
+        }
+        var usersPage = authUserRepository.findByFilters(roleEnum, search, pageable);
         var content = usersPage.getContent().stream()
                 .map(u -> new UserSummary(u.getId(), u.getEmail(), u.getRole().name(),
                         u.getFirstName(), u.getLastName()))
@@ -361,5 +369,14 @@ public class AuthService {
             return authUserRepository.countByRole(Role.valueOf(role));
         }
         return authUserRepository.count();
+    }
+
+    @Transactional
+    public void deleteUser(Long userId) {
+        AuthUser user = authUserRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        refreshTokenRepository.deleteByUser(user);
+        authUserRepository.delete(user);
+        log.info("User deleted: id={}, email={}", userId, user.getEmail());
     }
 }
