@@ -35,7 +35,7 @@ const LearnerDashboardPage = () => {
   const { data: mentors, isLoading: loadingMentors } = useQuery({
     queryKey: ['mentors', 'recommended'],
     queryFn: async () => {
-      const res = await api.get('/api/mentors/search?page=0&size=4&sort=rating,desc');
+      const res = await api.get('/api/mentors/search?page=0&size=4&sort=avgRating,desc');
       return res.data;
     }
   });
