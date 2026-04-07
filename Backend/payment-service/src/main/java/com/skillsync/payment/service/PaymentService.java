@@ -58,7 +58,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class PaymentService {
 
-        private static final int FIXED_AMOUNT_PAISE = 900; // ₹9 in paise
+        private static final int DEFAULT_AMOUNT_PAISE = 900; // ₹9 fallback
         private static final String CURRENCY = "INR";
 
         private final RazorpayClient razorpayClient;
@@ -88,8 +88,12 @@ public class PaymentService {
                 preventDuplicatePayment(userId, request);
 
                 try {
+                        int amountPaise = request.amount() != null && request.amount() > 0 
+                                ? request.amount() * 100 
+                                : DEFAULT_AMOUNT_PAISE;
+
                         JSONObject orderRequest = new JSONObject();
-                        orderRequest.put("amount", FIXED_AMOUNT_PAISE);
+                        orderRequest.put("amount", amountPaise);
                         orderRequest.put("currency", CURRENCY);
                         orderRequest.put("receipt", "receipt_" + userId + "_" + System.currentTimeMillis());
 
@@ -107,7 +111,7 @@ public class PaymentService {
                         Payment payment = Payment.builder()
                                         .userId(userId)
                                         .type(request.type())
-                                        .amount(FIXED_AMOUNT_PAISE)
+                                        .amount(amountPaise)
                                         .razorpayOrderId(orderId)
                                         .status(PaymentStatus.CREATED)
                                         .referenceId(request.referenceId())
@@ -120,7 +124,7 @@ public class PaymentService {
 
                         return new CreateOrderResponse(
                                         orderId,
-                                        FIXED_AMOUNT_PAISE,
+                                        amountPaise,
                                         CURRENCY,
                                         PaymentStatus.CREATED.name(),
                                         razorpayKeyId);
@@ -180,10 +184,9 @@ public class PaymentService {
                 // 6. Verify Razorpay signature
                 verifyRazorpaySignature(payment, request);
 
-                // 7. Validate amount
-                if (payment.getAmount() != FIXED_AMOUNT_PAISE) {
-                        markPaymentFailed(payment, "Amount mismatch: expected " + FIXED_AMOUNT_PAISE
-                                        + " but found " + payment.getAmount());
+                // 7. Validate amount (Removed strict fixed amount validation since it can vary)
+                if (payment.getAmount() <= 0) {
+                        markPaymentFailed(payment, "Amount invalid: " + payment.getAmount());
                         throw new PaymentException("AMOUNT_MISMATCH",
                                         "Payment amount verification failed");
                 }

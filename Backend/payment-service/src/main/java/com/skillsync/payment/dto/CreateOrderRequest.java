@@ -12,5 +12,7 @@ public record CreateOrderRequest(
         Long referenceId,
 
         @NotNull(message = "Reference type is required — MENTOR_ONBOARDING or SESSION_BOOKING")
-        ReferenceType referenceType
+        ReferenceType referenceType,
+
+        Integer amount
 ) {}

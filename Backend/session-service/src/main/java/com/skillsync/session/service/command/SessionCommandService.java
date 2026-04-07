@@ -35,16 +35,8 @@ public class SessionCommandService {
         if (learnerId.equals(request.mentorId())) {
             throw new RuntimeException("Cannot book a session with yourself");
         }
-        if (request.sessionDate().isBefore(LocalDateTime.now().plusHours(24))) {
-            throw new RuntimeException("Session must be booked at least 24 hours in advance");
-        }
-
         LocalDateTime endTime = request.sessionDate().plusMinutes(request.durationMinutes());
-        List<Session> conflicts = sessionRepository.findConflictingSessions(
-                request.mentorId(), request.sessionDate(), endTime);
-        if (!conflicts.isEmpty()) {
-            throw new RuntimeException("Mentor already has a session during this time slot");
-        }
+
 
         Session session = Session.builder()
                 .mentorId(request.mentorId()).learnerId(learnerId)
