@@ -27,13 +27,23 @@ const MentorDetailPage = () => {
   const localIsoDate = new Date(Date.now() - tzOffset).toISOString().split('T')[0];
   const [selectedDateStr, setSelectedDateStr] = useState<string>(localIsoDate);
 
-  // Load Razorpay SDK
+  // Load Razorpay SDK with proper onload tracking
+  const [razorpayReady, setRazorpayReady] = useState(false);
   useEffect(() => {
+    // If already loaded (e.g. from a previous page visit), skip
+    if (window.Razorpay) {
+      setRazorpayReady(true);
+      return;
+    }
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.async = true;
+    script.onload = () => setRazorpayReady(true);
+    script.onerror = () => console.error('Failed to load Razorpay SDK');
     document.body.appendChild(script);
-    return () => { document.body.removeChild(script); };
+    return () => {
+      try { document.body.removeChild(script); } catch (_) { /* already removed */ }
+    };
   }, []);
 
   // Fetch mentor profile
@@ -118,15 +128,15 @@ const MentorDetailPage = () => {
       }, { _skipErrorRedirect: true } as any);
       const { orderId, amount, currency, keyId } = orderRes.data;
 
-      if (!window.Razorpay) {
-        showToast({ message: 'Payment gateway failed to load. Please try again.', type: 'error' });
+      if (!window.Razorpay || !razorpayReady) {
+        showToast({ message: 'Payment gateway is still loading. Please wait a moment and try again.', type: 'error' });
         setLoadingStep('');
         return;
       }
 
       const rzp = new window.Razorpay({
         key: keyId,
-        amount: amount * 100,
+        amount,
         currency,
         name: 'SkillSync',
         description: `Session with ${mentorName}`,
