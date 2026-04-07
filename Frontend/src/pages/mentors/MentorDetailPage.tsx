@@ -82,15 +82,19 @@ const MentorDetailPage = () => {
     const [hours, minutes] = String(selectedSlot.startTime).split(':');
     sessionDate.setHours(Number(hours), Number(minutes), 0, 0);
 
+    // Format as LocalDateTime (no Z suffix) — backend expects java.time.LocalDateTime
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const localDateTimeStr = `${sessionDate.getFullYear()}-${pad(sessionDate.getMonth() + 1)}-${pad(sessionDate.getDate())}T${pad(sessionDate.getHours())}:${pad(sessionDate.getMinutes())}:00`;
+
     try {
       setLoadingStep('session');
       const sessionRes = await api.post('/api/sessions', {
         mentorId: Number(id),
         topic: 'Mentoring Session',
         description: `Session with ${mentorName} on ${weekdayNames[selectedSlot.dayOfWeek]}`,
-        sessionDate: sessionDate.toISOString(),
+        sessionDate: localDateTimeStr,
         durationMinutes: bookingDuration,
-      });
+      }, { _skipErrorRedirect: true } as any);
       const sessionId = sessionRes.data.id;
 
       setLoadingStep('order');
@@ -98,7 +102,7 @@ const MentorDetailPage = () => {
         type: 'SESSION_BOOKING',
         referenceId: sessionId,
         referenceType: 'SESSION_BOOKING'
-      });
+      }, { _skipErrorRedirect: true } as any);
       const { orderId, amount, currency, keyId } = orderRes.data;
 
       if (!window.Razorpay) {
