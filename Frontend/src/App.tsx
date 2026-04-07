@@ -22,6 +22,7 @@ import EarningsPage from './pages/mentor/EarningsPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import UsersCenterPage from './pages/admin/UsersCenterPage';
 import MentorApprovalsPage from './pages/admin/MentorApprovalsPage';
+import AdminSkillsPage from './pages/admin/AdminSkillsPage';
 import DiscoverMentorsPage from './pages/mentors/DiscoverMentorsPage';
 import MentorDetailPage from './pages/mentors/MentorDetailPage';
 import MySessionsPage from './pages/sessions/MySessionsPage';
@@ -76,6 +77,7 @@ function App() {
               <Route path="/admin" element={<AdminDashboardPage />} />
               <Route path="/admin/users" element={<UsersCenterPage />} />
               <Route path="/admin/mentor-approvals" element={<MentorApprovalsPage />} />
+              <Route path="/admin/skills" element={<AdminSkillsPage />} />
               <Route path="/mentors" element={<DiscoverMentorsPage />} />
               <Route path="/mentors/:id" element={<MentorDetailPage />} />
               <Route path="/sessions" element={<MySessionsPage />} />

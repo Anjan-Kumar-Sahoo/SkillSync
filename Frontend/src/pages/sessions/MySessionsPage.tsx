@@ -11,11 +11,12 @@ import type { RootState } from '../../store';
 
 type Tab = 'Upcoming' | 'Pending' | 'Completed' | 'Cancelled';
 
-const statusMap: Record<Tab, string> = {
-  Upcoming: 'ACCEPTED',
-  Pending: 'REQUESTED',
-  Completed: 'COMPLETED',
-  Cancelled: 'CANCELLED',
+const statusMap: Record<Tab, string[]> = {
+  // Include REQUESTED in Upcoming so newly booked sessions are visible immediately.
+  Upcoming: ['ACCEPTED', 'REQUESTED'],
+  Pending: ['REQUESTED'],
+  Completed: ['COMPLETED'],
+  Cancelled: ['CANCELLED'],
 };
 
 const MySessionsPage = () => {
@@ -23,6 +24,7 @@ const MySessionsPage = () => {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const role = useSelector((state: RootState) => state.auth.role);
+  const userId = useSelector((state: RootState) => state.auth.user?.id);
   const isMentor = role === 'ROLE_MENTOR';
 
   const tabs: Tab[] = ['Upcoming', 'Pending', 'Completed', 'Cancelled'];
@@ -36,19 +38,20 @@ const MySessionsPage = () => {
   });
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['sessions', role || 'unknown', activeTab, page],
+    queryKey: ['sessions', userId || 'unknown', role || 'unknown', activeTab, page],
     queryFn: async () => {
-      const status = statusMap[activeTab];
+      const statuses = statusMap[activeTab];
       const endpoint = isMentor ? '/api/sessions/mentor' : '/api/sessions/learner';
-      const res = await api.get(`${endpoint}?page=${page}&size=50`);
-      const allSessions = res.data?.content || [];
-      const filtered = allSessions.filter((s: any) => s.status === status);
-      return {
-        ...res.data,
-        content: filtered.slice(0, 10),
-        totalElements: filtered.length,
-      };
+      const params = new URLSearchParams();
+      params.set('page', String(page));
+      params.set('size', '10');
+      params.set('sort', 'createdAt,desc');
+      statuses.forEach((status) => params.append('status', status));
+
+      const res = await api.get(`${endpoint}?${params.toString()}`);
+      return res.data;
     },
+    enabled: !!role && !!userId,
     refetchInterval: activeTab === 'Pending' ? 30000 : false,
   });
 
@@ -257,7 +260,7 @@ const MySessionsPage = () => {
         onClose={() => setReviewModalData(prev => ({ ...prev, isOpen: false }))} 
         sessionId={reviewModalData.sessionId} 
         mentorId={reviewModalData.mentorId} 
-        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['sessions', 'Completed'] })}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['sessions'] })}
       />
 
     </PageLayout>

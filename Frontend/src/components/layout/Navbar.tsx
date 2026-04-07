@@ -8,7 +8,7 @@ const Navbar = () => {
   const user = useSelector((state: RootState) => state.auth.user);
 
   const { data: notificationData } = useQuery({
-    queryKey: ['unread-notifications'],
+    queryKey: ['unread-notifications', user?.id || 'unknown'],
     queryFn: async () => {
       try {
         const response = await api.get('/api/notifications/unread/count', { _skipErrorRedirect: true } as any);
@@ -17,6 +17,7 @@ const Navbar = () => {
         return { count: 0 };
       }
     },
+    enabled: !!user?.id,
     refetchInterval: 30000,
   });
 

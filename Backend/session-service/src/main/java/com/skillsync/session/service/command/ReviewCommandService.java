@@ -50,7 +50,7 @@ public class ReviewCommandService {
         Review review = Review.builder()
                 .sessionId(request.sessionId()).mentorId(mentorId).reviewerId(reviewerId)
                 .rating(request.rating()).comment(request.comment()).build();
-        review = reviewRepository.save(review);
+        review = reviewRepository.saveAndFlush(review);
 
         // Invalidate versioned review caches
         cacheService.evictByPattern(CacheService.vKey("review:mentor:" + mentorId + ":*"));

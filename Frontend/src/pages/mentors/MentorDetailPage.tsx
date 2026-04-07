@@ -97,6 +97,11 @@ const MentorDetailPage = () => {
     }
 
     const m = mentor as any;
+    const mentorUserId = Number(m.userId);
+    if (!Number.isFinite(mentorUserId)) {
+      showToast({ message: 'Invalid mentor information. Please refresh and try again.', type: 'error' });
+      return;
+    }
     const mentorName = `${m.firstName || ''} ${m.lastName || ''}`.trim() || `Mentor #${m.id}`;
 
     // Build a session date from the selectedDateStr + slot time
@@ -111,7 +116,7 @@ const MentorDetailPage = () => {
     try {
       setLoadingStep('session');
       const sessionRes = await api.post('/api/sessions', {
-        mentorId: Number(id),
+        mentorId: mentorUserId,
         topic: 'Mentoring Session',
         description: `Session with ${mentorName} on ${weekdayNames[selectedSlot.dayOfWeek]}`,
         sessionDate: localDateTimeStr,

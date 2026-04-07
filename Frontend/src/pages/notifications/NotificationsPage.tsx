@@ -1,16 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSelector } from 'react-redux';
 import notificationService from '../../services/notificationService';
 import PageLayout from '../../components/layout/PageLayout';
 import { useToast } from '../../components/ui/Toast';
+import type { RootState } from '../../store';
 
 const NotificationsPage = () => {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const userId = useSelector((state: RootState) => state.auth.user?.id);
 
   // Fetch notifications
   const { data: notificationsData, isLoading } = useQuery({
-    queryKey: ['notifications'],
+    queryKey: ['notifications', userId || 'unknown'],
     queryFn: () => notificationService.getNotifications(0, 50),
+    enabled: !!userId,
     refetchInterval: 30000,
   });
 

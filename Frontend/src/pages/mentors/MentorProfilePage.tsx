@@ -81,9 +81,13 @@ const MentorProfilePage = () => {
 
   const handleBook = () => {
     if (!selectedSlot || !mentor) return;
+
+    const mentorUserId = Number(mentor.userId);
+    if (!Number.isFinite(mentorUserId)) return;
+
     navigate('/checkout', { 
       state: { 
-        mentorId: mentor.id, 
+        mentorId: mentorUserId,
         mentorName: `${mentor.firstName} ${mentor.lastName}`, 
         slotId: selectedSlot.id, 
         startTime: selectedSlot.startTime, 

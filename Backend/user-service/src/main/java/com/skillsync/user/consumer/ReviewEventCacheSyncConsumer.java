@@ -28,7 +28,15 @@ public class ReviewEventCacheSyncConsumer {
     public void handleReviewSubmitted(Map<String, Object> event) {
         try {
             Long mentorId = toLong(event.get("mentorId"));
-            double avgRating = ((Number) event.get("avgRating")).doubleValue();
+            Object avgRatingValue = event.get("avgRating");
+            if (avgRatingValue == null) {
+                // Backward compatibility: session-service currently emits newAvgRating.
+                avgRatingValue = event.get("newAvgRating");
+            }
+            if (!(avgRatingValue instanceof Number)) {
+                throw new IllegalArgumentException("Missing avgRating/newAvgRating in review event payload");
+            }
+            double avgRating = ((Number) avgRatingValue).doubleValue();
             int totalReviews = ((Number) event.get("totalReviews")).intValue();
 
             // Idempotent: recalculated avg/total from source; safe to replay

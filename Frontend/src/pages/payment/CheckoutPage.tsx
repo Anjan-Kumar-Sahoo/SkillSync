@@ -58,10 +58,16 @@ const CheckoutPage = () => {
   });
 
   const handleConfirm = async () => {
+    const normalizedMentorId = Number(mentorId);
+    if (!Number.isFinite(normalizedMentorId)) {
+      showToast({ message: 'Invalid mentor selection. Please rebook from mentor page.', type: 'error' });
+      return;
+    }
+
     try {
       setLoadingStep('session');
       const sessionRes = await api.post('/api/sessions', {
-        mentorId,
+        mentorId: normalizedMentorId,
         topic: 'Mentoring Session',
         description: `Checkout booking with ${mentorName}`,
         sessionDate: startTime,

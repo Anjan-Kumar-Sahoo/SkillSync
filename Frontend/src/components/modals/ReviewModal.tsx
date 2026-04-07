@@ -19,17 +19,27 @@ const ReviewModal = ({ isOpen, onClose, sessionId, mentorId, onSuccess }: Review
 
   const reviewMutation = useMutation({
     mutationFn: async () => {
-      const payload = { sessionId, mentorId, rating, comment };
+      const trimmedComment = comment.trim();
+      const payload = {
+        sessionId,
+        mentorId,
+        rating,
+        comment: trimmedComment.length > 0 ? trimmedComment : null,
+      };
       const res = await api.post('/api/reviews', payload);
       return res.data;
     },
     onSuccess: () => {
       showToast({ message: 'Review submitted successfully!', type: 'success' });
+      setRating(0);
+      setHoverRating(0);
+      setComment('');
       onSuccess();
       onClose();
     },
-    onError: () => {
-      showToast({ message: 'Failed to submit review. Please try again.', type: 'error' });
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || 'Failed to submit review. Please try again.';
+      showToast({ message, type: 'error' });
     }
   });
 

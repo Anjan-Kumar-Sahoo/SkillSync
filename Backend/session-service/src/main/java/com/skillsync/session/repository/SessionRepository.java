@@ -14,7 +14,9 @@ import java.util.List;
 @Repository
 public interface SessionRepository extends JpaRepository<Session, Long> {
     Page<Session> findByLearnerId(Long learnerId, Pageable pageable);
+    Page<Session> findByLearnerIdAndStatusIn(Long learnerId, List<SessionStatus> statuses, Pageable pageable);
     Page<Session> findByMentorId(Long mentorId, Pageable pageable);
+    Page<Session> findByMentorIdAndStatusIn(Long mentorId, List<SessionStatus> statuses, Pageable pageable);
     Page<Session> findByMentorIdAndStatus(Long mentorId, SessionStatus status, Pageable pageable);
     List<Session> findByMentorIdAndStatusIn(Long mentorId, List<SessionStatus> statuses);
 

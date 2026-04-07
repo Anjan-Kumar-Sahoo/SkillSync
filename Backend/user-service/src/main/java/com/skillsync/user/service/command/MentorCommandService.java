@@ -137,6 +137,7 @@ public class MentorCommandService {
         log.info("[CQRS:COMMAND] Availability removed for mentorId {}. Cache invalidated.", profile.getId());
     }
 
+    @Transactional
     public void updateAvgRating(Long mentorId, double avgRating, int totalReviews) {
         MentorProfile profile = mentorProfileRepository.findById(mentorId)
                 .orElseThrow(() -> new RuntimeException("Mentor not found: " + mentorId));

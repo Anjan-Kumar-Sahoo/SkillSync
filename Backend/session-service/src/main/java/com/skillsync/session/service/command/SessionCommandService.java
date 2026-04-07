@@ -6,6 +6,8 @@ import com.skillsync.session.dto.*;
 import com.skillsync.session.entity.Session;
 import com.skillsync.session.enums.SessionStatus;
 import com.skillsync.session.event.SessionEvent;
+import com.skillsync.session.feign.AuthServiceClient;
+import com.skillsync.session.feign.MentorProfileClient;
 import com.skillsync.session.mapper.SessionMapper;
 import com.skillsync.session.repository.SessionRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * CQRS Command Service for Session operations.
@@ -29,16 +32,20 @@ public class SessionCommandService {
     private final SessionRepository sessionRepository;
     private final RabbitTemplate rabbitTemplate;
     private final CacheService cacheService;
+    private final AuthServiceClient authServiceClient;
+    private final MentorProfileClient mentorProfileClient;
 
     @Transactional
     public SessionResponse createSession(Long learnerId, CreateSessionRequest request) {
-        if (learnerId.equals(request.mentorId())) {
+        Long mentorUserId = resolveMentorUserId(request.mentorId());
+
+        if (learnerId.equals(mentorUserId)) {
             throw new RuntimeException("Cannot book a session with yourself");
         }
 
 
         Session session = Session.builder()
-                .mentorId(request.mentorId()).learnerId(learnerId)
+                .mentorId(mentorUserId).learnerId(learnerId)
                 .topic(request.topic()).description(request.description())
                 .sessionDate(request.sessionDate()).durationMinutes(request.durationMinutes())
                 .status(SessionStatus.REQUESTED).build();
@@ -152,5 +159,61 @@ public class SessionCommandService {
         } catch (Exception e) {
             log.error("Failed to publish session event: {}", e.getMessage());
         }
+    }
+
+    private Long resolveMentorUserId(Long requestedMentorId) {
+        if (requestedMentorId == null) {
+            throw new RuntimeException("Mentor ID is required");
+        }
+
+        Map<String, Object> user = fetchUserById(requestedMentorId);
+        if (isMentorUser(user)) {
+            return requestedMentorId;
+        }
+
+        Long mappedUserId = mapMentorProfileIdToUserId(requestedMentorId);
+        if (mappedUserId != null) {
+            Map<String, Object> mappedUser = fetchUserById(mappedUserId);
+            // If auth lookup is temporarily unavailable, fall back to mapped userId from mentor profile.
+            if (mappedUser == null || isMentorUser(mappedUser)) {
+                log.warn("Resolved mentor profile id {} to mentor user id {} for booking request.", requestedMentorId, mappedUserId);
+                return mappedUserId;
+            }
+        }
+
+        throw new RuntimeException("Invalid mentor id for booking: " + requestedMentorId);
+    }
+
+    private Map<String, Object> fetchUserById(Long userId) {
+        try {
+            return authServiceClient.getUserById(userId);
+        } catch (Exception e) {
+            log.warn("Unable to validate user {} via auth-service: {}", userId, e.getMessage());
+            return null;
+        }
+    }
+
+    private boolean isMentorUser(Map<String, Object> userPayload) {
+        if (userPayload == null) {
+            return false;
+        }
+        Object role = userPayload.get("role");
+        return "ROLE_MENTOR".equals(String.valueOf(role));
+    }
+
+    private Long mapMentorProfileIdToUserId(Long mentorProfileId) {
+        try {
+            Map<String, Object> mentorProfile = mentorProfileClient.getMentorById(mentorProfileId);
+            Object userIdValue = mentorProfile.get("userId");
+            if (userIdValue instanceof Number number) {
+                return number.longValue();
+            }
+            if (userIdValue != null) {
+                return Long.parseLong(String.valueOf(userIdValue));
+            }
+        } catch (Exception e) {
+            log.debug("Mentor profile lookup failed for id {}: {}", mentorProfileId, e.getMessage());
+        }
+        return null;
     }
 }

@@ -3,6 +3,7 @@ package com.skillsync.session.service.query;
 import com.skillsync.cache.CacheService;
 import com.skillsync.session.dto.*;
 import com.skillsync.session.entity.Session;
+import com.skillsync.session.enums.SessionStatus;
 import com.skillsync.session.mapper.SessionMapper;
 import com.skillsync.session.repository.SessionRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.List;
 
 /**
  * CQRS Query Service for Session operations.
@@ -44,6 +46,15 @@ public class SessionQueryService {
     }
 
     public Page<SessionResponse> getSessionsByLearner(Long learnerId, Pageable pageable) {
+        return getSessionsByLearner(learnerId, null, pageable);
+    }
+
+    public Page<SessionResponse> getSessionsByLearner(Long learnerId, List<SessionStatus> statuses, Pageable pageable) {
+        if (statuses != null && !statuses.isEmpty()) {
+            return sessionRepository.findByLearnerIdAndStatusIn(learnerId, statuses, pageable)
+                    .map(SessionQueryService::mapToResponse);
+        }
+
         return sessionRepository.findByLearnerId(learnerId, pageable)
                 .map(SessionQueryService::mapToResponse);
     }
@@ -53,6 +64,15 @@ public class SessionQueryService {
     }
 
     public Page<SessionResponse> getSessionsByMentor(Long mentorId, Pageable pageable) {
+        return getSessionsByMentor(mentorId, null, pageable);
+    }
+
+    public Page<SessionResponse> getSessionsByMentor(Long mentorId, List<SessionStatus> statuses, Pageable pageable) {
+        if (statuses != null && !statuses.isEmpty()) {
+            return sessionRepository.findByMentorIdAndStatusIn(mentorId, statuses, pageable)
+                    .map(SessionQueryService::mapToResponse);
+        }
+
         return sessionRepository.findByMentorId(mentorId, pageable)
                 .map(SessionQueryService::mapToResponse);
     }

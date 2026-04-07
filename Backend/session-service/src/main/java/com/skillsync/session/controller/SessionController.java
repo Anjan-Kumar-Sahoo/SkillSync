@@ -1,6 +1,7 @@
 package com.skillsync.session.controller;
 
 import com.skillsync.session.dto.*;
+import com.skillsync.session.enums.SessionStatus;
 import com.skillsync.session.service.command.SessionCommandService;
 import com.skillsync.session.service.query.SessionQueryService;
 import jakarta.validation.Valid;
@@ -10,6 +11,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/sessions")
@@ -28,14 +31,18 @@ public class SessionController {
 
     @GetMapping("/learner")
     public ResponseEntity<Page<SessionResponse>> getLearnerSessions(
-            @RequestHeader("X-User-Id") Long userId, Pageable pageable) {
-        return ResponseEntity.ok(sessionQueryService.getSessionsByLearner(userId, pageable));
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestParam(value = "status", required = false) List<SessionStatus> statuses,
+            Pageable pageable) {
+        return ResponseEntity.ok(sessionQueryService.getSessionsByLearner(userId, statuses, pageable));
     }
 
     @GetMapping("/mentor")
     public ResponseEntity<Page<SessionResponse>> getMentorSessions(
-            @RequestHeader("X-User-Id") Long userId, Pageable pageable) {
-        return ResponseEntity.ok(sessionQueryService.getSessionsByMentor(userId, pageable));
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestParam(value = "status", required = false) List<SessionStatus> statuses,
+            Pageable pageable) {
+        return ResponseEntity.ok(sessionQueryService.getSessionsByMentor(userId, statuses, pageable));
     }
 
     @GetMapping("/public/mentor/{mentorId}/booked")
