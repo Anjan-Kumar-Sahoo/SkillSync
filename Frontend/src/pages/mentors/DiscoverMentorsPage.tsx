@@ -169,8 +169,11 @@ const DiscoverMentorsPage = () => {
                     {getInitials(mentor.firstName, mentor.lastName)}
                   </div>
                   <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm shadow-sm rounded-lg px-2 py-1 flex items-center gap-1 z-10">
-                    <span className="text-amber-500 text-sm">★</span>
-                    <span className="font-bold text-xs text-on-surface">{mentor.rating?.toFixed(1) || 'NEW'}</span>
+                    {(mentor.totalReviews > 0 || mentor.reviewCount > 0) ? (
+                      <><span className="text-amber-500 text-sm">★</span><span className="font-bold text-xs text-on-surface">{Number(mentor.avgRating || mentor.rating || 0).toFixed(1)}</span></>
+                    ) : (
+                      <span className="font-bold text-xs text-primary">★ NEW</span>
+                    )}
                   </div>
                 </div>
                 

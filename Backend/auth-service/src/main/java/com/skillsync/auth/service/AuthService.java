@@ -169,6 +169,10 @@ public class AuthService {
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         user.setRole(Role.valueOf(role));
         authUserRepository.save(user);
+        
+        // Invalidate Redis profile cache so front-end gets updated role
+        cacheService.evict(CacheService.vKey("user:profile:" + user.getId()));
+        
         log.info("User role updated to {} for userId: {}", role, userId);
     }
 

@@ -40,9 +40,9 @@ ON CONFLICT (id) DO NOTHING;
 SELECT setval(pg_get_serial_sequence('users.profiles', 'id'), coalesce(max(id),0) + 1, false) FROM users.profiles;
 
 INSERT INTO mentors.mentor_profiles (id, user_id, bio, experience_years, hourly_rate, avg_rating, total_reviews, total_sessions, status, created_at, updated_at) VALUES
-(1, 4, 'Communication + JAVA FS DEVELOPER', 5, 50.00, 5.0, 0, 0, 'APPROVED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-(2, 5, 'Core Java + Kotlin + Adv. Java Expert', 5, 50.00, 5.0, 0, 0, 'APPROVED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-(3, 6, 'Core Java + Ai/ML Specialist', 5, 50.00, 5.0, 0, 0, 'APPROVED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+(1, 4, 'Communication + JAVA FS DEVELOPER', 5, 50.00, 0.0, 0, 0, 'APPROVED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(2, 5, 'Core Java + Kotlin + Adv. Java Expert', 5, 50.00, 0.0, 0, 0, 'APPROVED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(3, 6, 'Core Java + Ai/ML Specialist', 5, 50.00, 0.0, 0, 0, 'APPROVED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO NOTHING;
 
 SELECT setval(pg_get_serial_sequence('mentors.mentor_profiles', 'id'), coalesce(max(id),0) + 1, false) FROM mentors.mentor_profiles;

@@ -389,7 +389,7 @@ const LearnerDashboardPage = () => {
                     <h3 className="font-bold text-on-surface leading-tight">{mnt.firstName} {mnt.lastName}</h3>
                     <div className="flex items-center gap-1 bg-secondary-container/30 px-2 py-0.5 rounded text-xs font-bold text-on-secondary-container">
                       <span className="material-symbols-outlined text-[14px]">star</span>
-                      {mnt.rating?.toFixed(1) || 'NEW'}
+                      {(mnt.totalReviews > 0 || mnt.reviewCount > 0) ? Number(mnt.avgRating || mnt.rating || 0).toFixed(1) : 'NEW'}
                     </div>
                   </div>
                   <p className="text-xs font-medium text-on-surface-variant mt-1 line-clamp-2">{mnt.headline}</p>
