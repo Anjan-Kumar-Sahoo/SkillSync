@@ -58,6 +58,13 @@ public class SkillQueryService {
                 .collect(Collectors.toList());
     }
 
+    public List<SkillResponse> getSkillsByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return List.of();
+        return skillRepository.findAllById(ids).stream()
+                .map(SkillQueryService::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     /**
      * @deprecated Use {@link SkillMapper#toResponse} directly.
      */

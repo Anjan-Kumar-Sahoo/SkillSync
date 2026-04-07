@@ -34,6 +34,7 @@ public class MentorQueryService {
     private final MentorProfileRepository mentorProfileRepository;
     private final CacheService cacheService;
     private final AuthServiceClient authServiceClient;
+    private final com.skillsync.user.feign.SkillServiceClient skillServiceClient;
 
     @Value("${cache.ttl.mentor:600}")
     private long mentorTtl;
@@ -78,9 +79,12 @@ public class MentorQueryService {
 
     private MentorProfileResponse enrichProfile(MentorProfileResponse profile) {
         if (profile == null) return null;
+        MentorProfileResponse enriched = profile;
+        
+        // 1. Enrich User Details
         try {
             Map<String, Object> user = authServiceClient.getUserById(profile.userId());
-            return new MentorProfileResponse(
+            enriched = new MentorProfileResponse(
                     profile.id(), profile.userId(),
                     (String) user.get("firstName"),
                     (String) user.get("lastName"),
@@ -92,8 +96,31 @@ public class MentorQueryService {
                     profile.status(), profile.skills(), profile.availability()
             );
         } catch (Exception e) {
-            log.warn("Failed to enrich mentor profile userId {}: {}", profile.userId(), e.getMessage());
-            return profile;
+            log.warn("Failed to enrich user details for mentor userId {}: {}", profile.userId(), e.getMessage());
         }
+
+        // 2. Enrich Skill Names
+        if (enriched.skills() != null && !enriched.skills().isEmpty()) {
+            try {
+                List<Long> skillIds = enriched.skills().stream()
+                        .map(SkillSummary::id)
+                        .collect(Collectors.toList());
+                List<SkillSummary> skillNames = skillServiceClient.getSkillsByIds(skillIds);
+                
+                enriched = new MentorProfileResponse(
+                        enriched.id(), enriched.userId(),
+                        enriched.firstName(), enriched.lastName(),
+                        enriched.email(), enriched.avatarUrl(),
+                        enriched.bio(), enriched.experienceYears(),
+                        enriched.hourlyRate(), enriched.avgRating(),
+                        enriched.totalReviews(), enriched.totalSessions(),
+                        enriched.status(), skillNames, enriched.availability()
+                );
+            } catch (Exception e) {
+                log.warn("Failed to enrich skill names for mentor userId {}: {}", profile.userId(), e.getMessage());
+            }
+        }
+        
+        return enriched;
     }
 }

@@ -397,9 +397,9 @@ const LearnerDashboardPage = () => {
               </div>
               
               <div className="flex flex-wrap gap-1.5 mb-6">
-                {(mnt.skills || []).slice(0, 3).map((skill: string, i: number) => (
+                {(mnt.skills || []).slice(0, 3).map((skill: any, i: number) => (
                   <span key={i} className="bg-surface-container-low text-on-surface-variant text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">
-                    {skill}
+                    {typeof skill === 'string' ? skill : (skill.name || `Skill #${skill.id}`)}
                   </span>
                 ))}
                 {(mnt.skills?.length > 3) && (

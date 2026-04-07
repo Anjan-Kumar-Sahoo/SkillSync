@@ -9,4 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface SkillServiceClient {
     @GetMapping("/api/skills/{id}")
     SkillSummary getSkillById(@PathVariable Long id);
+
+    @GetMapping("/api/skills/batch")
+    java.util.List<SkillSummary> getSkillsByIds(@org.springframework.web.bind.annotation.RequestParam java.util.List<Long> ids);
 }

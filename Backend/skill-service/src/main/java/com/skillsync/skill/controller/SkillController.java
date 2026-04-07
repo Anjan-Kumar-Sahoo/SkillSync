@@ -33,9 +33,9 @@ public class SkillController {
         return ResponseEntity.ok(skillQueryService.getSkillById(id));
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<List<SkillResponse>> searchSkills(@RequestParam String q) {
-        return ResponseEntity.ok(skillQueryService.searchSkills(q));
+    @GetMapping("/batch")
+    public ResponseEntity<List<SkillResponse>> getSkillsByIds(@RequestParam List<Long> ids) {
+        return ResponseEntity.ok(skillQueryService.getSkillsByIds(ids));
     }
 
     // ─── COMMANDS ───
