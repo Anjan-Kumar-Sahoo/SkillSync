@@ -17,6 +17,8 @@ import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.transaction.annotation.Transactional;
+
 /**
  * CQRS Query Service for Mentor operations.
  * Implements cache-aside pattern with stampede + penetration protection.
@@ -24,6 +26,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class MentorQueryService {
 
     private final MentorProfileRepository mentorProfileRepository;
