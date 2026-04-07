@@ -57,6 +57,14 @@ public class SessionQueryService {
                 .map(SessionQueryService::mapToResponse);
     }
 
+    public java.util.List<SessionResponse> getActiveSessionsForMentor(Long mentorId) {
+        return sessionRepository.findByMentorIdAndStatusIn(mentorId, 
+            java.util.List.of(com.skillsync.session.enums.SessionStatus.REQUESTED, 
+                              com.skillsync.session.enums.SessionStatus.ACCEPTED))
+                .stream().map(SessionQueryService::mapToResponse)
+                .toList();
+    }
+
     /**
      * @deprecated Use {@link SessionMapper#toResponse} directly.
      */

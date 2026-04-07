@@ -38,6 +38,11 @@ public class SessionController {
         return ResponseEntity.ok(sessionQueryService.getSessionsByMentor(userId, pageable));
     }
 
+    @GetMapping("/public/mentor/{mentorId}/booked")
+    public ResponseEntity<java.util.List<SessionResponse>> getBookedSessionsForMentor(@PathVariable Long mentorId) {
+        return ResponseEntity.ok(sessionQueryService.getActiveSessionsForMentor(mentorId));
+    }
+
     // ─── COMMANDS ───
 
     @GetMapping("/count")

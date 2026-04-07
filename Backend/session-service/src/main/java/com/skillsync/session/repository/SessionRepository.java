@@ -16,6 +16,7 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
     Page<Session> findByLearnerId(Long learnerId, Pageable pageable);
     Page<Session> findByMentorId(Long mentorId, Pageable pageable);
     Page<Session> findByMentorIdAndStatus(Long mentorId, SessionStatus status, Pageable pageable);
+    List<Session> findByMentorIdAndStatusIn(Long mentorId, List<SessionStatus> statuses);
 
     @Query("SELECT s FROM Session s WHERE s.mentorId = :mentorId AND s.status IN ('REQUESTED','ACCEPTED') " +
            "AND s.sessionDate < :endTime AND FUNCTION('TIMESTAMPADD', MINUTE, s.durationMinutes, s.sessionDate) > :startTime")
