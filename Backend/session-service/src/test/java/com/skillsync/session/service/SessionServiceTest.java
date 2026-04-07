@@ -52,7 +52,6 @@ class SessionServiceTest {
         CreateSessionRequest request = new CreateSessionRequest(2L, "Java Basics", "Learn Java",
                 LocalDateTime.now().plusDays(2), 60);
 
-        when(sessionRepository.findConflictingSessions(anyLong(), any(), any())).thenReturn(Collections.emptyList());
         when(sessionRepository.save(any(Session.class))).thenReturn(testSession);
 
         SessionResponse response = sessionCommandService.createSession(3L, request);

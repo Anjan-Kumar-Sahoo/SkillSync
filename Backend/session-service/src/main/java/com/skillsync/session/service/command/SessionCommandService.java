@@ -35,7 +35,6 @@ public class SessionCommandService {
         if (learnerId.equals(request.mentorId())) {
             throw new RuntimeException("Cannot book a session with yourself");
         }
-        LocalDateTime endTime = request.sessionDate().plusMinutes(request.durationMinutes());
 
 
         Session session = Session.builder()
