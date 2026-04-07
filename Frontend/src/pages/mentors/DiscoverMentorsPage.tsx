@@ -202,7 +202,7 @@ const DiscoverMentorsPage = () => {
                     <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest flex flex-col">
                       Price
                       <span className="text-lg font-black text-primary lowercase tracking-normal -mt-0.5">
-                        ${mentor.hourlyRate}<span className="text-xs text-on-surface-variant font-semibold">/hr</span>
+                        ₹{mentor.hourlyRate}<span className="text-xs text-on-surface-variant font-semibold">/hr</span>
                       </span>
                     </span>
                   </div>

@@ -336,7 +336,7 @@ const MentorProfilePage = () => {
                 <div className="text-center mb-4">
                   <p className="text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest leading-none mb-1">Session Fee (60 min)</p>
                   <div className="flex items-center justify-center gap-2">
-                    <p className="text-4xl font-black text-on-surface">${mentor.hourlyRate}</p>
+                    <p className="text-4xl font-black text-on-surface">₹{mentor.hourlyRate}</p>
                     {mentor.availableSlots?.some((s:any) => !s.isBooked) && <span className="bg-emerald-500/10 text-emerald-600 font-bold text-[10px] px-2 py-0.5 rounded animate-pulse">AVAILABLE</span>}
                   </div>
                 </div>

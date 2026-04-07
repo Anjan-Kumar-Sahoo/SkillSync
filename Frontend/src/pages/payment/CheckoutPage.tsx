@@ -152,15 +152,15 @@ const CheckoutPage = () => {
           <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-4">Order Summary</p>
           <div className="flex justify-between items-center text-sm font-semibold text-on-surface-variant mb-2">
             <span>Session Fee (60 mins)</span>
-            <span>${hourlyRate.toFixed(2)}</span>
+            <span>₹{hourlyRate.toFixed(2)}</span>
           </div>
           <div className="flex justify-between items-center text-sm font-semibold text-on-surface-variant mb-4">
             <span>Platform Service Fee</span>
-            <span>${platformFee.toFixed(2)}</span>
+            <span>₹{platformFee.toFixed(2)}</span>
           </div>
           <div className="border-t border-outline-variant/20 pt-4 mt-2 flex justify-between items-center border-dashed">
             <span className="text-base font-extrabold text-on-surface uppercase tracking-wider">Total Amount</span>
-            <span className="text-3xl font-black text-primary">${totalAmount.toFixed(2)}</span>
+            <span className="text-3xl font-black text-primary">₹{totalAmount.toFixed(2)}</span>
           </div>
         </div>
 
@@ -255,7 +255,7 @@ const CheckoutPage = () => {
             </>
           ) : (
             <>
-              Confirm Payment <span className="text-white/40 px-1">•</span> ${totalAmount.toFixed(2)} 
+              Confirm Payment <span className="text-white/40 px-1">•</span> ₹{totalAmount.toFixed(2)} 
               <span className="material-symbols-outlined text-[20px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
             </>
           )}

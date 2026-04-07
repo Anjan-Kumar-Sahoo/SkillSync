@@ -410,7 +410,7 @@ const LearnerDashboardPage = () => {
               <div className="flex justify-between items-end mt-auto pt-4 border-t border-outline-variant/10">
                 <div>
                   <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-0.5">Starting at</p>
-                  <p className="text-lg font-black text-primary">${mnt.hourlyRate}/<span className="text-sm font-semibold text-on-surface-variant">hr</span></p>
+                  <p className="text-lg font-black text-primary">₹{mnt.hourlyRate}/<span className="text-sm font-semibold text-on-surface-variant">hr</span></p>
                 </div>
                 <button 
                   onClick={() => navigate(`/mentors/${mnt.id}`)}
