@@ -65,6 +65,22 @@ public class SessionCommandService {
     }
 
     @Transactional
+    public void confirmSessionPayment(Long sessionId) {
+        Session session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new RuntimeException("Session not found: " + sessionId));
+        // Transition to ACCEPTED automatically on payment success
+        validateTransition(session, SessionStatus.ACCEPTED);
+        session.setStatus(SessionStatus.ACCEPTED);
+        // Optionally generate a meeting link here
+        session.setMeetingLink("https://meet.jit.si/SkillSync-" + session.getId() + "-" + System.currentTimeMillis());
+        session = sessionRepository.save(session);
+
+        invalidateSessionCaches(session);
+        // Publish event to notify learner and mentor (notification service listens to session.accepted)
+        publishEvent(session, "session.accepted");
+    }
+
+    @Transactional
     public SessionResponse rejectSession(Long sessionId, Long mentorId, String reason) {
         Session session = getAndValidateOwnership(sessionId, mentorId, true);
         validateTransition(session, SessionStatus.REJECTED);

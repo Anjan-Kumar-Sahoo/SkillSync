@@ -38,6 +38,14 @@ public class RabbitMQConfig {
     @Bean public Queue reviewSubmittedQueue() { return QueueBuilder.durable(REVIEW_SUBMITTED_QUEUE).build(); }
     @Bean public Binding reviewSubmittedBinding() { return BindingBuilder.bind(reviewSubmittedQueue()).to(reviewExchange()).with("review.submitted"); }
 
+    // ==================== PAYMENT ====================
+    public static final String PAYMENT_EXCHANGE = "payment.exchange";
+    public static final String SESSION_PAYMENT_SUCCESS_QUEUE = "session.payment.success.queue";
+
+    @Bean public TopicExchange paymentExchange() { return new TopicExchange(PAYMENT_EXCHANGE, true, false); }
+    @Bean public Queue sessionPaymentSuccessQueue() { return QueueBuilder.durable(SESSION_PAYMENT_SUCCESS_QUEUE).build(); }
+    @Bean public Binding sessionPaymentSuccessBinding() { return BindingBuilder.bind(sessionPaymentSuccessQueue()).to(paymentExchange()).with("payment.business.action.#"); }
+
     // ==================== SHARED ====================
     @Bean public MessageConverter jsonMessageConverter() { return new Jackson2JsonMessageConverter(); }
 }
