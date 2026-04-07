@@ -43,6 +43,8 @@ public class SecurityConfig {
                                 "/api/auth/oauth-login",
                                 "/api/auth/verify/**",
                                 "/api/auth/validate",
+                                "/api/auth/me",
+                                "/api/auth/setup-password",
                                 "/api/auth/internal/**",
                                 "/actuator/**",
                                 "/swagger-ui/**",
