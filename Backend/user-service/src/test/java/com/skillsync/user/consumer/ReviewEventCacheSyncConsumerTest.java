@@ -1,7 +1,5 @@
 package com.skillsync.user.consumer;
 
-import com.skillsync.cache.CacheService;
-
 import com.skillsync.user.service.command.MentorCommandService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,7 +8,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 
 import static org.mockito.Mockito.*;
@@ -19,13 +16,12 @@ import static org.mockito.Mockito.*;
 class ReviewEventCacheSyncConsumerTest {
 
     @Mock private MentorCommandService mentorCommandService;
-    @Mock private CacheService cacheService;
 
     @InjectMocks private ReviewEventCacheSyncConsumer consumer;
 
     @Test
-    @DisplayName("Consume Review Submitted Event - Updates DB and invalidates cache")
-    void handleReviewSubmitted_shouldUpdateDbAndCache() {
+    @DisplayName("Consume Review Submitted Event - supports avgRating field")
+    void handleReviewSubmitted_shouldUpdateRating_usingAvgRatingField() {
         Map<String, Object> event = Map.of(
                 "mentorId", 2L,
                 "avgRating", 4.5,
@@ -34,7 +30,20 @@ class ReviewEventCacheSyncConsumerTest {
 
         consumer.handleReviewSubmitted(event);
 
-        // Verify the mentor command service is called exactly once with proper recalculations
         verify(mentorCommandService).updateAvgRating(2L, 4.5, 10);
+    }
+
+    @Test
+    @DisplayName("Consume Review Submitted Event - supports newAvgRating field")
+    void handleReviewSubmitted_shouldUpdateRating_usingNewAvgRatingField() {
+        Map<String, Object> event = Map.of(
+                "mentorId", 7L,
+                "newAvgRating", 4.8,
+                "totalReviews", 16
+        );
+
+        consumer.handleReviewSubmitted(event);
+
+        verify(mentorCommandService).updateAvgRating(7L, 4.8, 16);
     }
 }

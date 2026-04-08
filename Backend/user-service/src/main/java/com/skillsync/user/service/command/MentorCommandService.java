@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 /**
  * CQRS Command Service for Mentor operations.
@@ -139,13 +140,20 @@ public class MentorCommandService {
 
     @Transactional
     public void updateAvgRating(Long mentorId, double avgRating, int totalReviews) {
-        MentorProfile profile = mentorProfileRepository.findById(mentorId)
-                .orElseThrow(() -> new RuntimeException("Mentor not found: " + mentorId));
+        Optional<MentorProfile> profileById = mentorProfileRepository.findById(mentorId);
+        MentorProfile profile = profileById.orElseGet(() -> mentorProfileRepository.findByUserId(mentorId)
+                .orElseThrow(() -> new RuntimeException("Mentor not found for identifier: " + mentorId)));
+
+        if (profileById.isEmpty()) {
+            log.warn("[CQRS:COMMAND] Resolved mentor identifier {} as userId for profile {} during rating sync.",
+                    mentorId, profile.getId());
+        }
+
         profile.setAvgRating(avgRating);
         profile.setTotalReviews(totalReviews);
         mentorProfileRepository.save(profile);
 
-        invalidateMentorCaches(mentorId, profile.getUserId());
+        invalidateMentorCaches(profile.getId(), profile.getUserId());
     }
 
     private void invalidateMentorCaches(Long mentorId, Long userId) {

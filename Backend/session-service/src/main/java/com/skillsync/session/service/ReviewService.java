@@ -53,7 +53,8 @@ public class ReviewService {
         try {
             rabbitTemplate.convertAndSend(RabbitMQConfig.REVIEW_EXCHANGE, "review.submitted",
                     new ReviewSubmittedEvent(review.getId(), mentorId, request.rating(),
-                            avgRating != null ? avgRating : 0.0, (int) totalReviews));
+                            avgRating != null ? avgRating : 0.0, (int) totalReviews,
+                            request.comment()));
         } catch (Exception e) {
             log.error("Failed to publish review event: {}", e.getMessage());
         }

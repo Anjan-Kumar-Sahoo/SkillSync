@@ -161,61 +161,73 @@ const DiscoverMentorsPage = () => {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {mentorsList.map((mentor) => (
-              <div key={mentor.id} className="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm border border-outline-variant/10 hover:-translate-y-1 hover:shadow-xl hover:border-primary/20 transition-all duration-300 group flex flex-col">
-                <div className="h-48 bg-gradient-to-br from-surface-container to-surface-container-high relative flex items-center justify-center p-4 overflow-hidden">
-                  <div className="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors"></div>
-                  <div className={`w-20 h-20 rounded-full bg-gradient-to-tr ${getAvatarColor(mentor.firstName)} text-white flex items-center justify-center text-2xl font-black shadow-lg z-10 ring-4 ring-white`}>
-                    {getInitials(mentor.firstName, mentor.lastName)}
+            {mentorsList.map((mentor) => {
+              const reviewCount = Number(mentor.totalReviews ?? mentor.reviewCount ?? 0);
+              const avgRating = Number(mentor.avgRating ?? mentor.rating ?? 0);
+              const sessionsHeld = Number(mentor.totalSessions ?? 0);
+
+              return (
+                <div key={mentor.id} className="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm border border-outline-variant/10 hover:-translate-y-1 hover:shadow-xl hover:border-primary/20 transition-all duration-300 group flex flex-col">
+                  <div className="h-48 bg-gradient-to-br from-surface-container to-surface-container-high relative flex items-center justify-center p-4 overflow-hidden">
+                    <div className="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors"></div>
+                    <div className={`w-20 h-20 rounded-full bg-gradient-to-tr ${getAvatarColor(mentor.firstName)} text-white flex items-center justify-center text-2xl font-black shadow-lg z-10 ring-4 ring-white`}>
+                      {getInitials(mentor.firstName, mentor.lastName)}
+                    </div>
                   </div>
-                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm shadow-sm rounded-lg px-2 py-1 flex items-center gap-1 z-10">
-                    {(mentor.totalReviews > 0 || mentor.reviewCount > 0) ? (
-                      <><span className="text-amber-500 text-sm">★</span><span className="font-bold text-xs text-on-surface">{Number(mentor.avgRating || mentor.rating || 0).toFixed(1)}</span></>
-                    ) : (
-                      <span className="font-bold text-xs text-primary">★ NEW</span>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="p-5 flex flex-col flex-1">
-                  <h3 className="text-xl font-extrabold text-on-surface leading-tight mb-1 group-hover:text-primary transition-colors">
-                    {mentor.firstName} {mentor.lastName}
-                  </h3>
-                  <p className="text-sm font-medium text-on-surface-variant truncate mb-4" title={mentor.headline}>
-                    {mentor.headline || 'Industry Expert'}
-                  </p>
                   
-                  <div className="flex flex-wrap gap-1.5 mb-6 mt-auto">
-                    {(mentor.skills || []).slice(0, 3).map((skill: any, i: number) => (
-                      <span key={i} className="bg-surface-container-low text-on-surface-variant text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider border border-outline-variant/10">
-                        {typeof skill === 'string' ? skill : (skill.name || `Skill #${skill.skillId}`)}
-                      </span>
-                    ))}
-                    {(mentor.skills?.length > 3) && (
-                      <span className="bg-surface-container-low text-on-surface-variant text-[10px] font-bold px-2 py-1 rounded-md border border-outline-variant/10">
-                        +{mentor.skills.length - 3}
-                      </span>
-                    )}
-                  </div>
+                  <div className="p-5 flex flex-col flex-1">
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <div className="min-w-0">
+                        <h3 className="text-xl font-extrabold text-on-surface leading-tight mb-1 group-hover:text-primary transition-colors">
+                          {mentor.firstName} {mentor.lastName}
+                        </h3>
+                        <p className="text-sm font-medium text-on-surface-variant truncate" title={mentor.headline}>
+                          {mentor.headline || 'Industry Expert'}
+                        </p>
+                      </div>
 
-                  <div className="flex justify-between items-end mb-4 border-t border-outline-variant/10 pt-4">
-                    <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest flex flex-col">
-                      Price
-                      <span className="text-lg font-black text-primary lowercase tracking-normal -mt-0.5">
-                        ₹{mentor.hourlyRate}<span className="text-xs text-on-surface-variant font-semibold">/hr</span>
-                      </span>
-                    </span>
-                  </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-xs font-black text-on-surface">
+                          {reviewCount > 0 ? `★ ${avgRating.toFixed(1)}` : '★ NEW'}
+                        </p>
+                        <p className="text-[11px] font-semibold text-on-surface-variant">
+                          {sessionsHeld} session{sessionsHeld === 1 ? '' : 's'} held
+                        </p>
+                      </div>
+                    </div>
+                  
+                    <div className="flex flex-wrap gap-1.5 mb-6 mt-auto">
+                      {(mentor.skills || []).slice(0, 3).map((skill: any, i: number) => (
+                        <span key={i} className="bg-surface-container-low text-on-surface-variant text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider border border-outline-variant/10">
+                          {typeof skill === 'string' ? skill : (skill.name || `Skill #${skill.skillId}`)}
+                        </span>
+                      ))}
+                      {(mentor.skills?.length > 3) && (
+                        <span className="bg-surface-container-low text-on-surface-variant text-[10px] font-bold px-2 py-1 rounded-md border border-outline-variant/10">
+                          +{mentor.skills.length - 3}
+                        </span>
+                      )}
+                    </div>
 
-                  <button 
-                    onClick={() => navigate(`/mentors/${mentor.id}`)}
-                    className="w-full flex items-center justify-center gap-2 h-10 gradient-btn text-white text-sm font-bold rounded-lg shadow-sm group-hover:shadow-md transition-all active:scale-95"
-                  >
-                    Book Session <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
-                  </button>
+                    <div className="flex justify-between items-end mb-4 border-t border-outline-variant/10 pt-4">
+                      <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest flex flex-col">
+                        Price
+                        <span className="text-lg font-black text-primary lowercase tracking-normal -mt-0.5">
+                          ₹{mentor.hourlyRate}<span className="text-xs text-on-surface-variant font-semibold">/hr</span>
+                        </span>
+                      </span>
+                    </div>
+
+                    <button 
+                      onClick={() => navigate(`/mentors/${mentor.id}`)}
+                      className="w-full flex items-center justify-center gap-2 h-10 gradient-btn text-white text-sm font-bold rounded-lg shadow-sm group-hover:shadow-md transition-all active:scale-95"
+                    >
+                      Book Session <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {!isLast && (

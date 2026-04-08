@@ -29,7 +29,7 @@ public class ReviewEventConsumer {
     public void handleReviewSubmitted(Map<String, Object> event) {
         Long mentorId = toLong(event.get("mentorId"));
         int rating = ((Number) event.get("rating")).intValue();
-        String comment = (String) event.getOrDefault("comment", "No comment provided.");
+        String comment = normalizeComment(event.get("comment"));
 
         notificationCommandService.createAndPush(mentorId, "REVIEW_SUBMITTED",
                 "New Review Received",
@@ -48,6 +48,17 @@ public class ReviewEventConsumer {
             log.error("Failed to send review email to mentor {}: {}", mentorId, e.getMessage());
         }
         log.info("Processed REVIEW_SUBMITTED event for mentor {}", mentorId);
+    }
+
+    private String normalizeComment(Object value) {
+        if (value == null) {
+            return "No comment provided.";
+        }
+        String comment = String.valueOf(value).trim();
+        if (comment.isEmpty() || "null".equalsIgnoreCase(comment)) {
+            return "No comment provided.";
+        }
+        return comment;
     }
 
     private Long toLong(Object value) {

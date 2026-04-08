@@ -11,4 +11,5 @@ public class ReviewSubmittedEvent {
     private int rating;
     private double newAvgRating;
     private int totalReviews;
+    private String comment;
 }
