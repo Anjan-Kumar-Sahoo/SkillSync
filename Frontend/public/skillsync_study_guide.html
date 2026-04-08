@@ -1,0 +1,3078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkillSync Frontend — Viva Study Guide</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #18181f;
+    --border: #2a2a3a;
+    --accent: #6c63ff;
+    --accent2: #00d4aa;
+    --accent3: #ff6b6b;
+    --accent4: #ffd93d;
+    --text: #e8e8f0;
+    --text2: #9999bb;
+    --text3: #666688;
+    --code-bg: #0f0f1a;
+    --sidebar-w: 280px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  #sidebar {
+    width: var(--sidebar-w);
+    min-width: var(--sidebar-w);
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+    z-index: 100;
+  }
+
+  #sidebar::-webkit-scrollbar { width: 4px; }
+  #sidebar::-webkit-scrollbar-track { background: transparent; }
+  #sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .sidebar-header {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+  }
+
+  .sidebar-header h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+
+  .sidebar-header p {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 4px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .sidebar-nav { padding: 12px 0; }
+
+  .nav-section {
+    padding: 8px 20px 4px;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text3);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 8px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 20px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+
+  .nav-item:hover { background: var(--bg3); color: var(--text); border-left-color: var(--accent); }
+  .nav-item.active { background: rgba(108,99,255,0.1); color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+
+  .nav-num {
+    width: 22px; height: 22px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+    flex-shrink: 0;
+  }
+
+  .nav-item.active .nav-num { background: var(--accent); color: white; border-color: var(--accent); }
+
+  /* ── MAIN ── */
+  #main {
+    flex: 1;
+    max-width: calc(100vw - var(--sidebar-w));
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .top-bar {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 40px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .top-bar h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .badge-purple { background: rgba(108,99,255,0.2); color: var(--accent); }
+  .badge-green { background: rgba(0,212,170,0.15); color: var(--accent2); }
+  .badge-red { background: rgba(255,107,107,0.15); color: var(--accent3); }
+  .badge-yellow { background: rgba(255,217,61,0.15); color: var(--accent4); }
+
+  /* ── SECTION ── */
+  .section { padding: 48px 40px; border-bottom: 1px solid var(--border); }
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .section-num {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent), #4c45d4);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 16px;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .section-num.green { background: linear-gradient(135deg, var(--accent2), #009e7d); }
+  .section-num.red { background: linear-gradient(135deg, var(--accent3), #c44); }
+  .section-num.yellow { background: linear-gradient(135deg, var(--accent4), #e6a800); }
+  .section-num.pink { background: linear-gradient(135deg, #ff79c6, #bd49a6); }
+  .section-num.blue { background: linear-gradient(135deg, #6bc5ff, #2980b9); }
+  .section-num.orange { background: linear-gradient(135deg, #ff9f43, #e67e22); }
+
+  .section-title h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+
+  .section-title small {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text3);
+    margin-top: 2px;
+  }
+
+  /* ── SUBTOPIC ── */
+  .subtopic {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+
+  .subtopic-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    cursor: pointer;
+    background: var(--bg3);
+    transition: background 0.15s;
+    user-select: none;
+  }
+
+  .subtopic-header:hover { background: rgba(108,99,255,0.08); }
+
+  .subtopic-header h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .subtopic-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: rgba(108,99,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .subtopic-arrow {
+    color: var(--text3);
+    font-size: 12px;
+    transition: transform 0.2s;
+  }
+
+  .subtopic.open .subtopic-arrow { transform: rotate(90deg); }
+
+  .subtopic-body {
+    display: none;
+    padding: 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  .subtopic.open .subtopic-body { display: block; }
+
+  /* ── PROSE ── */
+  p { color: var(--text2); line-height: 1.75; margin-bottom: 14px; font-size: 14px; }
+  p strong { color: var(--text); font-weight: 600; }
+
+  /* ── CODE ── */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin: 16px 0;
+    overflow: hidden;
+  }
+
+  .code-label {
+    background: var(--bg3);
+    padding: 6px 16px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text3);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .code-label span { width: 8px; height: 8px; border-radius: 50%; }
+  .code-label .dot1 { background: #ff5f57; }
+  .code-label .dot2 { background: #febc2e; }
+  .code-label .dot3 { background: #28c840; }
+
+  pre {
+    padding: 16px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+    overflow-x: auto;
+    color: #cdd6f4;
+  }
+
+  .kw { color: #cba6f7; } /* keywords */
+  .fn { color: #89b4fa; } /* functions */
+  .str { color: #a6e3a1; } /* strings */
+  .cmt { color: #585b70; font-style: italic; } /* comments */
+  .num { color: #fab387; } /* numbers */
+  .type { color: #f9e2af; } /* types */
+  .var { color: #cdd6f4; } /* variables */
+  .op { color: #89dceb; } /* operators */
+
+  /* ── DIAGRAM ── */
+  .diagram-box {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 16px 0;
+    overflow-x: auto;
+  }
+
+  .flow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+
+  .flow-box {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    color: var(--text);
+    font-weight: 600;
+    white-space: nowrap;
+    text-align: center;
+    min-width: 100px;
+  }
+
+  .flow-box.accent { border-color: var(--accent); color: var(--accent); background: rgba(108,99,255,0.1); }
+  .flow-box.green { border-color: var(--accent2); color: var(--accent2); background: rgba(0,212,170,0.1); }
+  .flow-box.red { border-color: var(--accent3); color: var(--accent3); background: rgba(255,107,107,0.1); }
+  .flow-box.yellow { border-color: var(--accent4); color: var(--accent4); background: rgba(255,217,61,0.1); }
+
+  .flow-arrow {
+    color: var(--text3);
+    font-size: 18px;
+    padding: 0 6px;
+    font-weight: 300;
+  }
+
+  /* ── GRID ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 16px 0; }
+
+  .card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+
+  .card h4 {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .card p { font-size: 12.5px; margin-bottom: 0; }
+
+  /* ── TABLE ── */
+  .table-wrap { overflow-x: auto; margin: 16px 0; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  thead tr { background: var(--bg3); }
+
+  th {
+    padding: 10px 16px;
+    text-align: left;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 10px 16px;
+    color: var(--text2);
+    border-bottom: 1px solid rgba(42,42,58,0.5);
+    font-size: 13px;
+  }
+
+  td strong { color: var(--text); }
+  tr:hover td { background: rgba(108,99,255,0.04); }
+
+  /* ── CALLOUT ── */
+  .callout {
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 14px 0;
+    font-size: 13px;
+    line-height: 1.65;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .callout-icon { font-size: 18px; margin-top: 1px; flex-shrink: 0; }
+
+  .callout.info { background: rgba(108,99,255,0.08); border: 1px solid rgba(108,99,255,0.25); color: #aaa8ff; }
+  .callout.tip { background: rgba(0,212,170,0.08); border: 1px solid rgba(0,212,170,0.25); color: #7dffd4; }
+  .callout.warn { background: rgba(255,217,61,0.08); border: 1px solid rgba(255,217,61,0.25); color: #ffe680; }
+  .callout.danger { background: rgba(255,107,107,0.08); border: 1px solid rgba(255,107,107,0.25); color: #ff9a9a; }
+
+  /* ── TREE ── */
+  .tree {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: var(--text2);
+    line-height: 1.9;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 14px 0;
+  }
+
+  .tree .dir { color: var(--accent); font-weight: 600; }
+  .tree .file { color: var(--text2); }
+  .tree .ann { color: var(--text3); font-style: italic; }
+
+  /* ── LAYER STACK ── */
+  .layer-stack { margin: 16px 0; }
+  .layer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .layer-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── PROGRESS ── */
+  .checklist { margin: 12px 0; }
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(42,42,58,0.5);
+    font-size: 13px;
+    color: var(--text2);
+  }
+
+  .check-item:last-child { border-bottom: none; }
+  .check-mark { color: var(--accent2); font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+
+  /* ── SVG DIAGRAM STYLES ── */
+  .svg-container {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+    overflow-x: auto;
+  }
+
+  svg text { font-family: 'JetBrains Mono', monospace; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    #sidebar { display: none; }
+    #main { max-width: 100vw; }
+    .section { padding: 32px 20px; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .top-bar { padding: 16px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════ SIDEBAR ═══════════════════════════════════ -->
+<aside id="sidebar">
+  <div class="sidebar-header">
+    <h2>SkillSync FE</h2>
+    <p>Viva Study Guide · 21 Topics</p>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Core Architecture</div>
+    <a class="nav-item active" href="#s1" onclick="setActive(this)"><span class="nav-num">01</span> Overview & Philosophy</a>
+    <a class="nav-item" href="#s2" onclick="setActive(this)"><span class="nav-num">02</span> Architecture & Code Quality</a>
+    <a class="nav-item" href="#s3" onclick="setActive(this)"><span class="nav-num">03</span> API Integration & Data</a>
+    <div class="nav-section">Auth & Security</div>
+    <a class="nav-item" href="#s4" onclick="setActive(this)"><span class="nav-num">04</span> Authentication & Authorization</a>
+    <a class="nav-item" href="#s5" onclick="setActive(this)"><span class="nav-num">05</span> Frontend Security</a>
+    <div class="nav-section">State & Error</div>
+    <a class="nav-item" href="#s6" onclick="setActive(this)"><span class="nav-num">06</span> Error Handling & Resilience</a>
+    <a class="nav-item" href="#s7" onclick="setActive(this)"><span class="nav-num">07</span> State Management Deep-Dive</a>
+    <div class="nav-section">Config & Components</div>
+    <a class="nav-item" href="#s8" onclick="setActive(this)"><span class="nav-num">08</span> Environment & Configuration</a>
+    <a class="nav-item" href="#s9" onclick="setActive(this)"><span class="nav-num">09</span> Component Design</a>
+    <div class="nav-section">UX & Design</div>
+    <a class="nav-item" href="#s10" onclick="setActive(this)"><span class="nav-num">10</span> User Experience Strategy</a>
+    <a class="nav-item" href="#s11" onclick="setActive(this)"><span class="nav-num">11</span> UI Design & Visual System</a>
+    <a class="nav-item" href="#s12" onclick="setActive(this)"><span class="nav-num">12</span> Responsiveness & Adaptive UI</a>
+    <div class="nav-section">Performance & RT</div>
+    <a class="nav-item" href="#s13" onclick="setActive(this)"><span class="nav-num">13</span> Performance Optimization</a>
+    <a class="nav-item" href="#s14" onclick="setActive(this)"><span class="nav-num">14</span> Real-Time Communication</a>
+    <div class="nav-section">Payments & QA</div>
+    <a class="nav-item" href="#s15" onclick="setActive(this)"><span class="nav-num">15</span> Payment Flow Integrity</a>
+    <a class="nav-item" href="#s16" onclick="setActive(this)"><span class="nav-num">16</span> Quality Assurance</a>
+    <div class="nav-section">Docs & Features</div>
+    <a class="nav-item" href="#s17" onclick="setActive(this)"><span class="nav-num">17</span> Codebase Documentation</a>
+    <a class="nav-item" href="#s18" onclick="setActive(this)"><span class="nav-num">18</span> Feature Completeness</a>
+    <a class="nav-item" href="#s19" onclick="setActive(this)"><span class="nav-num">19</span> Code Traceability</a>
+    <div class="nav-section">Communication</div>
+    <a class="nav-item" href="#s20" onclick="setActive(this)"><span class="nav-num">20</span> Challenge Resolution</a>
+    <a class="nav-item" href="#s21" onclick="setActive(this)"><span class="nav-num">21</span> Advanced Practices</a>
+  </nav>
+</aside>
+
+<!-- ═══════════════════════════════════ MAIN ═══════════════════════════════════ -->
+<main id="main">
+
+<div class="top-bar">
+  <h1>SkillSync · Frontend Viva Guide</h1>
+  <span class="badge badge-purple">React + TypeScript</span>
+  <span class="badge badge-green">Spring Boot Backend</span>
+  <span class="badge badge-yellow">Razorpay Payments</span>
+</div>
+
+<!-- ═══ SECTION 1 ═══ -->
+<section class="section" id="s1">
+  <div class="section-title">
+    <div class="section-num">01</div>
+    <div>
+      <h2>Overview & Core Philosophy</h2>
+      <small>What is SkillSync? Why was it built this way?</small>
+    </div>
+  </div>
+
+  <div class="subtopic open">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🎯</div>
+      <h3>1.1 — What is SkillSync?</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p><strong>SkillSync is a mentor-learner marketplace platform</strong> — think Airbnb but for knowledge. Learners find mentors, book paid 1-on-1 sessions, join study groups, and track their growth. Mentors list their skills, set availability, get paid through Razorpay, and manage their reputation via reviews.</p>
+      <div class="grid-3">
+        <div class="card"><h4>👩‍🎓 Learner</h4><p>Discovers mentors, books sessions, joins groups, pays via Razorpay</p></div>
+        <div class="card"><h4>🧑‍💼 Mentor</h4><p>Lists profile + skills, sets availability, accepts/rejects sessions, earns money</p></div>
+        <div class="card"><h4>🛡 Admin</h4><p>Approves mentor applications, manages users, skills, groups, platform finances</p></div>
+      </div>
+      <p>The backend is <strong>Java 17 + Spring Boot 3.4.4 microservices</strong>. The frontend you built is <strong>React + TypeScript + Tailwind CSS</strong> deployed on Vercel, communicating with the API at <code>api.skillsync.mraks.dev</code>.</p>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🧱</div>
+      <h3>1.2 — The Core Philosophy: Separation of Concerns</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>The entire project is built on a fundamental software principle: <strong>each piece of code should have exactly ONE job</strong>. This makes debugging easy and code reusable.</p>
+      <div class="layer-stack">
+        <div class="layer" style="background:rgba(108,99,255,0.1); border:1px solid rgba(108,99,255,0.3)">
+          <div class="layer-dot" style="background:var(--accent)"></div>
+          <strong style="color:var(--accent)">Pages</strong> — <span style="color:var(--text2); font-size:13px">Full views like LearnerDashboardPage.tsx — only compose components</span>
+        </div>
+        <div class="layer" style="background:rgba(0,212,170,0.1); border:1px solid rgba(0,212,170,0.3)">
+          <div class="layer-dot" style="background:var(--accent2)"></div>
+          <strong style="color:var(--accent2)">Components</strong> — <span style="color:var(--text2); font-size:13px">Reusable UI chunks: Sidebar, Toast, Modal — only handle display</span>
+        </div>
+        <div class="layer" style="background:rgba(255,217,61,0.1); border:1px solid rgba(255,217,61,0.3)">
+          <div class="layer-dot" style="background:var(--accent4)"></div>
+          <strong style="color:var(--accent4)">Services</strong> — <span style="color:var(--text2); font-size:13px">mentorService.ts, sessionService.ts — only handle API calls</span>
+        </div>
+        <div class="layer" style="background:rgba(255,107,107,0.1); border:1px solid rgba(255,107,107,0.3)">
+          <div class="layer-dot" style="background:var(--accent3)"></div>
+          <strong style="color:var(--accent3)">Store Slices</strong> — <span style="color:var(--text2); font-size:13px">authSlice.ts, sessionsSlice.ts — only manage global state</span>
+        </div>
+        <div class="layer" style="background:rgba(107,197,255,0.1); border:1px solid rgba(107,197,255,0.3)">
+          <div class="layer-dot" style="background:#6bc5ff"></div>
+          <strong style="color:#6bc5ff">Hooks / Types / Utils</strong> — <span style="color:var(--text2); font-size:13px">apiHooks.ts, types/index.ts, dateTime.ts — reusable logic</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🗂</div>
+      <h3>1.3 — File Structure Tour</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <div class="tree">
+<span class="dir">src/</span>
+├── <span class="dir">pages/</span>       <span class="ann">← Full pages (auth/, learner/, mentor/, admin/, ...)</span>
+├── <span class="dir">components/</span>  <span class="ann">← Reusable UI (layout/, ui/, modals/)</span>
+├── <span class="dir">services/</span>    <span class="ann">← API calls (axios.ts, mentorService.ts, ...)</span>
+├── <span class="dir">store/</span>       <span class="ann">← Redux store (index.ts + slices/)</span>
+├── <span class="dir">hooks/</span>       <span class="ann">← React Query custom hooks (apiHooks.ts)</span>
+├── <span class="dir">routes/</span>      <span class="ann">← AppRoutes.tsx, DashboardRedirect.tsx</span>
+├── <span class="dir">context/</span>     <span class="ann">← ThemeContext.tsx</span>
+├── <span class="dir">types/</span>       <span class="ann">← TypeScript interfaces (index.ts)</span>
+├── <span class="dir">utils/</span>       <span class="ann">← dateTime.ts, queryClient.ts</span>
+├── <span class="file">App.tsx</span>      <span class="ann">← Root component, wraps providers</span>
+└── <span class="file">main.tsx</span>     <span class="ann">← Entry point, mounts React app</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🔧</div>
+      <h3>1.4 — Technology Stack & Why Each Was Chosen</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Technology</th><th>Role</th><th>Why?</th></tr></thead>
+          <tbody>
+            <tr><td><strong>React 18</strong></td><td>UI framework</td><td>Component-based, massive ecosystem, industry standard</td></tr>
+            <tr><td><strong>TypeScript</strong></td><td>Type safety</td><td>Catches bugs at compile time, self-documenting interfaces</td></tr>
+            <tr><td><strong>Tailwind CSS</strong></td><td>Styling</td><td>Utility-first, no CSS files needed, rapid development</td></tr>
+            <tr><td><strong>Redux Toolkit</strong></td><td>Global state</td><td>Manages auth state, UI state across all components</td></tr>
+            <tr><td><strong>React Query (TanStack)</strong></td><td>Server state / API calls</td><td>Caching, loading states, refetching — built in</td></tr>
+            <tr><td><strong>Axios</strong></td><td>HTTP client</td><td>Interceptors for JWT refresh, error handling</td></tr>
+            <tr><td><strong>React Router v6</strong></td><td>Client-side routing</td><td>SPA navigation without page reloads</td></tr>
+            <tr><td><strong>React Hook Form</strong></td><td>Form handling</td><td>Performant forms, built-in validation</td></tr>
+            <tr><td><strong>Vite</strong></td><td>Build tool</td><td>Lightning fast HMR (Hot Module Replacement), faster than CRA</td></tr>
+            <tr><td><strong>Razorpay SDK</strong></td><td>Payments</td><td>Indian payment gateway, loaded dynamically</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🚀</div>
+      <h3>1.5 — App Bootstrap Flow (main.tsx → screen)</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>When a user opens <code>skillsync.mraks.dev</code>, here's the exact order of what happens:</p>
+      <div class="diagram-box">
+        <div class="flow" style="flex-direction:column; gap:4px; align-items:flex-start">
+          <div style="display:flex; align-items:center; gap:8px">
+            <div class="flow-box accent">main.tsx</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box" style="font-size:12px">Wraps app in: <span style="color:var(--accent2)">ThemeProvider</span> → <span style="color:var(--accent)">Redux Provider</span> → <span style="color:var(--accent4)">QueryClientProvider</span> → <span style="color:#ff9f43">GoogleOAuthProvider</span></div>
+          </div>
+          <div style="padding-left:20px; color:var(--text3)">↓</div>
+          <div style="display:flex; align-items:center; gap:8px">
+            <div class="flow-box accent">App.tsx</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box" style="font-size:12px">Adds <span style="color:var(--accent2)">ToastProvider</span> + <span style="color:var(--accent2)">ActionConfirmProvider</span> + <span style="color:var(--accent)">BrowserRouter</span></div>
+          </div>
+          <div style="padding-left:20px; color:var(--text3)">↓</div>
+          <div style="display:flex; align-items:center; gap:8px">
+            <div class="flow-box green">AuthLoader.tsx</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box" style="font-size:12px">Silently calls <span style="color:var(--accent2)">/api/auth/me</span> to restore user from HttpOnly cookie</div>
+          </div>
+          <div style="padding-left:20px; color:var(--text3)">↓</div>
+          <div style="display:flex; align-items:center; gap:8px">
+            <div class="flow-box yellow">AppRoutes.tsx</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box" style="font-size:12px">Matches URL to Page component, wraps protected routes in <span style="color:var(--accent)">ProtectedRoute</span></div>
+          </div>
+          <div style="padding-left:20px; color:var(--text3)">↓</div>
+          <div style="display:flex; align-items:center; gap:8px">
+            <div class="flow-box" style="border-color:var(--accent2); color:var(--accent2)">Page renders</div>
+          </div>
+        </div>
+      </div>
+      <div class="callout info">
+        <span class="callout-icon">💡</span>
+        <div>The order of providers in main.tsx matters. ThemeProvider wraps everything because even the login screen needs the theme. Redux wraps the app because AuthLoader needs to dispatch to it. BrowserRouter must wrap AuthLoader because AuthLoader reads the current URL path.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 2 ═══ -->
+<section class="section" id="s2">
+  <div class="section-title">
+    <div class="section-num green">02</div>
+    <div>
+      <h2>Architecture & Code Quality</h2>
+      <small>How the frontend is structured and what makes it maintainable</small>
+    </div>
+  </div>
+
+  <div class="subtopic open">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🏛</div>
+      <h3>2.1 — React: Component-Based Architecture</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>React is built on a simple idea: <strong>break the UI into small, reusable "components"</strong>. Each component is a JavaScript function that returns HTML-like JSX.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Example: How ProtectedRoute.tsx works</div>
+        <pre><span class="cmt">// ProtectedRoute is a "guard" component</span>
+<span class="kw">const</span> <span class="fn">ProtectedRoute</span> = () => {
+  <span class="cmt">// 1. Read auth state from Redux store</span>
+  <span class="kw">const</span> isAuthenticated = <span class="fn">useSelector</span>(
+    (state: <span class="type">RootState</span>) => state.auth.isAuthenticated
+  );
+
+  <span class="cmt">// 2. If not logged in → redirect to /login</span>
+  <span class="kw">if</span> (!isAuthenticated) {
+    <span class="kw">return</span> &lt;<span class="type">Navigate</span> to=<span class="str">"/login"</span> replace /&gt;;
+  }
+
+  <span class="cmt">// 3. If logged in → render the actual page</span>
+  <span class="cmt">// &lt;Outlet /&gt; means: render whatever child route matches</span>
+  <span class="kw">return</span> &lt;<span class="type">Outlet</span> /&gt;;
+};</pre>
+      </div>
+      <div class="callout tip">
+        <span class="callout-icon">🎓</span>
+        <div><strong>For viva:</strong> "React components are like Lego bricks. ProtectedRoute is a security brick — if you're not authenticated, it redirects you. Outlet renders whatever child is matched — like a slot."</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">📐</div>
+      <h3>2.2 — TypeScript: Why Types Matter</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>TypeScript adds static typing to JavaScript. Think of it as <strong>writing a contract</strong> about what data looks like before it arrives.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> types/index.ts — Your data contracts</div>
+        <pre><span class="cmt">// This tells TypeScript (and YOU) exactly what a User looks like</span>
+<span class="kw">interface</span> <span class="type">UserSummary</span> {
+  id: <span class="type">number</span>;
+  email: <span class="type">string</span>;
+  role: <span class="type">string</span>;       <span class="cmt">// "ROLE_LEARNER" | "ROLE_MENTOR" | "ROLE_ADMIN"</span>
+  firstName: <span class="type">string</span>;
+  lastName: <span class="type">string</span>;
+  skills?: <span class="type">string</span>[];  <span class="cmt">// ? means optional</span>
+  bio?: <span class="type">string</span>;
+}
+
+<span class="cmt">// Payment has strict status values — no random strings allowed</span>
+<span class="kw">interface</span> <span class="type">Payment</span> {
+  status: <span class="str">'CREATED'</span> | <span class="str">'VERIFIED'</span> | <span class="str">'SUCCESS'</span> | <span class="str">'FAILED'</span>;
+}</pre>
+      </div>
+      <p>Without TypeScript: you'd pass the wrong data, get <code>undefined</code> errors at runtime, crash in production. With TypeScript: errors show up in your editor <em>before</em> you run the code.</p>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🎨</div>
+      <h3>2.3 — Tailwind CSS: Utility-First Styling</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>Traditional CSS: you write a class name, then write CSS for it. Tailwind flips this — <strong>you use pre-made utility classes directly in your HTML/JSX</strong>.</p>
+      <div class="grid-2">
+        <div class="card">
+          <h4>❌ Traditional CSS</h4>
+          <pre style="font-size:11px; color:#cdd6f4; background:transparent; padding:0">/* styles.css */
+.button {
+  width: 100%;
+  height: 56px;
+  background: blue;
+  font-weight: 800;
+  border-radius: 12px;
+}</pre>
+        </div>
+        <div class="card">
+          <h4>✅ Tailwind Way</h4>
+          <pre style="font-size:11px; color:#cdd6f4; background:transparent; padding:0">&lt;button className="
+  w-full h-14 bg-primary 
+  font-extrabold rounded-xl
+"&gt;
+  Pay Now
+&lt;/button&gt;</pre>
+        </div>
+      </div>
+      <p>In your CheckoutPage, you'll see classes like <code>bg-surface-container-lowest</code>, <code>text-on-surface</code> — these are <strong>custom CSS variables</strong> from your design system mapped to Tailwind.</p>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🧩</div>
+      <h3>2.4 — Functional Components + Hooks Pattern</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>Every component in your app is a <strong>function</strong>, not a class. React Hooks let these functions "hook into" React features like state, side effects, context.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Hooks used in CheckoutPage.tsx</div>
+        <pre><span class="kw">const</span> CheckoutPage = () => {
+  <span class="fn">useState</span>(<span class="str">'card'</span>)        <span class="cmt">// local state: which payment method is selected</span>
+  <span class="fn">useEffect</span>(...)         <span class="cmt">// side effect: load Razorpay SDK on mount</span>
+  <span class="fn">useLocation</span>()         <span class="cmt">// React Router: read navigate state (mentorId, etc.)</span>
+  <span class="fn">useNavigate</span>()         <span class="cmt">// React Router: programmatic navigation</span>
+  <span class="fn">useMutation</span>(...)      <span class="cmt">// React Query: POST /api/payments/verify</span>
+  <span class="fn">useRef</span>()              <span class="cmt">// persist sessionId without re-render</span>
+  <span class="fn">useToast</span>()            <span class="cmt">// custom hook: show success/error toast</span>
+};</pre>
+      </div>
+      <p><code>useRef</code> is special — it's like a variable that survives re-renders but <em>doesn't trigger</em> a re-render when changed. Perfect for storing <code>pendingSessionId</code> during the payment flow.</p>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🔄</div>
+      <h3>2.5 — Custom Hooks: Reusability Pattern</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>When the same logic is needed in multiple components, extract it into a <strong>custom hook</strong>. Your <code>apiHooks.ts</code> file does exactly this — it wraps React Query so pages don't repeat API logic.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> hooks/apiHooks.ts — Reusable data fetching</div>
+        <pre><span class="cmt">// Define ONCE — use in many components</span>
+<span class="kw">export const</span> <span class="fn">useMentors</span> = () => {
+  <span class="kw">return</span> <span class="fn">useQuery</span>({
+    queryKey: [<span class="str">'mentors'</span>],              <span class="cmt">// cache key</span>
+    queryFn: <span class="kw">async</span> () => {
+      <span class="kw">const</span> { data } = <span class="kw">await</span> api.<span class="fn">get</span>(<span class="str">'/api/mentors/search'</span>);
+      <span class="kw">return</span> data;
+    },
+  });
+};
+
+<span class="cmt">// In any component, just:</span>
+<span class="kw">const</span> { data, isLoading, error } = <span class="fn">useMentors</span>();
+<span class="cmt">// That's it! Caching, loading state, refetch — all handled</span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 3 ═══ -->
+<section class="section" id="s3">
+  <div class="section-title">
+    <div class="section-num red">03</div>
+    <div>
+      <h2>API Integration & Data Handling</h2>
+      <small>How the frontend talks to the Spring Boot backend</small>
+    </div>
+  </div>
+
+  <div class="subtopic open">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">⚡</div>
+      <h3>3.1 — What is Axios & Why Use It?</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>Axios is an HTTP client library. The browser has a built-in <code>fetch()</code> API, but Axios is better because it has <strong>interceptors</strong> — middleware that runs before every request or after every response.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> services/axios.ts — The central Axios instance</div>
+        <pre><span class="kw">const</span> api = <span class="fn">axios.create</span>({
+  baseURL: API_BASE_URL,      <span class="cmt">// 'https://api.skillsync.mraks.dev'</span>
+  withCredentials: <span class="num">true</span>,    <span class="cmt">// ← CRITICAL: sends HttpOnly cookies automatically</span>
+  headers: { <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span> },
+});</pre>
+      </div>
+      <p><strong><code>withCredentials: true</code></strong> is the most important setting. Without it, the browser would never send the JWT cookies to the backend. It's your authentication handshake on every single request.</p>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🔁</div>
+      <h3>3.2 — Token Refresh with Queue-Based Retry Logic</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>This is the most sophisticated piece of your frontend. When an access token expires (24h), any API call returns 401. Instead of logging the user out, the app <strong>silently refreshes the token and replays all failed requests</strong>.</p>
+      <div class="diagram-box">
+        <p style="font-size:12px; color:var(--accent4); font-weight:700; margin-bottom:14px; text-transform:uppercase; letter-spacing:1px">The Refresh Queue Flow</p>
+        <div class="flow" style="flex-direction:column; gap:6px; align-items:flex-start; font-size:12px">
+          <div style="display:flex; align-items:center; gap:8px">
+            <div class="flow-box accent" style="min-width:160px">Request A hits 401</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">isRefreshing = false?</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box green">Set isRefreshing = true</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box yellow">POST /api/auth/refresh</div>
+          </div>
+          <div style="padding-left:20px; color:var(--text3)">↓ Meanwhile, 3 more requests return 401...</div>
+          <div style="display:flex; align-items:center; gap:8px">
+            <div class="flow-box" style="min-width:200px">Requests B, C, D → 401</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box accent">isRefreshing = true</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box" style="border-color:#ffd93d; color:#ffd93d">Push to failedQueue[]</div>
+          </div>
+          <div style="padding-left:20px; color:var(--text3)">↓ Refresh succeeds...</div>
+          <div style="display:flex; align-items:center; gap:8px">
+            <div class="flow-box green">processQueue(null)</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box" style="min-width:220px">All B, C, D replay automatically 🎉</div>
+          </div>
+          <div style="padding-left:20px; color:var(--text3)">↓ OR Refresh fails...</div>
+          <div style="display:flex; align-items:center; gap:8px">
+            <div class="flow-box red">processQueue(error)</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box" style="border-color:var(--accent3); color:var(--accent3)">dispatch(logout()) → /login?reason=session_expired</div>
+          </div>
+        </div>
+      </div>
+      <div class="callout warn">
+        <span class="callout-icon">⚠️</span>
+        <div><strong>Why a queue?</strong> Without it, if 3 requests all fail simultaneously, you'd make 3 parallel refresh calls, creating race conditions and token chaos. The queue ensures only ONE refresh happens, then all waiters get replayed at once.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🗃</div>
+      <h3>3.3 — React Query (TanStack Query): Server State Management</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>React Query separates <strong>server state</strong> (data from the API) from <strong>client state</strong> (UI toggles, form values). It gives you caching, background refetching, and loading states — all for free.</p>
+      <div class="grid-2">
+        <div class="card">
+          <h4>useQuery — for GET requests</h4>
+          <pre style="font-size:11px; color:#cdd6f4; background:transparent; padding:0">const { data, isLoading, error } 
+  = useQuery({
+    queryKey: ['admin', 'stats'],
+    queryFn: () => api.get('/api/admin/stats')
+  });</pre>
+          <p style="margin-top:8px">Returns: loading state, data, error. Auto-cached for 5 minutes (see queryClient.ts)</p>
+        </div>
+        <div class="card">
+          <h4>useMutation — for POST/PUT/DELETE</h4>
+          <pre style="font-size:11px; color:#cdd6f4; background:transparent; padding:0">const mutation = useMutation({
+  mutationFn: (data) => 
+    api.post('/api/payments/verify', data),
+  onSuccess: () => navigate('/sessions'),
+  onError: (err) => showToast({...})
+});</pre>
+          <p style="margin-top:8px">Has: pending state, onSuccess, onError, onSettled callbacks</p>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> utils/queryClient.ts — Global defaults</div>
+        <pre><span class="kw">new</span> <span class="fn">QueryClient</span>({
+  defaultOptions: {
+    queries: {
+      staleTime: <span class="num">5 * 60 * 1000</span>,     <span class="cmt">// Cache for 5 minutes</span>
+      retry: <span class="num">2</span>,                       <span class="cmt">// Retry failed requests twice</span>
+      refetchOnWindowFocus: <span class="num">false</span>,   <span class="cmt">// Don't refetch when tab regains focus</span>
+    },
+  },
+});</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🏭</div>
+      <h3>3.4 — Service Layer: mentorService.ts, sessionService.ts</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>Instead of calling <code>api.get('/api/mentors/...')</code> directly in components, you have a <strong>service layer</strong>. Each service is a class that groups all API calls for a domain.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> services/mentorService.ts — OOP service pattern</div>
+        <pre><span class="kw">class</span> <span class="type">MentorService</span> {
+  <span class="cmt">// Search with filters + pagination</span>
+  <span class="kw">async</span> <span class="fn">getMentors</span>(filters?, page = <span class="num">0</span>, size = <span class="num">10</span>) {
+    <span class="kw">const</span> params = <span class="kw">new</span> <span class="fn">URLSearchParams</span>();
+    <span class="kw">if</span> (filters?.skill) params.<span class="fn">append</span>(<span class="str">'skill'</span>, filters.skill);
+    <span class="cmt">// ... more filters ...</span>
+    <span class="kw">const</span> res = <span class="kw">await</span> api.<span class="fn">get</span>(<span class="str">`/api/mentors/search?${params}`</span>);
+    <span class="kw">return</span> res.data; <span class="cmt">// PaginatedResponse&lt;MentorData&gt;</span>
+  }
+
+  <span class="kw">async</span> <span class="fn">applyAsMentor</span>(payload: <span class="type">MentorApplicationPayload</span>) {
+    <span class="kw">const</span> res = <span class="kw">await</span> api.<span class="fn">post</span>(<span class="str">'/api/mentors/apply'</span>, payload);
+    <span class="kw">return</span> res.data;
+  }
+}
+
+<span class="cmt">// Exported as singleton — one instance, used everywhere</span>
+<span class="kw">export default new</span> MentorService();</pre>
+      </div>
+      <div class="callout tip">
+        <span class="callout-icon">🎓</span>
+        <div><strong>For viva:</strong> "The service layer acts like a Repository pattern — it abstracts the API calls behind meaningful method names. If the API endpoint changes, I only update it in one place."</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">📦</div>
+      <h3>3.5 — Pagination: Handling Paginated API Responses</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>Your Spring Boot backend returns paginated data. The frontend handles this with a standard pattern across all services.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Paginated response structure</div>
+        <pre><span class="cmt">// What the API returns:</span>
+{
+  content: [<span class="str">...array of items...</span>],
+  totalElements: <span class="num">47</span>,
+  page: <span class="num">0</span>,
+  size: <span class="num">10</span>
+}
+
+<span class="cmt">// TypeScript interface for this:</span>
+<span class="kw">interface</span> <span class="type">PaginatedResponse</span>&lt;<span class="type">T</span>&gt; {
+  content: <span class="type">T</span>[];
+  totalElements: <span class="type">number</span>;
+  page: <span class="type">number</span>;
+  size: <span class="type">number</span>;
+}
+
+<span class="cmt">// Usage: fetch page 2 of mentors filtered by skill</span>
+mentorService.<span class="fn">getMentors</span>({ skill: <span class="str">'React'</span> }, page=<span class="num">2</span>, size=<span class="num">10</span>);</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🌐</div>
+      <h3>3.6 — URL Base Detection & Production Fixes</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>Your <code>axios.ts</code> has smart production safeguards — because Vercel env vars were misconfigured at some point:</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Production URL safety logic</div>
+        <pre><span class="cmt">// Fix 1: Raw EC2 IP in production → use proper domain</span>
+<span class="kw">if</span> (isProd && configuredUrl.<span class="fn">includes</span>(<span class="str">'35.153.59.2'</span>)) {
+  configuredUrl = <span class="str">'https://api.skillsync.mraks.dev'</span>;
+}
+
+<span class="cmt">// Fix 2: Vercel env pointed to frontend domain → redirect to API</span>
+<span class="kw">if</span> (isProd && <span class="kw">new</span> <span class="fn">URL</span>(configuredUrl).<span class="op">hostname</span> === <span class="str">'skillsync.mraks.dev'</span>) {
+  console.<span class="fn">warn</span>(<span class="str">'[CORS FIX] Misconfigured URL...'</span>);
+  configuredUrl = <span class="str">'https://api.skillsync.mraks.dev'</span>;
+}
+
+<span class="cmt">// Final: dev uses localhost, prod uses API domain</span>
+<span class="kw">const</span> API_BASE_URL = configuredUrl 
+  || (isProd ? <span class="str">'https://api.skillsync.mraks.dev'</span> : <span class="str">'http://localhost:8080'</span>);</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🔃</div>
+      <h3>3.7 — Exponential Backoff for 429 & 503 Errors</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p><strong>429 = Too Many Requests</strong>, <strong>503 = Service Unavailable</strong>. Instead of failing immediately, the interceptor automatically retries with increasing delays.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Exponential backoff in response interceptor</div>
+        <pre><span class="kw">const</span> retryCount = originalRequest._retryCount || <span class="num">0</span>;
+
+<span class="kw">if</span> ([<span class="num">429</span>, <span class="num">503</span>].<span class="fn">includes</span>(error.response?.status) && retryCount < <span class="num">3</span>) {
+  originalRequest._retryCount = retryCount + <span class="num">1</span>;
+  
+  <span class="cmt">// Wait: 1s, then 2s, then 4s (2^0 * 1000, 2^1 * 1000, 2^2 * 1000)</span>
+  <span class="kw">const</span> delay = Math.<span class="fn">pow</span>(<span class="num">2</span>, retryCount) * <span class="num">1000</span>;
+  <span class="kw">await new</span> <span class="fn">Promise</span>((res) => <span class="fn">setTimeout</span>(res, delay));
+  
+  <span class="kw">return</span> <span class="fn">api</span>(originalRequest); <span class="cmt">// retry the same request</span>
+}</pre>
+      </div>
+      <p>Retry 1: wait 1s. Retry 2: wait 2s. Retry 3: wait 4s. After 3 retries, give up and reject.</p>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">📋</div>
+      <h3>3.8 — React Hook Form: Controlled vs Uncontrolled Forms</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>In <code>LoginPage.tsx</code>, forms are managed with <code>react-hook-form</code>. It uses <strong>uncontrolled inputs</strong> with a <code>register</code> function — this is faster because React doesn't re-render on every keystroke.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> React Hook Form in LoginPage.tsx</div>
+        <pre><span class="kw">const</span> { register, handleSubmit, formState: { errors } } = <span class="fn">useForm</span>();
+
+<span class="cmt">// register() connects input to the form without useState</span>
+&lt;input 
+  {...<span class="fn">register</span>(<span class="str">'email'</span>, { required: <span class="num">true</span> })} 
+  type=<span class="str">"email"</span> 
+/&gt;
+
+<span class="cmt">// handleSubmit validates THEN calls onSubmit</span>
+&lt;form <span class="fn">onSubmit</span>={<span class="fn">handleSubmit</span>(onSubmit)}&gt;</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 4 ═══ -->
+<section class="section" id="s4">
+  <div class="section-title">
+    <div class="section-num yellow">04</div>
+    <div>
+      <h2>Authentication & Authorization</h2>
+      <small>JWT, cookies, OAuth, role-based routing — fully explained</small>
+    </div>
+  </div>
+
+  <div class="subtopic open">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🔐</div>
+      <h3>4.1 — JWT Authentication: What is a JWT?</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>JWT = JSON Web Token. It's a compact, URL-safe string that contains <strong>encoded user information + a signature</strong>. The server creates it, sends it to the client; the client sends it back on every request to prove who they are.</p>
+      <div class="diagram-box">
+        <p style="font-size:11px; color:var(--text3); margin-bottom:10px; text-transform:uppercase; letter-spacing:1px">JWT Structure: 3 parts separated by dots</p>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size:13px; word-break:break-all; line-height:1.8">
+          <span style="color:#ff6b6b">eyJhbGciOiJIUzI1NiJ9</span>
+          <span style="color:var(--text3)">.</span>
+          <span style="color:#ffd93d">eyJzdWIiOiJ1c2VyQGV4YW1wbGUuY29tIiwicm9sZSI6IlJPTEVfTEVBUk5FUiIsImlhdCI6MTcxMDAwMDAwMH0</span>
+          <span style="color:var(--text3)">.</span>
+          <span style="color:#00d4aa">SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c</span>
+        </div>
+        <div style="display:flex; gap:24px; margin-top:12px; font-size:12px">
+          <div><span style="color:#ff6b6b; font-weight:700">RED</span> = Header (algorithm)</div>
+          <div><span style="color:#ffd93d; font-weight:700">YELLOW</span> = Payload (userId, role, expiry)</div>
+          <div><span style="color:#00d4aa; font-weight:700">GREEN</span> = Signature (server's secret)</div>
+        </div>
+      </div>
+      <p>Your app uses <strong>HttpOnly cookies</strong> to store JWTs. This means JavaScript (including malicious scripts) <em>cannot</em> read the token — the browser handles sending it automatically. This protects against XSS attacks.</p>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🍪</div>
+      <h3>4.2 — HttpOnly Cookie vs localStorage: The Security Choice</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Storage</th><th>Accessible by JS</th><th>XSS Safe?</th><th>Your choice?</th></tr></thead>
+          <tbody>
+            <tr><td><strong>localStorage</strong></td><td>Yes — <code>localStorage.getItem('token')</code></td><td>❌ Any script can steal it</td><td>❌ Explicitly removed</td></tr>
+            <tr><td><strong>HttpOnly Cookie</strong></td><td>No — browser only</td><td>✅ Invisible to JS</td><td>✅ Used</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> authSlice.ts — localStorage explicitly removed</div>
+        <pre>setCredentials(state, action) {
+  state.user = action.payload.user;
+  state.isAuthenticated = <span class="kw">true</span>;
+  <span class="cmt">// ✅ Removed localStorage persistence for security (XSS mitigation)</span>
+  <span class="cmt">// Tokens live in HttpOnly cookies — server sets them</span>
+},</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🔄</div>
+      <h3>4.3 — AuthLoader: Session Persistence on Page Refresh</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>When you refresh the page, React state is lost (Redux store resets). But the HttpOnly cookie survives. <strong>AuthLoader.tsx</strong> bridges this gap — on every navigation to a protected route, it calls <code>/api/auth/me</code> to restore the session.</p>
+      <div class="diagram-box">
+        <div class="flow" style="flex-direction:column; gap:6px; align-items:flex-start">
+          <div style="display:flex; align-items:center; gap:8px">
+            <div class="flow-box" style="min-width:140px">User refreshes page</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box accent">Redux resets to null</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box green">Cookie still exists</div>
+          </div>
+          <div style="padding-left:20px; color:var(--text3)">↓ AuthLoader runs...</div>
+          <div style="display:flex; align-items:center; gap:8px">
+            <div class="flow-box yellow">GET /api/auth/me</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Server reads cookie, returns UserSummary</div>
+          </div>
+          <div style="padding-left:20px; color:var(--text3)">↓</div>
+          <div style="display:flex; align-items:center; gap:8px">
+            <div class="flow-box green">dispatch(setCredentials)</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box accent">Redux state restored ✓</div>
+          </div>
+          <div style="padding-left:20px; color:var(--text3)">↓ If /me returns 401 (expired access token)...</div>
+          <div style="display:flex; align-items:center; gap:8px">
+            <div class="flow-box red">Try POST /api/auth/refresh</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">New access token in cookie</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box green">Retry /me → Restored ✓</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🗺</div>
+      <h3>4.4 — Role-Based Routing: ProtectedRoute + DashboardRedirect</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>After login, users are redirected based on role. The <code>DashboardRedirect</code> component reads the Redux role and sends each user to the correct dashboard.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> routes/DashboardRedirect.tsx</div>
+        <pre><span class="kw">const</span> role = <span class="fn">useSelector</span>((state) => state.auth.role);
+
+<span class="kw">if</span> (role === <span class="str">'ROLE_ADMIN'</span>)  <span class="kw">return</span> &lt;<span class="type">Navigate</span> to=<span class="str">"/admin"</span>  /&gt;;
+<span class="kw">if</span> (role === <span class="str">'ROLE_MENTOR'</span>) <span class="kw">return</span> &lt;<span class="type">Navigate</span> to=<span class="str">"/mentor"</span> /&gt;;
+                              <span class="kw">return</span> &lt;<span class="type">Navigate</span> to=<span class="str">"/learner"</span>/&gt;;</pre>
+      </div>
+      <div class="callout info">
+        <span class="callout-icon">💡</span>
+        <div>Authorization is enforced at two levels: <strong>Frontend (route guards)</strong> prevent wrong users from seeing pages, and <strong>Backend (Spring Security)</strong> rejects API calls from wrong roles. Never rely on frontend-only guards — a hacker can bypass client-side JS.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🔵</div>
+      <h3>4.5 — Google OAuth Flow</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>The <code>@react-oauth/google</code> library handles the Google SSO button. When clicked, Google's popup authenticates the user and returns an access token. Your app then calls its own backend with the Google profile to create/login the user.</p>
+      <div class="diagram-box">
+        <div class="flow" style="flex-direction:column; gap:4px; align-items:flex-start; font-size:12px">
+          <div style="display:flex; align-items:center; gap:8px">
+            <div class="flow-box" style="min-width:120px">Click "Sign in with Google"</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box accent">Google popup opens</div>
+          </div>
+          <div style="padding-left:20px; color:var(--text3)">↓ User approves</div>
+          <div style="display:flex; align-items:center; gap:8px">
+            <div class="flow-box green">Google returns access_token</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Fetch google.com/oauth2/v3/userinfo</div>
+          </div>
+          <div style="padding-left:20px; color:var(--text3)">↓ Got email, given_name, family_name...</div>
+          <div style="display:flex; align-items:center; gap:8px">
+            <div class="flow-box yellow">POST /api/auth/oauth-login</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">SkillSync backend creates user if new</div>
+          </div>
+          <div style="padding-left:20px; color:var(--text3)">↓</div>
+          <div style="display:flex; align-items:center; gap:8px">
+            <div class="flow-box" style="border-color:var(--accent2); color:var(--accent2)">passwordSetupRequired?</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box accent">Yes → /setup-password</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box green">No → Dashboard</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 5 ═══ -->
+<section class="section" id="s5">
+  <div class="section-title">
+    <div class="section-num pink">05</div>
+    <div>
+      <h2>Frontend Security Implementations</h2>
+      <small>XSS, CSRF, HTTPS, input validation, secure data handling</small>
+    </div>
+  </div>
+
+  <div class="subtopic open">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🛡</div>
+      <h3>5.1 — XSS Prevention</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p><strong>XSS (Cross-Site Scripting)</strong> = an attacker injects malicious JavaScript into your page. React prevents this by <strong>automatically escaping</strong> all values rendered in JSX.</p>
+      <div class="grid-2">
+        <div class="card">
+          <h4>❌ Dangerous (raw HTML)</h4>
+          <pre style="font-size:11px; color:#ff6b6b; background:transparent; padding:0">// dangerouslySetInnerHTML
+&lt;div dangerouslySetInnerHTML=
+  {{__html: userInput}} /&gt;
+// NEVER do this with user data</pre>
+        </div>
+        <div class="card">
+          <h4>✅ Safe (React auto-escapes)</h4>
+          <pre style="font-size:11px; color:#a6e3a1; background:transparent; padding:0">// React escapes this safely
+&lt;div&gt;{mentorName}&lt;/div&gt;
+// "&lt;script&gt;" becomes "&amp;lt;script&amp;gt;"</pre>
+        </div>
+      </div>
+      <p>Additionally, storing tokens in HttpOnly cookies (not localStorage) means even if XSS somehow runs, it <strong>cannot steal the JWT</strong>.</p>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🔒</div>
+      <h3>5.2 — HTTPS Enforcement in Production</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>Your axios.ts explicitly forces HTTPS in production, preventing cookies from being sent over plain HTTP where they could be intercepted.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> axios.ts — HTTPS enforcement</div>
+        <pre><span class="kw">const</span> isProd = import.meta.env.<span class="op">PROD</span>;
+
+<span class="cmt">// If IP address slips through in prod, force HTTPS domain</span>
+<span class="kw">if</span> (isProd && configuredUrl.<span class="fn">includes</span>(<span class="str">'35.153.59.2'</span>)) {
+  configuredUrl = <span class="str">'https://api.skillsync.mraks.dev'</span>;
+}</pre>
+      </div>
+      <p>HttpOnly cookies are also marked <code>Secure</code> on the backend — meaning the browser will never send them over HTTP. Your frontend on Vercel is HTTPS-only.</p>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🚫</div>
+      <h3>5.3 — CSRF Protection via SameSite Cookies</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p><strong>CSRF (Cross-Site Request Forgery)</strong> = attacker tricks your browser into making requests to your app. Your backend sets cookies with <code>SameSite=Strict</code>, which means the browser only sends cookies for requests originating from your own domain.</p>
+      <div class="callout info">
+        <span class="callout-icon">💡</span>
+        <div>The frontend's role in CSRF protection is minimal — it's mostly a backend concern. But your choice of HttpOnly + SameSite cookies (vs localStorage + Authorization headers) is what provides this protection. If you used localStorage, CSRF would be a real threat.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🔑</div>
+      <h3>5.4 — Environment Variables: Keeping Secrets out of Code</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>Sensitive config (API URLs, OAuth client IDs) lives in <code>.env</code> files, not hardcoded in source code. Vite exposes env vars prefixed with <code>VITE_</code> to the frontend.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span>.env usage</div>
+        <pre><span class="cmt">// .env file (NOT committed to git)</span>
+VITE_API_URL=https://api.skillsync.mraks.dev
+VITE_GOOGLE_CLIENT_ID=186617186160-...
+
+<span class="cmt">// In code — accessed via import.meta.env</span>
+<span class="kw">const</span> GOOGLE_CLIENT_ID = import.meta.env.<span class="op">VITE_GOOGLE_CLIENT_ID</span>
+  || <span class="str">"186617..."</span>; <span class="cmt">// fallback if env missing</span></pre>
+      </div>
+      <div class="callout warn">
+        <span class="callout-icon">⚠️</span>
+        <div><strong>Important:</strong> VITE_ env vars ARE visible in the browser bundle — they're not server secrets. They're just for configuration. The actual secrets (API keys, JWT signing key) live only on the backend.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 6 ═══ -->
+<section class="section" id="s6">
+  <div class="section-title">
+    <div class="section-num red">06</div>
+    <div>
+      <h2>Error Handling & Resilience</h2>
+      <small>What happens when things go wrong — and how the app recovers</small>
+    </div>
+  </div>
+
+  <div class="subtopic open">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🗺</div>
+      <h3>6.1 — HTTP Status Code Handling Map</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>Your Axios response interceptor handles every HTTP error centrally so pages don't each need to handle them:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Status</th><th>Meaning</th><th>What SkillSync does</th></tr></thead>
+          <tbody>
+            <tr><td><strong>200-299</strong></td><td>Success</td><td>Pass data to component</td></tr>
+            <tr><td><strong>401</strong></td><td>Unauthenticated</td><td>Try token refresh → retry → if fails, logout + redirect /login?reason=session_expired</td></tr>
+            <tr><td><strong>403</strong></td><td>Forbidden (wrong role)</td><td>Redirect to <code>/unauthorized</code></td></tr>
+            <tr><td><strong>429</strong></td><td>Rate limited</td><td>Exponential backoff, retry up to 3 times</td></tr>
+            <tr><td><strong>500+</strong></td><td>Server error</td><td>Redirect to <code>/500</code> (unless <code>_skipErrorRedirect</code> flag set)</td></tr>
+            <tr><td><strong>503</strong></td><td>Service unavailable</td><td>Exponential backoff retry (not redirected)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🍞</div>
+      <h3>6.2 — Toast Notification System</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>Instead of <code>alert()</code> dialogs, your app uses a <strong>Toast system</strong> built with React Context. It's global — any component can trigger a toast without prop drilling.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> components/ui/Toast.tsx — Context pattern</div>
+        <pre><span class="cmt">// 1. Create Context with showToast function</span>
+<span class="kw">const</span> ToastContext = <span class="fn">createContext</span>&lt;<span class="type">ToastContextType</span> | undefined&gt;(undefined);
+
+<span class="cmt">// 2. Provider wraps entire app (in App.tsx)</span>
+<span class="kw">export const</span> <span class="type">ToastProvider</span> = ({ children }) => {
+  <span class="kw">const</span> [toastData, setToastData] = <span class="fn">useState</span>(null);
+  
+  <span class="kw">const</span> showToast = <span class="fn">useCallback</span>(({ message, type }) => {
+    <span class="fn">setToastData</span>({ message, type });
+    <span class="fn">setTimeout</span>(() => <span class="fn">setToastData</span>(null), <span class="num">3000</span>); <span class="cmt">// auto-dismiss</span>
+  }, []);
+
+  <span class="kw">return</span> &lt;<span class="type">ToastContext.Provider</span> value={{ showToast }}&gt;
+    {children}
+    {toastData && &lt;div className=<span class="str">"fixed bottom-6 right-6..."</span>&gt;...&lt;/div&gt;}
+  &lt;/<span class="type">ToastContext.Provider</span>&gt;;
+};
+
+<span class="cmt">// 3. Any component uses it:</span>
+<span class="kw">const</span> { showToast } = <span class="fn">useToast</span>();
+<span class="fn">showToast</span>({ message: <span class="str">'Booking confirmed! 🎉'</span>, type: <span class="str">'success'</span> });</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">⚙️</div>
+      <h3>6.3 — Escape Hatches: _skipErrorRedirect & _skipAuthRedirect</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>Sometimes the global 401/500 redirect behavior is unwanted — for example, checking if a user is logged in shouldn't force a redirect. These flags opt specific calls out of global error handling.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> AuthLoader.tsx — using escape hatches</div>
+        <pre><span class="cmt">// Don't redirect on 401 for the /me check — it's expected if not logged in</span>
+<span class="kw">await</span> api.<span class="fn">get</span>(<span class="str">'/api/auth/me'</span>, {
+  _skipErrorRedirect: <span class="num">true</span>,
+  _skipAuthRedirect: <span class="num">true</span>,
+} <span class="kw">as any</span>);
+
+<span class="cmt">// Rollback on payment failure — don't redirect on error</span>
+<span class="kw">await</span> api.<span class="fn">put</span>(<span class="str">`/api/sessions/${sessionId}/cancel`</span>, undefined, { 
+  _skipErrorRedirect: <span class="num">true</span> 
+} <span class="kw">as any</span>);</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🔄</div>
+      <h3>6.4 — useMutation Error Handling Pattern</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Consistent mutation error pattern across the app</div>
+        <pre><span class="kw">const</span> mutation = <span class="fn">useMutation</span>({
+  mutationFn: <span class="kw">async</span> (data) => api.<span class="fn">post</span>(<span class="str">'/api/...'</span>, data),
+  onSuccess: (responseData) => {
+    <span class="fn">showToast</span>({ message: <span class="str">'Done!'</span>, type: <span class="str">'success'</span> });
+    <span class="fn">navigate</span>(<span class="str">'/sessions'</span>);
+  },
+  onError: (error: <span class="kw">any</span>) => {
+    <span class="cmt">// Try to get backend's specific error message</span>
+    <span class="kw">const</span> message = error.response?.data?.message 
+      || <span class="str">'Something went wrong. Please try again.'</span>;
+    <span class="fn">showToast</span>({ message, type: <span class="str">'error'</span> });
+  }
+});</pre>
+      </div>
+      <p>The optional chaining <code>error.response?.data?.message</code> safely navigates the error object — if any part is undefined, it returns undefined instead of crashing.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 7 ═══ -->
+<section class="section" id="s7">
+  <div class="section-title">
+    <div class="section-num blue">07</div>
+    <div>
+      <h2>State Management Deep-Dive</h2>
+      <small>Redux Toolkit + React Query — two different jobs, two different tools</small>
+    </div>
+  </div>
+
+  <div class="subtopic open">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🏗</div>
+      <h3>7.1 — Why Two State Libraries? Redux + React Query</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>This is the most common viva question. They do DIFFERENT jobs:</p>
+      <div class="grid-2">
+        <div class="card" style="border-color:rgba(108,99,255,0.4)">
+          <h4>🔴 Redux Toolkit</h4>
+          <p><strong>Client State</strong> — data that lives in the browser, not the server</p>
+          <p>Examples: Is user logged in? What role? Is sidebar open? Which theme?</p>
+          <p>Persists while React is running. Lost on refresh (that's why AuthLoader exists).</p>
+        </div>
+        <div class="card" style="border-color:rgba(0,212,170,0.4)">
+          <h4>🟢 React Query</h4>
+          <p><strong>Server State</strong> — data that comes from the backend API</p>
+          <p>Examples: List of mentors, session data, notifications, admin stats</p>
+          <p>Automatically cached, refetched in background, synced with server</p>
+        </div>
+      </div>
+      <div class="callout tip">
+        <span class="callout-icon">🎓</span>
+        <div>"I use Redux for auth state because it needs to be synchronous and available everywhere before any API call happens. I use React Query for API data because it gives me caching, loading states, and background refetch out of the box."</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">📊</div>
+      <h3>7.2 — Redux Store Structure</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> store/index.ts — The global store</div>
+        <pre>store = {
+  auth: {           <span class="cmt">// authSlice</span>
+    user: { id, email, role, firstName, ... } | <span class="kw">null</span>,
+    isAuthenticated: <span class="kw">true</span> | <span class="kw">false</span>,
+    role: <span class="str">'ROLE_LEARNER'</span> | <span class="str">'ROLE_MENTOR'</span> | <span class="str">'ROLE_ADMIN'</span> | <span class="kw">null</span>,
+    accessToken: <span class="kw">null</span>,     <span class="cmt">// kept null — token is in HttpOnly cookie</span>
+  },
+  ui: {             <span class="cmt">// uiSlice</span>
+    sidebarOpen: <span class="kw">true</span>,
+    notificationsOpen: <span class="kw">false</span>,
+    theme: <span class="str">'light'</span> | <span class="str">'dark'</span>,
+    loading: <span class="kw">false</span>,
+    error: <span class="kw">null</span>,
+  },
+  sessions: {       <span class="cmt">// sessionsSlice</span>
+    sessions: [...],
+    upcomingSessions: [...],
+    selectedSession: <span class="kw">null</span>,
+    currentPage: <span class="num">0</span>,
+    totalElements: <span class="num">0</span>,
+  },
+  mentors: { ... }, notifications: { ... }, groups: { ... }, reviews: { ... }
+}</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">⚡</div>
+      <h3>7.3 — Redux Toolkit: createSlice Explained</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p><code>createSlice</code> generates <strong>actions + reducer</strong> in one go. Old Redux needed separate action creators and switch statements. RTK combines them.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> authSlice.ts — How createSlice works</div>
+        <pre><span class="kw">const</span> authSlice = <span class="fn">createSlice</span>({
+  name: <span class="str">'auth'</span>,              <span class="cmt">// prefix for action types</span>
+  initialState,              <span class="cmt">// starting values</span>
+  reducers: {
+    <span class="fn">setCredentials</span>(state, action) {
+      <span class="cmt">// RTK uses Immer — you can "mutate" state directly</span>
+      <span class="cmt">// Immer makes an immutable copy behind the scenes</span>
+      state.user = action.payload.user;
+      state.isAuthenticated = <span class="kw">true</span>;
+    },
+    <span class="fn">logout</span>(state) {
+      state.user = <span class="kw">null</span>;
+      state.isAuthenticated = <span class="kw">false</span>;
+    }
+  }
+});
+
+<span class="cmt">// RTK auto-generates: auth/setCredentials, auth/logout</span>
+<span class="kw">export const</span> { setCredentials, logout } = authSlice.actions;</pre>
+      </div>
+      <p><strong>Using it in a component:</strong></p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Reading and writing Redux state</div>
+        <pre><span class="cmt">// READ (useSelector)</span>
+<span class="kw">const</span> user = <span class="fn">useSelector</span>((state: <span class="type">RootState</span>) => state.auth.user);
+
+<span class="cmt">// WRITE (useDispatch)</span>
+<span class="kw">const</span> dispatch = <span class="fn">useDispatch</span>();
+<span class="fn">dispatch</span>(<span class="fn">logout</span>());  <span class="cmt">// triggers the logout reducer</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🗂</div>
+      <h3>7.4 — React Context vs Redux: When to Use Which</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>Your app uses React Context for <strong>Theme</strong> and <strong>Toast</strong> — not Redux. Here's why:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Feature</th><th>State Type</th><th>Why That Choice?</th></tr></thead>
+          <tbody>
+            <tr><td>Auth (user, role)</td><td><strong>Redux</strong></td><td>Many components need it; complex logic; needs to be debuggable with DevTools</td></tr>
+            <tr><td>Theme (light/dark)</td><td><strong>React Context</strong></td><td>Simple, few consumers, saved to localStorage — doesn't need Redux overhead</td></tr>
+            <tr><td>Toast messages</td><td><strong>React Context</strong></td><td>Simple pub/sub pattern — createContext is perfect, Redux is overkill</td></tr>
+            <tr><td>Sessions list</td><td><strong>Redux</strong></td><td>Multiple components need sessions, complex update patterns</td></tr>
+            <tr><td>API data (mentors)</td><td><strong>React Query</strong></td><td>Server state — needs caching, background sync, not manual management</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 8 ═══ -->
+<section class="section" id="s8">
+  <div class="section-title">
+    <div class="section-num orange">08</div>
+    <div>
+      <h2>Environment & Configuration</h2>
+      <small>How the app knows whether it's dev or production, and what URLs to use</small>
+    </div>
+  </div>
+
+  <div class="subtopic open">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🌿</div>
+      <h3>8.1 — Vite Environment Variables</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>Vite (your build tool) uses <code>.env</code> files to configure environment-specific values. Only variables prefixed with <code>VITE_</code> are exposed to the browser bundle.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span">.env files</div>
+        <pre><span class="cmt"># .env.development (local dev)</span>
+VITE_API_URL=http://localhost:8080
+VITE_GOOGLE_CLIENT_ID=186617...
+
+<span class="cmt"># .env.production (Vercel deployment)</span>
+VITE_API_URL=https://api.skillsync.mraks.dev
+
+<span class="cmt"># Access in code:</span>
+import.meta.env.VITE_API_URL
+import.meta.env.PROD  <span class="cmt">// true in production, false in dev</span>
+import.meta.env.DEV   <span class="cmt">// true in dev</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🏗</div>
+      <h3>8.2 — Vite vs Create React App (CRA)</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>You used Vite instead of Create React App. Here's why Vite is better:</p>
+      <div class="grid-2">
+        <div class="card">
+          <h4>⚡ Vite</h4>
+          <p>Uses native ES modules in dev — no bundling needed. HMR (Hot Module Replacement) in milliseconds. Build uses Rollup. Dev server starts in &lt;1 second.</p>
+        </div>
+        <div class="card">
+          <h4>🐢 Create React App</h4>
+          <p>Bundles entire app with Webpack even in dev. HMR takes seconds. Now deprecated by React team. Not suitable for large apps.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">☁️</div>
+      <h3>8.3 — Deployment: Vercel (Frontend) + EC2 (Backend)</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <div class="grid-2">
+        <div class="card">
+          <h4>▲ Vercel (Frontend)</h4>
+          <p>Auto-deploys on git push. CDN edge servers globally. Free SSL. Custom domain: skillsync.mraks.dev</p>
+        </div>
+        <div class="card">
+          <h4>☁️ AWS EC2 (Backend)</h4>
+          <p>Spring Boot JAR runs on EC2 instance. Custom domain: api.skillsync.mraks.dev. CORS configured to allow Vercel origin.</p>
+        </div>
+      </div>
+      <div class="callout info">
+        <span class="callout-icon">💡</span>
+        <div>CORS (Cross-Origin Resource Sharing) is why the frontend (skillsync.mraks.dev) can make API calls to a different domain (api.skillsync.mraks.dev). The Spring Boot backend must whitelist your Vercel domain in its CORS configuration.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 9 ═══ -->
+<section class="section" id="s9">
+  <div class="section-title">
+    <div class="section-num">09</div>
+    <div>
+      <h2>Component Design</h2>
+      <small>How components are structured, composed, and made reusable</small>
+    </div>
+  </div>
+
+  <div class="subtopic open">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🧩</div>
+      <h3>9.1 — Layout Components: Sidebar, Navbar, PageLayout</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>Your layout is built from composable shell components. The <code>Sidebar</code> is role-aware — it renders different nav links based on the user's role.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Sidebar.tsx — Role-based navigation</div>
+        <pre><span class="kw">const</span> learnerNav = [
+  { name: <span class="str">'Dashboard'</span>, icon: <span class="str">'grid_view'</span>, path: <span class="str">'/learner'</span> },
+  { name: <span class="str">'Mentor Search'</span>, icon: <span class="str">'person_search'</span>, path: <span class="str">'/mentors'</span> },
+  ...
+];
+
+<span class="kw">const</span> mentorNav = [...]; <span class="cmt">// different links for mentors</span>
+<span class="kw">const</span> adminNav = [...];  <span class="cmt">// different links for admins</span>
+
+<span class="cmt">// Select based on prop</span>
+<span class="kw">const</span> activeNav = role === <span class="str">'ROLE_MENTOR'</span> ? mentorNav 
+                 : role === <span class="str">'ROLE_ADMIN'</span>  ? adminNav 
+                 : learnerNav;</pre>
+      </div>
+      <p>Material Symbols (Google's icon font) is used for icons. The sidebar uses <code>useLocation()</code> to highlight the currently active link.</p>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🔀</div>
+      <h3>9.2 — Outlet Pattern in React Router</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>The <code>Outlet</code> component is like a "slot" — a placeholder where nested routes render. Your <code>AuthLayout</code> and <code>ProtectedRoute</code> use this to wrap groups of routes with shared layout.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Route nesting in AppRoutes.tsx</div>
+        <pre><span class="cmt">// AuthLayout wraps all auth pages (login, register, etc.)</span>
+<span class="cmt">// They share the same centered card layout</span>
+&lt;<span class="type">Route</span> element={&lt;<span class="type">AuthLayout</span> /&gt;}&gt;
+  &lt;<span class="type">Route</span> path=<span class="str">"/login"</span>     element={&lt;<span class="type">LoginPage</span> /&gt;} /&gt;
+  &lt;<span class="type">Route</span> path=<span class="str">"/register"</span>  element={&lt;<span class="type">RegisterPage</span> /&gt;} /&gt;
+&lt;/<span class="type">Route</span>&gt;
+
+<span class="cmt">// ProtectedRoute wraps all pages that need auth</span>
+&lt;<span class="type">Route</span> element={&lt;<span class="type">ProtectedRoute</span> /&gt;}&gt;
+  &lt;<span class="type">Route</span> path=<span class="str">"/learner"</span> element={&lt;<span class="type">LearnerDashboardPage</span> /&gt;} /&gt;
+  <span class="cmt">// ... 20+ protected routes ...</span>
+&lt;/<span class="type">Route</span>&gt;</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🎭</div>
+      <h3>9.3 — Modal Components: ReviewModal</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>Modals are reusable overlay components. They use <strong>React Context + state</strong> to be triggerable from anywhere without prop drilling. <code>ActionConfirm</code> is a generic confirmation dialog, <code>ReviewModal</code> handles session reviews.</p>
+      <div class="callout info">
+        <span class="callout-icon">💡</span>
+        <div>The <code>ActionConfirmProvider</code> in App.tsx provides a <code>confirm()</code> function that returns a Promise. You call <code>await confirm('Are you sure?')</code> and it shows a dialog. The user's click resolves or rejects the promise. This is the async confirmation pattern.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">📝</div>
+      <h3>9.4 — Props: Passing Data Between Components</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p><strong>Props</strong> are how parent components pass data to child components. In TypeScript, you define an interface for props to get type safety.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Typed props — Sidebar example</div>
+        <pre><span class="cmt">// Define what props Sidebar accepts</span>
+<span class="kw">interface</span> <span class="type">SidebarProps</span> {
+  role: <span class="str">'ROLE_LEARNER'</span> | <span class="str">'ROLE_MENTOR'</span> | <span class="str">'ROLE_ADMIN'</span>;
+}
+
+<span class="cmt">// Component receives props as parameter</span>
+<span class="kw">const</span> Sidebar = ({ role }: <span class="type">SidebarProps</span>) => {
+  <span class="cmt">// TypeScript will error if you pass wrong type</span>
+};
+
+<span class="cmt">// Usage — TypeScript checks at compile time</span>
+&lt;<span class="type">Sidebar</span> role=<span class="str">"ROLE_MENTOR"</span> /&gt; <span class="cmt">// ✓ valid</span>
+&lt;<span class="type">Sidebar</span> role=<span class="str">"random string"</span> /&gt; <span class="cmt">// ✗ TypeScript error</span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 10 ═══ -->
+<section class="section" id="s10">
+  <div class="section-title">
+    <div class="section-num pink">10</div>
+    <div>
+      <h2>User Experience Strategy</h2>
+      <small>How the frontend is designed to feel fast, clear, and trustworthy</small>
+    </div>
+  </div>
+
+  <div class="subtopic open">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">⏳</div>
+      <h3>10.1 — Loading States & Feedback</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>Every async action shows the user what's happening. In CheckoutPage, the button changes text at each step of the payment flow:</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Step-by-step loading feedback</div>
+        <pre><span class="kw">type</span> LoadingStep = <span class="str">''</span> | <span class="str">'session'</span> | <span class="str">'order'</span> | <span class="str">'verify'</span>;
+
+{loadingStep === <span class="str">'session'</span> && <span class="str">"Reserving slot..."</span>}
+{loadingStep === <span class="str">'order'</span>   && <span class="str">"Connecting to bank..."</span>}
+{loadingStep === <span class="str">'verify'</span>  && <span class="str">"Verifying transaction..."</span>}</pre>
+      </div>
+      <p>AuthLoader shows a spinner while checking if the user is authenticated. React Query's <code>isLoading</code> flag drives skeleton loaders on data pages.</p>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🗺</div>
+      <h3>10.2 — Navigation: Location State (no URL params for sensitive data)</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>When navigating to CheckoutPage, sensitive data (mentorId, price, mentor name) is passed via <strong>React Router's location state</strong> — not URL params. URL params appear in browser history and can be manipulated.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Location state navigation</div>
+        <pre><span class="cmt">// From MentorDetailPage — pass data invisibly</span>
+<span class="fn">navigate</span>(<span class="str">'/checkout'</span>, {
+  state: { mentorId: <span class="num">42</span>, mentorName: <span class="str">'Dr. Kumar'</span>, 
+           startTime: <span class="str">'2025-10-01T10:00'</span>, hourlyRate: <span class="num">500</span> }
+});
+
+<span class="cmt">// In CheckoutPage — read the state</span>
+<span class="kw">const</span> { state } = <span class="fn">useLocation</span>();
+<span class="kw">if</span> (!state?.mentorId) <span class="fn">navigate</span>(<span class="str">'/mentors'</span>); <span class="cmt">// guard: direct access blocked</span>
+<span class="kw">const</span> { mentorId, mentorName, startTime, hourlyRate } = state;</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🌙</div>
+      <h3>10.3 — Dark Mode / Theme System</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>The ThemeContext persists theme to <code>localStorage</code>, reads OS preference on first load (<code>prefers-color-scheme</code>), and applies <code>theme-dark</code>/<code>theme-light</code> class to <code>document.documentElement</code>.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> ThemeContext.tsx — How it works</div>
+        <pre><span class="cmt">// On theme change, update DOM</span>
+<span class="fn">useEffect</span>(() => {
+  root.classList.<span class="fn">toggle</span>(<span class="str">'theme-dark'</span>, theme === <span class="str">'dark'</span>);
+  root.<span class="fn">setAttribute</span>(<span class="str">'data-theme'</span>, theme);
+  root.style.colorScheme = theme;
+  localStorage.<span class="fn">setItem</span>(<span class="str">'skillsync.theme'</span>, theme);
+}, [theme]);
+
+<span class="cmt">// OS preference detection on first load</span>
+<span class="kw">const</span> <span class="fn">getInitialTheme</span> = () => {
+  <span class="kw">const</span> stored = localStorage.<span class="fn">getItem</span>(<span class="str">'skillsync.theme'</span>);
+  <span class="kw">if</span> (stored) <span class="kw">return</span> stored;
+  <span class="kw">return</span> window.<span class="fn">matchMedia</span>(<span class="str">'(prefers-color-scheme: dark)'</span>).matches 
+    ? <span class="str">'dark'</span> : <span class="str">'light'</span>;
+};</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">📍</div>
+      <h3>10.4 — Session Expiry UX</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>When a user's session expires, they're redirected to <code>/login?reason=session_expired</code>. LoginPage detects this URL param and shows a helpful toast, then removes the param to keep the URL clean.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> LoginPage.tsx — Session expiry UX</div>
+        <pre><span class="fn">useEffect</span>(() => {
+  <span class="kw">if</span> (searchParams.<span class="fn">get</span>(<span class="str">'reason'</span>) === <span class="str">'session_expired'</span>) {
+    <span class="fn">showToast</span>({ 
+      message: <span class="str">'Your session expired. Please sign in again.'</span>, 
+      type: <span class="str">'error'</span> 
+    });
+    <span class="cmt">// Remove param from URL without reloading</span>
+    updatedParams.<span class="fn">delete</span>(<span class="str">'reason'</span>);
+    <span class="fn">setSearchParams</span>(updatedParams, { replace: <span class="kw">true</span> });
+  }
+}, [searchParams]);</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 11 ═══ -->
+<section class="section" id="s11">
+  <div class="section-title">
+    <div class="section-num green">11</div>
+    <div>
+      <h2>UI Design & Visual System</h2>
+      <small>The design tokens, Tailwind config, and Material Design system</small>
+    </div>
+  </div>
+
+  <div class="subtopic open">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🎨</div>
+      <h3>11.1 — Material Design 3 Color System</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>Your Tailwind config uses Material Design 3 color token names. These are CSS variables that change based on light/dark mode — not hardcoded hex values.</p>
+      <div class="grid-3">
+        <div class="card" style="border-left:3px solid #6c63ff">
+          <h4>primary</h4>
+          <p>Main brand color. Used on buttons, active states, key highlights</p>
+        </div>
+        <div class="card" style="border-left:3px solid #888">
+          <h4>surface</h4>
+          <p>Background layers: surface → surface-container → surface-container-lowest</p>
+        </div>
+        <div class="card" style="border-left:3px solid #aaa">
+          <h4>on-surface</h4>
+          <p>Text colors. on-surface = main text, on-surface-variant = secondary text</p>
+        </div>
+        <div class="card" style="border-left:3px solid #ff6b6b">
+          <h4>error</h4>
+          <p>Error states, destructive actions, alert backgrounds</p>
+        </div>
+        <div class="card" style="border-left:3px solid #555">
+          <h4>outline-variant</h4>
+          <p>Subtle borders, dividers — a lighter variant of the outline color</p>
+        </div>
+        <div class="card" style="border-left:3px solid #00d4aa">
+          <h4>secondary</h4>
+          <p>Secondary actions, complementary UI elements</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🔤</div>
+      <h3>11.2 — Typography Classes</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>Consistent text hierarchy through Tailwind classes used across the codebase:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Class</th><th>Where Used</th><th>What it looks like</th></tr></thead>
+          <tbody>
+            <tr><td><code>text-2xl font-extrabold</code></td><td>Page titles (e.g., "Complete Your Booking")</td><td>Large, bold headings</td></tr>
+            <tr><td><code>text-[10px] font-black uppercase tracking-widest</code></td><td>Section labels ("ORDER SUMMARY")</td><td>Small caps labels</td></tr>
+            <tr><td><code>text-sm font-semibold text-on-surface-variant</code></td><td>Body/detail text</td><td>Secondary readable text</td></tr>
+            <tr><td><code>text-3xl font-black text-primary</code></td><td>Price display (₹totalAmount)</td><td>Big, attention-grabbing number</td></tr>
+            <tr><td><code>font-extrabold text-lg</code></td><td>Primary button text</td><td>Confident, clickable</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">✨</div>
+      <h3>11.3 — Animations & Transitions</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>Micro-interactions are implemented using Tailwind's transition utilities and Tailwind Animate plugin:</p>
+      <div class="checklist">
+        <div class="check-item"><span class="check-mark">→</span> <code>animate-in slide-in-from-bottom-4</code> — Checkout card slides up on open</div>
+        <div class="check-item"><span class="check-mark">→</span> <code>hover:-translate-y-0.5 hover:shadow-xl</code> — Pay button lifts on hover</div>
+        <div class="check-item"><span class="check-mark">→</span> <code>active:scale-[0.98]</code> — Button press tactile feel</div>
+        <div class="check-item"><span class="check-mark">→</span> <code>transition-all duration-300</code> — Smooth all property transitions</div>
+        <div class="check-item"><span class="check-mark">→</span> <code>animate-spin</code> — Rotating loading spinner</div>
+        <div class="check-item"><span class="check-mark">→</span> <code>group-hover:translate-x-1</code> — Arrow icon moves on button hover</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 12 ═══ -->
+<section class="section" id="s12">
+  <div class="section-title">
+    <div class="section-num blue">12</div>
+    <div>
+      <h2>Responsiveness & Adaptive UI</h2>
+      <small>How the app adapts to mobile, tablet, and desktop</small>
+    </div>
+  </div>
+
+  <div class="subtopic open">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">📱</div>
+      <h3>12.1 — Tailwind Breakpoints</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>Tailwind uses a <strong>mobile-first</strong> approach. Classes without prefix apply on all sizes; <code>lg:</code> applies only on large screens and above.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Prefix</th><th>Min Width</th><th>Device</th></tr></thead>
+          <tbody>
+            <tr><td>(none)</td><td>0px</td><td>All (mobile first)</td></tr>
+            <tr><td><code>sm:</code></td><td>640px</td><td>Small tablet</td></tr>
+            <tr><td><code>md:</code></td><td>768px</td><td>Tablet</td></tr>
+            <tr><td><code>lg:</code></td><td>1024px</td><td>Laptop/Desktop</td></tr>
+            <tr><td><code>xl:</code></td><td>1280px</td><td>Large desktop</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Sidebar responsive behavior</div>
+        <pre><span class="cmt">// w-20 = 80px (icon-only) on mobile</span>
+<span class="cmt">// lg:w-64 = 256px (with text) on desktop</span>
+&lt;aside className=<span class="str">"w-20 lg:w-64 ..."</span>&gt;
+
+<span class="cmt">// Text hidden on mobile, shown on desktop</span>
+&lt;span className=<span class="str">"hidden lg:inline ml-4"</span>&gt;Dashboard&lt;/span&gt;
+
+<span class="cmt">// Checkout form: p-6 on mobile, p-8 on medium+</span>
+&lt;div className=<span class="str">"p-6 md:p-8"</span>&gt;</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🖥</div>
+      <h3>12.2 — Fixed Sidebar + Scrollable Content Pattern</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>The classic app shell layout: fixed sidebar on the left, scrollable main content on the right. The sidebar uses <code>position: fixed</code> or <code>sticky</code> to stay in place.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Sidebar.tsx — Fixed positioning</div>
+        <pre><span class="cmt">// Sidebar: fixed, full height, on top of content</span>
+className=<span class="str">"fixed left-0 top-0 h-screen w-20 lg:w-64 
+           bg-surface-container-lowest/95 z-40 
+           backdrop-blur-xl"</span>
+
+<span class="cmt">// Main content: push left margin to clear sidebar</span>
+className=<span class="str">"ml-20 lg:ml-64 min-h-screen"</span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 13 ═══ -->
+<section class="section" id="s13">
+  <div class="section-title">
+    <div class="section-num orange">13</div>
+    <div>
+      <h2>Performance Optimization</h2>
+      <small>What makes SkillSync fast — caching, lazy loading, memoization</small>
+    </div>
+  </div>
+
+  <div class="subtopic open">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🧠</div>
+      <h3>13.1 — React Query Caching</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>React Query caches API responses. If you navigate away and come back within <strong>5 minutes</strong> (staleTime), it shows cached data instantly and optionally refetches in background.</p>
+      <div class="diagram-box">
+        <div class="flow" style="flex-direction:column; gap:4px; align-items:flex-start; font-size:12px">
+          <div style="display:flex; align-items:center; gap:8px">
+            <div class="flow-box accent">First visit</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box yellow">API call → cache result</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box green">Show data</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px">
+            <div class="flow-box accent">Return within 5min</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box green">Show cache instantly ⚡</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">No API call</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px">
+            <div class="flow-box accent">Return after 5min</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box green">Show stale data</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box yellow">Background refetch</div>
+          </div>
+        </div>
+      </div>
+      <p>The <code>queryKey</code> is the cache key. <code>['mentors', 'ROLE_MENTOR']</code> is a unique identifier — two components requesting the same key share the same cache and request.</p>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">⚡</div>
+      <h3>13.2 — useMemo: Preventing Expensive Recalculations</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p><code>useMemo</code> caches the result of an expensive calculation — only recalculates when its dependencies change.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> ThemeContext.tsx — useMemo for context value</div>
+        <pre><span class="cmt">// Without useMemo: new object created on EVERY render
+// → all consumers re-render unnecessarily</span>
+
+<span class="cmt">// With useMemo: same object reference until [theme] changes</span>
+<span class="kw">const</span> value = <span class="fn">useMemo</span>(
+  () => ({ theme, isDark: theme === <span class="str">'dark'</span>, setTheme, toggleTheme }),
+  [theme]  <span class="cmt">// ← only recalculate when theme changes</span>
+);</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🔂</div>
+      <h3>13.3 — useCallback: Preventing Function Recreation</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p><code>useCallback</code> returns a memoized version of a function — the same function reference across renders unless dependencies change.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Toast.tsx — useCallback for showToast</div>
+        <pre><span class="cmt">// Without useCallback: showToast is a new function every render
+// → components using useToast() would re-render unnecessarily</span>
+
+<span class="kw">const</span> showToast = <span class="fn">useCallback</span>(({ message, type }) => {
+  <span class="fn">setToastData</span>({ message, type });
+  <span class="fn">setTimeout</span>(() => <span class="fn">setToastData</span>(null), <span class="num">3000</span>);
+}, []); <span class="cmt">// ← empty deps = created ONCE, never changes</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">📦</div>
+      <h3>13.4 — Dynamic Imports & Code Splitting</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>The Razorpay SDK is loaded <strong>dynamically</strong> — only when the user reaches the checkout page. This prevents adding 200KB to the initial bundle that most users never need.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> CheckoutPage.tsx — Dynamic SDK loading</div>
+        <pre><span class="fn">useEffect</span>(() => {
+  <span class="cmt">// Only runs when checkout page mounts</span>
+  <span class="kw">const</span> script = document.<span class="fn">createElement</span>(<span class="str">'script'</span>);
+  script.src = <span class="str">'https://checkout.razorpay.com/v1/checkout.js'</span>;
+  script.async = <span class="kw">true</span>;
+  document.body.<span class="fn">appendChild</span>(script);
+
+  <span class="cmt">// Cleanup: remove script when leaving checkout</span>
+  <span class="kw">return</span> () => document.body.<span class="fn">removeChild</span>(script);
+}, []);</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 14 ═══ -->
+<section class="section" id="s14">
+  <div class="section-title">
+    <div class="section-num yellow">14</div>
+    <div>
+      <h2>Real-Time Communication</h2>
+      <small>Notifications, WebSocket infrastructure, polling strategy</small>
+    </div>
+  </div>
+
+  <div class="subtopic open">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🔔</div>
+      <h3>14.1 — Notification Service Architecture</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>The <code>NotificationService</code> class handles all notification CRUD. It includes a <code>subscribeToNotifications()</code> stub with a comment about WebSocket handling — indicating the architecture is designed for real-time upgrade.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> notificationService.ts</div>
+        <pre><span class="kw">class</span> <span class="type">NotificationService</span> {
+  <span class="fn">getNotifications</span>(page, size)  → paginated list
+  <span class="fn">getUnreadCount</span>()              → number (badge count)
+  <span class="fn">markAsRead</span>(id)               → marks single notification
+  <span class="fn">markAllAsRead</span>()              → bulk mark
+  <span class="fn">deleteNotification</span>(id)       → delete one
+  <span class="fn">clearAllNotifications</span>()      → Promise.all bulk delete
+
+  <span class="fn">subscribeToNotifications</span>()   → <span class="cmt">// WebSocket stub for future</span>
+}</pre>
+      </div>
+      <div class="callout info">
+        <span class="callout-icon">💡</span>
+        <div><strong>Current state:</strong> REST polling — fetch unread count periodically. <strong>Future:</strong> WebSocket (STOMP over SockJS, since backend is Spring Boot). WebSocket keeps a persistent connection so server can push new notifications instantly without polling.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">📡</div>
+      <h3>14.2 — WebSocket vs REST Polling</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <div class="grid-2">
+        <div class="card">
+          <h4>🔄 REST Polling (current)</h4>
+          <p>Client asks server every N seconds: "Any new notifications?" Server responds with count. Simple but wastes bandwidth on empty responses.</p>
+        </div>
+        <div class="card">
+          <h4>⚡ WebSocket (future)</h4>
+          <p>One persistent TCP connection. Server pushes notification instantly when it occurs. Zero polling overhead. Spring Boot supports STOMP over WebSocket natively.</p>
+        </div>
+      </div>
+      <p>The <code>Promise.all</code> pattern in <code>clearAllNotifications()</code> is a concurrency technique — all delete requests fire simultaneously instead of sequentially, making bulk deletion much faster.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 15 ═══ -->
+<section class="section" id="s15">
+  <div class="section-title">
+    <div class="section-num pink">15</div>
+    <div>
+      <h2>Payment Flow Integrity</h2>
+      <small>Razorpay integration, idempotency, rollback on failure</small>
+    </div>
+  </div>
+
+  <div class="subtopic open">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">💳</div>
+      <h3>15.1 — Complete Razorpay Flow (Step by Step)</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <div class="diagram-box">
+        <p style="font-size:11px; color:var(--accent2); font-weight:700; margin-bottom:16px; text-transform:uppercase; letter-spacing:1px">SkillSync Payment Flow — All 7 Steps</p>
+        <div style="display:flex; flex-direction:column; gap:12px; font-size:12px; font-family:'JetBrains Mono', monospace">
+          <div style="display:flex; align-items:center; gap:12px">
+            <div style="width:28px; height:28px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:700; flex-shrink:0; font-size:11px">1</div>
+            <div style="flex:1; background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:8px 14px">
+              <strong style="color:var(--text)">POST /api/sessions</strong>
+              <span style="color:var(--text3)"> → Create session in REQUESTED state. Save sessionId in useRef.</span>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px">
+            <div style="width:28px; height:28px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:700; flex-shrink:0; font-size:11px">2</div>
+            <div style="flex:1; background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:8px 14px">
+              <strong style="color:var(--text)">POST /api/payments/create-order</strong>
+              <span style="color:var(--text3)"> → Backend creates Razorpay order. Returns orderId, amount, currency, keyId.</span>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px">
+            <div style="width:28px; height:28px; border-radius:50%; background:var(--accent4); color:#000; display:flex; align-items:center; justify-content:center; font-weight:700; flex-shrink:0; font-size:11px">3</div>
+            <div style="flex:1; background:var(--bg3); border:1px solid rgba(255,217,61,0.3); border-radius:8px; padding:8px 14px">
+              <strong style="color:var(--accent4)">new window.Razorpay(options).open()</strong>
+              <span style="color:var(--text3)"> → Opens Razorpay checkout modal in browser.</span>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px">
+            <div style="width:28px; height:28px; border-radius:50%; background:var(--accent4); color:#000; display:flex; align-items:center; justify-content:center; font-weight:700; flex-shrink:0; font-size:11px">4</div>
+            <div style="flex:1; background:var(--bg3); border:1px solid rgba(255,217,61,0.3); border-radius:8px; padding:8px 14px">
+              <strong style="color:var(--accent4)">User pays</strong>
+              <span style="color:var(--text3)"> → Razorpay calls handler(response) with razorpayOrderId, razorpayPaymentId, razorpaySignature.</span>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px">
+            <div style="width:28px; height:28px; border-radius:50%; background:var(--accent2); display:flex; align-items:center; justify-content:center; font-weight:700; flex-shrink:0; font-size:11px">5</div>
+            <div style="flex:1; background:var(--bg3); border:1px solid rgba(0,212,170,0.3); border-radius:8px; padding:8px 14px">
+              <strong style="color:var(--accent2)">POST /api/payments/verify</strong>
+              <span style="color:var(--text3)"> → Backend verifies HMAC signature. Confirms money was received.</span>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px">
+            <div style="width:28px; height:28px; border-radius:50%; background:var(--accent2); display:flex; align-items:center; justify-content:center; font-weight:700; flex-shrink:0; font-size:11px">6</div>
+            <div style="flex:1; background:var(--bg3); border:1px solid rgba(0,212,170,0.3); border-radius:8px; padding:8px 14px">
+              <strong style="color:var(--accent2)">onSuccess</strong>
+              <span style="color:var(--text3)"> → Clear pendingSessionIdRef → showToast('Booking confirmed! 🎉') → navigate('/sessions')</span>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px">
+            <div style="width:28px; height:28px; border-radius:50%; background:var(--accent3); display:flex; align-items:center; justify-content:center; font-weight:700; flex-shrink:0; font-size:11px">!</div>
+            <div style="flex:1; background:var(--bg3); border:1px solid rgba(255,107,107,0.3); border-radius:8px; padding:8px 14px">
+              <strong style="color:var(--accent3)">On any failure / modal dismiss</strong>
+              <span style="color:var(--text3)"> → rollbackPendingSession() → PUT /api/sessions/{id}/cancel → clean state</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🔙</div>
+      <h3>15.2 — Rollback Pattern: Why useRef?</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>The <code>pendingSessionIdRef</code> uses <code>useRef</code> instead of <code>useState</code> deliberately. Here's why:</p>
+      <div class="grid-2">
+        <div class="card">
+          <h4>❌ useState would cause</h4>
+          <p>Setting state causes a re-render. In the middle of the payment flow, re-renders could break the Razorpay modal or reset loading states unexpectedly.</p>
+        </div>
+        <div class="card">
+          <h4>✅ useRef is perfect</h4>
+          <p><code>ref.current</code> stores a value that persists across renders but <em>never</em> triggers a re-render when changed. Safe to update during async operations.</p>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Rollback mechanism</div>
+        <pre><span class="kw">const</span> pendingSessionIdRef = <span class="fn">useRef</span>&lt;<span class="type">number</span> | <span class="kw">null</span>&gt;(<span class="kw">null</span>);
+
+<span class="cmt">// After creating session: store its ID for potential rollback</span>
+pendingSessionIdRef.current = sessionId;
+
+<span class="cmt">// If user closes modal, payment fails, or verify fails:</span>
+<span class="kw">const</span> rollbackPendingSession = <span class="kw">async</span> () => {
+  <span class="kw">const</span> sessionId = pendingSessionIdRef.current;
+  <span class="kw">if</span> (!sessionId) <span class="kw">return</span>; <span class="cmt">// nothing to rollback</span>
+  
+  <span class="kw">try</span> {
+    <span class="kw">await</span> api.<span class="fn">put</span>(<span class="str">`/api/sessions/${sessionId}/cancel`</span>, ...);
+  } <span class="kw">catch</span> { <span class="cmt">/* best-effort — don't crash on rollback failure */</span> }
+  <span class="kw">finally</span> { pendingSessionIdRef.current = <span class="kw">null</span>; }
+};</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">💰</div>
+      <h3>15.3 — Platform Fee Calculation</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>The frontend calculates and displays the 5% platform fee for transparency before the user pays.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Fee calculation</div>
+        <pre><span class="kw">const</span> platformFee = hourlyRate * <span class="num">0.05</span>;   <span class="cmt">// 5% platform cut</span>
+<span class="kw">const</span> totalAmount = hourlyRate + platformFee;
+
+<span class="cmt">// Display</span>
+Session Fee: ₹{hourlyRate.<span class="fn">toFixed</span>(<span class="num">2</span>)}
+Platform Fee: ₹{platformFee.<span class="fn">toFixed</span>(<span class="num">2</span>)}
+Total: ₹{totalAmount.<span class="fn">toFixed</span>(<span class="num">2</span>)}
+
+<span class="cmt">// Razorpay amount (in smallest currency unit — paise)</span>
+amount: amount * <span class="num">100</span>,  <span class="cmt">// ₹500 → 50000 paise</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">✅</div>
+      <h3>15.4 — Payment Signature Verification (Security)</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>After payment, Razorpay sends 3 values. The backend <strong>verifies the HMAC signature</strong> by recomputing it with the secret key. This prevents anyone from faking a "payment success".</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Value</th><th>Who Creates It</th><th>What It's For</th></tr></thead>
+          <tbody>
+            <tr><td><code>razorpay_order_id</code></td><td>Razorpay</td><td>Reference to the order created in step 2</td></tr>
+            <tr><td><code>razorpay_payment_id</code></td><td>Razorpay</td><td>Unique ID of this specific payment transaction</td></tr>
+            <tr><td><code>razorpay_signature</code></td><td>Razorpay</td><td>HMAC-SHA256(orderId + "|" + paymentId, secret)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout tip">
+        <span class="callout-icon">🎓</span>
+        <div>"The signature verification happens on the backend, not the frontend. The frontend just collects the three values from Razorpay's callback and sends them to our Spring Boot service. If someone tampered with orderId or paymentId, the HMAC would not match and the verification would fail."</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 16 ═══ -->
+<section class="section" id="s16">
+  <div class="section-title">
+    <div class="section-num green">16</div>
+    <div>
+      <h2>Quality Assurance & Debugging</h2>
+      <small>How you ensure the app works correctly and find issues</small>
+    </div>
+  </div>
+
+  <div class="subtopic open">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🔍</div>
+      <h3>16.1 — TypeScript as Your First QA Layer</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>TypeScript catches entire categories of bugs at compile time, before you even run the code. It's static analysis as QA.</p>
+      <div class="checklist">
+        <div class="check-item"><span class="check-mark">✓</span> Passing wrong type to a function → TypeScript error, not runtime crash</div>
+        <div class="check-item"><span class="check-mark">✓</span> Accessing property that doesn't exist → TypeScript error</div>
+        <div class="check-item"><span class="check-mark">✓</span> Forgetting to handle null → TypeScript forces null checks</div>
+        <div class="check-item"><span class="check-mark">✓</span> Misspelling a prop name → TypeScript catches it immediately</div>
+        <div class="check-item"><span class="check-mark">✓</span> Payment status typo → union type <code>'CREATED'|'VERIFIED'|'SUCCESS'</code> prevents invalid values</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🛠</div>
+      <h3>16.2 — Redux DevTools: Time-Travel Debugging</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>Redux DevTools (Chrome extension) shows every dispatched action and state change. You can time-travel — go back to any previous state. This makes debugging auth flows and state mutations trivial.</p>
+      <div class="callout tip">
+        <span class="callout-icon">🎓</span>
+        <div>"In viva, I can open DevTools, show the Redux state tab, and demonstrate exactly what happens to the auth state when I log in — you can see the setCredentials action fire and the store update from isAuthenticated: false to true."</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🧪</div>
+      <h3>16.3 — React Query DevTools</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>React Query has its own DevTools UI that shows all cached queries, their status (fresh/stale/fetching), and lets you manually refetch or remove from cache. Very useful for debugging API caching issues.</p>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">📊</div>
+      <h3>16.4 — Error Boundary Concepts</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>React's Error Boundaries catch JavaScript errors in component trees and show fallback UI instead of crashing the whole app. Your app has dedicated error pages (<code>ServerErrorPage</code>) and 404 handling instead of white screens.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 17 ═══ -->
+<section class="section" id="s17">
+  <div class="section-title">
+    <div class="section-num blue">17</div>
+    <div>
+      <h2>Codebase Documentation</h2>
+      <small>Inline comments, naming conventions, self-documenting code</small>
+    </div>
+  </div>
+
+  <div class="subtopic open">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">📝</div>
+      <h3>17.1 — Inline Comments Strategy</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>Your codebase uses inline comments purposefully — not just describing what code does (obvious from reading), but WHY decisions were made:</p>
+      <div class="checklist">
+        <div class="check-item"><span class="check-mark">→</span> <code>// CRITICAL: If configuredUrl points to frontend domain...</code> — explains a production bug fix</div>
+        <div class="check-item"><span class="check-mark">→</span> <code>// Removed localStorage persistence for security (XSS mitigation)</code> — explains a security decision</div>
+        <div class="check-item"><span class="check-mark">→</span> <code>// Best-effort rollback to avoid stale REQUESTED sessions</code> — explains the rollback intent</div>
+        <div class="check-item"><span class="check-mark">→</span> <code>// Razorpay takes smallest currency unit</code> — explains the * 100 conversion</div>
+        <div class="check-item"><span class="check-mark">→</span> <code>// Access token may be expired (24h). Try refresh cookie (7d)</code> — explains auth timer logic</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">📐</div>
+      <h3>17.2 — Naming Conventions</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Convention</th><th>Example</th><th>Used For</th></tr></thead>
+          <tbody>
+            <tr><td>PascalCase</td><td><code>LoginPage</code>, <code>AuthLoader</code>, <code>MentorService</code></td><td>Components, Classes, Interfaces</td></tr>
+            <tr><td>camelCase</td><td><code>showToast</code>, <code>handleConfirm</code>, <code>pendingSessionIdRef</code></td><td>Variables, Functions, Hooks</td></tr>
+            <tr><td>SCREAMING_SNAKE</td><td><code>ROLE_ADMIN</code>, <code>ROLE_MENTOR</code>, <code>API_BASE_URL</code></td><td>Constants, Enum-like values</td></tr>
+            <tr><td>kebab-case</td><td><code>axios.ts</code>, <code>queryClient.ts</code>, <code>dateTime.ts</code></td><td>File names (utility files)</td></tr>
+            <tr><td>use-prefix</td><td><code>useToast</code>, <code>useMentors</code>, <code>useTheme</code></td><td>Custom React Hooks (mandatory)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 18 ═══ -->
+<section class="section" id="s18">
+  <div class="section-title">
+    <div class="section-num orange">18</div>
+    <div>
+      <h2>Feature Completeness</h2>
+      <small>All features of SkillSync — nothing missed</small>
+    </div>
+  </div>
+
+  <div class="subtopic open">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">📋</div>
+      <h3>18.1 — Complete Feature Map</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <div class="grid-3">
+        <div class="card" style="border-top:3px solid var(--accent)">
+          <h4>🔐 Auth Features</h4>
+          <div class="checklist" style="margin:0">
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Email/password login</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Google OAuth</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Registration + OTP verify</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Forgot + Reset password</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> OAuth password setup</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Session persistence</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Token refresh</div>
+          </div>
+        </div>
+        <div class="card" style="border-top:3px solid var(--accent2)">
+          <h4>👩‍🎓 Learner Features</h4>
+          <div class="checklist" style="margin:0">
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Dashboard</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Discover + search mentors</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Mentor detail page</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Book sessions</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Razorpay checkout</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> My sessions</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Study groups</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Reviews/ratings</div>
+          </div>
+        </div>
+        <div class="card" style="border-top:3px solid var(--accent4)">
+          <h4>🧑‍💼 Mentor Features</h4>
+          <div class="checklist" style="margin:0">
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Dashboard</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Apply as mentor</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Manage availability</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Accept/reject sessions</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Earnings page</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Profile management</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> My profile page</div>
+          </div>
+        </div>
+        <div class="card" style="border-top:3px solid var(--accent3)">
+          <h4>🛡 Admin Features</h4>
+          <div class="checklist" style="margin:0">
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Admin dashboard</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> User management</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Mentor approvals</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Skills management</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Groups management</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Platform finances</div>
+          </div>
+        </div>
+        <div class="card" style="border-top:3px solid #6bc5ff">
+          <h4>🌐 Platform Features</h4>
+          <div class="checklist" style="margin:0">
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Landing page</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Notifications</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Settings page</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Help center</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> Light/Dark theme</div>
+            <div class="check-item" style="font-size:12px"><span class="check-mark">✓</span> 500/401/403 pages</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 19 ═══ -->
+<section class="section" id="s19">
+  <div class="section-title">
+    <div class="section-num">19</div>
+    <div>
+      <h2>Code Traceability (Explainability)</h2>
+      <small>Being able to trace any user action to the exact line of code</small>
+    </div>
+  </div>
+
+  <div class="subtopic open">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🔎</div>
+      <h3>19.1 — Tracing: "User Clicks Login" → What Happens?</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>This is what "code traceability" means — being able to say exactly which file, which function, which line handles each action. Practice this for the viva.</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Full login trace — file by file</div>
+        <pre><span class="cmt">1. pages/auth/LoginPage.tsx</span>
+   → form <span class="fn">onSubmit</span>() → loginMutation.<span class="fn">mutate</span>(data)
+
+<span class="cmt">2. pages/auth/LoginPage.tsx (useMutation mutationFn)</span>
+   → api.<span class="fn">post</span>(<span class="str">'/api/auth/login'</span>, data)
+
+<span class="cmt">3. services/axios.ts</span>
+   → request interceptor runs (nothing to add, cookies handle auth)
+   → HTTP POST to api.skillsync.mraks.dev/api/auth/login
+
+<span class="cmt">4. [Spring Boot backend handles → returns {user, accessToken, ...}]</span>
+
+<span class="cmt">5. services/axios.ts</span>
+   → response interceptor: 200 OK → passes data through
+
+<span class="cmt">6. pages/auth/LoginPage.tsx (onSuccess)</span>
+   → <span class="fn">dispatch</span>(<span class="fn">setCredentials</span>({ user, accessToken, refreshToken }))
+
+<span class="cmt">7. store/slices/authSlice.ts (setCredentials reducer)</span>
+   → state.user = user
+   → state.isAuthenticated = true
+   → state.role = 'ROLE_LEARNER'
+
+<span class="cmt">8. pages/auth/LoginPage.tsx (onSuccess continued)</span>
+   → <span class="fn">navigate</span>(<span class="str">'/learner'</span>)  <span class="cmt">← role-based redirect</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🔎</div>
+      <h3>19.2 — Tracing: "User Visits /mentor" Without Being Logged In</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Route guard trace</div>
+        <pre><span class="cmt">1. routes/AppRoutes.tsx</span>
+   → URL /mentor matches inside &lt;ProtectedRoute&gt;
+
+<span class="cmt">2. components/layout/ProtectedRoute.tsx</span>
+   → <span class="fn">useSelector</span>(state.auth.isAuthenticated)
+   → isAuthenticated = <span class="kw">false</span> (not logged in)
+   → <span class="kw">return</span> &lt;Navigate to=<span class="str">"/login"</span> replace /&gt;
+
+<span class="cmt">3. Browser navigates to /login</span>
+   → pages/auth/LoginPage.tsx renders</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 20 ═══ -->
+<section class="section" id="s20">
+  <div class="section-title">
+    <div class="section-num pink">20</div>
+    <div>
+      <h2>Communication & Challenge Resolution</h2>
+      <small>How to explain design decisions in the viva</small>
+    </div>
+  </div>
+
+  <div class="subtopic open">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🗣</div>
+      <h3>20.1 — Common Viva Questions & Ideal Answers</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <div class="subtopic" style="border:1px solid rgba(108,99,255,0.3); margin-bottom:12px">
+        <div class="subtopic-header" onclick="toggle(this)" style="background:rgba(108,99,255,0.08)">
+          <div class="subtopic-icon">❓</div>
+          <h3 style="font-size:14px">Why did you use Redux when you already have React Query?</h3>
+          <span class="subtopic-arrow">▶</span>
+        </div>
+        <div class="subtopic-body">
+          <p>"They serve different purposes. React Query manages server state — data from the API that can go stale, needs caching, and gets refetched. Redux manages client state — things like whether the user is authenticated, their role, and UI state like sidebar visibility. Auth state needs to be synchronously available everywhere before any API call happens, which is why Redux is the right choice for it. React Query would require an async query which introduces race conditions during initial load."</p>
+        </div>
+      </div>
+
+      <div class="subtopic" style="border:1px solid rgba(0,212,170,0.3); margin-bottom:12px">
+        <div class="subtopic-header" onclick="toggle(this)" style="background:rgba(0,212,170,0.08)">
+          <div class="subtopic-icon">❓</div>
+          <h3 style="font-size:14px">Why HttpOnly cookies and not localStorage for JWT?</h3>
+          <span class="subtopic-arrow">▶</span>
+        </div>
+        <div class="subtopic-body">
+          <p>"localStorage is accessible by any JavaScript running on the page. If there's an XSS vulnerability — even in a third-party script — the token can be stolen. HttpOnly cookies are inaccessible to JavaScript by design; only the browser sends them. Combined with the Secure flag and SameSite=Strict, this protects against both XSS token theft and CSRF attacks. The original code had localStorage, but it was explicitly removed as a security improvement."</p>
+        </div>
+      </div>
+
+      <div class="subtopic" style="border:1px solid rgba(255,217,61,0.3); margin-bottom:12px">
+        <div class="subtopic-header" onclick="toggle(this)" style="background:rgba(255,217,61,0.08)">
+          <div class="subtopic-icon">❓</div>
+          <h3 style="font-size:14px">What happens if the user closes the browser during payment?</h3>
+          <span class="subtopic-arrow">▶</span>
+        </div>
+        <div class="subtopic-body">
+          <p>"If the user closes the browser after the session is created but before payment completes, the session stays in REQUESTED state in the database. When the user returns and the page unmounts, the useEffect cleanup doesn't run. This is a known limitation. The ideal solution is a server-side scheduled job (cron job) that marks sessions as CANCELLED if they've been in REQUESTED state for more than, say, 15 minutes without a corresponding verified payment. The frontend handles the dismiss case (Razorpay modal's ondismiss callback) by calling the rollback API."</p>
+        </div>
+      </div>
+
+      <div class="subtopic" style="border:1px solid rgba(255,107,107,0.3)">
+        <div class="subtopic-header" onclick="toggle(this)" style="background:rgba(255,107,107,0.08)">
+          <div class="subtopic-icon">❓</div>
+          <h3 style="font-size:14px">Why does AuthLoader check /api/auth/me on every route change?</h3>
+          <span class="subtopic-arrow">▶</span>
+        </div>
+        <div class="subtopic-body">
+          <p>"It only calls /api/auth/me if the Redux user is null — meaning on page refresh or first load where Redux state is empty. The user object in Redux is a dependency in the useEffect, so once it's loaded, the effect won't re-run unless location.pathname changes AND user is still null. This prevents redundant /me calls on normal navigation. The only cost is one API call on hard refresh, which is acceptable and necessary for session persistence."</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">📈</div>
+      <h3>20.2 — Challenges You Faced & Solved</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Challenge</th><th>Root Cause</th><th>Solution</th></tr></thead>
+          <tbody>
+            <tr><td>API calls going to frontend domain</td><td>Vercel VITE_API_URL misconfigured</td><td>Added URL detection + auto-correction in axios.ts</td></tr>
+            <tr><td>Raw EC2 IP in production builds</td><td>Old env var not updated</td><td>Production IP-to-domain redirect in axios.ts</td></tr>
+            <tr><td>Multiple parallel 401s causing token refresh loops</td><td>No queue mechanism</td><td>Implemented failedQueue + isRefreshing flag</td></tr>
+            <tr><td>Stale REQUESTED sessions after payment cancel</td><td>No cleanup on modal dismiss</td><td>ondismiss callback → rollbackPendingSession()</td></tr>
+            <tr><td>Redux state lost on page refresh</td><td>In-memory state only</td><td>AuthLoader reads HttpOnly cookie on reload</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 21 ═══ -->
+<section class="section" id="s21">
+  <div class="section-title">
+    <div class="section-num yellow">21</div>
+    <div>
+      <h2>Advanced Practices Engaged</h2>
+      <small>Patterns and practices that show engineering maturity</small>
+    </div>
+  </div>
+
+  <div class="subtopic open">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🏆</div>
+      <h3>21.1 — Advanced Patterns in Your Codebase</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <div class="checklist">
+        <div class="check-item"><span class="check-mark">★</span> <strong>Interceptor Pattern</strong> — Axios interceptors as middleware for auth, retry, error handling</div>
+        <div class="check-item"><span class="check-mark">★</span> <strong>Provider Pattern</strong> — React Context Providers for Toast, ActionConfirm, Theme</div>
+        <div class="check-item"><span class="check-mark">★</span> <strong>Singleton Service Pattern</strong> — <code>export default new MentorService()</code> — one shared instance</div>
+        <div class="check-item"><span class="check-mark">★</span> <strong>Queue-Based Concurrency Control</strong> — failedQueue prevents parallel token refreshes</div>
+        <div class="check-item"><span class="check-mark">★</span> <strong>Optimistic UI with Rollback</strong> — create session first, rollback if payment fails</div>
+        <div class="check-item"><span class="check-mark">★</span> <strong>Dependency Injection via Context</strong> — QueryClientProvider injects queryClient into entire tree</div>
+        <div class="check-item"><span class="check-mark">★</span> <strong>Escape Hatch Flags</strong> — <code>_skipAuthRedirect</code>, <code>_skipErrorRedirect</code> for precise control</div>
+        <div class="check-item"><span class="check-mark">★</span> <strong>Generic TypeScript</strong> — <code>PaginatedResponse&lt;T&gt;</code> works for any data type</div>
+        <div class="check-item"><span class="check-mark">★</span> <strong>Exponential Backoff</strong> — <code>Math.pow(2, retryCount) * 1000</code> for rate limit handling</div>
+        <div class="check-item"><span class="check-mark">★</span> <strong>Dynamic Script Loading</strong> — Razorpay SDK loaded only when needed</div>
+        <div class="check-item"><span class="check-mark">★</span> <strong>Role-Based Component Rendering</strong> — Sidebar adapts to role without separate components</div>
+        <div class="check-item"><span class="check-mark">★</span> <strong>Mounted Flag Pattern</strong> — <code>let mounted = true</code> in AuthLoader prevents state updates on unmounted components</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🧬</div>
+      <h3>21.2 — The Mounted Flag Anti-Pattern Prevention</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>In AuthLoader, there's an advanced pattern that prevents memory leaks and React warnings:</p>
+      <div class="code-block">
+        <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> AuthLoader.tsx — Mounted flag</div>
+        <pre><span class="fn">useEffect</span>(() => {
+  <span class="kw">let</span> mounted = <span class="kw">true</span>; <span class="cmt">// track if component is still in DOM</span>
+
+  <span class="kw">const</span> initAuth = <span class="kw">async</span> () => {
+    <span class="cmt">// ... async operations ...</span>
+    
+    <span class="cmt">// Only update state if component is still mounted</span>
+    <span class="cmt">// (user might navigate away during async operation)</span>
+    <span class="kw">if</span> (mounted) <span class="fn">setLoading</span>(<span class="kw">false</span>);
+    <span class="kw">if</span> (mounted && data) <span class="fn">dispatch</span>(<span class="fn">setCredentials</span>(...));
+  };
+
+  <span class="fn">initAuth</span>();
+
+  <span class="cmt">// Cleanup: set mounted = false when component unmounts</span>
+  <span class="kw">return</span> () => { mounted = <span class="kw">false</span>; };
+}, []);</pre>
+      </div>
+      <div class="callout warn">
+        <span class="callout-icon">⚠️</span>
+        <div>Without this pattern: if the user navigates away before the async /api/auth/me call completes, React would try to setState on an unmounted component, causing a memory leak and the famous "Can't perform a React state update on an unmounted component" warning.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🔮</div>
+      <h3>21.3 — What Would You Improve Next?</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>Always have improvements ready — shows you understand limitations:</p>
+      <div class="checklist">
+        <div class="check-item"><span class="check-mark">→</span> <strong>WebSocket notifications</strong> — Replace REST polling with STOMP/SockJS for real-time push</div>
+        <div class="check-item"><span class="check-mark">→</span> <strong>React.lazy + Suspense</strong> — Code-split routes so each page is a separate JS chunk</div>
+        <div class="check-item"><span class="check-mark">→</span> <strong>React Error Boundaries</strong> — Catch component crashes, show fallback UI per-section</div>
+        <div class="check-item"><span class="check-mark">→</span> <strong>Unit tests with Vitest</strong> — Test service functions, custom hooks, utility functions</div>
+        <div class="check-item"><span class="check-mark">→</span> <strong>i18n (internationalization)</strong> — Support Hindi and other languages</div>
+        <div class="check-item"><span class="check-mark">→</span> <strong>Server-side session cleanup cron</strong> — Handle orphaned REQUESTED sessions from crashed payments</div>
+        <div class="check-item"><span class="check-mark">→</span> <strong>Optimistic updates in React Query</strong> — Update UI before API confirms for snappier feel</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subtopic">
+    <div class="subtopic-header" onclick="toggle(this)">
+      <div class="subtopic-icon">🗺</div>
+      <h3>21.4 — Full System Architecture Diagram</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <div class="diagram-box" style="padding:28px">
+        <svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:700px; display:block; margin:0 auto">
+          <defs>
+            <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#585b70"/>
+            </marker>
+          </defs>
+
+          <!-- Browser -->
+          <rect x="20" y="20" width="180" height="380" rx="12" fill="#1a1a2e" stroke="#6c63ff" stroke-width="1.5"/>
+          <text x="110" y="42" fill="#6c63ff" font-size="11" font-weight="700" text-anchor="middle">BROWSER (Vercel)</text>
+          
+          <rect x="36" y="55" width="148" height="32" rx="6" fill="#2a2a4e" stroke="#444"/>
+          <text x="110" y="76" fill="#cdd6f4" font-size="10" text-anchor="middle">React App (SPA)</text>
+          
+          <rect x="36" y="97" width="148" height="28" rx="6" fill="#1e1e38" stroke="#6c63ff" stroke-width="1"/>
+          <text x="110" y="115" fill="#89b4fa" font-size="9" text-anchor="middle">Redux Store</text>
+          
+          <rect x="36" y="135" width="148" height="28" rx="6" fill="#1e1e38" stroke="#00d4aa" stroke-width="1"/>
+          <text x="110" y="153" fill="#94e2d5" font-size="9" text-anchor="middle">React Query Cache</text>
+          
+          <rect x="36" y="173" width="148" height="28" rx="6" fill="#1e1e38" stroke="#f9e2af" stroke-width="1"/>
+          <text x="110" y="191" fill="#f9e2af" font-size="9" text-anchor="middle">Axios Instance</text>
+
+          <rect x="36" y="211" width="148" height="28" rx="6" fill="#1e1e38" stroke="#cba6f7" stroke-width="1"/>
+          <text x="110" y="229" fill="#cba6f7" font-size="9" text-anchor="middle">ThemeContext</text>
+
+          <rect x="36" y="249" width="148" height="28" rx="6" fill="#1e1e38" stroke="#fab387" stroke-width="1"/>
+          <text x="110" y="267" fill="#fab387" font-size="9" text-anchor="middle">React Router</text>
+          
+          <rect x="36" y="287" width="148" height="28" rx="6" fill="#1e1e38" stroke="#a6e3a1" stroke-width="1"/>
+          <text x="110" y="305" fill="#a6e3a1" font-size="9" text-anchor="middle">HttpOnly Cookies</text>
+
+          <rect x="36" y="325" width="68" height="60" rx="6" fill="#1e1e38" stroke="#89dceb" stroke-width="1"/>
+          <text x="70" y="353" fill="#89dceb" font-size="9" text-anchor="middle">localStorage</text>
+          <text x="70" y="368" fill="#585b70" font-size="8" text-anchor="middle">(theme only)</text>
+
+          <rect x="116" y="325" width="68" height="60" rx="6" fill="#1e1e38" stroke="#ff6b6b" stroke-width="1"/>
+          <text x="150" y="353" fill="#ff6b6b" font-size="9" text-anchor="middle">Razorpay</text>
+          <text x="150" y="368" fill="#585b70" font-size="8" text-anchor="middle">SDK (dynamic)</text>
+
+          <!-- Arrow: Browser to API -->
+          <line x1="200" y1="191" x2="280" y2="191" stroke="#585b70" stroke-width="1.5" marker-end="url(#arrow)" stroke-dasharray="4,3"/>
+          <text x="240" y="185" fill="#585b70" font-size="8" text-anchor="middle">HTTPS + Cookie</text>
+
+          <!-- Spring Boot -->
+          <rect x="290" y="20" width="200" height="380" rx="12" fill="#1a2020" stroke="#00d4aa" stroke-width="1.5"/>
+          <text x="390" y="42" fill="#00d4aa" font-size="11" font-weight="700" text-anchor="middle">SPRING BOOT (EC2)</text>
+          
+          <rect x="306" y="55" width="168" height="28" rx="6" fill="#1e2e2e" stroke="#00d4aa" stroke-width="1"/>
+          <text x="390" y="73" fill="#94e2d5" font-size="9" text-anchor="middle">Spring Security + JWT</text>
+
+          <rect x="306" y="93" width="168" height="28" rx="6" fill="#1e2e2e" stroke="#a6e3a1" stroke-width="1"/>
+          <text x="390" y="111" fill="#a6e3a1" font-size="9" text-anchor="middle">/api/auth/* endpoints</text>
+          
+          <rect x="306" y="131" width="168" height="28" rx="6" fill="#1e2e2e" stroke="#a6e3a1" stroke-width="1"/>
+          <text x="390" y="149" fill="#a6e3a1" font-size="9" text-anchor="middle">/api/mentors/* endpoints</text>
+
+          <rect x="306" y="169" width="168" height="28" rx="6" fill="#1e2e2e" stroke="#a6e3a1" stroke-width="1"/>
+          <text x="390" y="187" fill="#a6e3a1" font-size="9" text-anchor="middle">/api/sessions/* endpoints</text>
+
+          <rect x="306" y="207" width="168" height="28" rx="6" fill="#1e2e2e" stroke="#a6e3a1" stroke-width="1"/>
+          <text x="390" y="225" fill="#a6e3a1" font-size="9" text-anchor="middle">/api/payments/* endpoints</text>
+
+          <rect x="306" y="245" width="168" height="28" rx="6" fill="#1e2e2e" stroke="#a6e3a1" stroke-width="1"/>
+          <text x="390" y="263" fill="#a6e3a1" font-size="9" text-anchor="middle">/api/notifications/*</text>
+
+          <rect x="306" y="283" width="168" height="28" rx="6" fill="#1e2e2e" stroke="#a6e3a1" stroke-width="1"/>
+          <text x="390" y="301" fill="#a6e3a1" font-size="9" text-anchor="middle">/api/groups/* endpoints</text>
+
+          <rect x="306" y="321" width="168" height="60" rx="6" fill="#1e2e2e" stroke="#585b70" stroke-width="1"/>
+          <text x="390" y="349" fill="#585b70" font-size="9" text-anchor="middle">CORS Config:</text>
+          <text x="390" y="364" fill="#585b70" font-size="9" text-anchor="middle">Allow skillsync.mraks.dev</text>
+
+          <!-- Arrow: API to DB -->
+          <line x1="490" y1="191" x2="560" y2="191" stroke="#585b70" stroke-width="1.5" marker-end="url(#arrow)" stroke-dasharray="4,3"/>
+          <text x="525" y="185" fill="#585b70" font-size="8" text-anchor="middle">JPA/SQL</text>
+
+          <!-- DB + Razorpay -->
+          <rect x="570" y="60" width="110" height="80" rx="10" fill="#201a20" stroke="#cba6f7" stroke-width="1.5"/>
+          <text x="625" y="88" fill="#cba6f7" font-size="11" font-weight="700" text-anchor="middle">PostgreSQL</text>
+          <text x="625" y="108" fill="#585b70" font-size="9" text-anchor="middle">users, sessions</text>
+          <text x="625" y="122" fill="#585b70" font-size="9" text-anchor="middle">payments, etc.</text>
+
+          <rect x="570" y="165" width="110" height="80" rx="10" fill="#201a10" stroke="#fab387" stroke-width="1.5"/>
+          <text x="625" y="193" fill="#fab387" font-size="11" font-weight="700" text-anchor="middle">Razorpay API</text>
+          <text x="625" y="213" fill="#585b70" font-size="9" text-anchor="middle">create-order</text>
+          <text x="625" y="227" fill="#585b70" font-size="9" text-anchor="middle">verify signature</text>
+
+          <!-- Arrow: Spring Boot to Razorpay -->
+          <line x1="490" y1="215" x2="568" y2="205" stroke="#585b70" stroke-width="1.5" marker-end="url(#arrow)" stroke-dasharray="4,3"/>
+
+          <!-- Google -->
+          <rect x="570" y="270" width="110" height="70" rx="10" fill="#1a201a" stroke="#a6e3a1" stroke-width="1.5"/>
+          <text x="625" y="298" fill="#a6e3a1" font-size="11" font-weight="700" text-anchor="middle">Google OAuth</text>
+          <text x="625" y="316" fill="#585b70" font-size="9" text-anchor="middle">userinfo endpoint</text>
+          <text x="625" y="330" fill="#585b70" font-size="9" text-anchor="middle">JWT verification</text>
+
+          <!-- Arrow: Browser to Google -->
+          <line x1="200" y1="340" x2="568" y2="305" stroke="#585b70" stroke-width="1.5" marker-end="url(#arrow)" stroke-dasharray="4,3"/>
+          <text x="400" y="333" fill="#585b70" font-size="8">OAuth flow</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FINAL FOOTER ═══ -->
+<div style="padding:40px; background:linear-gradient(135deg, #0d0d1a, #111118); border-top:1px solid var(--border); text-align:center">
+  <p style="color:var(--text3); font-size:13px; margin-bottom:8px">SkillSync Frontend · Built with React 18 + TypeScript + Redux Toolkit + React Query + Tailwind CSS + Razorpay</p>
+  <p style="color:var(--text3); font-size:12px">skillsync.mraks.dev → api.skillsync.mraks.dev (EC2) → PostgreSQL</p>
+  <p style="color:var(--accent); font-size:14px; font-weight:700; margin-top:16px; font-family:'Syne', sans-serif">You built this. You know this. Go ace the viva. 🚀</p>
+</div>
+
+</main>
+
+<script>
+function toggle(header) {
+  const subtopic = header.parentElement;
+  subtopic.classList.toggle('open');
+}
+
+function setActive(link) {
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  link.classList.add('active');
+}
+
+// Highlight active section on scroll
+const sections = document.querySelectorAll('section[id]');
+const navItems = document.querySelectorAll('.nav-item');
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      navItems.forEach(item => {
+        item.classList.remove('active');
+        if (item.getAttribute('href') === '#' + id) {
+          item.classList.add('active');
+        }
+      });
+    }
+  });
+}, { threshold: 0.3 });
+
+sections.forEach(s => observer.observe(s));
+
+// Open first subtopic of each section by default
+document.querySelectorAll('.section').forEach(section => {
+  const first = section.querySelector('.subtopic');
+  if (first && !first.classList.contains('open')) {
+    first.classList.add('open');
+  }
+});
+</script>
+
+</body>
+</html>

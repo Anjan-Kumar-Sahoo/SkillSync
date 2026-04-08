@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/feppt", "destination": "/skillsync_study_guide.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

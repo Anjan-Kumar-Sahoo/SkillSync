@@ -44,6 +44,7 @@ const AppRoutes = () => {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/ppt" element={<PptLandingPage />} />
+      <Route path="/feppt" element={<Navigate to="/skillsync_study_guide.html" replace />} />
 
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<LoginPage />} />

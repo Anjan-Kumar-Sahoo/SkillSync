@@ -20,6 +20,8 @@ export const AuthLoader = ({ children }: { children: ReactNode }) => {
       const isPublicPath =
         path === '/' ||
         path === '/ppt' ||
+        path === '/feppt' ||
+        path === '/skillsync_study_guide.html' ||
         path === '/login' ||
         path === '/register' ||
         path === '/verify-otp' ||
