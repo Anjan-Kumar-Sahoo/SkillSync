@@ -79,6 +79,15 @@ const metrics: PlatformMetric[] = [
   { label: 'Uptime Focus', value: '99.9%', helper: 'Designed with monitoring + fail-safe behavior' },
 ];
 
+const finaleTags = [
+  'Mentor Match Engine',
+  'Realtime Session Flow',
+  'Payment-First Reliability',
+  'Trust-Driven Reviews',
+  'Career Growth Pathways',
+  'Community Learning Loops',
+];
+
 const cardClassNames = [
   'ppt-surface-card accent-cyan',
   'ppt-surface-card accent-orange',
@@ -106,16 +115,12 @@ const LandingPage = () => {
         <a className="ppt-brand" href="#top" aria-label="SkillSync Presentation Home">
           <img src={logo} alt="SkillSync logo" className="ppt-logo" />
           <span>SkillSync</span>
-          <small>Presentation Edition</small>
         </a>
 
         <div className="ppt-nav-actions">
           <ThemeToggleButton className="ppt-theme-toggle" showLabel={false} />
-          <Link className="ppt-btn ghost" to="/login">
+          <Link className="ppt-btn solid" to="/login">
             Sign In
-          </Link>
-          <Link className="ppt-btn solid" to="/dashboard">
-            Open Platform
           </Link>
         </div>
       </header>
@@ -203,11 +208,11 @@ const LandingPage = () => {
         </section>
 
         <section className="ppt-final-cta">
-          <p className="final-kicker">Ready To Pitch?</p>
-          <h2>Showcase SkillSync at /ppt with confidence.</h2>
+          <p className="final-kicker">Ready To Scale Learning?</p>
+          <h2>Give every learner a premium mentorship experience.</h2>
           <p>
-            This route is intentionally presentation-first: product clarity, premium visuals, and conversion-focused
-            storytelling for evaluators, judges, and stakeholders.
+            SkillSync blends trust, velocity, and clarity into one polished platform where users discover mentors,
+            book confidently, and improve continuously with feedback that actually matters.
           </p>
           <div className="ppt-cta-row">
             <Link className="ppt-btn solid" to="/dashboard">
@@ -216,6 +221,24 @@ const LandingPage = () => {
             <Link className="ppt-btn ghost" to="/register">
               Create Account
             </Link>
+          </div>
+
+          <div className="ppt-finale-ribbon" aria-label="Platform highlights">
+            {finaleTags.map((tag) => (
+              <span key={tag} className="ribbon-chip">
+                {tag}
+              </span>
+            ))}
+          </div>
+
+          <div className="ppt-finale-orbit" aria-hidden="true">
+            <div className="orbit-ring ring-a" />
+            <div className="orbit-ring ring-b" />
+            <div className="orbit-ring ring-c" />
+            <div className="orbit-pulse pulse-a" />
+            <div className="orbit-pulse pulse-b" />
+            <div className="orbit-pulse pulse-c" />
+            <div className="orbit-core">SkillSync</div>
           </div>
         </section>
       </main>

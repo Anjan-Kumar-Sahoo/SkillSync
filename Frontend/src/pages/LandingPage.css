@@ -540,9 +540,134 @@
   line-height: 1.58;
 }
 
+.ppt-finale-ribbon {
+  margin-top: 1.2rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.55rem;
+}
+
+.ribbon-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(93, 131, 177, 0.36);
+  background: rgba(255, 255, 255, 0.8);
+  padding: 0.42rem 0.72rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.35px;
+  color: var(--ppt-muted);
+  animation: chipFloat 6s ease-in-out infinite;
+}
+
+.ribbon-chip:nth-child(2n) {
+  animation-delay: 0.35s;
+}
+
+.ribbon-chip:nth-child(3n) {
+  animation-delay: 0.8s;
+}
+
+.ribbon-chip:hover {
+  transform: translateY(-2px);
+  border-color: rgba(16, 107, 255, 0.55);
+  color: var(--ppt-text);
+}
+
+.ppt-finale-orbit {
+  margin: 1.6rem auto 0;
+  width: min(100%, 420px);
+  height: 170px;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.orbit-ring {
+  position: absolute;
+  border-radius: 999px;
+  border: 1px dashed rgba(83, 121, 166, 0.45);
+}
+
+.ring-a {
+  width: 86%;
+  height: 74%;
+  animation: ringSpin 12s linear infinite;
+}
+
+.ring-b {
+  width: 65%;
+  height: 56%;
+  animation: ringSpin 9s linear infinite reverse;
+}
+
+.ring-c {
+  width: 43%;
+  height: 36%;
+  animation: ringSpin 6s linear infinite;
+}
+
+.orbit-pulse {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  box-shadow: 0 0 18px currentColor;
+  animation: pulseHop 4.8s ease-in-out infinite;
+}
+
+.pulse-a {
+  top: 20%;
+  left: 18%;
+  color: var(--ppt-accent-a);
+}
+
+.pulse-b {
+  top: 30%;
+  right: 19%;
+  color: var(--ppt-accent-b);
+  animation-delay: 0.7s;
+}
+
+.pulse-c {
+  bottom: 20%;
+  right: 28%;
+  color: var(--ppt-accent-c);
+  animation-delay: 1.4s;
+}
+
+.orbit-core {
+  border-radius: 999px;
+  border: 1px solid rgba(78, 118, 166, 0.42);
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.88), rgba(230, 242, 255, 0.76));
+  padding: 0.7rem 1.1rem;
+  font-weight: 900;
+  letter-spacing: 0.55px;
+  box-shadow: 0 14px 24px rgba(16, 52, 96, 0.16);
+}
+
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+@keyframes ringSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes chipFloat {
+  0%,
+  100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes pulseHop {
+  0%,
+  100% { transform: scale(1) translateY(0); opacity: 0.8; }
+  50% { transform: scale(1.35) translateY(-5px); opacity: 1; }
 }
 
 .theme-dark .ppt-page {
@@ -601,6 +726,26 @@
 
 .theme-dark .ppt-feature-card::after {
   background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(122, 164, 255, 0.26), transparent 48%);
+}
+
+.theme-dark .ribbon-chip {
+  background: rgba(23, 35, 56, 0.84);
+  border-color: rgba(110, 142, 186, 0.46);
+  color: var(--ppt-muted);
+}
+
+.theme-dark .ribbon-chip:hover {
+  border-color: rgba(122, 164, 255, 0.68);
+}
+
+.theme-dark .orbit-ring {
+  border-color: rgba(109, 138, 177, 0.56);
+}
+
+.theme-dark .orbit-core {
+  border-color: rgba(106, 135, 176, 0.5);
+  background: linear-gradient(140deg, rgba(27, 40, 63, 0.9), rgba(21, 34, 55, 0.82));
+  box-shadow: 0 14px 28px rgba(5, 10, 20, 0.45);
 }
 
 @media (max-width: 1100px) {
@@ -675,5 +820,9 @@
   .stage-chip {
     font-size: 0.63rem;
     padding: 0.36rem 0.58rem;
+  }
+
+  .ppt-finale-orbit {
+    height: 146px;
   }
 }
