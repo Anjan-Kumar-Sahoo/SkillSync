@@ -34,17 +34,41 @@ export const AuthLoader = ({ children }: { children: ReactNode }) => {
 
       // If user isn't loaded yet, try to fetch identity using cookies
       if (!user) {
-        try {
-          // Use /api/auth/me which extracts user from JWT cookie and returns UserSummary with role
+        const loadCurrentUser = async () => {
           const { data } = await api.get('/api/auth/me', {
             _skipErrorRedirect: true,
             _skipAuthRedirect: true,
           } as any);
+
           if (mounted && data) {
             dispatch(setCredentials({ accessToken: '', refreshToken: '', user: data }));
           }
+        };
+
+        try {
+          // Use /api/auth/me which extracts user from JWT cookie and returns UserSummary with role
+          await loadCurrentUser();
         } catch (error) {
-          console.error('User not authenticated on load - requires login');
+          const status = (error as any)?.response?.status;
+
+          if (status === 401) {
+            try {
+              // Access token may be expired (24h). Try refresh cookie (7d) and retry /me once.
+              await api.post(
+                '/api/auth/refresh',
+                undefined,
+                {
+                  _skipErrorRedirect: true,
+                  _skipAuthRedirect: true,
+                } as any,
+              );
+              await loadCurrentUser();
+            } catch {
+              console.error('User not authenticated on load - requires login');
+            }
+          } else {
+            console.error('User not authenticated on load - requires login');
+          }
         }
       }
       
