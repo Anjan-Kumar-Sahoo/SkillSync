@@ -39,10 +39,35 @@ const AdminSkillsPage = () => {
     },
   });
 
+  const deleteSkillMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return api.delete(`/api/skills/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['skills'] });
+      showToast({ message: 'Skill deleted successfully', type: 'success' });
+    },
+    onError: () => {
+      showToast({ message: 'Failed to delete skill', type: 'error' });
+    },
+  });
+
   const handleAddSkill = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSkillName.trim() || !newSkillCategory.trim()) return;
     addSkillMutation.mutate({ name: newSkillName, category: newSkillCategory });
+  };
+
+  const handleDeleteSkill = (skillId: number, skillName: string) => {
+    const confirmed = window.confirm(
+      `Delete skill "${skillName}"?\nThis will hide it from active mentor selection.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    deleteSkillMutation.mutate(skillId);
   };
 
   if (isLoading) {
@@ -94,14 +119,38 @@ const AdminSkillsPage = () => {
 
         <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/10">
           <h2 className="text-lg font-bold mb-4">Existing Skills ({skills?.length || 0})</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {skills?.map((skill) => (
-              <div key={skill.id} className="p-4 border border-outline-variant/20 rounded-xl bg-surface-variant/10">
-                <p className="font-bold text-on-surface">{skill.name}</p>
-                <p className="text-sm text-on-surface-variant mt-1">{skill.category}</p>
-              </div>
-            ))}
-          </div>
+          {skills && skills.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {skills.map((skill) => {
+                const isDeleting =
+                  deleteSkillMutation.isPending && deleteSkillMutation.variables === skill.id;
+
+                return (
+                  <div
+                    key={skill.id}
+                    className="p-4 border border-outline-variant/20 rounded-xl bg-surface-variant/10 flex flex-col gap-3"
+                  >
+                    <div>
+                      <p className="font-bold text-on-surface">{skill.name}</p>
+                      <p className="text-sm text-on-surface-variant mt-1">{skill.category}</p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteSkill(skill.id, skill.name)}
+                      disabled={isDeleting}
+                      className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-error bg-error/10 hover:bg-error/20 transition-colors disabled:opacity-50"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">delete</span>
+                      {isDeleting ? 'Deleting...' : 'Delete'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-on-surface-variant">No skills found.</p>
+          )}
         </div>
       </div>
     </PageLayout>
