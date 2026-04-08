@@ -115,6 +115,14 @@ const MentorProfilePage = () => {
   const colorIndex = mentor.firstName.charCodeAt(0) % 5;
   const colors = ['from-blue-500 to-indigo-500', 'from-emerald-400 to-teal-500', 'from-violet-500 to-purple-500', 'from-amber-400 to-orange-500', 'from-rose-400 to-red-500'];
   const avatarClass = colors[colorIndex];
+  const mentorReviewCount = Number(mentor.reviewCount ?? reviewsData?.totalElements ?? 0);
+  const mentorAverageRating = Number(mentor.avgRating ?? mentor.rating ?? 0);
+
+  const formatTimeOnlyIST = (value: string) => {
+    const dateValue = new Date(value);
+    if (Number.isNaN(dateValue.getTime())) return 'Invalid time';
+    return `${dateValue.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' })} IST`;
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-surface font-sans">
@@ -137,7 +145,7 @@ const MentorProfilePage = () => {
                     {initials}
                   </div>
                   <div className="absolute -bottom-2 -left-2 bg-gray-900/90 backdrop-blur-sm text-white rounded-lg px-2.5 py-1 text-sm font-bold shadow-md flex items-center gap-1 border border-white/10">
-                    <span className="text-amber-400">★</span> {mentor.rating?.toFixed(1) || 'NEW'}
+                    <span className="text-amber-400">★</span> {mentorReviewCount > 0 ? mentorAverageRating.toFixed(1) : 'NEW'}
                   </div>
                 </div>
 
@@ -313,7 +321,7 @@ const MentorProfilePage = () => {
                     <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto scrollbar-hide pr-1">
                       {availableTimes.map((slot: any) => {
                         const isSelected = selectedSlot?.id === slot.id;
-                        const timeString = new Date(slot.startTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+                        const timeString = formatTimeOnlyIST(slot.startTime);
                         return (
                           <button
                             key={slot.id}
@@ -350,7 +358,7 @@ const MentorProfilePage = () => {
                   disabled={!selectedSlot} 
                   className="w-full h-12 gradient-btn text-white font-extrabold rounded-xl shadow-md hover:shadow-lg disabled:opacity-50 disabled:scale-100 active:scale-[0.98] transition-all duration-300 disabled:cursor-not-allowed"
                 >
-                  {selectedSlot ? `Book for ${new Date(selectedSlot.startTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : 'Select a Time Slot'}
+                  {selectedSlot ? `Book for ${formatTimeOnlyIST(selectedSlot.startTime)}` : 'Select a Time Slot'}
                 </button>
               </div>
             </div>

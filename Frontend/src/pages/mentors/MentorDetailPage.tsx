@@ -5,6 +5,7 @@ import mentorService from '../../services/mentorService';
 import PageLayout from '../../components/layout/PageLayout';
 import { useToast } from '../../components/ui/Toast';
 import api from '../../services/axios';
+import { formatClockTime } from '../../utils/dateTime';
 
 declare global {
   interface Window {
@@ -118,7 +119,7 @@ const MentorDetailPage = () => {
       showToast({ message: 'Invalid mentor information. Please refresh and try again.', type: 'error' });
       return;
     }
-    const mentorName = `${m.firstName || ''} ${m.lastName || ''}`.trim() || `Mentor #${m.id}`;
+    const mentorName = `${m.firstName || ''} ${m.lastName || ''}`.trim() || 'Mentor';
 
     // Build a session date from the selectedDateStr + slot time
     const sessionDate = new Date(selectedDateStr);
@@ -215,7 +216,7 @@ const MentorDetailPage = () => {
   }
 
   const m = mentor as any;
-  const mentorDisplayName = `${m.firstName || ''} ${m.lastName || ''}`.trim() || `Mentor #${m.id}`;
+  const mentorDisplayName = `${m.firstName || ''} ${m.lastName || ''}`.trim() || 'Mentor';
   const mentorReviews = Number(m.reviewCount ?? m.totalReviews ?? 0);
   const mentorExperience = Number(m.experience ?? m.experienceYears ?? 0);
   const rawRating = Number(m.rating ?? m.avgRating ?? 0);
@@ -229,6 +230,10 @@ const MentorDetailPage = () => {
 
   const getInitials = (first?: string, last?: string) => {
     return `${first?.[0] || ''}${last?.[0] || ''}`.toUpperCase() || 'M';
+  };
+
+  const formatSlotRange = (startTime: string, endTime: string) => {
+    return `${formatClockTime(startTime)} - ${formatClockTime(endTime)} IST`;
   };
 
   return (
@@ -374,7 +379,7 @@ const MentorDetailPage = () => {
                           {weekdayNames[slot.dayOfWeek] || 'Unknown'}
                         </p>
                         <p className="text-sm text-on-surface-variant mt-0.5">
-                          {String(slot.startTime).slice(0, 5)} – {String(slot.endTime).slice(0, 5)}
+                          {formatSlotRange(String(slot.startTime), String(slot.endTime))}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -413,7 +418,7 @@ const MentorDetailPage = () => {
               <div className="flex justify-between items-center">
                 <div>
                   <p className="font-bold text-on-surface">{weekdayNames[selectedSlot.dayOfWeek]}</p>
-                  <p className="text-sm text-on-surface-variant">{String(selectedSlot.startTime).slice(0, 5)} – {String(selectedSlot.endTime).slice(0, 5)}</p>
+                  <p className="text-sm text-on-surface-variant">{formatSlotRange(String(selectedSlot.startTime), String(selectedSlot.endTime))}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Mentor</p>
@@ -432,7 +437,7 @@ const MentorDetailPage = () => {
               >
                 <option value="30">30 minutes</option>
                 <option value="60">1 hour</option>
-                <option value="90">1.5 hours</option>
+                <option value="90">1 hour 30 min</option>
                 <option value="120">2 hours</option>
               </select>
             </div>
@@ -480,7 +485,7 @@ const MentorDetailPage = () => {
               {reviews.map((review: any) => (
                 <div key={review.id} className="pb-4 border-b border-outline-variant/10 last:border-0 last:pb-0">
                   <div className="flex justify-between items-center mb-1">
-                    <span className="font-bold text-sm text-on-surface">{review.learnerName || `Learner #${review.reviewerId}`}</span>
+                    <span className="font-bold text-sm text-on-surface">{review.learnerName || 'Learner'}</span>
                     <span className="text-xs font-semibold text-on-surface-variant">{new Date(review.createdAt).toLocaleDateString()}</span>
                   </div>
                   <div className="flex text-amber-500 text-[14px] mb-1 gap-0.5">

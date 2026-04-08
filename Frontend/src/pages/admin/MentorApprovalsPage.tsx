@@ -76,7 +76,7 @@ const MentorApprovalsPage = () => {
                       <h3 className="text-lg font-extrabold text-on-surface">
                         {mentor.firstName && mentor.lastName
                           ? `${mentor.firstName} ${mentor.lastName}`
-                          : `Mentor #${mentor.id}`}
+                          : 'Mentor'}
                       </h3>
                       <p className="text-xs font-semibold text-on-surface-variant">
                         {mentor.email || `User ID: ${mentor.userId}`}

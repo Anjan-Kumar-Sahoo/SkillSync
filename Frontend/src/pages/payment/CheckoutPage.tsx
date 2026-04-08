@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import api from '../../services/axios';
 import { useToast } from '../../components/ui/Toast';
+import { formatDateTimeIST } from '../../utils/dateTime';
 
 declare global {
   interface Window {
@@ -40,8 +41,7 @@ const CheckoutPage = () => {
   const totalAmount = hourlyRate + platformFee;
 
   const formatTime = (iso: string) => {
-    const d = new Date(iso);
-    return `${d.toLocaleDateString('default', { month: 'short', day: 'numeric', year: 'numeric' })} • ${d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} (60m)`;
+    return `${formatDateTimeIST(iso)} (60 min)`;
   };
 
   const rollbackPendingSession = async () => {

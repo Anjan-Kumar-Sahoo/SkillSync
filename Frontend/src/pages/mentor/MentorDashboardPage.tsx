@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import PageLayout from '../../components/layout/PageLayout';
 import api from '../../services/axios';
 import { useToast } from '../../components/ui/Toast';
+import { formatDateTimeIST } from '../../utils/dateTime';
 
 const MentorDashboardPage = () => {
   const queryClient = useQueryClient();
@@ -102,17 +103,18 @@ const MentorDashboardPage = () => {
   const pendingRequests = pendingReqsObj?.content || [];
   const upcomingSessions = upcomingObj?.content || [];
   const recentReviews = recentReviewsObj?.content || [];
-  const mentorRating = Number(mentorData?.avgRating || 0);
+  const mentorReviewCount = Number(mentorData?.reviewCount ?? mentorData?.totalReviews ?? 0);
+  const mentorRating = Number(mentorData?.avgRating ?? mentorData?.rating ?? 0);
 
   const getSessionDisplayName = (session: any) => {
     if (session.learnerName) return session.learnerName;
-    if (session.learnerId) return `Learner #${session.learnerId}`;
     return 'Learner';
   };
 
-  const getSessionDate = (session: any) => {
+  const getSessionDateTimeLabel = (session: any) => {
     const raw = session.startTime || session.sessionDate;
-    return raw ? new Date(raw) : null;
+    if (!raw) return 'Time unavailable';
+    return formatDateTimeIST(raw);
   };
 
   const rightPanel = (
@@ -126,8 +128,8 @@ const MentorDashboardPage = () => {
             {recentReviews.map((review: any) => (
               <div key={review.id} className="pb-4 border-b border-outline-variant/10 last:border-0 last:pb-0">
                 <div className="flex justify-between items-center mb-1">
-                  <span className="font-bold text-sm text-on-surface">{review.learnerName || `Learner #${review.reviewerId}`}</span>
-                  <span className="text-xs font-semibold text-on-surface-variant">{new Date(review.createdAt).toLocaleDateString()}</span>
+                  <span className="font-bold text-sm text-on-surface">{review.learnerName || 'Learner'}</span>
+                  <span className="text-xs font-semibold text-on-surface-variant">{formatDateTimeIST(review.createdAt)}</span>
                 </div>
                 <div className="flex text-amber-500 text-[12px] mb-1">
                   {Array(5).fill(0).map((_, i) => (
@@ -194,7 +196,10 @@ const MentorDashboardPage = () => {
           <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Total Sessions</span>
         </div>
         <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/10 flex flex-col items-center justify-center text-center">
-          <span className="text-4xl font-black text-primary mb-1">{mentorRating.toFixed(1)} <span className="text-amber-500 text-3xl">★</span></span>
+          <span className="text-4xl font-black text-primary mb-1">
+            {mentorReviewCount > 0 ? mentorRating.toFixed(1) : 'NEW'}
+            {mentorReviewCount > 0 && <span className="text-amber-500 text-3xl"> ★</span>}
+          </span>
           <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Average Rating</span>
         </div>
         <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/10 flex flex-col items-center justify-center text-center">
@@ -226,7 +231,7 @@ const MentorDashboardPage = () => {
                     <h4 className="font-bold text-on-surface leading-tight text-lg">{getSessionDisplayName(req)}</h4>
                     <p className="text-xs font-semibold text-on-surface-variant mt-0.5 flex items-center gap-1">
                       <span className="material-symbols-outlined text-[14px]">calendar_today</span>
-                      {getSessionDate(req)?.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })} • {getSessionDate(req)?.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} ({req.durationMinutes || 60} min)
+                      {getSessionDateTimeLabel(req)} ({req.durationMinutes || 60} min)
                     </p>
                   </div>
                 </div>
@@ -283,7 +288,7 @@ const MentorDashboardPage = () => {
                     <h4 className="font-bold text-on-surface leading-tight text-lg">{getSessionDisplayName(session)}</h4>
                     <p className="text-xs font-semibold text-on-surface-variant mt-0.5 flex items-center gap-1">
                       <span className="material-symbols-outlined text-[14px]">calendar_today</span>
-                      {getSessionDate(session)?.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })} • {getSessionDate(session)?.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                      {getSessionDateTimeLabel(session)}
                     </p>
                   </div>
                 </div>

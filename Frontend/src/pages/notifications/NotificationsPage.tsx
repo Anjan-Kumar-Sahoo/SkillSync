@@ -4,6 +4,7 @@ import notificationService from '../../services/notificationService';
 import PageLayout from '../../components/layout/PageLayout';
 import { useToast } from '../../components/ui/Toast';
 import type { RootState } from '../../store';
+import { formatDateTimeIST } from '../../utils/dateTime';
 
 const NotificationsPage = () => {
   const queryClient = useQueryClient();
@@ -123,13 +124,7 @@ const NotificationsPage = () => {
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-900">{notification.title}</h3>
                     <p className="text-gray-700 text-sm mt-1">{notification.message}</p>
-                    <p className="text-xs text-gray-500 mt-2">
-                      {new Date(notification.createdAt).toLocaleDateString()} at{' '}
-                      {new Date(notification.createdAt).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </p>
+                    <p className="text-xs text-gray-500 mt-2">{formatDateTimeIST(notification.createdAt)}</p>
                   </div>
                   <div className="flex gap-2">
                     {!notification.isRead && (

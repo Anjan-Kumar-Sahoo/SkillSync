@@ -6,6 +6,7 @@ import api from '../../services/axios';
 import type { RootState } from '../../store';
 import PageLayout from '../../components/layout/PageLayout';
 import { useToast } from '../../components/ui/Toast';
+import { formatDateTimeIST } from '../../utils/dateTime';
 
 const LearnerDashboardPage = () => {
   const user = useSelector((state: RootState) => state.auth.user);
@@ -112,11 +113,10 @@ const LearnerDashboardPage = () => {
 
   const formatDateTime = (iso?: string) => {
     if (!iso) return '';
-    const d = new Date(iso);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' • ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    return formatDateTimeIST(iso);
   };
 
-  const getSessionMentorName = (session: any) => session.mentorName || (session.mentorId ? `Mentor #${session.mentorId}` : 'Mentor');
+  const getSessionMentorName = (session: any) => session.mentorName || 'Mentor';
   const getSessionDateTime = (session: any) => session.startTime || session.sessionDate;
 
   const toggleSkill = (skillId: number) => {
@@ -235,6 +235,9 @@ const LearnerDashboardPage = () => {
                   rows={5}
                   className="w-full rounded-xl border border-outline-variant/30 bg-surface px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary/40"
                 />
+                <p className={`mt-1 text-xs font-semibold ${applyData.bio.trim().length >= 50 ? 'text-emerald-600' : 'text-error'}`}>
+                  {applyData.bio.trim().length}/50 characters minimum
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -375,8 +378,12 @@ const LearnerDashboardPage = () => {
             Array(2).fill(0).map((_, i) => (
               <div key={i} className="h-48 rounded-xl bg-surface-container-low animate-pulse"></div>
             ))
-          ) : mentors?.content?.map((mnt: any) => (
-            <div key={mnt.id} className="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-transparent hover:border-primary/20 hover:-translate-y-1 transition-all duration-300 flex flex-col">
+          ) : mentors?.content?.map((mnt: any) => {
+            const reviewCount = Number(mnt.totalReviews ?? mnt.reviewCount ?? 0);
+            const avgRating = Number(mnt.avgRating ?? mnt.rating ?? 0);
+
+            return (
+              <div key={mnt.id} className="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-transparent hover:border-primary/20 hover:-translate-y-1 transition-all duration-300 flex flex-col">
               <div className="flex items-start gap-4 mb-4">
                 <div className="relative">
                   <div className={`w-14 h-14 rounded-xl text-white flex items-center justify-center font-bold text-lg shadow-sm ${getAvatarColor(mnt.firstName)}`}>
@@ -389,7 +396,7 @@ const LearnerDashboardPage = () => {
                     <h3 className="font-bold text-on-surface leading-tight">{mnt.firstName} {mnt.lastName}</h3>
                     <div className="flex items-center gap-1 bg-secondary-container/30 px-2 py-0.5 rounded text-xs font-bold text-on-secondary-container">
                       <span className="material-symbols-outlined text-[14px]">star</span>
-                      {(mnt.totalReviews > 0 || mnt.reviewCount > 0) ? Number(mnt.avgRating || mnt.rating || 0).toFixed(1) : 'NEW'}
+                      {reviewCount > 0 ? avgRating.toFixed(1) : 'NEW'}
                     </div>
                   </div>
                   <p className="text-xs font-medium text-on-surface-variant mt-1 line-clamp-2">{mnt.headline}</p>
@@ -420,7 +427,8 @@ const LearnerDashboardPage = () => {
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 

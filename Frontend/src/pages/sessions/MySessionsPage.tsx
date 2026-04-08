@@ -7,6 +7,7 @@ import ReviewModal from '../../components/modals/ReviewModal';
 import api from '../../services/axios';
 import { useToast } from '../../components/ui/Toast';
 import type { RootState } from '../../store';
+import { formatDateTimeIST } from '../../utils/dateTime';
 
 
 type Tab = 'Upcoming' | 'Pending' | 'Completed' | 'Cancelled';
@@ -80,10 +81,15 @@ const MySessionsPage = () => {
 
   const getSessionLabel = (session: any) => {
     if (isMentor) {
-      return session.learnerName || (session.learnerId ? `Learner #${session.learnerId}` : 'Learner');
+      return session.learnerName || 'Learner';
     }
 
-    return session.mentorName || (session.mentorId ? `Mentor #${session.mentorId}` : 'Mentor');
+    return session.mentorName || 'Mentor';
+  };
+
+  const getSessionDateTimeLabel = (sessionDateTime?: string) => {
+    if (!sessionDateTime) return 'Time unavailable';
+    return formatDateTimeIST(sessionDateTime);
   };
 
   const handleMentorSessionAction = async (id: number, action: 'accept' | 'reject' | 'complete') => {
@@ -165,10 +171,9 @@ const MySessionsPage = () => {
                   </div>
                   <div>
                     <h3 className="font-bold text-on-surface text-lg leading-tight group-hover:text-primary transition-colors">{displayName}</h3>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm text-on-surface-variant font-medium mt-0.5">
-                      <span className="flex items-center"><span className="material-symbols-outlined text-[16px] mr-1">calendar_month</span> {new Date(sessionDateTime).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                      <span className="hidden sm:inline-block w-1 h-1 bg-outline-variant/50 rounded-full"></span>
-                      <span className="flex items-center"><span className="material-symbols-outlined text-[16px] mr-1">schedule</span> {new Date(sessionDateTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</span>
+                    <div className="flex items-center gap-2 text-sm text-on-surface-variant font-medium mt-0.5">
+                      <span className="material-symbols-outlined text-[16px]">schedule</span>
+                      <span>{getSessionDateTimeLabel(sessionDateTime)}</span>
                     </div>
                   </div>
                 </div>
