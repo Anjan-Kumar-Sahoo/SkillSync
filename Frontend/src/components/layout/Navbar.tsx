@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../services/axios';
 import type { RootState } from '../../store';
+import ThemeToggleButton from '../ui/ThemeToggleButton';
 
 const Navbar = () => {
   const user = useSelector((state: RootState) => state.auth.user);
@@ -37,6 +38,8 @@ const Navbar = () => {
       </div>
 
       <div className="flex items-center space-x-4">
+        <ThemeToggleButton className="px-2.5 py-1.5" showLabel={false} />
+
         <Link to="/notifications" className="relative p-2 rounded-full flex hover:bg-surface-container text-on-surface-variant hover:text-primary transition-all duration-200">
           <span className="material-symbols-outlined text-[26px]">notifications</span>
           {unreadCount > 0 && (

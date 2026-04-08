@@ -91,7 +91,13 @@
 
 .landing-actions {
   display: flex;
+  align-items: center;
   gap: 0.625rem;
+}
+
+.landing-theme-toggle {
+  box-shadow: none;
+  border-color: #7f9bc237;
 }
 
 .landing-btn {
@@ -469,6 +475,105 @@
   letter-spacing: 1.3px;
   font-size: 0.72rem;
   color: #768ba9;
+}
+
+.theme-dark .landing-page {
+  --landing-bg: #0a101b;
+  --landing-panel: #111a2ad8;
+  --landing-border: #3a4e6b66;
+  --landing-text: #e9f1ff;
+  --landing-soft: #b0c0d9;
+  --landing-accent-a: #7aa4ff;
+  --landing-accent-b: #2bc2d5;
+  --landing-accent-c: #ff9b6c;
+  background: linear-gradient(180deg, #0a101b 0%, #0d1523 50%, #101b2d 100%);
+}
+
+.theme-dark .landing-nav {
+  background: #101a2adf;
+  border-bottom-color: #344767;
+}
+
+.theme-dark .landing-btn-ghost {
+  background: #1a263ab8;
+  border-color: #476289;
+  color: #dbe7fb;
+}
+
+.theme-dark .landing-btn-ghost:hover {
+  background: #21314a;
+  border-color: #6386bf;
+}
+
+.theme-dark .hero-card,
+.theme-dark .section-wrap {
+  box-shadow: 0 1rem 2rem rgba(3, 8, 17, 0.35);
+}
+
+.theme-dark .brand-stage {
+  background: radial-gradient(circle, #1b2b43 0%, #1b2b4300 72%);
+}
+
+.theme-dark .hero-tagline {
+  color: #8cb7ff;
+}
+
+.theme-dark .doc-card {
+  background: #162236e0;
+  border-color: #445d8066;
+}
+
+.theme-dark .doc-card:hover {
+  border-color: #7aa4ff88;
+  box-shadow: 0 0.9rem 1.6rem rgba(5, 11, 21, 0.45);
+}
+
+.theme-dark .doc-card span {
+  color: #bfd5ff;
+  background: #273d61;
+}
+
+.theme-dark .monitor-link {
+  border-color: #48607f66;
+  background: linear-gradient(145deg, #141f32, #192740);
+}
+
+.theme-dark .monitor-link:hover {
+  box-shadow: 0 0.8rem 1.3rem rgba(4, 10, 20, 0.45);
+}
+
+.theme-dark .monitor-link b {
+  color: #9de9bb;
+  background: #17402a;
+}
+
+.theme-dark .monitor-link small {
+  color: #a8bbd8;
+}
+
+.theme-dark .footer-description {
+  color: #bcd0ed;
+  background: #111a2a;
+  border-color: #4a638a66;
+  border-left-color: #7aa4ff;
+  box-shadow: 0 0.75rem 1.25rem rgba(4, 10, 20, 0.4);
+}
+
+.theme-dark .landing-footer {
+  color: #a4b9d7;
+  border-top-color: #374d6d;
+  background:
+    radial-gradient(circle at 50% -22%, #1d2d46a6 0%, #1d2d4600 50%),
+    linear-gradient(180deg, #101a2a 0%, #0f1828 100%);
+  box-shadow: inset 0 1px 0 #ffffff10;
+}
+
+.theme-dark .landing-footer h3 {
+  color: #dbe8ff;
+}
+
+.theme-dark .landing-footer p {
+  color: #8ea6c7;
 }
 
 @keyframes rise {

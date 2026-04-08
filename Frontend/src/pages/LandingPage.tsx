@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import logo from '../assets/skillsync-logo.png';
 import './LandingPage.css';
+import ThemeToggleButton from '../components/ui/ThemeToggleButton';
 
 const DEFAULT_BACKEND_BASE_URL = 'https://api.skillsync.mraks.dev';
 const DEFAULT_SWAGGER_PATH = '/swagger-ui/index.html';
@@ -138,6 +139,7 @@ const LandingPage = () => {
           <span>SkillSync</span>
         </a>
         <nav className="landing-actions" aria-label="Landing actions">
+          <ThemeToggleButton className="landing-theme-toggle" showLabel={false} />
           <a
             className="landing-btn landing-btn-ghost"
             href="https://github.com/Anjan-Kumar-Sahoo/SkillSync"

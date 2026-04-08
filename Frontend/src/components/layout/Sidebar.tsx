@@ -50,7 +50,7 @@ const Sidebar = ({ role }: SidebarProps) => {
   };
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-20 lg:w-64 bg-slate-50 border-r border-outline-variant/10 flex flex-col justify-between z-40 transition-all duration-300 shadow-sm">
+    <aside className="fixed left-0 top-0 h-screen w-20 lg:w-64 bg-surface-container-lowest/95 border-r border-outline-variant/20 flex flex-col justify-between z-40 transition-all duration-300 shadow-sm backdrop-blur-xl">
       <div className="flex flex-col flex-1 overflow-y-auto w-full scrollbar-hide">
         {/* LOGO SECTION */}
         <div className="flex items-center justify-center lg:justify-start lg:px-6 h-20 shrink-0 border-b border-outline-variant/10">
@@ -67,7 +67,7 @@ const Sidebar = ({ role }: SidebarProps) => {
             const isActive = location.pathname === item.path;
             const linkClasses = `flex items-center justify-center lg:justify-start px-2 lg:px-4 py-3 rounded-xl transition-all duration-200 group ${
               isActive 
-                ? 'bg-white text-primary shadow-sm font-extrabold' 
+                ? 'bg-surface-container-high text-primary shadow-sm font-extrabold' 
                 : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-semibold'
             }`;
 

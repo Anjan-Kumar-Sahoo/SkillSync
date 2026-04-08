@@ -34,21 +34,62 @@
   --radius-full: 0.75rem;
 }
 
+:root {
+  --gradient-btn-start: #004ac6;
+  --gradient-btn-end: #2563eb;
+  --app-bg-glow-a: rgba(37, 99, 235, 0.14);
+  --app-bg-glow-b: rgba(0, 167, 183, 0.1);
+}
+
+html.theme-dark {
+  --color-primary: #8bacff;
+  --color-primary-container: #5f86ff;
+  --color-on-primary: #071225;
+  --color-surface: #0a101b;
+  --color-surface-container-lowest: #111a2a;
+  --color-surface-container-low: #162235;
+  --color-surface-container: #1b2940;
+  --color-surface-container-high: #22334f;
+  --color-surface-container-highest: #2a3e5f;
+  --color-on-surface: #e6edf7;
+  --color-on-surface-variant: #aebbd0;
+  --color-secondary-container: #2b3f6f;
+  --color-on-secondary-container: #d9e4ff;
+  --color-outline: #6e7f9d;
+  --color-outline-variant: #354969;
+  --color-secondary: #95acff;
+  --color-error: #ff7a7a;
+
+  --gradient-btn-start: #5f86ff;
+  --gradient-btn-end: #2bc2d5;
+  --app-bg-glow-a: rgba(83, 117, 255, 0.28);
+  --app-bg-glow-b: rgba(44, 194, 213, 0.18);
+}
+
 /* ─── Base Styles ─── */
 body {
   font-family: var(--font-sans);
   background-color: var(--color-surface);
+  background-image:
+    radial-gradient(circle at 10% 0%, var(--app-bg-glow-a), transparent 32%),
+    radial-gradient(circle at 90% 2%, var(--app-bg-glow-b), transparent 34%);
+  background-attachment: fixed;
   color: var(--color-on-surface);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
   padding: 0;
+  transition: background-color 220ms ease, color 220ms ease;
 }
 
 html,
 #root {
   margin: 0;
   padding: 0;
+}
+
+* {
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
 }
 
 /* ─── Utility Classes ─── */
@@ -62,5 +103,82 @@ html,
 }
 
 .gradient-btn {
-  background: linear-gradient(135deg, #004ac6, #2563eb);
+  background: linear-gradient(135deg, var(--gradient-btn-start), var(--gradient-btn-end));
+}
+
+/* ─── Dark Theme Overrides For Legacy Utility Classes ─── */
+html.theme-dark .bg-white {
+  background-color: #121b2c !important;
+}
+
+html.theme-dark .bg-slate-50 {
+  background-color: #111a2a !important;
+}
+
+html.theme-dark .bg-gray-50 {
+  background-color: #1a2336 !important;
+}
+
+html.theme-dark .bg-gray-100 {
+  background-color: #212d43 !important;
+}
+
+html.theme-dark .bg-gray-300 {
+  background-color: #44556f !important;
+}
+
+html.theme-dark .bg-gray-400 {
+  background-color: #556a87 !important;
+}
+
+html.theme-dark .text-gray-900 {
+  color: #edf3ff !important;
+}
+
+html.theme-dark .text-gray-700 {
+  color: #d4deef !important;
+}
+
+html.theme-dark .text-gray-600 {
+  color: #b9c7dc !important;
+}
+
+html.theme-dark .text-gray-500 {
+  color: #a4b4cd !important;
+}
+
+html.theme-dark .text-gray-400 {
+  color: #8ea1be !important;
+}
+
+html.theme-dark .border-gray-100 {
+  border-color: #2c3a52 !important;
+}
+
+html.theme-dark .border-gray-200 {
+  border-color: #314059 !important;
+}
+
+html.theme-dark .border-gray-300 {
+  border-color: #3b4d69 !important;
+}
+
+html.theme-dark .hover\:bg-gray-50:hover {
+  background-color: #24324a !important;
+}
+
+html.theme-dark .hover\:bg-gray-100:hover {
+  background-color: #2a3953 !important;
+}
+
+html.theme-dark .hover\:bg-gray-400:hover {
+  background-color: #647b9b !important;
+}
+
+html.theme-dark .hover\:text-gray-700:hover {
+  color: #dce6f6 !important;
+}
+
+html.theme-dark .disabled\:bg-gray-100:disabled {
+  background-color: #1f2a3f !important;
 }
