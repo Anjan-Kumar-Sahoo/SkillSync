@@ -3,12 +3,14 @@ import { useSelector } from 'react-redux';
 import notificationService from '../../services/notificationService';
 import PageLayout from '../../components/layout/PageLayout';
 import { useToast } from '../../components/ui/Toast';
+import { useActionConfirm } from '../../components/ui/ActionConfirm';
 import type { RootState } from '../../store';
 import { formatDateTimeIST } from '../../utils/dateTime';
 
 const NotificationsPage = () => {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const { requestConfirmation } = useActionConfirm();
   const userId = useSelector((state: RootState) => state.auth.user?.id);
 
   // Fetch notifications
@@ -46,6 +48,21 @@ const NotificationsPage = () => {
 
   const notifications = notificationsData?.content || [];
   const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  const handleDeleteNotification = async (notificationId: number) => {
+    const confirmed = await requestConfirmation({
+      title: 'Delete Notification?',
+      message: 'Are you sure you want to delete this notification?',
+      confirmLabel: 'Yes, delete notification',
+      requiredText: 'YES',
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    deleteNotificationMutation.mutate(notificationId);
+  };
 
   const getNotificationIcon = (type: string) => {
     const icons: Record<string, string> = {
@@ -137,7 +154,7 @@ const NotificationsPage = () => {
                       </button>
                     )}
                     <button
-                      onClick={() => deleteNotificationMutation.mutate(notification.id)}
+                      onClick={() => void handleDeleteNotification(notification.id)}
                       disabled={deleteNotificationMutation.isPending}
                       className="text-red-600 hover:text-red-700 text-xs font-medium disabled:opacity-50"
                     >

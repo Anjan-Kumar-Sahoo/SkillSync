@@ -4,12 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import groupService from '../../services/groupService';
 import PageLayout from '../../components/layout/PageLayout';
 import { useToast } from '../../components/ui/Toast';
+import { useActionConfirm } from '../../components/ui/ActionConfirm';
 import type { CreateGroupPayload } from '../../services/groupService';
 
 const GroupsPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const { requestConfirmation } = useActionConfirm();
 
   const [activeTab, setActiveTab] = useState<'explore' | 'mygroups'>('explore');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -82,6 +84,21 @@ const GroupsPage = () => {
       description: formData.description,
       category: formData.category || 'General',
     });
+  };
+
+  const handleLeaveGroup = async (groupId: number, groupName: string) => {
+    const confirmed = await requestConfirmation({
+      title: 'Leave Group?',
+      message: `Are you sure you want to leave "${groupName}"?`,
+      confirmLabel: 'Yes, leave group',
+      requiredText: 'YES',
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    leaveGroupMutation.mutate(groupId);
   };
 
   return (
@@ -223,7 +240,7 @@ const GroupsPage = () => {
                         View
                       </button>
                       <button
-                        onClick={() => leaveGroupMutation.mutate(group.id)}
+                        onClick={() => void handleLeaveGroup(group.id, group.name)}
                         disabled={leaveGroupMutation.isPending}
                         className="flex-1 bg-red-600 text-white py-2 rounded hover:bg-red-700 transition text-sm disabled:opacity-50"
                       >

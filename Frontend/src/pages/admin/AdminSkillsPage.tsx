@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/axios';
 import PageLayout from '../../components/layout/PageLayout';
 import { useToast } from '../../components/ui/Toast';
+import { useActionConfirm } from '../../components/ui/ActionConfirm';
 
 interface Skill {
   id: number;
@@ -10,17 +11,26 @@ interface Skill {
   category: string;
 }
 
+const PAGE_SIZE = 16;
+
 const AdminSkillsPage = () => {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const { requestConfirmation } = useActionConfirm();
+  const [page, setPage] = useState(0);
   const [newSkillName, setNewSkillName] = useState('');
   const [newSkillCategory, setNewSkillCategory] = useState('');
 
-  const { data: skills, isLoading } = useQuery<Skill[]>({
-    queryKey: ['skills'],
+  const { data: skillsData, isLoading } = useQuery<{ content: Skill[]; totalElements: number; totalPages: number; number: number }>({
+    queryKey: ['skills', page],
     queryFn: async () => {
-      const res = await api.get('/api/skills?size=100');
-      return res.data?.content || [];
+      const params = new URLSearchParams();
+      params.append('page', String(page));
+      params.append('size', String(PAGE_SIZE));
+      params.append('sort', 'id,asc');
+
+      const res = await api.get(`/api/skills?${params.toString()}`);
+      return res.data;
     },
   });
 
@@ -58,10 +68,13 @@ const AdminSkillsPage = () => {
     addSkillMutation.mutate({ name: newSkillName, category: newSkillCategory });
   };
 
-  const handleDeleteSkill = (skillId: number, skillName: string) => {
-    const confirmed = window.confirm(
-      `Delete skill "${skillName}"?\nThis will hide it from active mentor selection.`
-    );
+  const handleDeleteSkill = async (skillId: number, skillName: string) => {
+    const confirmed = await requestConfirmation({
+      title: 'Delete Skill?',
+      message: `Are you sure you want to delete skill "${skillName}"? This will hide it from active mentor selection.`,
+      confirmLabel: 'Yes, delete skill',
+      requiredText: 'YES',
+    });
 
     if (!confirmed) {
       return;
@@ -69,6 +82,11 @@ const AdminSkillsPage = () => {
 
     deleteSkillMutation.mutate(skillId);
   };
+
+  const skills = skillsData?.content || [];
+  const totalElements = Number(skillsData?.totalElements || skills.length || 0);
+  const totalPages = Math.max(1, Number(skillsData?.totalPages || 1));
+  const currentPage = Number(skillsData?.number ?? page);
 
   if (isLoading) {
     return (
@@ -118,8 +136,8 @@ const AdminSkillsPage = () => {
         </div>
 
         <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/10">
-          <h2 className="text-lg font-bold mb-4">Existing Skills ({skills?.length || 0})</h2>
-          {skills && skills.length > 0 ? (
+          <h2 className="text-lg font-bold mb-4">Existing Skills ({totalElements})</h2>
+          {skills.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {skills.map((skill) => {
                 const isDeleting =
@@ -137,7 +155,7 @@ const AdminSkillsPage = () => {
 
                     <button
                       type="button"
-                      onClick={() => handleDeleteSkill(skill.id, skill.name)}
+                      onClick={() => void handleDeleteSkill(skill.id, skill.name)}
                       disabled={isDeleting}
                       className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-error bg-error/10 hover:bg-error/20 transition-colors disabled:opacity-50"
                     >
@@ -150,6 +168,28 @@ const AdminSkillsPage = () => {
             </div>
           ) : (
             <p className="text-on-surface-variant">No skills found.</p>
+          )}
+
+          {skills.length > 0 && totalPages > 1 && (
+            <div className="mt-5 pt-4 border-t border-outline-variant/10 flex items-center justify-between gap-3">
+              <button
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={currentPage <= 0}
+                className="px-3 py-1.5 rounded-md text-sm font-bold bg-surface-container hover:bg-surface-container-high text-on-surface disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <p className="text-xs font-semibold text-on-surface-variant">
+                Page {currentPage + 1} of {totalPages}
+              </p>
+              <button
+                onClick={() => setPage((p) => p + 1)}
+                disabled={currentPage >= totalPages - 1}
+                className="px-3 py-1.5 rounded-md text-sm font-bold bg-surface-container hover:bg-surface-container-high text-on-surface disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
           )}
         </div>
       </div>

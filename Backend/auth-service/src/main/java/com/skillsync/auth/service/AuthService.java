@@ -350,7 +350,11 @@ public class AuthService {
     }
 
     public Map<String, Object> getAllUsersFiltered(int page, int size, String role, String search) {
-        var pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        var pageable = org.springframework.data.domain.PageRequest.of(
+                page,
+                size,
+                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "id")
+        );
         Role roleEnum = null;
         if (role != null && !role.isBlank()) {
             try { roleEnum = Role.valueOf(role); } catch (IllegalArgumentException ignored) {}

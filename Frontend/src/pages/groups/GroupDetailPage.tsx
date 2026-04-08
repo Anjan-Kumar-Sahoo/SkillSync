@@ -4,12 +4,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 import groupService from '../../services/groupService';
 import PageLayout from '../../components/layout/PageLayout';
 import { useToast } from '../../components/ui/Toast';
+import { useActionConfirm } from '../../components/ui/ActionConfirm';
 
 const GroupDetailPage = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const { requestConfirmation } = useActionConfirm();
 
   const [activeTab, setActiveTab] = useState<'discussion' | 'members'>('discussion');
   const [newDiscussionTitle, setNewDiscussionTitle] = useState('');
@@ -71,6 +73,23 @@ const GroupDetailPage = () => {
     postDiscussionMutation.mutate();
   };
 
+  const handleLeaveGroup = async () => {
+    const groupName = group?.name || 'this group';
+
+    const confirmed = await requestConfirmation({
+      title: 'Leave Group?',
+      message: `Are you sure you want to leave "${groupName}"?`,
+      confirmLabel: 'Yes, leave group',
+      requiredText: 'YES',
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    leaveGroupMutation.mutate();
+  };
+
   if (groupLoading) {
     return (
       <PageLayout>
@@ -120,7 +139,7 @@ const GroupDetailPage = () => {
               </div>
             </div>
             <button
-              onClick={() => leaveGroupMutation.mutate()}
+              onClick={() => void handleLeaveGroup()}
               disabled={leaveGroupMutation.isPending}
               className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition disabled:opacity-50"
             >

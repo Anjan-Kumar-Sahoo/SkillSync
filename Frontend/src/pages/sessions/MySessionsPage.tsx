@@ -6,6 +6,7 @@ import PageLayout from '../../components/layout/PageLayout';
 import ReviewModal from '../../components/modals/ReviewModal';
 import api from '../../services/axios';
 import { useToast } from '../../components/ui/Toast';
+import { useActionConfirm } from '../../components/ui/ActionConfirm';
 import type { RootState } from '../../store';
 import { formatDateTimeIST } from '../../utils/dateTime';
 
@@ -24,6 +25,7 @@ const MySessionsPage = () => {
 
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const { requestConfirmation } = useActionConfirm();
   const role = useSelector((state: RootState) => state.auth.role);
   const userId = useSelector((state: RootState) => state.auth.user?.id);
   const isMentor = role === 'ROLE_MENTOR';
@@ -92,10 +94,13 @@ const MySessionsPage = () => {
     return formatDateTimeIST(sessionDateTime);
   };
 
-  const handleLearnerCancel = (sessionId: number) => {
-    const confirmed = window.confirm(
-      'Are you sure you want to cancel the session?\nNo compensation would be provided for it.'
-    );
+  const handleLearnerCancel = async (sessionId: number) => {
+    const confirmed = await requestConfirmation({
+      title: 'Cancel Session?',
+      message: 'Are you sure you want to cancel the session? No compensation would be provided for it.',
+      confirmLabel: 'Yes, cancel session',
+      requiredText: 'YES',
+    });
 
     if (!confirmed) {
       return;
@@ -223,7 +228,7 @@ const MySessionsPage = () => {
 
                     {!isMentor && session.status === 'REQUESTED' && (
                       <button 
-                        onClick={() => handleLearnerCancel(session.id)}
+                        onClick={() => void handleLearnerCancel(session.id)}
                         disabled={cancelMutation.isPending}
                         className="text-error bg-error/10 hover:bg-error/20 px-4 py-2 rounded-lg text-sm font-bold transition-colors border border-transparent hover:border-error/20 shrink-0 disabled:opacity-50"
                       >
@@ -237,7 +242,7 @@ const MySessionsPage = () => {
                           Join Call
                         </button>
                         <button 
-                          onClick={() => handleLearnerCancel(session.id)}
+                          onClick={() => void handleLearnerCancel(session.id)}
                           disabled={cancelMutation.isPending}
                           className="text-on-surface-variant hover:text-error hover:bg-error/10 p-2 rounded-lg transition-colors border border-transparent"
                           title="Cancel Session"

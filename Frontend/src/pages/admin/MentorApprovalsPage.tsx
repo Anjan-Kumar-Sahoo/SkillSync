@@ -1,16 +1,25 @@
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import PageLayout from '../../components/layout/PageLayout';
 import api from '../../services/axios';
 import { useToast } from '../../components/ui/Toast';
 
+const PAGE_SIZE = 6;
+
 const MentorApprovalsPage = () => {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const [page, setPage] = useState(0);
 
   const { data: mentorsData, isLoading } = useQuery({
-    queryKey: ['admin', 'mentors', 'pending'],
+    queryKey: ['admin', 'mentors', 'pending', page],
     queryFn: async () => {
-      const { data } = await api.get('/api/admin/mentors/pending');
+      const params = new URLSearchParams();
+      params.append('page', String(page));
+      params.append('size', String(PAGE_SIZE));
+      params.append('sort', 'id,asc');
+
+      const { data } = await api.get(`/api/admin/mentors/pending?${params.toString()}`);
       return data;
     },
   });
@@ -40,7 +49,18 @@ const MentorApprovalsPage = () => {
   });
 
   const pendingMentors = mentorsData?.content || mentorsData || [];
-  const mentorsList = Array.isArray(pendingMentors) ? pendingMentors : [];
+  const mentorsList = Array.isArray(pendingMentors)
+    ? [...pendingMentors].sort((a: any, b: any) => Number(a?.id || 0) - Number(b?.id || 0))
+    : [];
+  const totalElements = Array.isArray(mentorsData?.content)
+    ? Number(mentorsData?.totalElements || mentorsList.length || 0)
+    : mentorsList.length;
+  const totalPages = Array.isArray(mentorsData?.content)
+    ? Math.max(1, Number(mentorsData?.totalPages || 1))
+    : 1;
+  const currentPage = Array.isArray(mentorsData?.content)
+    ? Number(mentorsData?.number ?? page)
+    : 0;
 
   return (
     <PageLayout>
@@ -50,7 +70,7 @@ const MentorApprovalsPage = () => {
           <p className="text-on-surface-variant mt-2">Review and manage pending mentor applications</p>
           {!isLoading && (
             <p className="mt-3 text-sm font-bold text-primary bg-primary/10 inline-block px-3 py-1 rounded-full">
-              {mentorsList.length} pending application{mentorsList.length !== 1 ? 's' : ''}
+              {totalElements} pending application{totalElements !== 1 ? 's' : ''}
             </p>
           )}
         </div>
@@ -67,9 +87,10 @@ const MentorApprovalsPage = () => {
             <p className="text-sm text-on-surface-variant">No pending mentor applications to review.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {mentorsList.map((mentor: any) => (
-              <div key={mentor.id} className="bg-surface-container-lowest border border-outline-variant/10 rounded-2xl p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {mentorsList.map((mentor: any) => (
+                <div key={mentor.id} className="bg-surface-container-lowest border border-outline-variant/10 rounded-2xl p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
                 <div>
                   <div className="flex items-start justify-between mb-4">
                     <div>
@@ -79,6 +100,8 @@ const MentorApprovalsPage = () => {
                           : 'Mentor'}
                       </h3>
                       <p className="text-xs font-semibold text-on-surface-variant">
+                        #{mentor.id} •
+                        {' '}
                         {mentor.email || `User ID: ${mentor.userId}`}
                       </p>
                     </div>
@@ -138,9 +161,32 @@ const MentorApprovalsPage = () => {
                     Reject
                   </button>
                 </div>
+                </div>
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="px-5 py-3 border border-outline-variant/10 rounded-xl bg-surface-container-lowest flex items-center justify-between gap-3">
+                <button
+                  onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  disabled={currentPage <= 0}
+                  className="px-3 py-1.5 rounded-md text-sm font-bold bg-surface-container hover:bg-surface-container-high text-on-surface disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <p className="text-xs font-semibold text-on-surface-variant">
+                  Page {currentPage + 1} of {totalPages}
+                </p>
+                <button
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={currentPage >= totalPages - 1}
+                  className="px-3 py-1.5 rounded-md text-sm font-bold bg-surface-container hover:bg-surface-container-high text-on-surface disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
     </PageLayout>

@@ -3,21 +3,26 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import PageLayout from '../../components/layout/PageLayout';
 import api from '../../services/axios';
 import { useToast } from '../../components/ui/Toast';
+import { useActionConfirm } from '../../components/ui/ActionConfirm';
+
+const PAGE_SIZE = 20;
 
 const UsersCenterPage = () => {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const { requestConfirmation } = useActionConfirm();
 
+  const [page, setPage] = useState(0);
   const [roleFilter, setRoleFilter] = useState('');
   const [searchText, setSearchText] = useState('');
   const [searchInput, setSearchInput] = useState('');
 
   const { data: usersData, isLoading } = useQuery({
-    queryKey: ['admin', 'users', roleFilter, searchText],
+    queryKey: ['admin', 'users', page, roleFilter, searchText],
     queryFn: async () => {
       const params = new URLSearchParams();
-      params.append('page', '0');
-      params.append('size', '200');
+      params.append('page', String(page));
+      params.append('size', String(PAGE_SIZE));
       if (roleFilter) params.append('role', roleFilter);
       if (searchText) params.append('search', searchText);
       const { data } = await api.get(`/api/admin/users?${params.toString()}`);
@@ -49,14 +54,37 @@ const UsersCenterPage = () => {
     onError: () => showToast({ message: 'Failed to update role', type: 'error' }),
   });
 
-  const users = usersData?.content || [];
+  const users = [...(usersData?.content || [])].sort((a: any, b: any) => {
+    const aId = Number(a?.id || 0);
+    const bId = Number(b?.id || 0);
+    return aId - bId;
+  });
+  const totalElements = Number(usersData?.totalElements || users.length || 0);
+  const totalPages = Math.max(1, Number(usersData?.totalPages || 1));
+  const currentPage = Number(usersData?.number ?? page);
 
   const handleSearch = () => {
-    setSearchText(searchInput);
+    setSearchText(searchInput.trim());
+    setPage(0);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') handleSearch();
+  };
+
+  const handleDeleteUser = async (id: number, email: string) => {
+    const confirmed = await requestConfirmation({
+      title: 'Delete User?',
+      message: `Are you sure you want to delete user ${email}? This action cannot be undone.`,
+      confirmLabel: 'Yes, delete user',
+      requiredText: 'YES',
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    deleteMutation.mutate(id);
   };
 
   const getRoleBadgeStyle = (role: string) => {
@@ -90,7 +118,10 @@ const UsersCenterPage = () => {
             <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest block mb-1 pl-1">Role Filter</label>
             <select
               value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
+              onChange={(e) => {
+                setRoleFilter(e.target.value);
+                setPage(0);
+              }}
               className="w-full h-10 bg-surface-container px-3 rounded-lg text-sm font-semibold text-on-surface outline-none focus:ring-1 focus:ring-primary border border-transparent"
             >
               <option value="">All Roles</option>
@@ -139,6 +170,7 @@ const UsersCenterPage = () => {
               <table className="w-full">
                 <thead className="bg-surface-container border-b border-outline-variant/10">
                   <tr>
+                    <th className="text-left py-3 px-5 text-[10px] font-black text-on-surface-variant uppercase tracking-widest">ID</th>
                     <th className="text-left py-3 px-5 text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Email</th>
                     <th className="text-left py-3 px-5 text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Name</th>
                     <th className="text-left py-3 px-5 text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Role</th>
@@ -148,6 +180,7 @@ const UsersCenterPage = () => {
                 <tbody>
                   {users.map((user: any) => (
                     <tr key={user.id} className="border-b border-outline-variant/5 hover:bg-surface-container-low/50 transition-colors">
+                      <td className="py-3 px-5 text-sm font-bold text-on-surface">#{user.id}</td>
                       <td className="py-3 px-5 text-sm font-semibold text-on-surface">{user.email}</td>
                       <td className="py-3 px-5 text-sm text-on-surface-variant">{user.firstName} {user.lastName}</td>
                       <td className="py-3 px-5">
@@ -177,11 +210,7 @@ const UsersCenterPage = () => {
                           )}
                           {user.role !== 'ROLE_ADMIN' && (
                             <button
-                              onClick={() => {
-                                if (confirm(`Delete user ${user.email}? This action cannot be undone.`)) {
-                                  deleteMutation.mutate(user.id);
-                                }
-                              }}
+                              onClick={() => void handleDeleteUser(user.id, user.email)}
                               disabled={deleteMutation.isPending}
                               className="text-[10px] font-bold bg-red-100 text-red-700 hover:bg-red-200 px-3 py-1.5 rounded-lg transition disabled:opacity-50"
                             >
@@ -197,11 +226,34 @@ const UsersCenterPage = () => {
             </div>
           )}
           {!isLoading && users.length > 0 && (
-            <div className="px-5 py-3 border-t border-outline-variant/10 bg-surface-container-low/30 text-xs font-semibold text-on-surface-variant">
-              Showing {users.length} user{users.length !== 1 ? 's' : ''}
-              {roleFilter && ` • Role: ${getRoleLabel(roleFilter)}`}
-              {searchText && ` • Search: "${searchText}"`}
-            </div>
+            <>
+              <div className="px-5 py-3 border-t border-outline-variant/10 bg-surface-container-low/30 text-xs font-semibold text-on-surface-variant">
+                Showing {users.length} of {totalElements} user{totalElements !== 1 ? 's' : ''}
+                {roleFilter && ` • Role: ${getRoleLabel(roleFilter)}`}
+                {searchText && ` • Search: "${searchText}"`}
+                {' • Sorted by ID'}
+              </div>
+
+              <div className="px-5 py-3 border-t border-outline-variant/10 bg-surface-container-lowest flex items-center justify-between gap-3">
+                <button
+                  onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  disabled={currentPage <= 0}
+                  className="px-3 py-1.5 rounded-md text-sm font-bold bg-surface-container hover:bg-surface-container-high text-on-surface disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <p className="text-xs font-semibold text-on-surface-variant">
+                  Page {currentPage + 1} of {totalPages}
+                </p>
+                <button
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={currentPage >= totalPages - 1}
+                  className="px-3 py-1.5 rounded-md text-sm font-bold bg-surface-container hover:bg-surface-container-high text-on-surface disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </>
           )}
         </div>
       </div>

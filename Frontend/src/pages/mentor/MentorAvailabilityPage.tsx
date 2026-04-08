@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import PageLayout from '../../components/layout/PageLayout';
 import api from '../../services/axios';
 import { useToast } from '../../components/ui/Toast';
+import { useActionConfirm } from '../../components/ui/ActionConfirm';
 
 const weekdayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -11,6 +12,7 @@ const MentorAvailabilityPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const { requestConfirmation } = useActionConfirm();
 
   const [dayOfWeek, setDayOfWeek] = useState('1');
   const [startTime, setStartTime] = useState('09:00');
@@ -59,6 +61,21 @@ const MentorAvailabilityPage = () => {
     if (a.dayOfWeek !== b.dayOfWeek) return a.dayOfWeek - b.dayOfWeek;
     return String(a.startTime).localeCompare(String(b.startTime));
   });
+
+  const handleRemoveSlot = async (slotId: number, dayName: string, start: string, end: string) => {
+    const confirmed = await requestConfirmation({
+      title: 'Remove Availability Slot?',
+      message: `Are you sure you want to remove ${dayName} ${String(start).slice(0, 5)}-${String(end).slice(0, 5)}?`,
+      confirmLabel: 'Yes, remove slot',
+      requiredText: 'YES',
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    deleteSlotMutation.mutate(slotId);
+  };
 
   return (
     <PageLayout>
@@ -145,7 +162,12 @@ const MentorAvailabilityPage = () => {
                       <span className="text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md bg-primary/10 text-primary border border-primary/20">Booked</span>
                     ) : (
                       <button
-                        onClick={() => deleteSlotMutation.mutate(slot.id)}
+                        onClick={() => void handleRemoveSlot(
+                          slot.id,
+                          weekdayNames[slot.dayOfWeek] || 'Unknown day',
+                          slot.startTime,
+                          slot.endTime,
+                        )}
                         disabled={deleteSlotMutation.isPending}
                         className="text-error bg-error/10 hover:bg-error/20 px-3 py-2 rounded-lg text-sm font-bold transition-colors disabled:opacity-50"
                       >
