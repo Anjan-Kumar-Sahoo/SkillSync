@@ -1,19 +1,23 @@
-import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../assets/skillsync-logo.png';
 import ThemeToggleButton from '../components/ui/ThemeToggleButton';
 import './LandingPage.css';
 
-type ValueItem = {
+type LiveStep = {
+  time: string;
   title: string;
-  body: string;
-  stat: string;
+  detail: string;
+  state: 'done' | 'active' | 'queued';
 };
 
-type FeatureItem = {
-  icon: string;
-  title: string;
-  description: string;
+type ExperienceLane = {
+  role: string;
+  headline: string;
+  summary: string;
+  bullets: string[];
+  metric: string;
+  pulse: string;
+  accentClass: string;
 };
 
 type PlatformMetric = {
@@ -22,61 +26,114 @@ type PlatformMetric = {
   helper: string;
 };
 
-const values: ValueItem[] = [
+type ReliabilitySignal = {
+  label: string;
+  value: string;
+  helper: string;
+};
+
+type HeroSignal = {
+  label: string;
+  value: string;
+};
+
+const livePipeline: LiveStep[] = [
   {
-    title: 'Mentor Marketplace',
-    body: 'Discover verified mentors across coding, cloud, system design, and interview prep with clear pricing and trust signals.',
-    stat: '12+ domains',
+    time: '09:10',
+    title: 'Learner books a session',
+    detail: 'Topic, slot, and mentor are selected with timezone-safe scheduling.',
+    state: 'done',
   },
   {
-    title: 'Secure Session Flow',
-    body: 'Booking is payment-aware and event-driven, so mentors are notified only after successful payment with automatic failure rollback.',
-    stat: 'Zero ghost bookings',
+    time: '09:11',
+    title: 'Payment verification lock',
+    detail: 'Mentor notification is held until transaction success is confirmed.',
+    state: 'active',
   },
   {
-    title: 'Smart Feedback Loop',
-    body: 'Reviews, ratings, and mentor credibility update consistently across notifications, profile cards, and dashboards.',
-    stat: 'Realtime sync',
+    time: '09:13',
+    title: 'Mentor response window',
+    detail: 'Accept/reject action updates learner status in real time.',
+    state: 'queued',
+  },
+  {
+    time: '10:00',
+    title: 'Live session execution',
+    detail: 'Join details, reminders, and completion flow stay aligned for both users.',
+    state: 'queued',
   },
 ];
 
-const features: FeatureItem[] = [
+const experienceLanes: ExperienceLane[] = [
   {
-    icon: 'rocket_launch',
-    title: 'Fast Start, No Friction',
-    description: 'Inline OTP verification, OAuth onboarding, and role-aware dashboard routing get users productive in minutes.',
+    role: 'Learner Workspace',
+    headline: 'Book confidently, cancel consciously.',
+    summary: 'Learners can discover mentors quickly, but every cancellation is explicit and policy-aware.',
+    bullets: [
+      'Clear mentor profile cards with ratings and trust cues',
+      'Payment-first booking to prevent ghost confirmations',
+      'Cancellation confirmation with compensation disclaimer',
+    ],
+    metric: '3-step booking flow',
+    pulse: 'High confidence onboarding',
+    accentClass: 'lane-cyan',
   },
   {
-    icon: 'shield_lock',
-    title: 'Production-Grade Safety',
-    description: 'JWT cookie auth, guarded routes, rollback-aware session booking, and clean compensating flows across services.',
+    role: 'Mentor Console',
+    headline: 'Only valid bookings reach the mentor.',
+    summary: 'Mentors receive requests after payment success, reducing noise and protecting time.',
+    bullets: [
+      'No premature notifications from failed transactions',
+      'Accept, reject, and complete actions from one queue',
+      'Earnings, ratings, and session history stay synchronized',
+    ],
+    metric: 'Zero ghost bookings',
+    pulse: 'Cleaner decision queue',
+    accentClass: 'lane-orange',
   },
   {
-    icon: 'monitoring',
-    title: 'Observability Built In',
-    description: 'Prometheus, Grafana, Loki, Zipkin, and Eureka are integrated from day one for resilient operations.',
-  },
-  {
-    icon: 'groups_2',
-    title: 'Community + Mentoring',
-    description: 'Learners can level up through 1:1 mentorship and collaborative group learning in a single platform.',
-  },
-  {
-    icon: 'bolt',
-    title: 'Event-Driven Backbone',
-    description: 'Microservices communicate via robust event contracts, making the system scalable and failure-aware.',
-  },
-  {
-    icon: 'insights',
-    title: 'Clear Growth Signals',
-    description: 'Track sessions, earnings, ratings, and learner progress with purpose-built dashboards per role.',
+    role: 'Platform Operations',
+    headline: 'Runtime visibility without guesswork.',
+    summary: 'Events, retries, and service-level monitoring are designed for production behavior.',
+    bullets: [
+      'Event contracts drive booking, payment, and notification flow',
+      'Rollback paths preserve data consistency on payment failure',
+      'Observability stack supports fast issue diagnosis',
+    ],
+    metric: 'Monitoring-first topology',
+    pulse: 'Operational reliability',
+    accentClass: 'lane-blue',
   },
 ];
 
 const metrics: PlatformMetric[] = [
-  { label: 'Services', value: '9', helper: 'Microservices in production topology' },
-  { label: 'Core Flows', value: '25+', helper: 'Auth, booking, review, payment, notifications' },
-  { label: 'Uptime Focus', value: '99.9%', helper: 'Designed with monitoring + fail-safe behavior' },
+  { label: 'Services', value: '9', helper: 'Microservices under one platform graph' },
+  { label: 'Critical Journeys', value: '25+', helper: 'Auth, booking, payment, review, notifications' },
+  { label: 'Runtime Goal', value: '99.9%', helper: 'Monitoring and fail-safe flow design' },
+];
+
+const reliabilitySignals: ReliabilitySignal[] = [
+  {
+    label: 'Mentor alert after payment success',
+    value: 'Strictly enforced',
+    helper: 'Prevents invalid request notifications',
+  },
+  {
+    label: 'Failed payment rollback',
+    value: 'Automatic',
+    helper: 'Session state stays consistent across services',
+  },
+  {
+    label: 'Rating and review propagation',
+    value: 'Realtime',
+    helper: 'Dashboard and profile credibility stay in sync',
+  },
+];
+
+const heroSignals: HeroSignal[] = [
+  { label: 'Queue Health', value: 'Stable' },
+  { label: 'Payment Guard', value: 'Enabled' },
+  { label: 'Reminder Jobs', value: 'On Schedule' },
 ];
 
 const finaleTags = [
@@ -88,22 +145,7 @@ const finaleTags = [
   'Community Learning Loops',
 ];
 
-const cardClassNames = [
-  'ppt-surface-card accent-cyan',
-  'ppt-surface-card accent-orange',
-  'ppt-surface-card accent-blue',
-] as const;
-
 const LandingPage = () => {
-  const surfaceCards = useMemo(
-    () =>
-      values.map((item, index) => ({
-        ...item,
-        className: cardClassNames[index % cardClassNames.length],
-      })),
-    [],
-  );
-
   return (
     <div className="ppt-page" id="top">
       <div className="ppt-grid-overlay" aria-hidden="true" />
@@ -130,12 +172,12 @@ const LandingPage = () => {
           <div className="ppt-hero-copy">
             <p className="ppt-kicker">Peer To Peer Learning Platform</p>
             <h1>
-              Mentorship That
-              <span> Scales Trust, Not Noise.</span>
+              Built For Real Sessions,
+              <span> Not Just Pretty Screens.</span>
             </h1>
             <p className="ppt-subtext">
-              SkillSync connects serious learners with verified mentors through a resilient, payment-safe,
-              event-driven platform engineered for real growth and real outcomes.
+              SkillSync maps the full mentorship lifecycle: learner request, payment verification, mentor response,
+              live session delivery, and post-session trust signals, all in a single reliable flow.
             </p>
 
             <div className="ppt-cta-row">
@@ -158,32 +200,69 @@ const LandingPage = () => {
             </div>
           </div>
 
-          <div className="ppt-hero-stage" aria-hidden="true">
-            <div className="stage-ring ring-outer" />
-            <div className="stage-ring ring-mid" />
-            <div className="stage-ring ring-inner" />
-            <div className="stage-core">
-              <img src={logo} alt="" />
+          <div className="ppt-hero-stage" aria-label="Live session pipeline preview">
+            <div className="ppt-live-console">
+              <div className="live-console-head">
+                <p>Live Session Pipeline</p>
+                <span className="live-indicator">
+                  <i aria-hidden="true" />
+                  Active now
+                </span>
+              </div>
+
+              <div className="live-flow">
+                {livePipeline.map((step) => (
+                  <article key={`${step.time}-${step.title}`} className={`live-step ${step.state}`}>
+                    <span className="live-time">{step.time}</span>
+                    <div className="live-step-body">
+                      <h3>{step.title}</h3>
+                      <p>{step.detail}</p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+
+              <p className="live-console-foot">
+                State transitions remain traceable across booking, payment, notification, and completion events.
+              </p>
             </div>
-            <div className="stage-chip chip-a">Event Driven</div>
-            <div className="stage-chip chip-b">Payment Safe</div>
-            <div className="stage-chip chip-c">Realtime UX</div>
+
+            <div className="ppt-live-signals" aria-hidden="true">
+              <div className="signal-brand">
+                <img src={logo} alt="" />
+                <span>SkillSync Runtime</span>
+              </div>
+              {heroSignals.map((signal) => (
+                <article key={signal.label} className="ppt-live-signal-card">
+                  <p>{signal.label}</p>
+                  <h3>{signal.value}</h3>
+                </article>
+              ))}
+            </div>
           </div>
         </section>
 
         <section className="ppt-section" id="platform-story">
           <div className="ppt-section-head">
-            <p>What Makes It Different</p>
-            <h2>Built Like a Product, Not Just a Demo.</h2>
+            <p>Real Workflow, Real Context</p>
+            <h2>Every role sees the right state, at the right moment.</h2>
           </div>
 
-          <div className="ppt-surface-grid">
-            {surfaceCards.map((item) => (
-              <article key={item.title} className={item.className}>
-                <div className="surface-glow" aria-hidden="true" />
-                <span className="surface-stat">{item.stat}</span>
-                <h3>{item.title}</h3>
-                <p>{item.body}</p>
+          <div className="ppt-lane-grid">
+            {experienceLanes.map((lane) => (
+              <article key={lane.role} className={`ppt-lane-card ${lane.accentClass}`}>
+                <div className="lane-top">
+                  <span className="lane-role">{lane.role}</span>
+                  <span className="lane-metric">{lane.metric}</span>
+                </div>
+                <h3>{lane.headline}</h3>
+                <p>{lane.summary}</p>
+                <ul>
+                  {lane.bullets.map((bullet) => (
+                    <li key={bullet}>{bullet}</li>
+                  ))}
+                </ul>
+                <div className="lane-pulse">{lane.pulse}</div>
               </article>
             ))}
           </div>
@@ -191,17 +270,16 @@ const LandingPage = () => {
 
         <section className="ppt-section">
           <div className="ppt-section-head">
-            <p>Product Story</p>
-            <h2>A polished learning ecosystem for learners, mentors, and teams.</h2>
+            <p>Operational Reliability</p>
+            <h2>Production-safe behavior is part of the UX, not an afterthought.</h2>
           </div>
 
-          <div className="ppt-feature-grid">
-            {features.map((feature) => (
-              <article key={feature.title} className="ppt-feature-card">
-                <div className="feature-sheen" aria-hidden="true" />
-                <span className="material-symbols-outlined">{feature.icon}</span>
-                <h3>{feature.title}</h3>
-                <p>{feature.description}</p>
+          <div className="ppt-signal-grid">
+            {reliabilitySignals.map((signal) => (
+              <article key={signal.label} className="ppt-signal-card">
+                <p>{signal.label}</p>
+                <h3>{signal.value}</h3>
+                <small>{signal.helper}</small>
               </article>
             ))}
           </div>

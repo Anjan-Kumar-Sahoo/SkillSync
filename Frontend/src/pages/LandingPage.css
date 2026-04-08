@@ -256,81 +256,196 @@
 
 .ppt-hero-stage {
   position: relative;
-  min-height: 340px;
+  min-height: 360px;
   border-radius: 22px;
   border: 1px solid rgba(95, 133, 178, 0.3);
-  background: linear-gradient(170deg, rgba(255, 255, 255, 0.8), rgba(235, 245, 255, 0.7));
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.8), rgba(233, 245, 255, 0.74));
   display: grid;
-  place-items: center;
+  grid-template-columns: minmax(0, 1.32fr) minmax(0, 0.68fr);
+  gap: 0.8rem;
+  padding: 0.9rem;
   overflow: hidden;
 }
 
-.stage-ring {
-  position: absolute;
-  border-radius: 999px;
-  border: 1px solid rgba(94, 132, 178, 0.46);
-  animation: spin 18s linear infinite;
+.ppt-live-console {
+  border-radius: 18px;
+  border: 1px solid rgba(90, 127, 172, 0.3);
+  background: rgba(255, 255, 255, 0.78);
+  padding: 0.86rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
 }
 
-.ring-outer {
-  width: 88%;
-  height: 88%;
+.live-console-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
-.ring-mid {
-  width: 64%;
-  height: 64%;
-  animation-duration: 14s;
-  animation-direction: reverse;
-}
-
-.ring-inner {
-  width: 40%;
-  height: 40%;
-  animation-duration: 10s;
-}
-
-.stage-core {
-  width: 130px;
-  height: 130px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.95), rgba(205, 227, 255, 0.7));
-  box-shadow: 0 20px 35px rgba(19, 53, 97, 0.2);
-  z-index: 2;
-}
-
-.stage-core img {
-  width: 74px;
-  height: 74px;
-}
-
-.stage-chip {
-  position: absolute;
-  padding: 0.45rem 0.75rem;
-  border-radius: 999px;
-  border: 1px solid rgba(70, 108, 156, 0.35);
-  background: rgba(255, 255, 255, 0.76);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.6px;
+.live-console-head p {
+  margin: 0;
+  font-size: 0.76rem;
   text-transform: uppercase;
+  letter-spacing: 1.08px;
+  font-weight: 900;
+  color: #1f65cb;
 }
 
-.chip-a {
-  top: 16%;
-  right: 10%;
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.36rem;
+  border-radius: 999px;
+  border: 1px solid rgba(83, 121, 166, 0.35);
+  background: rgba(255, 255, 255, 0.74);
+  padding: 0.24rem 0.52rem;
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: var(--ppt-muted);
 }
 
-.chip-b {
-  bottom: 17%;
-  left: 8%;
+.live-indicator i {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #1fae4f;
+  box-shadow: 0 0 0 0 rgba(31, 174, 79, 0.5);
+  animation: pulseDot 2s ease infinite;
 }
 
-.chip-c {
-  bottom: 14%;
-  right: 8%;
+.live-flow {
+  margin-top: 0.78rem;
+  display: grid;
+  gap: 0.52rem;
+}
+
+.live-step {
+  position: relative;
+  border-radius: 14px;
+  border: 1px solid rgba(88, 126, 171, 0.3);
+  background: rgba(255, 255, 255, 0.74);
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 0.66rem;
+  padding: 0.62rem 0.68rem;
+  transition: transform 260ms ease, border-color 260ms ease, box-shadow 260ms ease;
+  animation: cardRise 600ms cubic-bezier(0.21, 0.73, 0.26, 1) both;
+}
+
+.live-step:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.live-step:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+.live-step:nth-child(4) {
+  animation-delay: 0.36s;
+}
+
+.live-step:hover {
+  transform: translateY(-2px);
+}
+
+.live-time {
+  border-radius: 10px;
+  border: 1px solid rgba(83, 121, 166, 0.34);
+  background: rgba(255, 255, 255, 0.84);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.24rem 0.38rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.6px;
+  font-weight: 800;
+  color: var(--ppt-muted);
+}
+
+.live-step-body h3 {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.3;
+}
+
+.live-step-body p {
+  margin: 0.28rem 0 0;
+  color: var(--ppt-muted);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.live-step.done {
+  border-color: rgba(41, 151, 83, 0.4);
+}
+
+.live-step.active {
+  border-color: rgba(16, 107, 255, 0.46);
+  box-shadow: 0 0 0 1px rgba(16, 107, 255, 0.22);
+  animation: activeStepGlow 2.4s ease-in-out infinite;
+}
+
+.live-step.active .live-time {
+  color: #1459b6;
+}
+
+.live-step.queued {
+  border-color: rgba(255, 122, 61, 0.4);
+}
+
+.live-console-foot {
+  margin: 0.68rem 0 0;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--ppt-muted);
+}
+
+.ppt-live-signals {
+  display: grid;
+  align-content: start;
+  gap: 0.56rem;
+}
+
+.signal-brand {
+  border-radius: 15px;
+  border: 1px solid rgba(90, 127, 172, 0.34);
+  background: rgba(255, 255, 255, 0.76);
+  padding: 0.62rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.signal-brand img {
+  width: 30px;
+  height: 30px;
+}
+
+.signal-brand span {
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+
+.ppt-live-signal-card {
+  border-radius: 14px;
+  border: 1px solid rgba(90, 127, 172, 0.32);
+  background: rgba(255, 255, 255, 0.76);
+  padding: 0.62rem 0.68rem;
+}
+
+.ppt-live-signal-card p {
+  margin: 0;
+  color: var(--ppt-muted);
+  font-size: 0.66rem;
+  letter-spacing: 0.82px;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+.ppt-live-signal-card h3 {
+  margin: 0.26rem 0 0;
+  font-size: 0.98rem;
 }
 
 .ppt-section,
@@ -353,162 +468,177 @@
   line-height: 1.15;
 }
 
-.ppt-surface-grid {
+.ppt-lane-grid {
   margin-top: 1rem;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
+  gap: 0.78rem;
 }
 
-.ppt-surface-card {
+.ppt-lane-card {
+  --lane-accent: var(--ppt-accent-a);
   position: relative;
   border-radius: 18px;
   border: 1px solid rgba(93, 131, 177, 0.35);
   background: var(--ppt-surface-strong);
   padding: 1rem;
   overflow: hidden;
-  isolation: isolate;
   transition: transform 260ms cubic-bezier(0.22, 0.74, 0.18, 1), box-shadow 260ms ease, border-color 260ms ease;
 }
 
-.ppt-surface-card::before {
+.ppt-lane-card::before {
   content: '';
   position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  background: linear-gradient(140deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0));
-  opacity: 0;
-  transition: opacity 260ms ease;
-  pointer-events: none;
-  z-index: -1;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--lane-accent), transparent);
+  opacity: 0.8;
 }
 
-.ppt-surface-card:hover {
-  transform: translateY(-8px) scale(1.01);
-  box-shadow: 0 20px 30px rgba(17, 45, 83, 0.18);
+.ppt-lane-card:hover {
+  transform: translateY(-9px);
+  border-color: color-mix(in oklab, var(--lane-accent) 50%, rgba(93, 131, 177, 0.35));
+  box-shadow: 0 24px 34px rgba(17, 45, 83, 0.2);
 }
 
-.ppt-surface-card:hover::before {
-  opacity: 1;
+.lane-cyan {
+  --lane-accent: #08b8c9;
 }
 
-.surface-glow {
-  position: absolute;
-  width: 180px;
-  height: 180px;
-  right: -80px;
-  top: -80px;
+.lane-orange {
+  --lane-accent: #ff7a3d;
+}
+
+.lane-blue {
+  --lane-accent: #106bff;
+}
+
+.lane-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.lane-role,
+.lane-metric {
   border-radius: 999px;
-  filter: blur(22px);
-  opacity: 0.52;
-}
-
-.accent-cyan .surface-glow {
-  background: rgba(8, 184, 201, 0.56);
-}
-
-.accent-orange .surface-glow {
-  background: rgba(255, 122, 61, 0.6);
-}
-
-.accent-blue .surface-glow {
-  background: rgba(16, 107, 255, 0.58);
-}
-
-.surface-stat {
-  display: inline-flex;
-  margin-bottom: 0.72rem;
-  border-radius: 999px;
-  border: 1px solid rgba(83, 121, 166, 0.35);
-  background: rgba(255, 255, 255, 0.76);
-  padding: 0.28rem 0.56rem;
-  font-size: 0.66rem;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+  border: 1px solid rgba(83, 121, 166, 0.34);
+  background: rgba(255, 255, 255, 0.74);
+  padding: 0.25rem 0.52rem;
+  font-size: 0.64rem;
   font-weight: 800;
+  letter-spacing: 0.78px;
+  text-transform: uppercase;
   color: var(--ppt-muted);
 }
 
-.ppt-surface-card h3 {
-  margin: 0;
-  font-size: 1.06rem;
+.lane-metric {
+  border-color: color-mix(in oklab, var(--lane-accent) 45%, rgba(83, 121, 166, 0.34));
 }
 
-.ppt-surface-card p {
-  margin: 0.55rem 0 0;
+.ppt-lane-card h3 {
+  margin: 0.8rem 0 0;
+  font-size: 1.03rem;
+}
+
+.ppt-lane-card p {
+  margin: 0.5rem 0 0;
   color: var(--ppt-muted);
-  line-height: 1.52;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
+  line-height: 1.54;
 }
 
-.ppt-feature-grid {
+.ppt-lane-card ul {
+  margin: 0.8rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.ppt-lane-card li {
+  position: relative;
+  padding-left: 1rem;
+  color: var(--ppt-muted);
+  font-size: 0.82rem;
+  line-height: 1.43;
+}
+
+.ppt-lane-card li::before {
+  content: '';
+  position: absolute;
+  top: 0.45rem;
+  left: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--lane-accent);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--lane-accent) 28%, transparent);
+}
+
+.lane-pulse {
+  margin-top: 0.8rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in oklab, var(--lane-accent) 44%, rgba(83, 121, 166, 0.3));
+  background: color-mix(in oklab, var(--lane-accent) 10%, rgba(255, 255, 255, 0.72));
+  padding: 0.42rem 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.25px;
+}
+
+.ppt-signal-grid {
   margin-top: 1rem;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
+  gap: 0.78rem;
 }
 
-.ppt-feature-card {
+.ppt-signal-card {
   position: relative;
   border-radius: 18px;
   border: 1px solid rgba(90, 127, 172, 0.35);
   background: var(--ppt-surface-strong);
   padding: 1rem;
   overflow: hidden;
-  transform-style: preserve-3d;
-  transition: transform 300ms cubic-bezier(0.21, 0.74, 0.14, 1), box-shadow 260ms ease, border-color 240ms ease;
 }
 
-.ppt-feature-card::after {
+.ppt-signal-card::after {
   content: '';
   position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.55), transparent 48%);
-  opacity: 0;
-  transition: opacity 240ms ease;
+  left: -20%;
+  top: -120%;
+  width: 28%;
+  height: 300%;
+  transform: rotate(18deg);
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.38), transparent);
+  animation: signalSweep 6.5s linear infinite;
   pointer-events: none;
 }
 
-.ppt-feature-card:hover {
-  transform: translateY(-10px) rotateX(2deg) rotateY(-2deg);
-  box-shadow: 0 24px 36px rgba(14, 40, 75, 0.2);
-}
-
-.ppt-feature-card:hover::after {
-  opacity: 1;
-}
-
-.feature-sheen {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(110deg, transparent 10%, rgba(255, 255, 255, 0.62) 45%, transparent 76%);
-  transform: translateX(-120%);
-  opacity: 0;
-  transition: transform 520ms ease, opacity 320ms ease;
-  pointer-events: none;
-}
-
-.ppt-feature-card:hover .feature-sheen {
-  transform: translateX(120%);
-  opacity: 1;
-}
-
-.ppt-feature-card .material-symbols-outlined {
-  font-size: 28px;
-  margin-bottom: 0.7rem;
-  color: var(--ppt-accent-a);
-}
-
-.ppt-feature-card h3 {
+.ppt-signal-card p {
   margin: 0;
-  font-size: 1.03rem;
+  color: var(--ppt-muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 800;
 }
 
-.ppt-feature-card p {
-  margin: 0.54rem 0 0;
+.ppt-signal-card h3 {
+  margin: 0.6rem 0 0;
+  font-size: 1.12rem;
+}
+
+.ppt-signal-card small {
+  display: block;
+  margin-top: 0.5rem;
   color: var(--ppt-muted);
-  line-height: 1.5;
-  font-size: 0.89rem;
+  line-height: 1.45;
+  font-size: 0.84rem;
 }
 
 .ppt-final-cta {
@@ -648,26 +778,82 @@
   box-shadow: 0 14px 24px rgba(16, 52, 96, 0.16);
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+@keyframes cardRise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseDot {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(31, 174, 79, 0.45);
+  }
+
+  50% {
+    box-shadow: 0 0 0 7px rgba(31, 174, 79, 0);
+  }
+}
+
+@keyframes activeStepGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px rgba(16, 107, 255, 0.2);
+  }
+
+  50% {
+    box-shadow: 0 0 0 1px rgba(16, 107, 255, 0.32), 0 8px 18px rgba(16, 107, 255, 0.2);
+  }
+}
+
+@keyframes signalSweep {
+  from {
+    transform: translateX(-80%) rotate(18deg);
+  }
+
+  to {
+    transform: translateX(430%) rotate(18deg);
+  }
 }
 
 @keyframes ringSpin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes chipFloat {
   0%,
-  100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
 }
 
 @keyframes pulseHop {
   0%,
-  100% { transform: scale(1) translateY(0); opacity: 0.8; }
-  50% { transform: scale(1.35) translateY(-5px); opacity: 1; }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 0.8;
+  }
+
+  50% {
+    transform: scale(1.35) translateY(-5px);
+    opacity: 1;
+  }
 }
 
 .theme-dark .ppt-page {
@@ -699,13 +885,22 @@
   box-shadow: 0 14px 36px rgba(4, 8, 18, 0.5);
 }
 
-.theme-dark .ppt-brand small,
-.theme-dark .surface-stat,
-.theme-dark .stage-chip,
 .theme-dark .ppt-metric-card,
-.theme-dark .ppt-btn.ghost {
+.theme-dark .ppt-btn.ghost,
+.theme-dark .live-indicator,
+.theme-dark .live-step,
+.theme-dark .ppt-live-console,
+.theme-dark .signal-brand,
+.theme-dark .ppt-live-signal-card,
+.theme-dark .lane-role,
+.theme-dark .lane-metric,
+.theme-dark .ppt-signal-card {
   background: rgba(20, 33, 53, 0.75);
   color: var(--ppt-muted);
+}
+
+.theme-dark .live-time {
+  background: rgba(24, 38, 61, 0.8);
 }
 
 .theme-dark .ppt-btn.ghost {
@@ -716,16 +911,16 @@
   background: linear-gradient(170deg, rgba(17, 27, 44, 0.82), rgba(13, 24, 42, 0.74));
 }
 
-.theme-dark .stage-core {
-  background: radial-gradient(circle, rgba(31, 47, 72, 0.95), rgba(18, 31, 51, 0.88));
+.theme-dark .live-step.active {
+  border-color: rgba(122, 164, 255, 0.56);
 }
 
-.theme-dark .feature-sheen {
-  background: linear-gradient(110deg, transparent 12%, rgba(187, 209, 255, 0.36) 50%, transparent 80%);
+.theme-dark .lane-pulse {
+  background: color-mix(in oklab, var(--lane-accent) 18%, rgba(21, 35, 56, 0.82));
 }
 
-.theme-dark .ppt-feature-card::after {
-  background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(122, 164, 255, 0.26), transparent 48%);
+.theme-dark .ppt-signal-card::after {
+  background: linear-gradient(180deg, transparent, rgba(164, 188, 236, 0.24), transparent);
 }
 
 .theme-dark .ribbon-chip {
@@ -754,11 +949,20 @@
   }
 
   .ppt-hero-stage {
-    min-height: 300px;
+    min-height: auto;
+    grid-template-columns: 1fr;
   }
 
-  .ppt-surface-grid,
-  .ppt-feature-grid {
+  .ppt-live-signals {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .signal-brand {
+    grid-column: 1 / -1;
+  }
+
+  .ppt-lane-grid,
+  .ppt-signal-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -798,28 +1002,21 @@
     grid-template-columns: 1fr;
   }
 
-  .ppt-surface-grid,
-  .ppt-feature-grid {
-    grid-template-columns: 1fr;
-  }
-
   .ppt-hero-stage {
-    min-height: 250px;
+    padding: 0.72rem;
+    grid-template-columns: 1fr;
+    gap: 0.58rem;
   }
 
-  .stage-core {
-    width: 100px;
-    height: 100px;
+  .live-step {
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 0.56rem;
   }
 
-  .stage-core img {
-    width: 56px;
-    height: 56px;
-  }
-
-  .stage-chip {
-    font-size: 0.63rem;
-    padding: 0.36rem 0.58rem;
+  .ppt-live-signals,
+  .ppt-lane-grid,
+  .ppt-signal-grid {
+    grid-template-columns: 1fr;
   }
 
   .ppt-finale-orbit {
