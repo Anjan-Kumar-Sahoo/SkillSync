@@ -41,10 +41,16 @@ public class RabbitMQConfig {
     // ==================== PAYMENT ====================
     public static final String PAYMENT_EXCHANGE = "payment.exchange";
     public static final String SESSION_PAYMENT_SUCCESS_QUEUE = "session.payment.success.queue";
+    public static final String SESSION_PAYMENT_FAILED_QUEUE = "session.payment.failed.queue";
+    public static final String SESSION_PAYMENT_COMPENSATED_QUEUE = "session.payment.compensated.queue";
 
     @Bean public TopicExchange paymentExchange() { return new TopicExchange(PAYMENT_EXCHANGE, true, false); }
     @Bean public Queue sessionPaymentSuccessQueue() { return QueueBuilder.durable(SESSION_PAYMENT_SUCCESS_QUEUE).build(); }
-    @Bean public Binding sessionPaymentSuccessBinding() { return BindingBuilder.bind(sessionPaymentSuccessQueue()).to(paymentExchange()).with("payment.business.action.#"); }
+    @Bean public Queue sessionPaymentFailedQueue() { return QueueBuilder.durable(SESSION_PAYMENT_FAILED_QUEUE).build(); }
+    @Bean public Queue sessionPaymentCompensatedQueue() { return QueueBuilder.durable(SESSION_PAYMENT_COMPENSATED_QUEUE).build(); }
+    @Bean public Binding sessionPaymentSuccessBinding() { return BindingBuilder.bind(sessionPaymentSuccessQueue()).to(paymentExchange()).with("payment.business.action.v1"); }
+    @Bean public Binding sessionPaymentFailedBinding() { return BindingBuilder.bind(sessionPaymentFailedQueue()).to(paymentExchange()).with("payment.failed.v1"); }
+    @Bean public Binding sessionPaymentCompensatedBinding() { return BindingBuilder.bind(sessionPaymentCompensatedQueue()).to(paymentExchange()).with("payment.compensated.v1"); }
 
     // ==================== SHARED ====================
     @Bean public MessageConverter jsonMessageConverter() { return new Jackson2JsonMessageConverter(); }

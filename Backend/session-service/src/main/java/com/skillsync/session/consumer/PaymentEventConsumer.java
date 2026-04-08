@@ -34,4 +34,46 @@ public class PaymentEventConsumer {
             throw e; // rethrow is important for DLQ if configured
         }
     }
+
+    @RabbitListener(queues = RabbitMQConfig.SESSION_PAYMENT_FAILED_QUEUE)
+    public void handlePaymentFailed(PaymentCompletedEvent event) {
+        log.info("[SESSION-CONSUMER] Received payment failed event: orderId={}, referenceId={}, type={}, reason={}",
+                event.orderId(), event.referenceId(), event.type(), event.compensationReason());
+
+        try {
+            if ("SESSION_BOOKING".equals(event.type()) && event.referenceId() != null) {
+                sessionCommandService.rollbackSessionPayment(
+                        event.referenceId(),
+                        event.userId(),
+                        event.compensationReason()
+                );
+                log.info("[SESSION-CONSUMER] Rolled back provisional session {} after payment failure.", event.referenceId());
+            }
+        } catch (Exception e) {
+            log.error("[SESSION-CONSUMER] Error rolling back failed payment for sessionId={}: {}",
+                    event.referenceId(), e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    @RabbitListener(queues = RabbitMQConfig.SESSION_PAYMENT_COMPENSATED_QUEUE)
+    public void handlePaymentCompensated(PaymentCompletedEvent event) {
+        log.info("[SESSION-CONSUMER] Received payment compensated event: orderId={}, referenceId={}, type={}, reason={}",
+                event.orderId(), event.referenceId(), event.type(), event.compensationReason());
+
+        try {
+            if ("SESSION_BOOKING".equals(event.type()) && event.referenceId() != null) {
+                sessionCommandService.rollbackSessionPayment(
+                        event.referenceId(),
+                        event.userId(),
+                        event.compensationReason()
+                );
+                log.info("[SESSION-CONSUMER] Rolled back session {} after payment compensation.", event.referenceId());
+            }
+        } catch (Exception e) {
+            log.error("[SESSION-CONSUMER] Error rolling back compensated payment for sessionId={}: {}",
+                    event.referenceId(), e.getMessage(), e);
+            throw e;
+        }
+    }
 }

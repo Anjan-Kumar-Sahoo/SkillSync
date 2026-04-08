@@ -68,6 +68,11 @@ class SessionServiceTest {
         verify(cacheService).evict(CacheService.vKey("session:1"));
         verify(cacheService).evictByPattern(CacheService.vKey("session:learner:3:*"));
         verify(cacheService).evictByPattern(CacheService.vKey("session:mentor:2:*"));
+        verify(rabbitTemplate, never()).convertAndSend(
+            eq("session.exchange"),
+            eq("session.requested"),
+            any(com.skillsync.session.event.SessionEvent.class)
+        );
     }
 
     @Test
@@ -133,5 +138,54 @@ class SessionServiceTest {
         when(sessionRepository.findById(1L)).thenReturn(Optional.of(testSession));
 
         assertThrows(RuntimeException.class, () -> sessionCommandService.cancelSession(1L, 999L));
+    }
+
+    @Test
+    @DisplayName("Rollback unpaid session - REQUESTED becomes CANCELLED without notification event")
+    void rollbackSessionPayment_requested_shouldCancelWithoutEvent() {
+        Session requestedSession = Session.builder()
+                .id(11L).mentorId(2L).learnerId(3L)
+                .topic("Java Basics").description("Learn Java")
+                .sessionDate(LocalDateTime.now().plusDays(1))
+                .durationMinutes(60).status(SessionStatus.REQUESTED)
+                .build();
+
+        when(sessionRepository.findById(11L)).thenReturn(Optional.of(requestedSession));
+        when(sessionRepository.save(any(Session.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        sessionCommandService.rollbackSessionPayment(11L, 3L, "Payment failed");
+
+        assertEquals(SessionStatus.CANCELLED, requestedSession.getStatus());
+        verify(cacheService).evict(CacheService.vKey("session:11"));
+        verify(cacheService).evictByPattern(CacheService.vKey("session:learner:3:*"));
+        verify(cacheService).evictByPattern(CacheService.vKey("session:mentor:2:*"));
+        verify(rabbitTemplate, never()).convertAndSend(
+            eq("session.exchange"),
+            eq("session.cancelled"),
+            any(com.skillsync.session.event.SessionEvent.class)
+        );
+    }
+
+    @Test
+    @DisplayName("Rollback compensated session - ACCEPTED becomes CANCELLED with notification event")
+    void rollbackSessionPayment_accepted_shouldCancelWithEvent() {
+        Session acceptedSession = Session.builder()
+                .id(12L).mentorId(2L).learnerId(3L)
+                .topic("Java Basics").description("Learn Java")
+                .sessionDate(LocalDateTime.now().plusDays(1))
+                .durationMinutes(60).status(SessionStatus.ACCEPTED)
+                .build();
+
+        when(sessionRepository.findById(12L)).thenReturn(Optional.of(acceptedSession));
+        when(sessionRepository.save(any(Session.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        sessionCommandService.rollbackSessionPayment(12L, 3L, "Compensated");
+
+        assertEquals(SessionStatus.CANCELLED, acceptedSession.getStatus());
+    verify(rabbitTemplate).convertAndSend(
+        eq("session.exchange"),
+        eq("session.cancelled"),
+        any(com.skillsync.session.event.SessionEvent.class)
+    );
     }
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import mentorService from '../../services/mentorService';
@@ -22,6 +22,7 @@ const MentorDetailPage = () => {
   const [selectedSlot, setSelectedSlot] = useState<any>(null);
   const [bookingDuration, setBookingDuration] = useState(60);
   const [loadingStep, setLoadingStep] = useState<'' | 'session' | 'order' | 'verify'>('');
+  const pendingSessionIdRef = useRef<number | null>(null);
 
   const tzOffset = new Date().getTimezoneOffset() * 60000;
   const localIsoDate = new Date(Date.now() - tzOffset).toISOString().split('T')[0];
@@ -81,14 +82,29 @@ const MentorDetailPage = () => {
   const verifyPaymentMutation = useMutation({
     mutationFn: async (paymentDetails: any) => api.post('/api/payments/verify', paymentDetails),
     onSuccess: () => {
+      pendingSessionIdRef.current = null;
       showToast({ message: 'Booking confirmed! 🎉', type: 'success' });
       navigate('/sessions', { replace: true });
     },
     onError: () => {
+      void rollbackPendingSession();
       showToast({ message: 'Payment received but verification failed. Contact support.', type: 'error' });
       setLoadingStep('');
     }
   });
+
+  const rollbackPendingSession = async () => {
+    const sessionId = pendingSessionIdRef.current;
+    if (!sessionId) return;
+
+    try {
+      await api.put(`/api/sessions/${sessionId}/cancel`, undefined, { _skipErrorRedirect: true } as any);
+    } catch {
+      // Best-effort rollback to avoid stale REQUESTED sessions after payment interruption.
+    } finally {
+      pendingSessionIdRef.current = null;
+    }
+  };
 
   const handlePayNow = async () => {
     if (!selectedSlot || !mentor) {
@@ -123,6 +139,7 @@ const MentorDetailPage = () => {
         durationMinutes: bookingDuration,
       }, { _skipErrorRedirect: true } as any);
       const sessionId = sessionRes.data.id;
+      pendingSessionIdRef.current = sessionId;
 
       setLoadingStep('order');
       const orderRes = await api.post('/api/payments/create-order', {
@@ -135,6 +152,7 @@ const MentorDetailPage = () => {
 
       if (!window.Razorpay || !razorpayReady) {
         showToast({ message: 'Payment gateway is still loading. Please wait a moment and try again.', type: 'error' });
+        await rollbackPendingSession();
         setLoadingStep('');
         return;
       }
@@ -155,7 +173,8 @@ const MentorDetailPage = () => {
           });
         },
         modal: {
-          ondismiss: () => {
+          ondismiss: async () => {
+            await rollbackPendingSession();
             setLoadingStep('');
             showToast({ message: 'Payment cancelled.', type: 'success' });
           }
@@ -165,6 +184,7 @@ const MentorDetailPage = () => {
       rzp.open();
 
     } catch (e: any) {
+      await rollbackPendingSession();
       showToast({ message: e.response?.data?.message || 'Failed to initiate payment.', type: 'error' });
       setLoadingStep('');
     }

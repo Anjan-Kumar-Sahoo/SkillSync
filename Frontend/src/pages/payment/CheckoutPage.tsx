@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import api from '../../services/axios';
@@ -17,6 +17,7 @@ const CheckoutPage = () => {
 
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal'>('card');
   const [loadingStep, setLoadingStep] = useState<'' | 'session' | 'order' | 'verify'>('');
+  const pendingSessionIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!state || !state.mentorId) navigate('/mentors', { replace: true });
@@ -43,15 +44,30 @@ const CheckoutPage = () => {
     return `${d.toLocaleDateString('default', { month: 'short', day: 'numeric', year: 'numeric' })} • ${d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} (60m)`;
   };
 
+  const rollbackPendingSession = async () => {
+    const sessionId = pendingSessionIdRef.current;
+    if (!sessionId) return;
+
+    try {
+      await api.put(`/api/sessions/${sessionId}/cancel`, undefined, { _skipErrorRedirect: true } as any);
+    } catch {
+      // Best-effort rollback to avoid stale REQUESTED sessions after payment interruption.
+    } finally {
+      pendingSessionIdRef.current = null;
+    }
+  };
+
   const verifyPaymentMutation = useMutation({
     mutationFn: async (paymentDetails: any) => {
       return api.post('/api/payments/verify', paymentDetails);
     },
     onSuccess: () => {
+      pendingSessionIdRef.current = null;
       showToast({ message: 'Booking confirmed! 🎉', type: 'success' });
       navigate('/sessions', { replace: true });
     },
     onError: () => {
+      void rollbackPendingSession();
       showToast({ message: 'Payment received but verification failed. Contact support.', type: 'error' });
       setLoadingStep('');
     }
@@ -74,6 +90,7 @@ const CheckoutPage = () => {
         durationMinutes: 60,
       });
       const sessionId = sessionRes.data.id;
+      pendingSessionIdRef.current = sessionId;
 
       setLoadingStep('order');
       const orderRes = await api.post('/api/payments/create-order', {
@@ -85,6 +102,7 @@ const CheckoutPage = () => {
 
       if (!window.Razorpay) {
         showToast({ message: 'Payment gateway failed to load.', type: 'error' });
+        await rollbackPendingSession();
         setLoadingStep('');
         return;
       }
@@ -105,7 +123,8 @@ const CheckoutPage = () => {
           });
         },
         modal: {
-          ondismiss: () => {
+          ondismiss: async () => {
+            await rollbackPendingSession();
             setLoadingStep('');
             showToast({ message: 'Payment cancelled.', type: 'success' });
           }
@@ -120,6 +139,7 @@ const CheckoutPage = () => {
 
     } catch (e: any) {
       console.error(e);
+      await rollbackPendingSession();
       showToast({ message: e.response?.data?.message || 'Failed to initialize checkout.', type: 'error' });
       setLoadingStep('');
     }

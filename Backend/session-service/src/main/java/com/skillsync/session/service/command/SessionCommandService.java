@@ -53,9 +53,9 @@ public class SessionCommandService {
 
         // Invalidate user session caches
         invalidateSessionCaches(session);
-        publishEvent(session, "session.requested");
 
-        log.info("[CQRS:COMMAND] Session {} created. Cache invalidated.", session.getId());
+        log.info("[CQRS:COMMAND] Session {} created in REQUESTED state (awaiting payment confirmation). Cache invalidated.",
+            session.getId());
         return SessionMapper.toResponse(session);
     }
 
@@ -126,6 +126,43 @@ public class SessionCommandService {
         invalidateSessionCaches(session);
         publishEvent(session, "session.completed");
         return SessionMapper.toResponse(session);
+    }
+
+    @Transactional
+    public void rollbackSessionPayment(Long sessionId, Long userId, String reason) {
+        Session session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new RuntimeException("Session not found: " + sessionId));
+
+        if (userId != null && !userId.equals(session.getLearnerId())) {
+            throw new RuntimeException("Not authorized to rollback this session payment");
+        }
+
+        SessionStatus currentStatus = session.getStatus();
+        if (currentStatus == SessionStatus.CANCELLED || currentStatus == SessionStatus.REJECTED || currentStatus == SessionStatus.COMPLETED) {
+            log.info("Skipping payment rollback for session {} because status is {}", sessionId, currentStatus);
+            return;
+        }
+
+        if (!session.isTransitionAllowed(SessionStatus.CANCELLED)) {
+            log.warn("Skipping payment rollback for session {} due to invalid transition {} -> CANCELLED",
+                    sessionId, currentStatus);
+            return;
+        }
+
+        session.setStatus(SessionStatus.CANCELLED);
+        session.setCancelReason(reason != null && !reason.isBlank()
+                ? reason
+                : "Rolled back due to payment failure/cancellation");
+        session = sessionRepository.save(session);
+        invalidateSessionCaches(session);
+
+        // Only emit cancellation event if session was already confirmed to avoid noisy mentor alerts
+        // for unpaid REQUESTED sessions.
+        if (currentStatus == SessionStatus.ACCEPTED) {
+            publishEvent(session, "session.cancelled");
+        }
+
+        log.info("Rolled back session {} after payment issue. Previous status: {}", sessionId, currentStatus);
     }
 
     private void invalidateSessionCaches(Session session) {
