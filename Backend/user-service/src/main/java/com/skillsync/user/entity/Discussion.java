@@ -13,6 +13,7 @@ public class Discussion {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "group_id") private LearningGroup group;
     @Column(nullable = false) private Long authorId;
+    @Column(length = 150) private String title;
     @Column(nullable = false, length = 5000) private String content;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "parent_id") private Discussion parent;
     @CreatedDate @Column(updatable = false) private LocalDateTime createdAt;

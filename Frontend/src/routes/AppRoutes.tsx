@@ -24,6 +24,7 @@ import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
 import UsersCenterPage from '../pages/admin/UsersCenterPage';
 import MentorApprovalsPage from '../pages/admin/MentorApprovalsPage';
 import AdminSkillsPage from '../pages/admin/AdminSkillsPage';
+import AdminGroupsPage from '../pages/admin/AdminGroupsPage';
 
 import DiscoverMentorsPage from '../pages/mentors/DiscoverMentorsPage';
 import MentorDetailPage from '../pages/mentors/MentorDetailPage';
@@ -69,6 +70,7 @@ const AppRoutes = () => {
         <Route path="/admin/users" element={<UsersCenterPage />} />
         <Route path="/admin/mentor-approvals" element={<MentorApprovalsPage />} />
         <Route path="/admin/skills" element={<AdminSkillsPage />} />
+        <Route path="/admin/groups" element={<AdminGroupsPage />} />
         <Route path="/mentors" element={<DiscoverMentorsPage />} />
         <Route path="/mentors/:id" element={<MentorDetailPage />} />
         <Route path="/sessions" element={<MySessionsPage />} />

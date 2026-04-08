@@ -15,6 +15,7 @@ public class LearningGroup {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @Column(nullable = false) private String name;
     @Column(length = 2000) private String description;
+    @Column(length = 100) private String category;
     private int maxMembers;
     @Column(nullable = false) private Long createdBy;
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)

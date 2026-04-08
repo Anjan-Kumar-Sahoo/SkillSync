@@ -101,6 +101,14 @@ const AdminDashboardPage = () => {
       color: 'text-emerald-600',
       bg: 'bg-emerald-100',
     },
+    {
+      title: 'Manage Groups',
+      description: 'Create groups, edit group settings, and remove members',
+      icon: 'groups',
+      path: '/admin/groups',
+      color: 'text-cyan-700',
+      bg: 'bg-cyan-100',
+    },
   ];
 
   return (
@@ -136,7 +144,7 @@ const AdminDashboardPage = () => {
         {/* Quick Actions */}
         <div>
           <h2 className="text-xl font-extrabold text-on-surface mb-4 tracking-tight">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             {quickLinks.map((link) => (
               <button
                 key={link.path}

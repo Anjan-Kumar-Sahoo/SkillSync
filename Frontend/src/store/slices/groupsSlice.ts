@@ -15,6 +15,7 @@ export interface GroupData {
   name: string;
   description: string;
   category: string;
+  maxMembers?: number;
   createdBy: number;
   createdByName: string;
   memberCount: number;

@@ -6,12 +6,36 @@ export interface CreateGroupPayload {
   name: string;
   description: string;
   category: string;
+  maxMembers: number;
 }
 
 export interface UpdateGroupPayload {
   name?: string;
   description?: string;
   category?: string;
+  maxMembers?: number;
+}
+
+export interface GroupMemberPayload {
+  id: number;
+  userId: number;
+  name: string;
+  email: string;
+  role: string;
+  joinedAt: string;
+}
+
+export interface DiscussionPayload {
+  id: number;
+  groupId: number;
+  authorId: number;
+  authorName: string;
+  authorRole: string;
+  title: string;
+  content: string;
+  parentId: number | null;
+  replies: number;
+  createdAt: string;
 }
 
 interface PaginatedResponse<T> {
@@ -46,6 +70,7 @@ const mapGroup = (group: any): GroupData => {
     name: group.name,
     description: group.description,
     category: group.category || 'General',
+    maxMembers: group.maxMembers,
     createdBy: group.createdBy,
     createdByName: group.createdByName || `User #${group.createdBy}`,
     memberCount: group.memberCount || 0,
@@ -66,19 +91,18 @@ class GroupService {
     const params = new URLSearchParams();
     params.append('page', page.toString());
     params.append('size', size.toString());
+    params.append('sort', 'createdAt,desc');
+    if (search?.trim()) params.append('search', search.trim());
+    if (category && category !== 'All') params.append('category', category);
+
     const res = await api.get(`/api/groups?${params.toString()}`);
     const serverContent = (res.data?.content || []).map(mapGroup);
-    const filtered = serverContent.filter((g: GroupData) => {
-      const matchesSearch = !search || g.name.toLowerCase().includes(search.toLowerCase()) || g.description.toLowerCase().includes(search.toLowerCase());
-      const matchesCategory = !category || category === 'All' || g.category?.toLowerCase() === category.toLowerCase();
-      return matchesSearch && matchesCategory;
-    });
 
     return {
-      content: filtered,
-      totalElements: filtered.length,
-      page,
-      size,
+      content: serverContent,
+      totalElements: res.data?.totalElements ?? serverContent.length,
+      page: res.data?.number ?? page,
+      size: res.data?.size ?? size,
     };
   }
 
@@ -86,15 +110,18 @@ class GroupService {
     page: number = 0,
     size: number = 10
   ): Promise<PaginatedResponse<GroupData>> {
-    const allGroups = await this.getGroups(undefined, undefined, page, size * 3);
-    const userId = store.getState().auth.user?.id;
-    const joinedIds = getJoinedGroupIds();
-    const mine = allGroups.content.filter((g) => joinedIds.includes(g.id) || (userId ? g.createdBy === userId : false));
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('size', size.toString());
+    params.append('sort', 'createdAt,desc');
+
+    const res = await api.get(`/api/groups/my?${params.toString()}`);
+    const mine = (res.data?.content || []).map(mapGroup);
     return {
       content: mine,
-      totalElements: mine.length,
-      page,
-      size,
+      totalElements: res.data?.totalElements ?? mine.length,
+      page: res.data?.number ?? page,
+      size: res.data?.size ?? size,
     };
   }
 
@@ -115,7 +142,7 @@ class GroupService {
     payload: UpdateGroupPayload
   ): Promise<GroupData> {
     const res = await api.put(`/api/groups/${id}`, payload);
-    return res.data;
+    return mapGroup(res.data);
   }
 
   async deleteGroup(id: number): Promise<void> {
@@ -134,15 +161,27 @@ class GroupService {
   }
 
   async getGroupMembers(
-    _groupId: number,
+    groupId: number,
     page: number = 0,
     size: number = 20
-  ): Promise<any> {
+  ): Promise<PaginatedResponse<GroupMemberPayload>> {
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('size', size.toString());
+    params.append('sort', 'joinedAt,desc');
+    const res = await api.get(`/api/groups/${groupId}/members?${params.toString()}`);
     return {
-      content: [],
-      totalElements: 0,
-      page,
-      size,
+      content: (res.data?.content || []).map((member: any) => ({
+        id: member.id,
+        userId: member.userId,
+        name: member.name,
+        email: member.email,
+        role: member.role,
+        joinedAt: member.joinedAt,
+      })),
+      totalElements: res.data?.totalElements ?? 0,
+      page: res.data?.number ?? page,
+      size: res.data?.size ?? size,
     };
   }
 
@@ -150,24 +189,43 @@ class GroupService {
     groupId: number,
     page: number = 0,
     size: number = 20
-  ): Promise<any> {
+  ): Promise<PaginatedResponse<DiscussionPayload>> {
     const params = new URLSearchParams();
     params.append('page', page.toString());
     params.append('size', size.toString());
+    params.append('sort', 'createdAt,desc');
     const res = await api.get(`/api/groups/${groupId}/discussions?${params.toString()}`);
-    return res.data;
+    return {
+      content: (res.data?.content || []) as DiscussionPayload[],
+      totalElements: res.data?.totalElements ?? 0,
+      page: res.data?.number ?? page,
+      size: res.data?.size ?? size,
+    };
   }
 
   async postDiscussion(
     groupId: number,
     title: string,
     content: string
-  ): Promise<any> {
+  ): Promise<DiscussionPayload> {
     const res = await api.post(`/api/groups/${groupId}/discussions`, {
       title,
       content,
     });
     return res.data;
+  }
+
+  async deleteDiscussion(groupId: number, discussionId: number): Promise<void> {
+    await api.delete(`/api/groups/${groupId}/discussions/${discussionId}`);
+  }
+
+  async addGroupMember(groupId: number, email: string): Promise<GroupMemberPayload> {
+    const res = await api.post(`/api/groups/${groupId}/members`, { email });
+    return res.data;
+  }
+
+  async removeGroupMember(groupId: number, memberUserId: number): Promise<void> {
+    await api.delete(`/api/groups/${groupId}/members/${memberUserId}`);
   }
 }
 

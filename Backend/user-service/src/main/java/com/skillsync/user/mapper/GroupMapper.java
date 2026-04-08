@@ -12,14 +12,18 @@ public final class GroupMapper {
     private GroupMapper() {}
 
     public static GroupResponse toResponse(LearningGroup group, int memberCount) {
-        return new GroupResponse(group.getId(), group.getName(), group.getDescription(),
+        return new GroupResponse(group.getId(), group.getName(), group.getDescription(), group.getCategory(),
                 group.getMaxMembers(), memberCount, group.getCreatedBy(), group.getCreatedAt());
     }
 
-    public static DiscussionResponse toDiscussionResponse(Discussion discussion) {
+    public static DiscussionResponse toDiscussionResponse(
+            Discussion discussion,
+            String authorName,
+            String authorRole,
+            int replies) {
         return new DiscussionResponse(discussion.getId(), discussion.getGroup().getId(),
-                discussion.getAuthorId(), discussion.getContent(),
-                discussion.getParent() != null ? discussion.getParent().getId() : null,
+                discussion.getAuthorId(), authorName, authorRole, discussion.getTitle(), discussion.getContent(),
+                discussion.getParent() != null ? discussion.getParent().getId() : null, replies,
                 discussion.getCreatedAt());
     }
 }

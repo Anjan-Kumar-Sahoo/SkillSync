@@ -18,9 +18,11 @@ public class GroupService {
 
     @Transactional
     public GroupResponse createGroup(Long userId, CreateGroupRequest request) {
+        int maxMembers = request.maxMembers() != null ? request.maxMembers() : 50;
         LearningGroup group = LearningGroup.builder()
                 .name(request.name()).description(request.description())
-                .maxMembers(request.maxMembers()).createdBy(userId)
+            .category(request.category() != null && !request.category().isBlank() ? request.category().trim() : "General")
+            .maxMembers(maxMembers).createdBy(userId)
                 .members(new ArrayList<>()).build();
         group = groupRepository.save(group);
 
@@ -59,7 +61,7 @@ public class GroupService {
         LearningGroup group = findGroup(groupId);
         if (!memberRepository.existsByGroupIdAndUserId(groupId, userId)) throw new RuntimeException("Must be a member to post");
         Discussion parent = request.parentId() != null ? discussionRepository.findById(request.parentId()).orElse(null) : null;
-        Discussion discussion = Discussion.builder().group(group).authorId(userId).content(request.content()).parent(parent).build();
+        Discussion discussion = Discussion.builder().group(group).authorId(userId).title(request.title()).content(request.content()).parent(parent).build();
         discussion = discussionRepository.save(discussion);
         return mapDiscussion(discussion);
     }
@@ -74,11 +76,11 @@ public class GroupService {
 
     private GroupResponse mapToResponse(LearningGroup g) {
         int count = g.getMembers() != null ? g.getMembers().size() : (int) memberRepository.countByGroupId(g.getId());
-        return new GroupResponse(g.getId(), g.getName(), g.getDescription(), g.getMaxMembers(), count, g.getCreatedBy(), g.getCreatedAt());
+        return new GroupResponse(g.getId(), g.getName(), g.getDescription(), g.getCategory(), g.getMaxMembers(), count, g.getCreatedBy(), g.getCreatedAt());
     }
 
     private DiscussionResponse mapDiscussion(Discussion d) {
-        return new DiscussionResponse(d.getId(), d.getGroup().getId(), d.getAuthorId(), d.getContent(),
-                d.getParent() != null ? d.getParent().getId() : null, d.getCreatedAt());
+        return new DiscussionResponse(d.getId(), d.getGroup().getId(), d.getAuthorId(), "User", "ROLE_LEARNER", d.getTitle(), d.getContent(),
+                d.getParent() != null ? d.getParent().getId() : null, 0, d.getCreatedAt());
     }
 }
