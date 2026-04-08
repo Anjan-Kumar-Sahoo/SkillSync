@@ -1,240 +1,224 @@
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../assets/skillsync-logo.png';
-import './LandingPage.css';
 import ThemeToggleButton from '../components/ui/ThemeToggleButton';
+import './LandingPage.css';
 
-const DEFAULT_BACKEND_BASE_URL = 'https://api.skillsync.mraks.dev';
-const DEFAULT_SWAGGER_PATH = '/swagger-ui/index.html';
-const DEFAULT_EUREKA_PATH = '/eureka-ui/';
-const DEFAULT_SONAR_URL = 'https://sonarcloud.io/organizations/skillsync-github/projects';
+type ValueItem = {
+  title: string;
+  body: string;
+  stat: string;
+};
 
-type DocLink = {
+type FeatureItem = {
+  icon: string;
   title: string;
   description: string;
-  href: string;
 };
 
-type MonitoringLink = {
-  name: string;
-  description: string;
-  status: string;
-  href: string;
+type PlatformMetric = {
+  label: string;
+  value: string;
+  helper: string;
 };
 
-const docsLinks: DocLink[] = [
+const values: ValueItem[] = [
   {
-    title: 'Backend Architecture',
-    description: 'Service topology, data boundaries, and domain ownership.',
-    href: '/ui-docs/BE-ARCHITECTURE.html',
+    title: 'Mentor Marketplace',
+    body: 'Discover verified mentors across coding, cloud, system design, and interview prep with clear pricing and trust signals.',
+    stat: '12+ domains',
   },
   {
-    title: 'Frontend Architecture',
-    description: 'Component tree, state flow, and API integration model.',
-    href: '/ui-docs/FE-ARCHITECTURE.html',
+    title: 'Secure Session Flow',
+    body: 'Booking is payment-aware and event-driven, so mentors are notified only after successful payment with automatic failure rollback.',
+    stat: 'Zero ghost bookings',
   },
   {
-    title: 'Payment Saga',
-    description: 'Outbox, compensation, retries, and consistency strategy.',
-    href: '/ui-docs/PAYMENT_SAGA.html',
-  },
-  {
-    title: 'Deployment & DevOps',
-    description: 'Container runtime, ingress, CI/CD and observability setup.',
-    href: '/ui-docs/DEPLOYMENT.html',
+    title: 'Smart Feedback Loop',
+    body: 'Reviews, ratings, and mentor credibility update consistently across notifications, profile cards, and dashboards.',
+    stat: 'Realtime sync',
   },
 ];
 
-const resolveMonitoringLinks = (): MonitoringLink[] => {
-  const backendBaseUrl = import.meta.env.VITE_BACKEND_BASE_URL || DEFAULT_BACKEND_BASE_URL;
-  const monitoringBaseUrl = import.meta.env.VITE_MONITORING_BASE_URL || backendBaseUrl;
-  const swaggerUrl = import.meta.env.VITE_SWAGGER_URL;
-  const eurekaUrl = import.meta.env.VITE_EUREKA_URL;
-  const sonarUrl = import.meta.env.VITE_SONAR_URL || DEFAULT_SONAR_URL;
+const features: FeatureItem[] = [
+  {
+    icon: 'rocket_launch',
+    title: 'Fast Start, No Friction',
+    description: 'Inline OTP verification, OAuth onboarding, and role-aware dashboard routing get users productive in minutes.',
+  },
+  {
+    icon: 'shield_lock',
+    title: 'Production-Grade Safety',
+    description: 'JWT cookie auth, guarded routes, rollback-aware session booking, and clean compensating flows across services.',
+  },
+  {
+    icon: 'monitoring',
+    title: 'Observability Built In',
+    description: 'Prometheus, Grafana, Loki, Zipkin, and Eureka are integrated from day one for resilient operations.',
+  },
+  {
+    icon: 'groups_2',
+    title: 'Community + Mentoring',
+    description: 'Learners can level up through 1:1 mentorship and collaborative group learning in a single platform.',
+  },
+  {
+    icon: 'bolt',
+    title: 'Event-Driven Backbone',
+    description: 'Microservices communicate via robust event contracts, making the system scalable and failure-aware.',
+  },
+  {
+    icon: 'insights',
+    title: 'Clear Growth Signals',
+    description: 'Track sessions, earnings, ratings, and learner progress with purpose-built dashboards per role.',
+  },
+];
 
-  try {
-    const backendParsed = new URL(backendBaseUrl);
-    const monitoringParsed = new URL(monitoringBaseUrl);
+const metrics: PlatformMetric[] = [
+  { label: 'Services', value: '9', helper: 'Microservices in production topology' },
+  { label: 'Core Flows', value: '25+', helper: 'Auth, booking, review, payment, notifications' },
+  { label: 'Uptime Focus', value: '99.9%', helper: 'Designed with monitoring + fail-safe behavior' },
+];
 
-    const backendProtocol = backendParsed.protocol;
-    const backendHost = backendParsed.hostname;
-    const backendOrigin = backendParsed.port
-      ? `${backendProtocol}//${backendHost}:${backendParsed.port}`
-      : `${backendProtocol}//${backendHost}`;
-
-    const monitoringProtocol = monitoringParsed.protocol;
-    const monitoringHost = monitoringParsed.hostname;
-    const monitoringOrigin = monitoringParsed.port
-      ? `${monitoringProtocol}//${monitoringHost}:${monitoringParsed.port}`
-      : `${monitoringProtocol}//${monitoringHost}`;
-
-    const onMonitoringPort = (port: number, suffix = '') =>
-      `${monitoringProtocol}//${monitoringHost}:${port}${suffix}`;
-
-    return [
-      {
-        name: 'Eureka',
-        description: 'Service discovery dashboard',
-        status: 'ACTIVE',
-        href: eurekaUrl || `${monitoringOrigin}${DEFAULT_EUREKA_PATH}`,
-      },
-      {
-        name: 'RabbitMQ',
-        description: 'Message broker management',
-        status: 'ACTIVE',
-        href: onMonitoringPort(15672),
-      },
-      {
-        name: 'Prometheus',
-        description: 'Metrics collection and queries',
-        status: 'ACTIVE',
-        href: onMonitoringPort(9090),
-      },
-      {
-        name: 'Grafana',
-        description: 'Dashboards and alerting',
-        status: 'ACTIVE',
-        href: onMonitoringPort(3000),
-      },
-      {
-        name: 'SonarCloud',
-        description: 'Code quality and security analysis',
-        status: 'QA',
-        href: sonarUrl,
-      },
-      {
-        name: 'Loki Ready',
-        description: 'Log aggregation health endpoint',
-        status: 'CHECK',
-        href: onMonitoringPort(3100, '/ready'),
-      },
-      {
-        name: 'Zipkin',
-        description: 'Distributed tracing UI',
-        status: 'ACTIVE',
-        href: onMonitoringPort(9411),
-      },
-      {
-        name: 'Gateway Swagger',
-        description: 'Gateway API contract explorer',
-        status: 'DOCS',
-        href: swaggerUrl || `${backendOrigin}${DEFAULT_SWAGGER_PATH}`,
-      },
-    ];
-  } catch {
-    return [];
-  }
-};
-
-const monitoringLinks = resolveMonitoringLinks();
+const cardClassNames = [
+  'ppt-surface-card accent-cyan',
+  'ppt-surface-card accent-orange',
+  'ppt-surface-card accent-blue',
+] as const;
 
 const LandingPage = () => {
-  return (
-    <div className="landing-page">
-      <div className="landing-bg landing-bg-1" />
-      <div className="landing-bg landing-bg-2" />
+  const surfaceCards = useMemo(
+    () =>
+      values.map((item, index) => ({
+        ...item,
+        className: cardClassNames[index % cardClassNames.length],
+      })),
+    [],
+  );
 
-      <header className="landing-nav">
-        <a className="landing-brand" href="#top" aria-label="SkillSync Home">
-          <img src={logo} alt="SkillSync logo" className="landing-logo" />
+  return (
+    <div className="ppt-page" id="top">
+      <div className="ppt-grid-overlay" aria-hidden="true" />
+      <div className="ppt-aura aura-one" aria-hidden="true" />
+      <div className="ppt-aura aura-two" aria-hidden="true" />
+      <div className="ppt-aura aura-three" aria-hidden="true" />
+
+      <header className="ppt-nav">
+        <a className="ppt-brand" href="#top" aria-label="SkillSync Presentation Home">
+          <img src={logo} alt="SkillSync logo" className="ppt-logo" />
           <span>SkillSync</span>
+          <small>Presentation Edition</small>
         </a>
-        <nav className="landing-actions" aria-label="Landing actions">
-          <ThemeToggleButton className="landing-theme-toggle" showLabel={false} />
-          <a
-            className="landing-btn landing-btn-ghost"
-            href="https://github.com/Anjan-Kumar-Sahoo/SkillSync"
-            target="_blank"
-            rel="noreferrer"
-          >
-            GitHub
-          </a>
-          <Link className="landing-btn landing-btn-solid" to="/dashboard">
-            Use App
+
+        <div className="ppt-nav-actions">
+          <ThemeToggleButton className="ppt-theme-toggle" showLabel={false} />
+          <Link className="ppt-btn ghost" to="/login">
+            Sign In
           </Link>
-        </nav>
+          <Link className="ppt-btn solid" to="/dashboard">
+            Open Platform
+          </Link>
+        </div>
       </header>
 
-      <main className="landing-content" id="top">
-        <section className="hero-card">
-          <div className="hero-aura hero-aura-one" aria-hidden="true" />
-          <div className="hero-aura hero-aura-two" aria-hidden="true" />
-          <div className="hero-aura hero-aura-three" aria-hidden="true" />
-          <div className="brand-stage" aria-hidden="true">
-            <div className="gravity-orb orb-a" />
-            <div className="gravity-orb orb-b" />
-            <div className="gravity-orb orb-c" />
-            <img src={logo} alt="" className="hero-logo" />
+      <main className="ppt-main">
+        <section className="ppt-hero">
+          <div className="ppt-hero-copy">
+            <p className="ppt-kicker">Peer To Peer Learning Platform</p>
+            <h1>
+              Mentorship That
+              <span> Scales Trust, Not Noise.</span>
+            </h1>
+            <p className="ppt-subtext">
+              SkillSync connects serious learners with verified mentors through a resilient, payment-safe,
+              event-driven platform engineered for real growth and real outcomes.
+            </p>
+
+            <div className="ppt-cta-row">
+              <Link className="ppt-btn solid" to="/dashboard">
+                Explore Product
+              </Link>
+              <a className="ppt-btn ghost" href="#platform-story">
+                Why SkillSync
+              </a>
+            </div>
+
+            <div className="ppt-metrics">
+              {metrics.map((metric) => (
+                <article key={metric.label} className="ppt-metric-card">
+                  <p>{metric.label}</p>
+                  <h3>{metric.value}</h3>
+                  <small>{metric.helper}</small>
+                </article>
+              ))}
+            </div>
           </div>
-          <h2 className="hero-brand-title">SkillSync</h2>
-          <p className="hero-tagline">Peer To Peer Learning Platform</p>
-          <div className="hero-cta-row">
-            <Link className="landing-btn landing-btn-solid" to="/dashboard">
-              Get Started
+
+          <div className="ppt-hero-stage" aria-hidden="true">
+            <div className="stage-ring ring-outer" />
+            <div className="stage-ring ring-mid" />
+            <div className="stage-ring ring-inner" />
+            <div className="stage-core">
+              <img src={logo} alt="" />
+            </div>
+            <div className="stage-chip chip-a">Event Driven</div>
+            <div className="stage-chip chip-b">Payment Safe</div>
+            <div className="stage-chip chip-c">Realtime UX</div>
+          </div>
+        </section>
+
+        <section className="ppt-section" id="platform-story">
+          <div className="ppt-section-head">
+            <p>What Makes It Different</p>
+            <h2>Built Like a Product, Not Just a Demo.</h2>
+          </div>
+
+          <div className="ppt-surface-grid">
+            {surfaceCards.map((item) => (
+              <article key={item.title} className={item.className}>
+                <div className="surface-glow" aria-hidden="true" />
+                <span className="surface-stat">{item.stat}</span>
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="ppt-section">
+          <div className="ppt-section-head">
+            <p>Product Story</p>
+            <h2>A polished learning ecosystem for learners, mentors, and teams.</h2>
+          </div>
+
+          <div className="ppt-feature-grid">
+            {features.map((feature) => (
+              <article key={feature.title} className="ppt-feature-card">
+                <div className="feature-sheen" aria-hidden="true" />
+                <span className="material-symbols-outlined">{feature.icon}</span>
+                <h3>{feature.title}</h3>
+                <p>{feature.description}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="ppt-final-cta">
+          <p className="final-kicker">Ready To Pitch?</p>
+          <h2>Showcase SkillSync at /ppt with confidence.</h2>
+          <p>
+            This route is intentionally presentation-first: product clarity, premium visuals, and conversion-focused
+            storytelling for evaluators, judges, and stakeholders.
+          </p>
+          <div className="ppt-cta-row">
+            <Link className="ppt-btn solid" to="/dashboard">
+              Enter Application
             </Link>
-            <a className="landing-btn landing-btn-ghost" href="#docs">
-              View Docs
-            </a>
-          </div>
-        </section>
-
-        <section className="section-wrap" id="docs">
-          <div className="section-head">
-            <p className="section-label">Infrastructure</p>
-            <h2>Documentation</h2>
-            <p>Explore comprehensive technical blueprints that power the SkillSync ecosystem.</p>
-          </div>
-          <div className="docs-grid">
-            {docsLinks.map((doc, index) => (
-              <a
-                key={doc.title}
-                href={doc.href}
-                className="doc-card"
-                target="_blank"
-                rel="noreferrer"
-                style={{ animationDelay: `${index * 120}ms` }}
-              >
-                <h3>{doc.title}</h3>
-                <p>{doc.description}</p>
-                <span>View Specs</span>
-              </a>
-            ))}
-          </div>
-        </section>
-
-        <section className="section-wrap" id="system-health">
-          <div className="section-head">
-            <p className="section-label">System Health</p>
-            <h2>Monitoring Quick Access</h2>
-            <p>All production monitoring links are mapped from your direct gateway domain.</p>
-          </div>
-          <div className="monitor-grid">
-            {monitoringLinks.map((item, index) => (
-              <a
-                key={item.name}
-                className="monitor-link"
-                href={item.href}
-                target="_blank"
-                rel="noreferrer"
-                style={{ animationDelay: `${index * 80}ms` }}
-              >
-                <div className="monitor-top">
-                  <span>{item.name}</span>
-                  <b>{item.status}</b>
-                </div>
-                <small>{item.description}</small>
-              </a>
-            ))}
+            <Link className="ppt-btn ghost" to="/register">
+              Create Account
+            </Link>
           </div>
         </section>
       </main>
-      <p className="footer-description">
-        This page is for presentation purpose only. It gives quick navigation to your
-        platform walkthrough and operational dashboards.
-      </p>
-      <footer className="landing-footer">
-        <h3>SkillSync</h3>
-        <p>© 2026 SkillSync. Peer To Peer Learning Platform.</p>
-      </footer>
     </div>
   );
 };

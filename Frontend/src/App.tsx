@@ -15,6 +15,7 @@ import SetupPasswordPage from './pages/auth/SetupPasswordPage';
 import UnauthorizedPage from './pages/auth/UnauthorizedPage';
 import ServerErrorPage from './pages/error/ServerErrorPage';
 import LandingPage from './pages/LandingPage';
+import PptLandingPage from './pages/PptLandingPage';
 import LearnerDashboardPage from './pages/learner/LearnerDashboardPage';
 import MentorDashboardPage from './pages/mentor/MentorDashboardPage';
 import MentorAvailabilityPage from './pages/mentor/MentorAvailabilityPage';
@@ -50,6 +51,7 @@ function App() {
         <AuthLoader>
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/ppt" element={<PptLandingPage />} />
 
             {/* Public Auth Routes */}
             <Route element={<AuthLayout />}>
