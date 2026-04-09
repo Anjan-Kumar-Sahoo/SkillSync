@@ -264,7 +264,7 @@
   .subtopic.open .subtopic-body { display: block; }
 
   /* ── PROSE ── */
-  p { color: var(--text2); line-height: 1.75; margin-bottom: 14px; font-size: 14px; }
+  p { color: var(--text2); line-height: 1.8; margin-bottom: 16px; font-size: 16px; }
   p strong { color: var(--text); font-weight: 600; }
 
   /* ── CODE ── */
@@ -298,8 +298,8 @@
   pre {
     padding: 16px 20px;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 12.5px;
-    line-height: 1.7;
+    font-size: 14px;
+    line-height: 1.75;
     overflow-x: auto;
     color: #cdd6f4;
   }
@@ -375,7 +375,7 @@
     margin-bottom: 8px;
   }
 
-  .card p { font-size: 12.5px; margin-bottom: 0; }
+  .card p { font-size: 14.5px; margin-bottom: 0; line-height: 1.7; }
 
   /* ── TABLE ── */
   .table-wrap { overflow-x: auto; margin: 16px 0; }
@@ -383,7 +383,7 @@
   table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 13px;
+    font-size: 15px;
   }
 
   thead tr { background: var(--bg3); }
@@ -401,10 +401,10 @@
   }
 
   td {
-    padding: 10px 16px;
+    padding: 12px 16px;
     color: var(--text2);
     border-bottom: 1px solid rgba(42,42,58,0.5);
-    font-size: 13px;
+    font-size: 15px;
   }
 
   td strong { color: var(--text); }
@@ -413,10 +413,10 @@
   /* ── CALLOUT ── */
   .callout {
     border-radius: 10px;
-    padding: 14px 18px;
-    margin: 14px 0;
-    font-size: 13px;
-    line-height: 1.65;
+    padding: 16px 20px;
+    margin: 16px 0;
+    font-size: 15px;
+    line-height: 1.75;
     display: flex;
     gap: 12px;
     align-items: flex-start;
@@ -432,13 +432,13 @@
   /* ── TREE ── */
   .tree {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 12.5px;
+    font-size: 14px;
     color: var(--text2);
-    line-height: 1.9;
+    line-height: 2;
     background: var(--code-bg);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 16px 20px;
+    padding: 18px 22px;
     margin: 14px 0;
   }
 
@@ -455,7 +455,7 @@
     padding: 10px 16px;
     border-radius: 8px;
     margin-bottom: 4px;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 500;
   }
 
@@ -469,7 +469,7 @@
     gap: 10px;
     padding: 8px 0;
     border-bottom: 1px solid rgba(42,42,58,0.5);
-    font-size: 13px;
+    font-size: 15px;
     color: var(--text2);
   }
 
@@ -560,6 +560,24 @@
     </div>
   </div>
 
+  <div class="subtopic open" style="border-color: var(--accent2)">
+    <div class="subtopic-header" onclick="toggle(this)" style="background:rgba(0,212,170,0.08)">
+      <div class="subtopic-icon" style="background:rgba(0,212,170,0.2)">🧠</div>
+      <h3 style="color:var(--accent2)">1.0 — The "Absolute Beginner" Mental Model</h3>
+      <span class="subtopic-arrow">▶</span>
+    </div>
+    <div class="subtopic-body">
+      <p>Before reading any instructions, you need to understand how the internet works using the <strong>Restaurant Analogy</strong>. This platform is split into four big pieces:</p>
+      <div class="grid-2">
+        <div class="card"><h4>📱 1. The Frontend (React — You are here)</h4><p>This is the <strong>Menu and the Dining Area</strong>. It's everything the user can see, click, and touch. It doesn't permanently save data—it just takes orders from the customer and looks pretty.</p></div>
+        <div class="card"><h4>⚙️ 2. The API (The Network)</h4><p>This is the <strong>Waiter</strong>. The Frontend gives an order to the Waiter ("Fetch me a list of mentors!"). The Waiter runs to the kitchen into the back, and brings the answer back to the table.</p></div>
+        <div class="card"><h4>🖥 3. The Backend (Java Server)</h4><p>This is the <strong>Kitchen & Chef</strong>. Customers are not allowed inside. The Chef receives the order from the Waiter, cooks the meal (processes the logic, checks security, charges money), and plates it up to send back.</p></div>
+        <div class="card"><h4>🗄 4. The Database (PostgreSQL)</h4><p>This is the <strong>Pantry/Fridge</strong>. The Chef (Backend) grabs ingredients (saved user data, passwords) from here. The Waiter (API) NEVER talks to the Fridge directly.</p></div>
+      </div>
+      <p><strong>In this guide, we are ONLY talking about the Dining Area (React) and the Waiter (Axios/API).</strong> You are the interior designer of the dining area and the boss of the waiter.</p>
+    </div>
+  </div>
+
   <div class="subtopic open">
     <div class="subtopic-header" onclick="toggle(this)">
       <div class="subtopic-icon">🎯</div>
@@ -567,13 +585,18 @@
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p><strong>SkillSync is a mentor-learner marketplace platform</strong> — think Airbnb but for knowledge. Learners find mentors, book paid 1-on-1 sessions, join study groups, and track their growth. Mentors list their skills, set availability, get paid through Razorpay, and manage their reputation via reviews.</p>
+      <p><strong>SkillSync is a mentor-learner marketplace platform</strong> — imagine Airbnb, but instead of renting houses, people rent knowledge! A student ("Learner") can find a teacher ("Mentor"), book a paid one-on-one session with them, join study groups, and track their learning progress. Mentors list what they can teach, set their available time slots, get paid real money through an Indian payment system called Razorpay, and build their reputation through reviews from students.</p>
+      <div class="callout info"><span class="callout-icon">🍕</span><div><strong>Think of it like ordering a pizza:</strong> You (Learner) browse a menu (Mentor list), pick what you want (a skill to learn), pay for it (Razorpay checkout), and get it delivered (attend the session). The restaurant owner (Admin) makes sure everything runs smoothly behind the scenes.</div></div>
       <div class="grid-3">
-        <div class="card"><h4>👩‍🎓 Learner</h4><p>Discovers mentors, books sessions, joins groups, pays via Razorpay</p></div>
-        <div class="card"><h4>🧑‍💼 Mentor</h4><p>Lists profile + skills, sets availability, accepts/rejects sessions, earns money</p></div>
-        <div class="card"><h4>🛡 Admin</h4><p>Approves mentor applications, manages users, skills, groups, platform finances</p></div>
+        <div class="card"><h4>👩‍🎓 Learner (Student)</h4><p>The person who wants to learn. They can search for mentors, book sessions (like booking a doctor's appointment), join study groups, and pay using Razorpay (an online payment system, like Google Pay).</p></div>
+        <div class="card"><h4>🧑‍💼 Mentor (Teacher)</h4><p>The person who teaches. They create a profile saying what they can teach, set when they're free (like a doctor's available slots), accept or reject session requests, and earn money for each session.</p></div>
+        <div class="card"><h4>🛡 Admin (Manager)</h4><p>The boss of the platform. They approve new mentor applications (making sure mentors are qualified), manage all users, manage skills/categories, and oversee the platform's money.</p></div>
       </div>
-      <p>The backend is <strong>Java 17 + Spring Boot 3.4.4 microservices</strong>. The frontend you built is <strong>React + TypeScript + Tailwind CSS</strong> deployed on Vercel, communicating with the API at <code>api.skillsync.mraks.dev</code>.</p>
+      <p>The project has two big parts:</p>
+      <div class="grid-2">
+        <div class="card"><h4>🖥 Backend (the brain)</h4><p>Built with <strong>Java + Spring Boot</strong>. This is the server — it stores data in a database, handles payments, sends emails, etc. Think of it as the kitchen in a restaurant — users never see it, but it does all the real work.</p></div>
+        <div class="card"><h4>🎨 Frontend (the face)</h4><p>Built with <strong>React + TypeScript + Tailwind CSS</strong>. This is what users see and click on — buttons, forms, pages. Think of it as the dining area of a restaurant. It's hosted on <strong>Vercel</strong> (a free hosting service) and talks to the backend at <code>api.skillsync.mraks.dev</code>.</p></div>
+      </div>
     </div>
   </div>
 
@@ -584,27 +607,28 @@
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p>The entire project is built on a fundamental software principle: <strong>each piece of code should have exactly ONE job</strong>. This makes debugging easy and code reusable.</p>
+      <p>The entire project follows one golden rule: <strong>each piece of code should do exactly ONE job</strong>. This is called "Separation of Concerns".</p>
+      <div class="callout info"><span class="callout-icon">🏠</span><div><strong>Real-world analogy:</strong> Think of a house. The kitchen is only for cooking. The bedroom is only for sleeping. The bathroom is only for bathing. You don't cook in the bathroom! Similarly, in our code, each file has ONE specific job, and it doesn't do anything else. This makes it easy to find and fix problems.</div></div>
       <div class="layer-stack">
         <div class="layer" style="background:rgba(108,99,255,0.1); border:1px solid rgba(108,99,255,0.3)">
           <div class="layer-dot" style="background:var(--accent)"></div>
-          <strong style="color:var(--accent)">Pages</strong> — <span style="color:var(--text2); font-size:13px">Full views like LearnerDashboardPage.tsx — only compose components</span>
+          <strong style="color:var(--accent)">Pages</strong> — <span style="color:var(--text2); font-size:13px">These are the full screens you see (like the Dashboard screen, the Login screen). A page is like a room in a house — it arranges furniture (components) inside it. Example: <code>LearnerDashboardPage.tsx</code></span>
         </div>
         <div class="layer" style="background:rgba(0,212,170,0.1); border:1px solid rgba(0,212,170,0.3)">
           <div class="layer-dot" style="background:var(--accent2)"></div>
-          <strong style="color:var(--accent2)">Components</strong> — <span style="color:var(--text2); font-size:13px">Reusable UI chunks: Sidebar, Toast, Modal — only handle display</span>
+          <strong style="color:var(--accent2)">Components</strong> — <span style="color:var(--text2); font-size:13px">These are reusable building blocks — like LEGO bricks. A button, a sidebar menu, a popup message ("Toast") — these are all components. You build them once and reuse them on many pages.</span>
         </div>
         <div class="layer" style="background:rgba(255,217,61,0.1); border:1px solid rgba(255,217,61,0.3)">
           <div class="layer-dot" style="background:var(--accent4)"></div>
-          <strong style="color:var(--accent4)">Services</strong> — <span style="color:var(--text2); font-size:13px">mentorService.ts, sessionService.ts — only handle API calls</span>
+          <strong style="color:var(--accent4)">Services</strong> — <span style="color:var(--text2); font-size:13px">These are the "messengers" that talk to the backend server. When you click "Book Session", a service file sends that request to the server and brings back the response. Example: <code>mentorService.ts</code> handles all mentor-related requests.</span>
         </div>
         <div class="layer" style="background:rgba(255,107,107,0.1); border:1px solid rgba(255,107,107,0.3)">
           <div class="layer-dot" style="background:var(--accent3)"></div>
-          <strong style="color:var(--accent3)">Store Slices</strong> — <span style="color:var(--text2); font-size:13px">authSlice.ts, sessionsSlice.ts — only manage global state</span>
+          <strong style="color:var(--accent3)">Store Slices</strong> — <span style="color:var(--text2); font-size:13px">This is the app's "memory". <strong>State</strong> = data the app needs to remember (like: "Is the user logged in? What's their name?"). A "slice" is one section of that memory. <code>authSlice.ts</code> remembers login info. <code>sessionsSlice.ts</code> remembers session data.</span>
         </div>
         <div class="layer" style="background:rgba(107,197,255,0.1); border:1px solid rgba(107,197,255,0.3)">
           <div class="layer-dot" style="background:#6bc5ff"></div>
-          <strong style="color:#6bc5ff">Hooks / Types / Utils</strong> — <span style="color:var(--text2); font-size:13px">apiHooks.ts, types/index.ts, dateTime.ts — reusable logic</span>
+          <strong style="color:#6bc5ff">Hooks / Types / Utils</strong> — <span style="color:var(--text2); font-size:13px">Helper tools. <strong>Hooks</strong> = reusable logic shortcuts (explained later). <strong>Types</strong> = descriptions of what data looks like (like a form template). <strong>Utils</strong> = small helper functions (like formatting a date).</span>
         </div>
       </div>
     </div>
@@ -668,41 +692,42 @@
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p>When a user opens <code>skillsync.mraks.dev</code>, here's the exact order of what happens:</p>
+      <p>When a user opens <code>skillsync.mraks.dev</code> in their browser, the app starts up like a car engine — things happen in a specific order. Let's walk through each step:</p>
+      <div class="callout info"><span class="callout-icon">🎁</span><div><strong>What are "Providers"?</strong> A Provider is like a gift wrapper. It wraps around the entire app and gives every page inside it access to something useful. For example, <code>ThemeProvider</code> gives every page access to the dark/light theme. Without the wrapper, pages wouldn't know which theme to use. Think of it like electricity in a house — the main power supply (Provider) wraps the whole house so every room can use electricity.</div></div>
       <div class="diagram-box">
         <div class="flow" style="flex-direction:column; gap:4px; align-items:flex-start">
           <div style="display:flex; align-items:center; gap:8px">
             <div class="flow-box accent">main.tsx</div>
             <span class="flow-arrow">→</span>
-            <div class="flow-box" style="font-size:12px">Wraps app in: <span style="color:var(--accent2)">ThemeProvider</span> → <span style="color:var(--accent)">Redux Provider</span> → <span style="color:var(--accent4)">QueryClientProvider</span> → <span style="color:#ff9f43">GoogleOAuthProvider</span></div>
+            <div class="flow-box" style="font-size:12px">Wraps app in: <span style="color:var(--accent2)">ThemeProvider</span> (dark/light mode) → <span style="color:var(--accent)">Redux Provider</span> (app memory) → <span style="color:var(--accent4)">QueryClientProvider</span> (data fetching) → <span style="color:#ff9f43">GoogleOAuthProvider</span> (Google login)</div>
           </div>
           <div style="padding-left:20px; color:var(--text3)">↓</div>
           <div style="display:flex; align-items:center; gap:8px">
             <div class="flow-box accent">App.tsx</div>
             <span class="flow-arrow">→</span>
-            <div class="flow-box" style="font-size:12px">Adds <span style="color:var(--accent2)">ToastProvider</span> + <span style="color:var(--accent2)">ActionConfirmProvider</span> + <span style="color:var(--accent)">BrowserRouter</span></div>
+            <div class="flow-box" style="font-size:12px">Adds <span style="color:var(--accent2)">ToastProvider</span> (popup messages) + <span style="color:var(--accent2)">ActionConfirmProvider</span> ("Are you sure?" dialogs) + <span style="color:var(--accent)">BrowserRouter</span> (URL navigation)</div>
           </div>
           <div style="padding-left:20px; color:var(--text3)">↓</div>
           <div style="display:flex; align-items:center; gap:8px">
             <div class="flow-box green">AuthLoader.tsx</div>
             <span class="flow-arrow">→</span>
-            <div class="flow-box" style="font-size:12px">Silently calls <span style="color:var(--accent2)">/api/auth/me</span> to restore user from HttpOnly cookie</div>
+            <div class="flow-box" style="font-size:12px">Quietly checks: "Is the user already logged in?" by asking the server <span style="color:var(--accent2)">/api/auth/me</span>. If yes, it restores their session so they don't have to log in again.</div>
           </div>
           <div style="padding-left:20px; color:var(--text3)">↓</div>
           <div style="display:flex; align-items:center; gap:8px">
             <div class="flow-box yellow">AppRoutes.tsx</div>
             <span class="flow-arrow">→</span>
-            <div class="flow-box" style="font-size:12px">Matches URL to Page component, wraps protected routes in <span style="color:var(--accent)">ProtectedRoute</span></div>
+            <div class="flow-box" style="font-size:12px">Looks at the URL (like <code>/login</code> or <code>/learner</code>) and decides which page to show. If the page needs login, it wraps it in a <span style="color:var(--accent)">ProtectedRoute</span> (a security guard).</div>
           </div>
           <div style="padding-left:20px; color:var(--text3)">↓</div>
           <div style="display:flex; align-items:center; gap:8px">
-            <div class="flow-box" style="border-color:var(--accent2); color:var(--accent2)">Page renders</div>
+            <div class="flow-box" style="border-color:var(--accent2); color:var(--accent2)">The page appears on screen! ✨</div>
           </div>
         </div>
       </div>
-      <div class="callout info">
-        <span class="callout-icon">💡</span>
-        <div>The order of providers in main.tsx matters. ThemeProvider wraps everything because even the login screen needs the theme. Redux wraps the app because AuthLoader needs to dispatch to it. BrowserRouter must wrap AuthLoader because AuthLoader reads the current URL path.</div>
+      <div class="callout tip">
+        <span class="callout-icon">🧅</span>
+        <div><strong>Why does the order matter?</strong> Think of it like layers of an onion. The outermost layer (ThemeProvider) wraps everything because even the login screen needs to know the theme. Redux wraps the app because the AuthLoader needs to save user data into it. The Router must wrap AuthLoader because AuthLoader checks the current URL. If you switch the order, things break — like putting on your shoes before your socks!</div>
       </div>
     </div>
   </div>
@@ -725,7 +750,8 @@
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p>React is built on a simple idea: <strong>break the UI into small, reusable "components"</strong>. Each component is a JavaScript function that returns HTML-like JSX.</p>
+      <p>React is a tool that lets us build websites using a simple idea: <strong>break the screen into small, reusable pieces called "components"</strong>.</p>
+      <div class="callout info"><span class="callout-icon">🧱</span><div><strong>Think of LEGO blocks:</strong> Instead of building an entire toy castle as one giant, unchangeable piece of plastic, you build it using small LEGO bricks (a door block, a window block, a roof block). In React, a "component" is a LEGO brick. You build a "Button" component once, and use it 50 times across your app. <strong>JSX</strong> is just the special language we use to describe what the LEGO brick looks like (it looks very similar to standard HTML).</div></div>
       <div class="code-block">
         <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Example: How ProtectedRoute.tsx works</div>
         <pre><span class="cmt">// ProtectedRoute is a "guard" component</span>
@@ -759,7 +785,8 @@
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p>TypeScript adds static typing to JavaScript. Think of it as <strong>writing a contract</strong> about what data looks like before it arrives.</p>
+      <p>TypeScript is an upgraded version of JavaScript. It adds "types", which means <strong>writing a strict rulebook</strong> for what your data should look like before the code even runs.</p>
+      <div class="callout info"><span class="callout-icon">📋</span><div><strong>Think of a bouncer at a club:</strong> Without TypeScript (normal JavaScript), any data can walk into your function. A number, a text string, or empty data — JavaScript lets them all in, and then the app crashes later when it realizes the data is wrong. TypeScript is the bouncer. You give it a list (an "interface") saying "Only let User data in, and User MUST have an email and an ID". If the wrong data tries to enter, TypeScript stops it with a red underline in your code editor <em>before</em> your app crashes.</div></div>
       <div class="code-block">
         <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> types/index.ts — Your data contracts</div>
         <pre><span class="cmt">// This tells TypeScript (and YOU) exactly what a User looks like</span>
@@ -789,7 +816,8 @@
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p>Traditional CSS: you write a class name, then write CSS for it. Tailwind flips this — <strong>you use pre-made utility classes directly in your HTML/JSX</strong>.</p>
+      <p>Normally in web design (CSS), you invent a name like "my-button", and then in a separate file, you write 10 rules explaining what "my-button" looks like. Tailwind CSS gives you <strong>tiny, pre-made style rules that you stick directly onto your elements</strong>.</p>
+      <div class="callout info"><span class="callout-icon">🎨</span><div><strong>Think of ordering a sandwich:</strong> Traditional CSS is like giving the chef a paper that says "Make me The Special Sandwich", and the chef goes to a separate recipe book to know what that is. Tailwind is like pointing at the ingredients you want: "I want a sandwich with <em>w-full</em> (full width), <em>bg-primary</em> (blue background), and <em>rounded-xl</em> (rounded corners)". You build the design right where you ask for it.</div></div>
       <div class="grid-2">
         <div class="card">
           <h4>❌ Traditional CSS</h4>
@@ -823,7 +851,8 @@
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p>Every component in your app is a <strong>function</strong>, not a class. React Hooks let these functions "hook into" React features like state, side effects, context.</p>
+      <p>In modern React, every part of the screen is just a simple function. But sometimes a function needs superpowers — like memory to remember something the user typed. <strong>"Hooks"</strong> are special tools that give these simple functions superpowers.</p>
+      <div class="callout info"><span class="callout-icon">🎣</span><div><strong>Think of Hooks as utility belts:</strong> Imagine a plain function is just a normal worker. A Hook (like <code>useState</code>) gives that worker a notepad so they can remember things between tasks (this is called "state"). Another Hook (<code>useEffect</code>) gives them an alarm clock so they can do something at a specific time, like fetching data the moment the page opens (this is called a "side effect").</div></div>
       <div class="code-block">
         <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Hooks used in CheckoutPage.tsx</div>
         <pre><span class="kw">const</span> CheckoutPage = () => {
@@ -847,7 +876,8 @@
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p>When the same logic is needed in multiple components, extract it into a <strong>custom hook</strong>. Your <code>apiHooks.ts</code> file does exactly this — it wraps React Query so pages don't repeat API logic.</p>
+      <p>When you have a superpower recipe that you use often, you can package it into a <strong>custom hook</strong>. For example, fetching a list of mentors is done in many places. Instead of writing the fetch logic everywhere, we wrote <code>useMentors()</code>.</p>
+      <div class="callout info"><span class="callout-icon">📦</span><div><strong>Think of an instant coffee pod:</strong> Instead of measuring the coffee beans, boiling the water, and mixing it every single time you want a cup (writing the API fetch code), you create a pod (a custom hook). Now, anytime a page needs mentors, it just uses the <code>useMentors()</code> pod and gets the data instantly!</div></div>
       <div class="code-block">
         <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> hooks/apiHooks.ts — Reusable data fetching</div>
         <pre><span class="cmt">// Define ONCE — use in many components</span>
@@ -886,7 +916,8 @@
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p>Axios is an HTTP client library. The browser has a built-in <code>fetch()</code> API, but Axios is better because it has <strong>interceptors</strong> — middleware that runs before every request or after every response.</p>
+      <p>Axios is a tool used by the frontend to send requests to the backend server. Think of it as a <strong>postman</strong>. While browsers have a built-in postman (called <code>fetch()</code>), Axios is a "smart postman" that can intercept letters before they are sent or directly after they arrive.</p>
+      <div class="callout info"><span class="callout-icon">📮</span><div><strong>What are Interceptors?</strong> Imagine telling your postman: "Before you deliver any letter from me, secretly attach my ID card to the envelope." That's a <em>request interceptor</em>. It automatically adds your security token to every API call. A <em>response interceptor</em> says: "If the backend replies with an 'Expired ID' error, pause the delivery, secretly go get me a new ID card, and then try delivering the letter again."</div></div>
       <div class="code-block">
         <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> services/axios.ts — The central Axios instance</div>
         <pre><span class="kw">const</span> api = <span class="fn">axios.create</span>({
@@ -906,7 +937,8 @@
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p>This is the most sophisticated piece of your frontend. When an access token expires (24h), any API call returns 401. Instead of logging the user out, the app <strong>silently refreshes the token and replays all failed requests</strong>.</p>
+      <p>This is one of the smartest security features in your app. Your login "ticket" (access token) expires after 24 hours to keep hackers away. When it expires, the server gives an error (called a 401 error). Instead of rudely kicking the user out and forcing them to type their password again, the app <strong>secretly gets a new ticket in the background and retries the action</strong>.</p>
+      <div class="callout info"><span class="callout-icon">🎟️</span><div><strong>Think of a movie theater:</strong> You are watching a 3-part movie. After part 1, your ticket expires. The guard stops you. Instead of kicking you out into the rain, a helper (the app) tells the guard "Wait here", runs to the box office, gets a new ticket, hands it to you, and you walk straight in without even noticing the interruption. The "Queue Flow" below ensures that if 3 guards stop you at the exact same time, the helper only gets ONE new ticket, not three.</div></div>
       <div class="diagram-box">
         <p style="font-size:12px; color:var(--accent4); font-weight:700; margin-bottom:14px; text-transform:uppercase; letter-spacing:1px">The Refresh Queue Flow</p>
         <div class="flow" style="flex-direction:column; gap:6px; align-items:flex-start; font-size:12px">
@@ -955,7 +987,8 @@
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p>React Query separates <strong>server state</strong> (data from the API) from <strong>client state</strong> (UI toggles, form values). It gives you caching, background refetching, and loading states — all for free.</p>
+      <p>React Query manages data that comes from the backend server. It handles everything relating to fetching, storing the fetched data, and keeping it up to date automatically.</p>
+      <div class="callout info"><span class="callout-icon">🗄️</span><div><strong>Think of a smart librarian:</strong> Normally, if you need a book (data from the server), you have to walk to the library, find it, and bring it back. If you need it again, you go back again. React Query is a smart librarian. When you ask for the "Mentors List", she gets it and makes a shiny copy for her front desk ("caching"). Next time you ask, she hands you the copy instantly. Then, in the background, she quietly checks if the original book changed ("background refetching"); if it did, she updates your copy without bothering you.</div></div>
       <div class="grid-2">
         <div class="card">
           <h4>useQuery — for GET requests</h4>
@@ -999,7 +1032,8 @@
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p>Instead of calling <code>api.get('/api/mentors/...')</code> directly in components, you have a <strong>service layer</strong>. Each service is a class that groups all API calls for a domain.</p>
+      <p>Instead of pages talking to the postman (Axios) directly, we created a <strong>service layer</strong>. This is a dedicated file that organizes all the API calls related to one topic, like mentors or payments.</p>
+      <div class="callout info"><span class="callout-icon">📞</span><div><strong>Think of receptionists:</strong> If everyone in a big company randomly yelled out the window to order supplies, it would be chaos. Instead, if someone needs something, they call the "Supply Receptionist" (the Service). The Receptionist knows exactly who to call, what forms to fill, and handles the actual ordering. If the actual supplier changes their phone number, you only update the Receptionist's notebook, not everyone in the building.</div></div>
       <div class="code-block">
         <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> services/mentorService.ts — OOP service pattern</div>
         <pre><span class="kw">class</span> <span class="type">MentorService</span> {
@@ -1156,7 +1190,8 @@ mentorService.<span class="fn">getMentors</span>({ skill: <span class="str">'Rea
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p>JWT = JSON Web Token. It's a compact, URL-safe string that contains <strong>encoded user information + a signature</strong>. The server creates it, sends it to the client; the client sends it back on every request to prove who they are.</p>
+      <p>JWT = JSON Web Token. It's an encrypted digital pass that contains <strong>your user info and a special stamp of approval</strong>. The server creates it, gives it to the app, and the app shows it to the server every time it asks for data.</p>
+      <div class="callout info"><span class="callout-icon">🗝️</span><div><strong>Think of a hotel keycard:</strong> When you check in at the reception (log in), they give you a keycard (the JWT). The keycard holds your room number and check-out date, but it's encrypted so you can't change it yourself to stay longer. Every time you want to enter a locked area like the pool or gym (make an API request), you tap the keycard to prove you are allowed in.</div></div>
       <div class="diagram-box">
         <p style="font-size:11px; color:var(--text3); margin-bottom:10px; text-transform:uppercase; letter-spacing:1px">JWT Structure: 3 parts separated by dots</p>
         <div style="font-family: 'JetBrains Mono', monospace; font-size:13px; word-break:break-all; line-height:1.8">
@@ -1183,6 +1218,8 @@ mentorService.<span class="fn">getMentors</span>({ skill: <span class="str">'Rea
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
+      <p>Once you get your "hotel keycard" (JWT), where do you keep it safe? There are two places in the browser: <strong>localStorage</strong> (a public pocket) and an <strong>HttpOnly Cookie</strong> (a locked vault).</p>
+      <div class="callout info"><span class="callout-icon">🍪</span><div><strong>Think of keeping your wallet safe:</strong> <em>localStorage</em> is like putting your wallet on the table in a restaurant. Anyone who sits at the table (any script running on the page, including bad ones) can take your cash. An <em>HttpOnly Cookie</em> is like putting your wallet in a safe that only the postman can open. You can't see the keycard, but whenever you send a letter (an API request) the postman secretly includes it for you.</div></div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Storage</th><th>Accessible by JS</th><th>XSS Safe?</th><th>Your choice?</th></tr></thead>
@@ -1211,7 +1248,8 @@ mentorService.<span class="fn">getMentors</span>({ skill: <span class="str">'Rea
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p>When you refresh the page, React state is lost (Redux store resets). But the HttpOnly cookie survives. <strong>AuthLoader.tsx</strong> bridges this gap — on every navigation to a protected route, it calls <code>/api/auth/me</code> to restore the session.</p>
+      <p>When you refresh your browser, the app's memory (Redux) gets completely wiped blank. But remember, your "keycard" is safely stored in the browser's vault (HttpOnly cookie). <strong>AuthLoader</strong> is the component that uses this keycard to rebuild your memory.</p>
+      <div class="callout info"><span class="callout-icon">🔄</span><div><strong>Think of waking up with amnesia:</strong> Every time you hit refresh, the app forgets everything. But the AuthLoader says, "Wait, let me take the keycard from the vault, send it to the server (<code>/api/auth/me</code>), and ask: 'Who is this person?'" The server replies with your name and role, and the app's memory is instantly restored.</div></div>
       <div class="diagram-box">
         <div class="flow" style="flex-direction:column; gap:6px; align-items:flex-start">
           <div style="display:flex; align-items:center; gap:8px">
@@ -1253,7 +1291,8 @@ mentorService.<span class="fn">getMentors</span>({ skill: <span class="str">'Rea
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p>After login, users are redirected based on role. The <code>DashboardRedirect</code> component reads the Redux role and sends each user to the correct dashboard.</p>
+      <p>After a successful login, the app needs to send the user to the right place. A student goes to the Learner dashboard, while a teacher goes to the Mentor dashboard. The <code>DashboardRedirect</code> component acts as a traffic controller.</p>
+      <div class="callout info"><span class="callout-icon">🚦</span><div><strong>Think of a traffic cop:</strong> You show the traffic cop (<code>DashboardRedirect</code>) your ID badge (your role from Redux). If it says "Mentor", the cop points you to the Mentor lane. If it says "Admin", they point you to the VIP Admin lane.</div></div>
       <div class="code-block">
         <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> routes/DashboardRedirect.tsx</div>
         <pre><span class="kw">const</span> role = <span class="fn">useSelector</span>((state) => state.auth.role);
@@ -1327,7 +1366,8 @@ mentorService.<span class="fn">getMentors</span>({ skill: <span class="str">'Rea
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p><strong>XSS (Cross-Site Scripting)</strong> = an attacker injects malicious JavaScript into your page. React prevents this by <strong>automatically escaping</strong> all values rendered in JSX.</p>
+      <p><strong>XSS (Cross-Site Scripting)</strong> happens when a bad guy sneaks evil code into your website (for example, by typing code into a comment box). React protects you by <strong>automatically sanitizing</strong> everything before it shows up on the screen.</p>
+      <div class="callout info"><span class="callout-icon">🛡️</span><div><strong>Think of entering an airport:</strong> An XSS attack is like someone trying to smuggle a weapon in their bag. React acts like the airport security scanner. Before any data reaches the screen, React checks it, removes anything dangerous (turns code into plain, harmless text), and only then lets it pass through.</div></div>
       <div class="grid-2">
         <div class="card">
           <h4>❌ Dangerous (raw HTML)</h4>
@@ -1354,7 +1394,8 @@ mentorService.<span class="fn">getMentors</span>({ skill: <span class="str">'Rea
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p>Your axios.ts explicitly forces HTTPS in production, preventing cookies from being sent over plain HTTP where they could be intercepted.</p>
+      <p>HTTPS makes sure the connection between the user and the server is encrypted. Your app forces HTTPS so hackers on public Wi-Fi can't steal your users' hotel keycards (cookies).</p>
+      <div class="callout info"><span class="callout-icon">🔒</span><div><strong>Think of an armored truck:</strong> Sending data over HTTP (no 'S') is like sending cash in an open convertible — anyone on the highway can lean in and take it. HTTPS is like an armored, locked bank truck. Even if someone intercepts the truck, they can't see or steal what's inside.</div></div>
       <div class="code-block">
         <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> axios.ts — HTTPS enforcement</div>
         <pre><span class="kw">const</span> isProd = import.meta.env.<span class="op">PROD</span>;
@@ -1450,7 +1491,8 @@ VITE_GOOGLE_CLIENT_ID=186617186160-...
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p>Instead of <code>alert()</code> dialogs, your app uses a <strong>Toast system</strong> built with React Context. It's global — any component can trigger a toast without prop drilling.</p>
+      <p>Instead of annoying browser popups (like <code>alert()</code>), your app uses a <strong>Toast system</strong>. It's a small message that slides up at the bottom of the screen. Because it's built with React Context, any page can trigger a toast easily.</p>
+      <div class="callout info"><span class="callout-icon">🍞</span><div><strong>Think of a PA system in a school:</strong> If a teacher in room 10 wants to make an announcement, they don't have to walk to every classroom ("prop drilling"). They just use the microphone connected to the central PA system (React Context), and the message is instantly broadcast to the whole school.</div></div>
       <div class="code-block">
         <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> components/ui/Toast.tsx — Context pattern</div>
         <pre><span class="cmt">// 1. Create Context with showToast function</span>
@@ -1485,7 +1527,8 @@ VITE_GOOGLE_CLIENT_ID=186617186160-...
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p>Sometimes the global 401/500 redirect behavior is unwanted — for example, checking if a user is logged in shouldn't force a redirect. These flags opt specific calls out of global error handling.</p>
+      <p>Normally, if the server returns an error, the app automatically redirects the user to an error page or the login screen. But sometimes, we want to handle the error quietly without redirecting. These "escape hatches" tell the app to ignore the global rules.</p>
+      <div class="callout info"><span class="callout-icon">🚪</span><div><strong>Think of a library fire alarm:</strong> Normally, if there's smoke, the global alarm goes off and everyone is forced outside (global error redirect). But if someone just burned some toast in the staff room, the head librarian uses an override key (<code>_skipErrorRedirect</code>) to say "Ignore this minor smoke, don't trigger the general alarm, we will handle it ourselves."</div></div>
       <div class="code-block">
         <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> AuthLoader.tsx — using escape hatches</div>
         <pre><span class="cmt">// Don't redirect on 401 for the /me check — it's expected if not logged in</span>
@@ -1547,7 +1590,8 @@ VITE_GOOGLE_CLIENT_ID=186617186160-...
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p>This is the most common viva question. They do DIFFERENT jobs:</p>
+      <p>This is the most common viva question. Redux Toolkit and React Query are both "memory managers", but they remember entirely different things:</p>
+      <div class="callout info"><span class="callout-icon">🧠</span><div><strong>Think of the app's brain having two sides:</strong><br><strong>Redux (Short-term personal memory):</strong> Remembers things happening right now on your screen. "Is the sidebar open?", "Am I in dark mode?", "Who is logged in?". It forgets everything when you refresh the page.<br><strong>React Query (Library card memory):</strong> Remembers facts from the outside world (the server). "What's the list of mentors?", "What are my upcoming sessions?". It automatically checks if facts have changed and updates them.</div></div>
       <div class="grid-2">
         <div class="card" style="border-color:rgba(108,99,255,0.4)">
           <h4>🔴 Redux Toolkit</h4>
@@ -1612,7 +1656,8 @@ VITE_GOOGLE_CLIENT_ID=186617186160-...
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p><code>createSlice</code> generates <strong>actions + reducer</strong> in one go. Old Redux needed separate action creators and switch statements. RTK combines them.</p>
+      <p><code>createSlice</code> is just a shortcut for setting up a section of memory. It automatically creates the actions (the orders you give) and the reducer (the worker who writes down the new memory).</p>
+      <div class="callout info"><span class="callout-icon">🍰</span><div><strong>Think of a pizza slice:</strong> The whole pizza is the "Root Store" (all the app's memory). A "slice" is just one piece of that memory — like the "auth slice" that only remembers login info. <code>createSlice</code> is the pizza cutter. It neatly packages everything you need to manage that specific slice without messing up the rest of the pizza.</div></div>
       <div class="code-block">
         <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> authSlice.ts — How createSlice works</div>
         <pre><span class="kw">const</span> authSlice = <span class="fn">createSlice</span>({
@@ -1690,6 +1735,7 @@ VITE_GOOGLE_CLIENT_ID=186617186160-...
     </div>
     <div class="subtopic-body">
       <p>Vite (your build tool) uses <code>.env</code> files to configure environment-specific values. Only variables prefixed with <code>VITE_</code> are exposed to the browser bundle.</p>
+      <div class="callout info"><span class="callout-icon">🌱</span><div><strong>Think of .env (Environment Variables) as secret instructions:</strong> Imagine your app is a spy. When the spy is practicing at home (Development), you give them practice targets (localhost). When the spy goes on a real mission into the real world (Production), you give them real targets (the live internet URL). <code>.env</code> files are the secret notes that tell the app where it is and who it should talk to, so you don't accidentally spend real money while testing!</div></div>
       <div class="code-block">
         <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span">.env files</div>
         <pre><span class="cmt"># .env.development (local dev)</span>
@@ -1746,8 +1792,8 @@ import.meta.env.DEV   <span class="cmt">// true in dev</span></pre>
         </div>
       </div>
       <div class="callout info">
-        <span class="callout-icon">💡</span>
-        <div>CORS (Cross-Origin Resource Sharing) is why the frontend (skillsync.mraks.dev) can make API calls to a different domain (api.skillsync.mraks.dev). The Spring Boot backend must whitelist your Vercel domain in its CORS configuration.</div>
+        <span class="callout-icon">🛡️</span>
+        <div><strong>What is CORS?</strong> Think of CORS like a security guard between two different buildings. Your screen (Frontend) lives in Building A (Vercel). The brain/kitchen (Backend) lives in Building B (EC2). Normally, browsers block Building A from calling Building B to stop hackers. CORS is the Backend guard putting Building A on the VIP list, saying "It's okay, I know them, let them in!"</div>
       </div>
     </div>
   </div>
@@ -1799,6 +1845,7 @@ import.meta.env.DEV   <span class="cmt">// true in dev</span></pre>
     </div>
     <div class="subtopic-body">
       <p>The <code>Outlet</code> component is like a "slot" — a placeholder where nested routes render. Your <code>AuthLayout</code> and <code>ProtectedRoute</code> use this to wrap groups of routes with shared layout.</p>
+      <div class="callout info"><span class="callout-icon">🖼️</span><div><strong>Think of an Outlet like a picture frame:</strong> The frame itself (your navigation bar, sidebar, background colors) stays exactly the same on every single page. But the picture inside the frame changes depending on which room you walk into. `Outlet` is the empty space inside the frame where React dynamically swaps out the picture (the specific page you are looking at).</div></div>
       <div class="code-block">
         <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Route nesting in AppRoutes.tsx</div>
         <pre><span class="cmt">// AuthLayout wraps all auth pages (login, register, etc.)</span>
@@ -1840,6 +1887,7 @@ import.meta.env.DEV   <span class="cmt">// true in dev</span></pre>
     </div>
     <div class="subtopic-body">
       <p><strong>Props</strong> are how parent components pass data to child components. In TypeScript, you define an interface for props to get type safety.</p>
+      <div class="callout info"><span class="callout-icon">📣</span><div><strong>Think of Props like giving passing instructions:</strong> If you hire a painter (the Child Component) to paint a wall, you need to tell them which color to use. The 'Prop' is the color. You (the Parent) pass <code>color="blue"</code> down to the painter, and they know what to do. The painter can't change the instruction, they can only use it!</div></div>
       <div class="code-block">
         <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Typed props — Sidebar example</div>
         <pre><span class="cmt">// Define what props Sidebar accepts</span>
@@ -1898,6 +1946,7 @@ import.meta.env.DEV   <span class="cmt">// true in dev</span></pre>
     </div>
     <div class="subtopic-body">
       <p>When navigating to CheckoutPage, sensitive data (mentorId, price, mentor name) is passed via <strong>React Router's location state</strong> — not URL params. URL params appear in browser history and can be manipulated.</p>
+      <div class="callout info"><span class="callout-icon">📝</span><div><strong>Think of sneaking a secret note:</strong> You are taking a user from the Mentor Profile to the Payment screen. You need to tell the Payment screen the price string. You could shout the secret across the room (putting the price right in the URL like <code>/checkout?price=500</code> — bad idea, users can edit it to <code>price=1</code>!). Or you can use 'Location State', which is secretly sliding a note into the user's pocket as they walk to the next room. The next page reads the secret note securely, and the URL stays perfectly clean.</div></div>
       <div class="code-block">
         <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Location state navigation</div>
         <pre><span class="cmt">// From MentorDetailPage — pass data invisibly</span>
@@ -2180,7 +2229,8 @@ className=<span class="str">"ml-20 lg:ml-64 min-h-screen"</span></pre>
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p><code>useMemo</code> caches the result of an expensive calculation — only recalculates when its dependencies change.</p>
+      <p><code>useMemo</code> is a React hook that literally tells the app to "memorize" the answer to a hard math problem. It only does the math again if the numbers change.</p>
+      <div class="callout info"><span class="callout-icon">🧮</span><div><strong>Think of doing long division:</strong> If someone asks you "what is 9243 ÷ 3?", you do the hard math and say "3081". If they ask you the exact same question two seconds later, you don't do the math again! You just remember the answer. <code>useMemo</code> is how we teach the app to remember answers.</div></div>
       <div class="code-block">
         <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> ThemeContext.tsx — useMemo for context value</div>
         <pre><span class="cmt">// Without useMemo: new object created on EVERY render
@@ -2202,7 +2252,8 @@ className=<span class="str">"ml-20 lg:ml-64 min-h-screen"</span></pre>
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p><code>useCallback</code> returns a memoized version of a function — the same function reference across renders unless dependencies change.</p>
+      <p><code>useCallback</code> is similar to useMemo, but instead of memorizing an answer, it memorizes a set of <strong>instructions</strong> (a function).</p>
+      <div class="callout info"><span class="callout-icon">📜</span><div><strong>Think of a recipe card:</strong> Every time the app redraws the screen, it throws away all old instructions and writes new ones from scratch. This takes time! <code>useCallback</code> is like laminating a recipe card. The app uses the same laminated card every time instead of writing a new one, which makes the app run much faster.</div></div>
       <div class="code-block">
         <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Toast.tsx — useCallback for showToast</div>
         <pre><span class="cmt">// Without useCallback: showToast is a new function every render
@@ -2290,10 +2341,12 @@ className=<span class="str">"ml-20 lg:ml-64 min-h-screen"</span></pre>
         <div class="card">
           <h4>🔄 REST Polling (current)</h4>
           <p>Client asks server every N seconds: "Any new notifications?" Server responds with count. Simple but wastes bandwidth on empty responses.</p>
+          <p style="margin-top:8px; font-size:13px; color:var(--text3)"><strong>Like kids on a road trip:</strong> "Are we there yet? No. Are we there yet? No." It's annoying and wastes energy.</p>
         </div>
         <div class="card">
           <h4>⚡ WebSocket (future)</h4>
-          <p>One persistent TCP connection. Server pushes notification instantly when it occurs. Zero polling overhead. Spring Boot supports STOMP over WebSocket natively.</p>
+          <p>One persistent TCP connection. Server pushes notification instantly when it occurs. Zero polling overhead.</p>
+          <p style="margin-top:8px; font-size:13px; color:var(--text3)"><strong>Like a smart intercom:</strong> The driver says "Stop asking. I will leave this intercom open, and the second we arrive, I will announce it." It's instant.</p>
         </div>
       </div>
       <p>The <code>Promise.all</code> pattern in <code>clearAllNotifications()</code> is a concurrency technique — all delete requests fire simultaneously instead of sequentially, making bulk deletion much faster.</p>
@@ -2446,6 +2499,7 @@ amount: amount * <span class="num">100</span>,  <span class="cmt">// ₹500 → 
     </div>
     <div class="subtopic-body">
       <p>After payment, Razorpay sends 3 values. The backend <strong>verifies the HMAC signature</strong> by recomputing it with the secret key. This prevents anyone from faking a "payment success".</p>
+      <div class="callout info"><span class="callout-icon">🔏</span><div><strong>Think of a wax seal on a royal letter:</strong> After a user pays, Razorpay hands them a receipt and says "Give this back to SkillSync." But what if a hacker changes the receipt from $5 to $500? To prevent this, Razorpay stamps the receipt with an unsolvable mathematical wax seal (the Signature). When your server gets the receipt, it checks if the seal is perfectly intact. If the math matches, we know the receipt is 100% genuine and hasn't been tampered with.</div></div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Value</th><th>Who Creates It</th><th>What It's For</th></tr></thead>
@@ -2481,7 +2535,8 @@ amount: amount * <span class="num">100</span>,  <span class="cmt">// ₹500 → 
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p>TypeScript catches entire categories of bugs at compile time, before you even run the code. It's static analysis as QA.</p>
+      <p>TypeScript acts as your strict proofreader. Before your app even runs, it reads everything to make sure the data matches the rules.</p>
+      <div class="callout info"><span class="callout-icon">👮‍♂️</span><div><strong>Think of a grammar checker:</strong> If you write "I is going to the store," Microsoft Word underlines it in red immediately. You don't have to print the document and give it to a publisher to find out it's wrong. TypeScript underlines code mistakes in red immediately (in the editor) instead of waiting for a real user to click a button and crash the app.</div></div>
       <div class="checklist">
         <div class="check-item"><span class="check-mark">✓</span> Passing wrong type to a function → TypeScript error, not runtime crash</div>
         <div class="check-item"><span class="check-mark">✓</span> Accessing property that doesn't exist → TypeScript error</div>
@@ -2499,7 +2554,8 @@ amount: amount * <span class="num">100</span>,  <span class="cmt">// ₹500 → 
       <span class="subtopic-arrow">▶</span>
     </div>
     <div class="subtopic-body">
-      <p>Redux DevTools (Chrome extension) shows every dispatched action and state change. You can time-travel — go back to any previous state. This makes debugging auth flows and state mutations trivial.</p>
+      <p>Redux DevTools is a Chrome extension that shows every memory change. You can time-travel — going back to any previous state.</p>
+      <div class="callout info"><span class="callout-icon">⏪</span><div><strong>Think of instant replay in sports:</strong> If a referee isn't sure if a player committed a foul, they watch the instant replay in slow motion. Redux DevTools lets you watch the "instant replay" of every data change your app made, so you can rewind and see EXACTLY when the wrong data was saved into memory.</div></div>
       <div class="callout tip">
         <span class="callout-icon">🎓</span>
         <div>"In viva, I can open DevTools, show the Redux state tab, and demonstrate exactly what happens to the auth state when I log in — you can see the setCredentials action fire and the store update from isAuthenticated: false to true."</div>
@@ -2681,6 +2737,7 @@ amount: amount * <span class="num">100</span>,  <span class="cmt">// ₹500 → 
     </div>
     <div class="subtopic-body">
       <p>This is what "code traceability" means — being able to say exactly which file, which function, which line handles each action. Practice this for the viva.</p>
+      <div class="callout info"><span class="callout-icon">📦</span><div><strong>Think of tracing a package delivery:</strong> You drop off a package at the post office (User clicks login). The post office loads it on a truck (Axios interceptor). The truck drives to the destination (Backend server). The recipient signs for it and hands the driver a receipt (Backend returns the User Data). The driver brings the receipt back to your house (Response interceptor). You save the receipt in your filing cabinet (Redux `setCredentials`). And finally, you walk into the living room (Redirect to Learner Dashboard).</div></div>
       <div class="code-block">
         <div class="code-label"><span class="dot1"></span><span class="dot2"></span><span class="dot3"></span> Full login trace — file by file</div>
         <pre><span class="cmt">1. pages/auth/LoginPage.tsx</span>
