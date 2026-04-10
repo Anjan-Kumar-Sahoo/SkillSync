@@ -8,6 +8,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
 import java.util.ArrayList;
 
 @Service @RequiredArgsConstructor
@@ -18,7 +20,7 @@ public class GroupService {
 
     @Transactional
     public GroupResponse createGroup(Long userId, CreateGroupRequest request) {
-        int maxMembers = request.maxMembers() != null ? request.maxMembers() : 50;
+        Integer maxMembers = request.maxMembers() != null ? request.maxMembers() : Integer.MAX_VALUE;
         LearningGroup group = LearningGroup.builder()
                 .name(request.name()).description(request.description())
             .category(request.category() != null && !request.category().isBlank() ? request.category().trim() : "General")
@@ -37,8 +39,6 @@ public class GroupService {
     public void joinGroup(Long groupId, Long userId) {
         LearningGroup group = findGroup(groupId);
         if (memberRepository.existsByGroupIdAndUserId(groupId, userId)) throw new RuntimeException("Already a member");
-        long count = memberRepository.countByGroupId(groupId);
-        if (count >= group.getMaxMembers()) throw new RuntimeException("Group is full");
         memberRepository.save(GroupMember.builder().group(group).userId(userId).role(GroupMember.MemberRole.MEMBER).build());
     }
 
@@ -61,7 +61,10 @@ public class GroupService {
         LearningGroup group = findGroup(groupId);
         if (!memberRepository.existsByGroupIdAndUserId(groupId, userId)) throw new RuntimeException("Must be a member to post");
         Discussion parent = request.parentId() != null ? discussionRepository.findById(request.parentId()).orElse(null) : null;
-        Discussion discussion = Discussion.builder().group(group).authorId(userId).title(request.title()).content(request.content()).parent(parent).build();
+        Discussion discussion = Discussion.builder().group(group).authorId(userId)
+            .title(request.title()).content(request.content()).parent(parent)
+            .createdAt(Instant.now())
+            .build();
         discussion = discussionRepository.save(discussion);
         return mapDiscussion(discussion);
     }
@@ -81,6 +84,6 @@ public class GroupService {
 
     private DiscussionResponse mapDiscussion(Discussion d) {
         return new DiscussionResponse(d.getId(), d.getGroup().getId(), d.getAuthorId(), "User", "ROLE_LEARNER", d.getTitle(), d.getContent(),
-                d.getParent() != null ? d.getParent().getId() : null, 0, d.getCreatedAt());
+                d.getParent() != null ? d.getParent().getId() : null, 0, d.getCreatedAt(), false);
     }
 }

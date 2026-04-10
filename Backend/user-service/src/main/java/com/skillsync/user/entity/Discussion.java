@@ -2,9 +2,10 @@ package com.skillsync.user.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
+import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import java.time.LocalDateTime;
+
+import java.time.Instant;
 
 @Entity @Table(name = "discussions", schema = "groups",
     indexes = {
@@ -20,5 +21,7 @@ public class Discussion {
     @Column(length = 150) private String title;
     @Column(nullable = false, length = 5000) private String content;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "parent_id") private Discussion parent;
-    @CreatedDate @Column(updatable = false) private LocalDateTime createdAt;
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
+    private Instant createdAt;
 }

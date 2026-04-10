@@ -11,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+
 /**
  * CQRS Command Service for Notification operations.
  * Handles all write operations and cache invalidation.
@@ -27,7 +29,9 @@ public class NotificationCommandService {
     public Notification createAndPush(Long userId, String type, String title, String message) {
         Notification notification = Notification.builder()
                 .userId(userId).type(type).title(title)
-                .message(message).isRead(false).build();
+            .message(message).isRead(false)
+            .createdAt(Instant.now())
+            .build();
         notification = notificationRepository.save(notification);
 
         // Push via WebSocket

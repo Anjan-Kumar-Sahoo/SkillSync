@@ -14,7 +14,6 @@ const initialForm = {
   name: '',
   description: '',
   category: 'General',
-  maxMembers: 50,
 };
 
 const AdminGroupsPage = () => {
@@ -120,7 +119,6 @@ const AdminGroupsPage = () => {
       name: group.name,
       description: group.description || '',
       category: group.category || 'General',
-      maxMembers: Math.max(2, Number(group.maxMembers || group.memberCount || 2)),
     });
   };
 
@@ -151,7 +149,6 @@ const AdminGroupsPage = () => {
         name: editForm.name.trim(),
         description: editForm.description.trim(),
         category: editForm.category.trim(),
-        maxMembers: Number(editForm.maxMembers),
       },
     });
   };
@@ -259,7 +256,6 @@ const AdminGroupsPage = () => {
                     <th className="text-left py-3 px-5 text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Name</th>
                     <th className="text-left py-3 px-5 text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Category</th>
                     <th className="text-left py-3 px-5 text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Members</th>
-                    <th className="text-left py-3 px-5 text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Max</th>
                     <th className="text-right py-3 px-5 text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Actions</th>
                   </tr>
                 </thead>
@@ -272,7 +268,6 @@ const AdminGroupsPage = () => {
                       </td>
                       <td className="py-3 px-5 text-sm text-on-surface-variant">{group.category}</td>
                       <td className="py-3 px-5 text-sm text-on-surface">{group.memberCount}</td>
-                      <td className="py-3 px-5 text-sm text-on-surface">{group.maxMembers || '-'}</td>
                       <td className="py-3 px-5 text-right">
                         <div className="flex justify-end gap-2">
                           <button
@@ -397,28 +392,16 @@ const AdminGroupsPage = () => {
                   className="w-full bg-surface-container px-3 py-2 rounded-lg text-sm font-semibold text-on-surface outline-none focus:ring-1 focus:ring-primary border border-transparent"
                   required
                 />
-                <div className="grid grid-cols-2 gap-3">
-                  <select
-                    value={editForm.category}
-                    onChange={(event) => setEditForm((prev) => ({ ...prev, category: event.target.value }))}
-                    className="w-full h-10 bg-surface-container px-3 rounded-lg text-sm font-semibold text-on-surface outline-none focus:ring-1 focus:ring-primary border border-transparent"
-                  >
-                    <option value="Programming">Programming</option>
-                    <option value="Design">Design</option>
-                    <option value="Business">Business</option>
-                    <option value="General">General</option>
-                  </select>
-                  <input
-                    type="number"
-                    min={2}
-                    max={200}
-                    value={editForm.maxMembers}
-                    onChange={(event) =>
-                      setEditForm((prev) => ({ ...prev, maxMembers: Number(event.target.value) || 2 }))
-                    }
-                    className="w-full h-10 bg-surface-container px-3 rounded-lg text-sm font-semibold text-on-surface outline-none focus:ring-1 focus:ring-primary border border-transparent"
-                  />
-                </div>
+                <select
+                  value={editForm.category}
+                  onChange={(event) => setEditForm((prev) => ({ ...prev, category: event.target.value }))}
+                  className="w-full h-10 bg-surface-container px-3 rounded-lg text-sm font-semibold text-on-surface outline-none focus:ring-1 focus:ring-primary border border-transparent"
+                >
+                  <option value="Programming">Programming</option>
+                  <option value="Design">Design</option>
+                  <option value="Business">Business</option>
+                  <option value="General">General</option>
+                </select>
                 <div className="flex justify-end gap-3 pt-2">
                   <button
                     type="button"

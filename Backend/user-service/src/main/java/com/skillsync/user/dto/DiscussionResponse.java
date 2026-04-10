@@ -1,6 +1,6 @@
 package com.skillsync.user.dto;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record DiscussionResponse(
 	Long id,
@@ -12,5 +12,6 @@ public record DiscussionResponse(
 	String content,
 	Long parentId,
 	int replies,
-	LocalDateTime createdAt
+	Instant createdAt,
+	boolean isAdmin
 ) {}

@@ -20,10 +20,11 @@ public final class GroupMapper {
             Discussion discussion,
             String authorName,
             String authorRole,
-            int replies) {
+            int replies,
+            boolean isAdmin) {
         return new DiscussionResponse(discussion.getId(), discussion.getGroup().getId(),
                 discussion.getAuthorId(), authorName, authorRole, discussion.getTitle(), discussion.getContent(),
                 discussion.getParent() != null ? discussion.getParent().getId() : null, replies,
-                discussion.getCreatedAt());
+                discussion.getCreatedAt(), isAdmin);
     }
 }

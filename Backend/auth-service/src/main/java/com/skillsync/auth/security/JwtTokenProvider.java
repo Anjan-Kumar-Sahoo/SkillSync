@@ -14,6 +14,9 @@ import java.util.Map;
 @Component
 public class JwtTokenProvider {
 
+    private static final long MIN_ACCESS_EXPIRATION_MS = 24L * 60 * 60 * 1000;
+    private static final long MIN_REFRESH_EXPIRATION_MS = 7L * 24 * 60 * 60 * 1000;
+
     @Value("${jwt.secret}")
     private String jwtSecret;
 
@@ -24,20 +27,22 @@ public class JwtTokenProvider {
     private long refreshExpiration;
 
     public String generateAccessToken(Long userId, String email, String role) {
+        long effectiveAccessExpiration = getAccessExpiration();
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claims(Map.of("email", email, "role", role))
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + accessExpiration))
+            .expiration(new Date(System.currentTimeMillis() + effectiveAccessExpiration))
                 .signWith(getSigningKey())
                 .compact();
     }
 
     public String generateRefreshToken(Long userId) {
+        long effectiveRefreshExpiration = getRefreshExpiration();
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + refreshExpiration))
+            .expiration(new Date(System.currentTimeMillis() + effectiveRefreshExpiration))
                 .signWith(getSigningKey())
                 .compact();
     }
@@ -68,11 +73,11 @@ public class JwtTokenProvider {
     }
 
     public long getAccessExpiration() {
-        return accessExpiration;
+        return Math.max(accessExpiration, MIN_ACCESS_EXPIRATION_MS);
     }
 
     public long getRefreshExpiration() {
-        return refreshExpiration;
+        return Math.max(refreshExpiration, MIN_REFRESH_EXPIRATION_MS);
     }
 
     private SecretKey getSigningKey() {

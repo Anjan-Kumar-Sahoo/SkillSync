@@ -111,6 +111,7 @@ const GroupDetailPage = () => {
   });
 
   const canDeleteDiscussion = (discussion: DiscussionPayload) => {
+    if (discussion.isAdmin) return true;
     if (currentRole === 'ROLE_ADMIN') return true;
     if (!currentUserId) return false;
     if (discussion.authorId === currentUserId) return true;
@@ -210,7 +211,7 @@ const GroupDetailPage = () => {
               <p className="text-on-surface-variant mt-2">{group.description}</p>
               <div className="flex flex-wrap gap-3 mt-4 text-sm">
                 <span className="px-2.5 py-1 rounded-md bg-surface-container text-on-surface-variant font-semibold">
-                  {group.memberCount}/{group.maxMembers || '?'} members
+                  {group.memberCount} members
                 </span>
                 <span className="px-2.5 py-1 rounded-md bg-surface-container text-on-surface-variant font-semibold">
                   {group.category}
@@ -351,7 +352,7 @@ const GroupDetailPage = () => {
                               <p className="text-sm text-on-surface-variant">
                                 by {discussion.authorName} ({discussion.authorRole.replace('ROLE_', '')})
                                 {' • '}
-                                {new Date(discussion.createdAt).toLocaleString()}
+                                {new Date(discussion.createdAt).toLocaleTimeString()}
                               </p>
                             </div>
                             {canDelete && (

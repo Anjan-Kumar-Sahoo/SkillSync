@@ -1,5 +1,3 @@
-const IST_TIMEZONE = 'Asia/Kolkata';
-
 const toDate = (value: string | number | Date): Date | null => {
   const dateValue = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(dateValue.getTime())) {
@@ -12,21 +10,21 @@ export const formatDateTimeIST = (value: string | number | Date): string => {
   const dateValue = toDate(value);
   if (!dateValue) return '';
 
-  const datePart = dateValue.toLocaleDateString('en-IN', {
-    timeZone: IST_TIMEZONE,
+  const locale = typeof navigator !== 'undefined' && navigator.language ? navigator.language : 'en-US';
+
+  const datePart = dateValue.toLocaleDateString(locale, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
   });
 
-  const timePart = dateValue.toLocaleTimeString('en-IN', {
-    timeZone: IST_TIMEZONE,
+  const timePart = dateValue.toLocaleTimeString(locale, {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
   });
 
-  return `${datePart} • ${timePart} IST`;
+  return `${datePart} • ${timePart}`;
 };
 
 export const formatClockTime = (timeValue: string): string => {

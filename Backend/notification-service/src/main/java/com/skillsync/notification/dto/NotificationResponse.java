@@ -1,6 +1,6 @@
 package com.skillsync.notification.dto;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record NotificationResponse(
         Long id,
@@ -9,5 +9,5 @@ public record NotificationResponse(
         String title,
         String message,
         boolean isRead,
-        LocalDateTime createdAt
+        Instant createdAt
 ) {}

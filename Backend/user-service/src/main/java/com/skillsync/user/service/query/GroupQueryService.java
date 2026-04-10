@@ -96,7 +96,9 @@ public class GroupQueryService {
     }
 
     public Page<DiscussionResponse> getDiscussions(Long groupId, Long userId, String userRole, Pageable pageable) {
-        if (!ROLE_ADMIN.equals(userRole) && !memberRepository.existsByGroupIdAndUserId(groupId, userId)) {
+        boolean adminViewer = ROLE_ADMIN.equals(userRole);
+
+        if (!adminViewer && !memberRepository.existsByGroupIdAndUserId(groupId, userId)) {
             throw new RuntimeException("Only group members can view messages");
         }
 
@@ -109,7 +111,8 @@ public class GroupQueryService {
                             discussion,
                             extractDisplayName(author),
                             authorRole,
-                            replies);
+                            replies,
+                            adminViewer);
                 });
     }
 

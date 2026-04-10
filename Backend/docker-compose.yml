@@ -320,6 +320,8 @@ services:
     env_file: .env
     environment:
       DB_NAME: skillsync_auth
+      JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-86400000}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-604800000}
       JAVA_OPTS: "-Xms128m -Xmx512m"
     depends_on:
       postgres:

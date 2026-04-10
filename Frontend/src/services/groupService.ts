@@ -35,6 +35,7 @@ export interface DiscussionPayload {
   parentId: number | null;
   replies: number;
   createdAt: string;
+  isAdmin?: boolean;
 }
 
 interface PaginatedResponse<T> {
@@ -172,9 +173,12 @@ class GroupService {
     params.append('page', page.toString());
     params.append('size', size.toString());
     params.append('sort', 'createdAt,desc');
-    const res = await api.get(`/api/groups/${groupId}/discussions?${params.toString()}`);
+    const res = await api.get(`/api/groups/${groupId}/messages?${params.toString()}`);
     return {
-      content: (res.data?.content || []) as DiscussionPayload[],
+      content: (res.data?.content || []).map((message: DiscussionPayload) => ({
+        ...message,
+        isAdmin: Boolean(message.isAdmin),
+      })),
       totalElements: res.data?.totalElements ?? 0,
       page: res.data?.number ?? page,
       size: res.data?.size ?? size,
@@ -186,15 +190,15 @@ class GroupService {
     title: string,
     content: string
   ): Promise<DiscussionPayload> {
-    const res = await api.post(`/api/groups/${groupId}/discussions`, {
+    const res = await api.post(`/api/groups/${groupId}/message`, {
       title,
       content,
     });
     return res.data;
   }
 
-  async deleteDiscussion(groupId: number, discussionId: number): Promise<void> {
-    await api.delete(`/api/groups/${groupId}/discussions/${discussionId}`);
+  async deleteDiscussion(_groupId: number, discussionId: number): Promise<void> {
+    await api.delete(`/api/groups/message/${discussionId}`);
   }
 
   async addGroupMember(groupId: number, email: string): Promise<GroupMemberPayload> {

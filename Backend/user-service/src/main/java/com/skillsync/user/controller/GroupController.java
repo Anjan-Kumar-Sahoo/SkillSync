@@ -58,6 +58,15 @@ public class GroupController {
         return ResponseEntity.ok(groupQueryService.getDiscussions(id, userId, userRole, pageable));
     }
 
+    @GetMapping("/{id}/messages")
+    public ResponseEntity<Page<DiscussionResponse>> getMessages(
+            @PathVariable Long id,
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestHeader("X-User-Role") String userRole,
+            Pageable pageable) {
+        return ResponseEntity.ok(groupQueryService.getDiscussions(id, userId, userRole, pageable));
+    }
+
     // ─── COMMANDS ───
 
     @PostMapping
@@ -120,9 +129,20 @@ public class GroupController {
 
     @PostMapping("/{id}/discussions")
     public ResponseEntity<DiscussionResponse> postDiscussion(
-            @PathVariable Long id, @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long id,
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestHeader("X-User-Role") String userRole,
             @Valid @RequestBody PostDiscussionRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(groupCommandService.postDiscussion(id, userId, request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(groupCommandService.postDiscussion(id, userId, userRole, request));
+    }
+
+    @PostMapping("/{id}/message")
+    public ResponseEntity<DiscussionResponse> postMessage(
+            @PathVariable Long id,
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestHeader("X-User-Role") String userRole,
+            @Valid @RequestBody PostDiscussionRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(groupCommandService.postDiscussion(id, userId, userRole, request));
     }
 
     @DeleteMapping("/{id}/discussions/{discussionId}")
@@ -132,6 +152,15 @@ public class GroupController {
             @RequestHeader("X-User-Id") Long userId,
             @RequestHeader("X-User-Role") String userRole) {
         groupCommandService.deleteDiscussion(id, discussionId, userId, userRole);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/message/{discussionId}")
+    public ResponseEntity<Void> deleteMessage(
+            @PathVariable Long discussionId,
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestHeader("X-User-Role") String userRole) {
+        groupCommandService.deleteDiscussionById(discussionId, userId, userRole);
         return ResponseEntity.ok().build();
     }
 }

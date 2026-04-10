@@ -10,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -25,6 +27,7 @@ public class NotificationService {
                 .title(title)
                 .message(message)
                 .isRead(false)
+            .createdAt(Instant.now())
                 .build();
         notification = notificationRepository.save(notification);
 

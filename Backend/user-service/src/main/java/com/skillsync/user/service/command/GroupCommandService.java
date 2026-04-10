@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +40,7 @@ public class GroupCommandService {
     public GroupResponse createGroup(Long userId, String userRole, CreateGroupRequest request) {
         validateCanCreateGroup(userRole);
 
-        int maxMembers = request.maxMembers() != null ? request.maxMembers() : 50;
+        Integer maxMembers = request.maxMembers() != null ? request.maxMembers() : Integer.MAX_VALUE;
         String normalizedName = request.name().trim();
         LearningGroup group = LearningGroup.builder()
             .name(normalizedName).description(normalizeDescription(request.description()))
@@ -73,10 +74,6 @@ public class GroupCommandService {
             group.setCategory(normalizeCategory(request.category()));
         }
         if (request.maxMembers() != null) {
-            long currentMembers = memberRepository.countByGroupId(groupId);
-            if (request.maxMembers() < currentMembers) {
-                throw new RuntimeException("maxMembers cannot be less than current members");
-            }
             group.setMaxMembers(request.maxMembers());
         }
 
@@ -93,8 +90,6 @@ public class GroupCommandService {
         LearningGroup group = findGroup(groupId);
         if (memberRepository.existsByGroupIdAndUserId(groupId, userId))
             throw new RuntimeException("Already a member");
-        long count = memberRepository.countByGroupId(groupId);
-        if (count >= group.getMaxMembers()) throw new RuntimeException("Group is full");
         memberRepository.save(GroupMember.builder().group(group).userId(userId)
                 .role(GroupMember.MemberRole.MEMBER).build());
 
@@ -129,11 +124,6 @@ public class GroupCommandService {
 
         if (memberRepository.existsByGroupIdAndUserId(groupId, memberUserId)) {
             throw new RuntimeException("User is already a member of this group");
-        }
-
-        long count = memberRepository.countByGroupId(groupId);
-        if (count >= group.getMaxMembers()) {
-            throw new RuntimeException("Group is full");
         }
 
         GroupMember member = GroupMember.builder()
@@ -175,9 +165,9 @@ public class GroupCommandService {
     }
 
     @Transactional
-    public DiscussionResponse postDiscussion(Long groupId, Long userId, PostDiscussionRequest request) {
+    public DiscussionResponse postDiscussion(Long groupId, Long userId, String userRole, PostDiscussionRequest request) {
         LearningGroup group = findGroup(groupId);
-        if (!memberRepository.existsByGroupIdAndUserId(groupId, userId))
+        if (!isAdmin(userRole) && !memberRepository.existsByGroupIdAndUserId(groupId, userId))
             throw new RuntimeException("Must be a member to post");
 
         Discussion parent = null;
@@ -190,7 +180,9 @@ public class GroupCommandService {
         }
 
         Discussion discussion = Discussion.builder().group(group).authorId(userId)
-                .title(request.title()).content(request.content()).parent(parent).build();
+            .title(request.title()).content(request.content()).parent(parent)
+            .createdAt(Instant.now())
+            .build();
         discussion = discussionRepository.save(discussion);
 
         cacheService.evictByPattern(CacheService.vKey("user:group:" + groupId + ":discussions:*"));
@@ -198,7 +190,7 @@ public class GroupCommandService {
         Map<String, Object> author = authServiceClient.getUserById(userId);
         String authorName = extractDisplayName(author);
         String authorRole = asText(author.get("role"), ROLE_LEARNER);
-        return GroupMapper.toDiscussionResponse(discussion, authorName, authorRole, 0);
+        return GroupMapper.toDiscussionResponse(discussion, authorName, authorRole, 0, isAdmin(userRole));
     }
 
     @Transactional
@@ -226,6 +218,13 @@ public class GroupCommandService {
         cacheService.evictByPattern(CacheService.vKey("user:group:" + groupId + ":discussions:*"));
     }
 
+    @Transactional
+    public void deleteDiscussionById(Long discussionId, Long actorUserId, String actorRole) {
+        Discussion discussion = discussionRepository.findById(discussionId)
+                .orElseThrow(() -> new RuntimeException("Discussion not found"));
+        deleteDiscussion(discussion.getGroup().getId(), discussionId, actorUserId, actorRole);
+    }
+
     private LearningGroup findGroup(Long id) {
         return groupRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Group not found: " + id));
@@ -238,7 +237,7 @@ public class GroupCommandService {
     }
 
     private boolean canDeleteDiscussion(Discussion discussion, Long actorUserId, String actorRole) {
-        if (ROLE_ADMIN.equals(actorRole)) {
+        if (isAdmin(actorRole)) {
             return true;
         }
 
@@ -256,9 +255,13 @@ public class GroupCommandService {
     }
 
     private void validateAdmin(String actorRole) {
-        if (!ROLE_ADMIN.equals(actorRole)) {
+        if (!isAdmin(actorRole)) {
             throw new RuntimeException("Only admins can perform this action");
         }
+    }
+
+    private boolean isAdmin(String actorRole) {
+        return ROLE_ADMIN.equals(actorRole);
     }
 
     @SuppressWarnings("unchecked")

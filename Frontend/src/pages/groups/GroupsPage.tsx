@@ -142,7 +142,7 @@ const GroupsPage = () => {
                           {group.category}
                         </span>
                         <span className="text-xs text-on-surface-variant font-semibold">
-                          {group.memberCount}/{group.maxMembers || '?'} members
+                          {group.memberCount} members
                         </span>
                       </div>
 

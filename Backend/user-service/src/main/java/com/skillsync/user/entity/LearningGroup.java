@@ -16,7 +16,7 @@ public class LearningGroup {
     @Column(nullable = false) private String name;
     @Column(length = 2000) private String description;
     @Column(length = 100) private String category;
-    private int maxMembers;
+    private Integer maxMembers;
     @Column(nullable = false) private Long createdBy;
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<GroupMember> members;

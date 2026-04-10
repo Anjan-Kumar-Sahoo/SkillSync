@@ -7,7 +7,7 @@ public record GroupResponse(
 	String name,
 	String description,
 	String category,
-	int maxMembers,
+	Integer maxMembers,
 	int memberCount,
 	Long createdBy,
 	LocalDateTime createdAt,
