@@ -1,14 +1,8 @@
+import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../assets/skillsync-logo.png';
 import ThemeToggleButton from '../components/ui/ThemeToggleButton';
 import './LandingPage.css';
-
-type LiveStep = {
-  time: string;
-  title: string;
-  detail: string;
-  state: 'done' | 'active' | 'queued';
-};
 
 type ExperienceLane = {
   role: string;
@@ -31,38 +25,6 @@ type ReliabilitySignal = {
   value: string;
   helper: string;
 };
-
-type HeroSignal = {
-  label: string;
-  value: string;
-};
-
-const livePipeline: LiveStep[] = [
-  {
-    time: '09:10',
-    title: 'Learner books a session',
-    detail: 'Topic, slot, and mentor are selected with timezone-safe scheduling.',
-    state: 'done',
-  },
-  {
-    time: '09:11',
-    title: 'Payment verification lock',
-    detail: 'Mentor notification is held until transaction success is confirmed.',
-    state: 'active',
-  },
-  {
-    time: '09:13',
-    title: 'Mentor response window',
-    detail: 'Accept/reject action updates learner status in real time.',
-    state: 'queued',
-  },
-  {
-    time: '10:00',
-    title: 'Live session execution',
-    detail: 'Join details, reminders, and completion flow stay aligned for both users.',
-    state: 'queued',
-  },
-];
 
 const experienceLanes: ExperienceLane[] = [
   {
@@ -130,12 +92,6 @@ const reliabilitySignals: ReliabilitySignal[] = [
   },
 ];
 
-const heroSignals: HeroSignal[] = [
-  { label: 'Queue Health', value: 'Stable' },
-  { label: 'Payment Guard', value: 'Enabled' },
-  { label: 'Reminder Jobs', value: 'On Schedule' },
-];
-
 const finaleTags = [
   'Mentor Match Engine',
   'Realtime Session Flow',
@@ -145,7 +101,42 @@ const finaleTags = [
   'Community Learning Loops',
 ];
 
+/** Intersection Observer hook — adds `.revealed` when element scrolls into view */
+const useRevealOnScroll = () => {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('revealed');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -40px 0px' },
+    );
+
+    // Observe the container and all stagger-children inside it
+    observer.observe(el);
+    el.querySelectorAll('.stagger-child').forEach((child) => observer.observe(child));
+
+    return () => observer.disconnect();
+  }, []);
+
+  return ref;
+};
+
 const LandingPage = () => {
+  const heroTextRef = useRevealOnScroll();
+  const lanesRef = useRevealOnScroll();
+  const signalsRef = useRevealOnScroll();
+  const finaleRef = useRevealOnScroll();
+
   return (
     <div className="ppt-page" id="top">
       <div className="ppt-grid-overlay" aria-hidden="true" />
@@ -161,6 +152,9 @@ const LandingPage = () => {
 
         <div className="ppt-nav-actions">
           <ThemeToggleButton className="ppt-theme-toggle" showLabel={false} />
+          <Link className="ppt-btn ghost" to="/register">
+            Register
+          </Link>
           <Link className="ppt-btn solid" to="/login">
             Sign In
           </Link>
@@ -168,7 +162,31 @@ const LandingPage = () => {
       </header>
 
       <main className="ppt-main">
-        <section className="ppt-hero">
+        {/* ── Hero 1: Brand showcase with logo, orbs ── */}
+        <section className="hero-card">
+          <div className="hero-aura hero-aura-one" aria-hidden="true" />
+          <div className="hero-aura hero-aura-two" aria-hidden="true" />
+          <div className="hero-aura hero-aura-three" aria-hidden="true" />
+          <div className="brand-stage" aria-hidden="true">
+            <div className="gravity-orb orb-a" />
+            <div className="gravity-orb orb-b" />
+            <div className="gravity-orb orb-c" />
+            <img src={logo} alt="" className="hero-logo" />
+          </div>
+          <h2 className="hero-brand-title">SkillSync</h2>
+          <p className="hero-tagline">Peer To Peer Learning Platform</p>
+          <div className="hero-cta-row">
+            <Link className="landing-btn landing-btn-solid" to="/dashboard">
+              Get Started
+            </Link>
+            <a className="landing-btn landing-btn-ghost" href="#platform-story">
+              Why SkillSync
+            </a>
+          </div>
+        </section>
+
+        {/* ── Hero 2: Full-screen text headline + metrics ── */}
+        <section className="ppt-hero reveal-section" ref={heroTextRef}>
           <div className="ppt-hero-copy">
             <p className="ppt-kicker">Peer To Peer Learning Platform</p>
             <h1>
@@ -180,18 +198,11 @@ const LandingPage = () => {
               live session delivery, and post-session trust signals, all in a single reliable flow.
             </p>
 
-            <div className="ppt-cta-row">
-              <Link className="ppt-btn solid" to="/dashboard">
-                Explore Product
-              </Link>
-              <a className="ppt-btn ghost" href="#platform-story">
-                Why SkillSync
-              </a>
-            </div>
+
 
             <div className="ppt-metrics">
-              {metrics.map((metric) => (
-                <article key={metric.label} className="ppt-metric-card">
+              {metrics.map((metric, i) => (
+                <article key={metric.label} className="ppt-metric-card stagger-child" style={{ transitionDelay: `${i * 120}ms` }}>
                   <p>{metric.label}</p>
                   <h3>{metric.value}</h3>
                   <small>{metric.helper}</small>
@@ -199,58 +210,18 @@ const LandingPage = () => {
               ))}
             </div>
           </div>
-
-          <div className="ppt-hero-stage" aria-label="Live session pipeline preview">
-            <div className="ppt-live-console">
-              <div className="live-console-head">
-                <p>Live Session Pipeline</p>
-                <span className="live-indicator">
-                  <i aria-hidden="true" />
-                  Active now
-                </span>
-              </div>
-
-              <div className="live-flow">
-                {livePipeline.map((step) => (
-                  <article key={`${step.time}-${step.title}`} className={`live-step ${step.state}`}>
-                    <span className="live-time">{step.time}</span>
-                    <div className="live-step-body">
-                      <h3>{step.title}</h3>
-                      <p>{step.detail}</p>
-                    </div>
-                  </article>
-                ))}
-              </div>
-
-              <p className="live-console-foot">
-                State transitions remain traceable across booking, payment, notification, and completion events.
-              </p>
-            </div>
-
-            <div className="ppt-live-signals" aria-hidden="true">
-              <div className="signal-brand">
-                <img src={logo} alt="" />
-                <span>SkillSync Runtime</span>
-              </div>
-              {heroSignals.map((signal) => (
-                <article key={signal.label} className="ppt-live-signal-card">
-                  <p>{signal.label}</p>
-                  <h3>{signal.value}</h3>
-                </article>
-              ))}
-            </div>
-          </div>
         </section>
 
-        <section className="ppt-section" id="platform-story">
+        {/* ── Experience Lanes ── */}
+        <section className="ppt-section reveal-section" id="platform-story" ref={lanesRef}>
           <div className="ppt-section-head">
             <p>Real Workflow, Real Context</p>
             <h2>Every role sees the right state, at the right moment.</h2>
           </div>
 
           <div className="ppt-lane-grid">
-            {experienceLanes.map((lane) => (
-              <article key={lane.role} className={`ppt-lane-card ${lane.accentClass}`}>
+            {experienceLanes.map((lane, i) => (
+              <article key={lane.role} className={`ppt-lane-card ${lane.accentClass} stagger-child`} style={{ transitionDelay: `${i * 150}ms` }}>
                 <div className="lane-top">
                   <span className="lane-role">{lane.role}</span>
                   <span className="lane-metric">{lane.metric}</span>
@@ -268,15 +239,16 @@ const LandingPage = () => {
           </div>
         </section>
 
-        <section className="ppt-section">
+        {/* ── Reliability Signals ── */}
+        <section className="ppt-section reveal-section" ref={signalsRef}>
           <div className="ppt-section-head">
             <p>Operational Reliability</p>
             <h2>Production-safe behavior is part of the UX, not an afterthought.</h2>
           </div>
 
           <div className="ppt-signal-grid">
-            {reliabilitySignals.map((signal) => (
-              <article key={signal.label} className="ppt-signal-card">
+            {reliabilitySignals.map((signal, i) => (
+              <article key={signal.label} className="ppt-signal-card stagger-child" style={{ transitionDelay: `${i * 150}ms` }}>
                 <p>{signal.label}</p>
                 <h3>{signal.value}</h3>
                 <small>{signal.helper}</small>
@@ -285,7 +257,8 @@ const LandingPage = () => {
           </div>
         </section>
 
-        <section className="ppt-final-cta">
+        {/* ── Final CTA ── */}
+        <section className="ppt-final-cta reveal-section" ref={finaleRef}>
           <p className="final-kicker">Ready To Scale Learning?</p>
           <h2>Give every learner a premium mentorship experience.</h2>
           <p>
@@ -302,8 +275,8 @@ const LandingPage = () => {
           </div>
 
           <div className="ppt-finale-ribbon" aria-label="Platform highlights">
-            {finaleTags.map((tag) => (
-              <span key={tag} className="ribbon-chip">
+            {finaleTags.map((tag, i) => (
+              <span key={tag} className="ribbon-chip stagger-child" style={{ transitionDelay: `${i * 80}ms` }}>
                 {tag}
               </span>
             ))}
@@ -316,7 +289,10 @@ const LandingPage = () => {
             <div className="orbit-pulse pulse-a" />
             <div className="orbit-pulse pulse-b" />
             <div className="orbit-pulse pulse-c" />
-            <div className="orbit-core">SkillSync</div>
+            <div className="orbit-core">
+              <img src={logo} alt="" className="orbit-core-logo" />
+              <span>SkillSync</span>
+            </div>
           </div>
         </section>
       </main>

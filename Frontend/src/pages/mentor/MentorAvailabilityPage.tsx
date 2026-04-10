@@ -67,7 +67,6 @@ const MentorAvailabilityPage = () => {
       title: 'Remove Availability Slot?',
       message: `Are you sure you want to remove ${dayName} ${String(start).slice(0, 5)}-${String(end).slice(0, 5)}?`,
       confirmLabel: 'Yes, remove slot',
-      requiredText: 'YES',
     });
 
     if (!confirmed) {

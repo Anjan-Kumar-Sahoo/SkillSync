@@ -77,7 +77,6 @@ const UsersCenterPage = () => {
       title: 'Delete User?',
       message: `Are you sure you want to delete user ${email}? This action cannot be undone.`,
       confirmLabel: 'Yes, delete user',
-      requiredText: 'YES',
     });
 
     if (!confirmed) {

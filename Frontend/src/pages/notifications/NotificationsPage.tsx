@@ -54,7 +54,6 @@ const NotificationsPage = () => {
       title: 'Delete Notification?',
       message: 'Are you sure you want to delete this notification?',
       confirmLabel: 'Yes, delete notification',
-      requiredText: 'YES',
     });
 
     if (!confirmed) {

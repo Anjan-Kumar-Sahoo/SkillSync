@@ -130,7 +130,6 @@ const GroupDetailPage = () => {
       title: 'Leave Group?',
       message: `Are you sure you want to leave "${groupName}"?`,
       confirmLabel: 'Yes, leave group',
-      requiredText: 'YES',
     });
 
     if (!confirmed) return;
@@ -142,7 +141,6 @@ const GroupDetailPage = () => {
       title: 'Delete Message?',
       message: 'This message will be permanently removed from the group conversation.',
       confirmLabel: 'Yes, delete message',
-      requiredText: 'YES',
     });
 
     if (!confirmed) return;
@@ -154,7 +152,6 @@ const GroupDetailPage = () => {
       title: 'Remove Member?',
       message: `Remove ${member.name} from this group?`,
       confirmLabel: 'Yes, remove member',
-      requiredText: 'YES',
     });
 
     if (!confirmed) return;

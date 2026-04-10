@@ -73,7 +73,6 @@ const AdminSkillsPage = () => {
       title: 'Delete Skill?',
       message: `Are you sure you want to delete skill "${skillName}"? This will hide it from active mentor selection.`,
       confirmLabel: 'Yes, delete skill',
-      requiredText: 'YES',
     });
 
     if (!confirmed) {

@@ -157,7 +157,6 @@ const AdminGroupsPage = () => {
       title: 'Delete Group?',
       message: `Delete group "${group.name}"? All group messages and membership links will be removed.`,
       confirmLabel: 'Yes, delete group',
-      requiredText: 'YES',
     });
 
     if (!confirmed) return;
@@ -171,7 +170,6 @@ const AdminGroupsPage = () => {
       title: 'Remove Member?',
       message: `Remove ${member.name} from "${membersGroup.name}"?`,
       confirmLabel: 'Yes, remove member',
-      requiredText: 'YES',
     });
 
     if (!confirmed) return;

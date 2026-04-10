@@ -99,7 +99,6 @@ const MySessionsPage = () => {
       title: 'Cancel Session?',
       message: 'Are you sure you want to cancel the session? No compensation would be provided for it.',
       confirmLabel: 'Yes, cancel session',
-      requiredText: 'YES',
     });
 
     if (!confirmed) {

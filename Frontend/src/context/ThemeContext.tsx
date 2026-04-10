@@ -19,7 +19,7 @@ const getInitialTheme = (): ThemeMode => {
     return stored;
   }
 
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return 'light';
 };
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);

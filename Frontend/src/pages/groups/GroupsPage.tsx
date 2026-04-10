@@ -56,7 +56,6 @@ const GroupsPage = () => {
       title: 'Leave Group?',
       message: `Are you sure you want to leave "${groupName}"?`,
       confirmLabel: 'Yes, leave group',
-      requiredText: 'YES',
     });
 
     if (!confirmed) {
