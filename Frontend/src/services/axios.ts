@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { store } from '../store';
-import { logout } from '../store/slices/authSlice';
+import { logout, setCredentials } from '../store/slices/authSlice';
 
 // Strongly force HTTPS in production to prevent Vercel ENV leaks pointing to raw IPs.
 const isProd = import.meta.env.PROD;
@@ -36,6 +36,8 @@ api.interceptors.request.use((config) => {
 // RESPONSE INTERCEPTOR — handle 401 with silent token refresh + retry
 let isRefreshing = false;
 let failedQueue: Array<{ resolve: () => void; reject: (err: any) => void }> = [];
+
+const isInvalidSessionStatus = (status?: number): boolean => status === 401 || status === 403;
 
 const processQueue = (error: any) => {
   failedQueue.forEach(({ resolve, reject }) => {
@@ -76,8 +78,28 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        await api.post('/api/auth/refresh');
-        
+        const currentRefreshToken = store.getState().auth.refreshToken;
+
+        const refreshResponse = await api.post(
+          '/api/auth/refresh',
+          currentRefreshToken ? { refreshToken: currentRefreshToken } : undefined,
+          {
+            _skipErrorRedirect: true,
+            _skipAuthRedirect: true,
+          } as any,
+        );
+
+        const refreshed = refreshResponse?.data;
+        if (refreshed?.user) {
+          store.dispatch(
+            setCredentials({
+              user: refreshed.user,
+              accessToken: refreshed.accessToken || '',
+              refreshToken: refreshed.refreshToken || currentRefreshToken || '',
+            }),
+          );
+        }
+
         // Refresh was successful. Tokens are cookie-based, so queued requests
         // should be replayed without forcing an Authorization header.
         processQueue(null);
@@ -89,8 +111,14 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError);
-        store.dispatch(logout());
-        window.location.href = '/login?reason=session_expired';
+        const refreshStatus = (refreshError as any)?.response?.status;
+
+        // Only force logout when the refresh token is definitely invalid/expired.
+        if (isInvalidSessionStatus(refreshStatus)) {
+          store.dispatch(logout());
+          window.location.href = '/login?reason=session_expired';
+        }
+
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

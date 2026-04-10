@@ -17,6 +17,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.Map;
 
 @RestController
@@ -80,12 +81,18 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refreshToken(@CookieValue(value = "refreshToken", required = false) String refreshTokenCookie,
+                                                     @RequestBody(required = false) RefreshTokenRequest refreshTokenBody,
                                                      HttpServletResponse response,
                                                      HttpServletRequest httpRequest) {
-        if (refreshTokenCookie == null) {
+        String refreshToken = StringUtils.hasText(refreshTokenCookie)
+                ? refreshTokenCookie
+                : (refreshTokenBody != null ? refreshTokenBody.refreshToken() : null);
+
+        if (!StringUtils.hasText(refreshToken)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        AuthResponse authResponse = authService.refreshToken(new RefreshTokenRequest(refreshTokenCookie));
+
+        AuthResponse authResponse = authService.refreshToken(new RefreshTokenRequest(refreshToken));
         addAuthCookies(response, authResponse, httpRequest);
         return ResponseEntity.ok(authResponse);
     }
@@ -245,14 +252,21 @@ public class AuthController {
     }
 
     private CookieOptions resolveCookieOptions(HttpServletRequest request) {
-        String host = request.getServerName();
-        boolean isLocalHost = isLocalHost(host);
+        String serverHost = normalizeHost(request.getServerName());
+        String forwardedHost = extractForwardedHost(request.getHeader("X-Forwarded-Host"));
+        String originHost = extractOriginHost(request.getHeader("Origin"));
+
+        boolean isLocalHost = isLocalHost(serverHost)
+            || isLocalHost(forwardedHost)
+            || isLocalHost(originHost);
 
         boolean secure = !isLocalHost;
         String sameSite = StringUtils.hasText(configuredCookieSameSite)
                 ? configuredCookieSameSite
                 : (secure ? "None" : "Lax");
-        String domain = StringUtils.hasText(configuredCookieDomain) ? configuredCookieDomain : null;
+        String domain = (!isLocalHost && StringUtils.hasText(configuredCookieDomain))
+            ? configuredCookieDomain.trim()
+            : null;
 
         return new CookieOptions(secure, sameSite, domain);
     }
@@ -277,10 +291,54 @@ public class AuthController {
             return false;
         }
 
-        String normalized = host.trim().toLowerCase();
+        String normalized = normalizeHost(host);
+        if (!StringUtils.hasText(normalized)) {
+            return false;
+        }
+
         return "localhost".equals(normalized)
                 || "127.0.0.1".equals(normalized)
                 || "::1".equals(normalized);
+    }
+
+    private String extractForwardedHost(String forwardedHostHeader) {
+        if (!StringUtils.hasText(forwardedHostHeader)) {
+            return null;
+        }
+
+        String first = forwardedHostHeader.split(",")[0].trim();
+        return normalizeHost(first);
+    }
+
+    private String extractOriginHost(String originHeader) {
+        if (!StringUtils.hasText(originHeader)) {
+            return null;
+        }
+
+        try {
+            return normalizeHost(URI.create(originHeader).getHost());
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
+
+    private String normalizeHost(String host) {
+        if (!StringUtils.hasText(host)) {
+            return null;
+        }
+
+        String normalized = host.trim().toLowerCase();
+
+        if (normalized.startsWith("[") && normalized.contains("]")) {
+            return normalized.substring(1, normalized.indexOf(']'));
+        }
+
+        int colonIdx = normalized.indexOf(':');
+        if (colonIdx > -1) {
+            return normalized.substring(0, colonIdx);
+        }
+
+        return normalized;
     }
 
     private record CookieOptions(boolean secure, String sameSite, String domain) {}
