@@ -11,9 +11,9 @@ public final class GroupMapper {
 
     private GroupMapper() {}
 
-    public static GroupResponse toResponse(LearningGroup group, int memberCount) {
+    public static GroupResponse toResponse(LearningGroup group, int memberCount, boolean joined) {
         return new GroupResponse(group.getId(), group.getName(), group.getDescription(), group.getCategory(),
-                group.getMaxMembers(), memberCount, group.getCreatedBy(), group.getCreatedAt());
+                group.getMaxMembers(), memberCount, group.getCreatedBy(), group.getCreatedAt(), joined);
     }
 
     public static DiscussionResponse toDiscussionResponse(

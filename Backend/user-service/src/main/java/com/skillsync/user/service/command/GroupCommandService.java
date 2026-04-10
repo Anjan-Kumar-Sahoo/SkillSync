@@ -40,8 +40,9 @@ public class GroupCommandService {
         validateCanCreateGroup(userRole);
 
         int maxMembers = request.maxMembers() != null ? request.maxMembers() : 50;
+        String normalizedName = request.name().trim();
         LearningGroup group = LearningGroup.builder()
-                .name(request.name()).description(request.description())
+            .name(normalizedName).description(normalizeDescription(request.description()))
             .category(normalizeCategory(request.category()))
             .maxMembers(maxMembers).createdBy(userId)
                 .members(new ArrayList<>()).build();
@@ -54,7 +55,7 @@ public class GroupCommandService {
         cacheService.evictByPattern(CacheService.vKey("user:group:all:*"));
         cacheService.evictByPattern(CacheService.vKey("user:group:my:*"));
         log.info("[CQRS:COMMAND] Group created by userId: {}. Cache invalidated.", userId);
-        return GroupMapper.toResponse(group, 1);
+        return GroupMapper.toResponse(group, 1, true);
     }
 
     @Transactional
@@ -83,7 +84,8 @@ public class GroupCommandService {
         evictGroupCaches(groupId);
 
         int count = (int) memberRepository.countByGroupId(groupId);
-        return GroupMapper.toResponse(group, count);
+        boolean joined = memberRepository.existsByGroupIdAndUserId(groupId, actorUserId);
+        return GroupMapper.toResponse(group, count, joined);
     }
 
     @Transactional
@@ -336,5 +338,13 @@ public class GroupCommandService {
             return "General";
         }
         return category.trim();
+    }
+
+    private String normalizeDescription(String description) {
+        if (description == null) {
+            return null;
+        }
+        String normalized = description.trim();
+        return normalized.isEmpty() ? null : normalized;
     }
 }

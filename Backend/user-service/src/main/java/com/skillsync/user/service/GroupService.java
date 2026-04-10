@@ -30,7 +30,7 @@ public class GroupService {
                 .role(GroupMember.MemberRole.OWNER).build();
         memberRepository.save(owner);
 
-        return mapToResponse(group);
+        return mapToResponse(group, true);
     }
 
     @Transactional
@@ -51,10 +51,10 @@ public class GroupService {
     }
 
     public Page<GroupResponse> getAllGroups(Pageable pageable) {
-        return groupRepository.findAll(pageable).map(this::mapToResponse);
+        return groupRepository.findAll(pageable).map(group -> mapToResponse(group, false));
     }
 
-    public GroupResponse getGroupById(Long id) { return mapToResponse(findGroup(id)); }
+    public GroupResponse getGroupById(Long id) { return mapToResponse(findGroup(id), false); }
 
     @Transactional
     public DiscussionResponse postDiscussion(Long groupId, Long userId, PostDiscussionRequest request) {
@@ -74,9 +74,9 @@ public class GroupService {
         return groupRepository.findById(id).orElseThrow(() -> new RuntimeException("Group not found: " + id));
     }
 
-    private GroupResponse mapToResponse(LearningGroup g) {
+    private GroupResponse mapToResponse(LearningGroup g, boolean joined) {
         int count = g.getMembers() != null ? g.getMembers().size() : (int) memberRepository.countByGroupId(g.getId());
-        return new GroupResponse(g.getId(), g.getName(), g.getDescription(), g.getCategory(), g.getMaxMembers(), count, g.getCreatedBy(), g.getCreatedAt());
+        return new GroupResponse(g.getId(), g.getName(), g.getDescription(), g.getCategory(), g.getMaxMembers(), count, g.getCreatedBy(), g.getCreatedAt(), joined);
     }
 
     private DiscussionResponse mapDiscussion(Discussion d) {

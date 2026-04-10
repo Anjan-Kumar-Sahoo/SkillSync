@@ -10,5 +10,6 @@ public record GroupResponse(
 	int maxMembers,
 	int memberCount,
 	Long createdBy,
-	LocalDateTime createdAt
+	LocalDateTime createdAt,
+	boolean joined
 ) {}

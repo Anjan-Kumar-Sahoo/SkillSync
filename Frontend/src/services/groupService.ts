@@ -1,12 +1,11 @@
 import api from './axios';
 import type { GroupData } from '../store/slices/groupsSlice';
-import { store } from '../store';
 
 export interface CreateGroupPayload {
   name: string;
-  description: string;
-  category: string;
-  maxMembers: number;
+  description?: string;
+  category?: string;
+  maxMembers?: number;
 }
 
 export interface UpdateGroupPayload {
@@ -45,30 +44,13 @@ interface PaginatedResponse<T> {
   size: number;
 }
 
-const JOINED_GROUPS_KEY = 'skillsync.joinedGroups';
-
-const getJoinedGroupIds = (): number[] => {
-  try {
-    const raw = window.localStorage.getItem(JOINED_GROUPS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-};
-
-const setJoinedGroupIds = (ids: number[]) => {
-  window.localStorage.setItem(JOINED_GROUPS_KEY, JSON.stringify([...new Set(ids)]));
-};
-
 const mapGroup = (group: any): GroupData => {
-  const userId = store.getState().auth.user?.id;
-  const joinedIds = getJoinedGroupIds();
-  const joined = joinedIds.includes(group.id) || (userId ? group.createdBy === userId : false);
+  const joined = Boolean(group.joined);
 
   return {
     id: group.id,
     name: group.name,
-    description: group.description,
+    description: group.description || 'No description provided.',
     category: group.category || 'General',
     maxMembers: group.maxMembers,
     createdBy: group.createdBy,
@@ -132,9 +114,7 @@ class GroupService {
 
   async createGroup(payload: CreateGroupPayload): Promise<GroupData> {
     const res = await api.post('/api/groups', payload);
-    const created = mapGroup(res.data);
-    setJoinedGroupIds([...getJoinedGroupIds(), created.id]);
-    return created;
+    return mapGroup(res.data);
   }
 
   async updateGroup(
@@ -151,13 +131,11 @@ class GroupService {
 
   async joinGroup(id: number): Promise<GroupData> {
     await api.post(`/api/groups/${id}/join`, {});
-    setJoinedGroupIds([...getJoinedGroupIds(), id]);
     return this.getGroupById(id);
   }
 
   async leaveGroup(id: number): Promise<void> {
     await api.post(`/api/groups/${id}/leave`, {});
-    setJoinedGroupIds(getJoinedGroupIds().filter((groupId) => groupId !== id));
   }
 
   async getGroupMembers(

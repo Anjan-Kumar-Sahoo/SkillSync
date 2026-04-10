@@ -23,6 +23,7 @@ const Sidebar = ({ role }: SidebarProps) => {
   const mentorNav = [
     { name: 'Dashboard', icon: 'grid_view', path: '/mentor' },
     { name: 'My Sessions', icon: 'event_upcoming', path: '/sessions' },
+    { name: 'Manage Groups', icon: 'groups', path: '/groups' },
     { name: 'My Availability', icon: 'event_available', path: '/mentor/availability' },
     { name: 'My Profile', icon: 'account_circle', path: '/profile' },
     { name: 'Earnings', icon: 'payments', path: '/mentor/earnings' },

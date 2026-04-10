@@ -225,9 +225,10 @@ public class AuthController {
                                 long accessTokenMaxAgeSeconds,
                                 HttpServletRequest request) {
         CookieOptions cookieOptions = resolveCookieOptions(request);
+        long refreshTokenMaxAgeSeconds = Math.max(1, jwtTokenProvider.getRefreshExpiration() / 1000);
 
         String accessTokenCookie = buildCookie("accessToken", accessToken, accessTokenMaxAgeSeconds, cookieOptions);
-        String refreshTokenCookie = buildCookie("refreshToken", refreshToken, 7 * 24 * 60 * 60, cookieOptions);
+        String refreshTokenCookie = buildCookie("refreshToken", refreshToken, refreshTokenMaxAgeSeconds, cookieOptions);
 
         response.addHeader("Set-Cookie", accessTokenCookie);
         response.addHeader("Set-Cookie", refreshTokenCookie);

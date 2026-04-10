@@ -172,6 +172,21 @@ const MentorDashboardPage = () => {
           </button>
         </div>
       )}
+
+      <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/15">
+        <h3 className="font-bold text-lg text-on-surface mb-2 flex items-center gap-2">
+          <span className="material-symbols-outlined">groups</span> Manage Groups
+        </h3>
+        <p className="text-xs text-on-surface-variant font-medium mb-4 leading-relaxed">
+          Explore groups and join communities. Joined groups let you message and moderate learner messages.
+        </p>
+        <button
+          onClick={() => navigate('/groups')}
+          className="w-full bg-primary text-on-primary px-4 py-2.5 rounded-lg text-sm font-bold shadow-sm hover:bg-primary-dark transition-colors"
+        >
+          Open Group Hub
+        </button>
+      </div>
     </>
   );
 

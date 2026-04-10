@@ -141,7 +141,7 @@ class MapperTest {
                     .maxMembers(10).createdBy(100L)
                     .build();
 
-            GroupResponse response = GroupMapper.toResponse(group, 3);
+                GroupResponse response = GroupMapper.toResponse(group, 3, false);
 
             assertEquals(5L, response.id());
             assertEquals("Java Study Group", response.name());
@@ -149,6 +149,7 @@ class MapperTest {
             assertEquals(10, response.maxMembers());
             assertEquals(3, response.memberCount());
             assertEquals(100L, response.createdBy());
+            assertFalse(response.joined());
         }
     }
 }

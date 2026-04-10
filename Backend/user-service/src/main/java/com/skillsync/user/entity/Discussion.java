@@ -6,7 +6,11 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
-@Entity @Table(name = "discussions", schema = "groups")
+@Entity @Table(name = "discussions", schema = "groups",
+    indexes = {
+        @Index(name = "idx_discussions_group_created_at", columnList = "group_id, created_at"),
+        @Index(name = "idx_discussions_parent_id", columnList = "parent_id")
+    })
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 public class Discussion {

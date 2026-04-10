@@ -3,6 +3,7 @@ package com.skillsync.user.service.query;
 import com.skillsync.cache.CacheService;
 import com.skillsync.user.dto.*;
 import com.skillsync.user.entity.*;
+import com.skillsync.user.exception.ResourceNotFoundException;
 import com.skillsync.user.feign.AuthServiceClient;
 import com.skillsync.user.mapper.GroupMapper;
 import com.skillsync.user.repository.*;
@@ -14,7 +15,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * CQRS Query Service for Group operations.
@@ -40,24 +44,34 @@ public class GroupQueryService {
     /**
      * Cache-aside with stampede protection: get group by ID.
      */
-    public GroupResponse getGroupById(Long id) {
+    public GroupResponse getGroupById(Long id, Long userId) {
         String cacheKey = CacheService.vKey("user:group:" + id);
 
-        return cacheService.getOrLoad(cacheKey, GroupResponse.class,
+        GroupResponse base = cacheService.getOrLoad(cacheKey, GroupResponse.class,
                 Duration.ofSeconds(groupTtl), () -> {
                     LearningGroup group = groupRepository.findById(id).orElse(null);
                     if (group == null) return null;
                     int count = group.getMembers() != null ? group.getMembers().size()
                             : (int) memberRepository.countByGroupId(group.getId());
-                    return GroupMapper.toResponse(group, count);
+                    return GroupMapper.toResponse(group, count, false);
                 });
+
+        if (base == null) {
+            throw new ResourceNotFoundException("Group not found: " + id);
+        }
+
+        boolean joined = isJoined(id, userId);
+        return withJoined(base, joined);
     }
 
-    public Page<GroupResponse> getAllGroups(String search, String category, Pageable pageable) {
-        return groupRepository.searchGroups(search, category, pageable).map(g -> {
+    public Page<GroupResponse> getAllGroups(String search, String category, Long userId, Pageable pageable) {
+        Page<LearningGroup> groupsPage = groupRepository.searchGroups(search, category, pageable);
+        Set<Long> joinedGroupIds = resolveJoinedGroupIds(groupsPage.getContent(), userId);
+
+        return groupsPage.map(g -> {
             int count = g.getMembers() != null ? g.getMembers().size()
                     : (int) memberRepository.countByGroupId(g.getId());
-            return GroupMapper.toResponse(g, count);
+            return GroupMapper.toResponse(g, count, joinedGroupIds.contains(g.getId()));
         });
     }
 
@@ -65,7 +79,7 @@ public class GroupQueryService {
         return groupRepository.findMyGroups(userId, pageable).map(g -> {
             int count = g.getMembers() != null ? g.getMembers().size()
                     : (int) memberRepository.countByGroupId(g.getId());
-            return GroupMapper.toResponse(g, count);
+            return GroupMapper.toResponse(g, count, true);
         });
     }
 
@@ -120,6 +134,38 @@ public class GroupQueryService {
         }
         String text = String.valueOf(value);
         return text.isBlank() ? fallback : text;
+    }
+
+    private Set<Long> resolveJoinedGroupIds(List<LearningGroup> groups, Long userId) {
+        if (userId == null || groups == null || groups.isEmpty()) {
+            return Set.of();
+        }
+
+        List<Long> groupIds = groups.stream()
+                .map(LearningGroup::getId)
+                .toList();
+        return new HashSet<>(memberRepository.findJoinedGroupIds(userId, groupIds));
+    }
+
+    private boolean isJoined(Long groupId, Long userId) {
+        if (userId == null) {
+            return false;
+        }
+        return memberRepository.existsByGroupIdAndUserId(groupId, userId);
+    }
+
+    private GroupResponse withJoined(GroupResponse response, boolean joined) {
+        return new GroupResponse(
+                response.id(),
+                response.name(),
+                response.description(),
+                response.category(),
+                response.maxMembers(),
+                response.memberCount(),
+                response.createdBy(),
+                response.createdAt(),
+                joined
+        );
     }
 }
 

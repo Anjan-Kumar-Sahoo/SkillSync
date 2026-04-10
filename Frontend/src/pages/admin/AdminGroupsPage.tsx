@@ -124,16 +124,13 @@ const AdminGroupsPage = () => {
 
   const handleCreate = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!createForm.name.trim() || !createForm.description.trim() || !createForm.category.trim()) {
-      showToast({ message: 'Please fill all required fields', type: 'error' });
+    if (!createForm.name.trim()) {
+      showToast({ message: 'Group name is required', type: 'error' });
       return;
     }
 
     createMutation.mutate({
       name: createForm.name.trim(),
-      description: createForm.description.trim(),
-      category: createForm.category.trim(),
-      maxMembers: Number(createForm.maxMembers),
     });
   };
 
@@ -346,36 +343,9 @@ const AdminGroupsPage = () => {
                   className="w-full h-10 bg-surface-container px-3 rounded-lg text-sm font-semibold text-on-surface outline-none focus:ring-1 focus:ring-primary border border-transparent"
                   required
                 />
-                <textarea
-                  value={createForm.description}
-                  onChange={(event) => setCreateForm((prev) => ({ ...prev, description: event.target.value }))}
-                  placeholder="Description"
-                  rows={4}
-                  className="w-full bg-surface-container px-3 py-2 rounded-lg text-sm font-semibold text-on-surface outline-none focus:ring-1 focus:ring-primary border border-transparent"
-                  required
-                />
-                <div className="grid grid-cols-2 gap-3">
-                  <select
-                    value={createForm.category}
-                    onChange={(event) => setCreateForm((prev) => ({ ...prev, category: event.target.value }))}
-                    className="w-full h-10 bg-surface-container px-3 rounded-lg text-sm font-semibold text-on-surface outline-none focus:ring-1 focus:ring-primary border border-transparent"
-                  >
-                    <option value="Programming">Programming</option>
-                    <option value="Design">Design</option>
-                    <option value="Business">Business</option>
-                    <option value="General">General</option>
-                  </select>
-                  <input
-                    type="number"
-                    min={2}
-                    max={200}
-                    value={createForm.maxMembers}
-                    onChange={(event) =>
-                      setCreateForm((prev) => ({ ...prev, maxMembers: Number(event.target.value) || 2 }))
-                    }
-                    className="w-full h-10 bg-surface-container px-3 rounded-lg text-sm font-semibold text-on-surface outline-none focus:ring-1 focus:ring-primary border border-transparent"
-                  />
-                </div>
+                <p className="text-xs font-semibold text-on-surface-variant">
+                  Group will be created immediately with default settings. You can edit description/category/capacity later.
+                </p>
                 <div className="flex justify-end gap-3 pt-2">
                   <button
                     type="button"

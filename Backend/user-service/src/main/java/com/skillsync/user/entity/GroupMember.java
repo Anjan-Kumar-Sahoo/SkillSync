@@ -7,7 +7,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 @Entity @Table(name = "group_members", schema = "groups",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"group_id", "user_id"}))
+    uniqueConstraints = @UniqueConstraint(columnNames = {"group_id", "user_id"}),
+    indexes = {
+        @Index(name = "idx_group_members_user_id", columnList = "user_id")
+    })
 @Data @Builder @NoArgsConstructor @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 public class GroupMember {

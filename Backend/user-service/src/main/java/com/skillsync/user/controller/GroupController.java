@@ -25,8 +25,9 @@ public class GroupController {
     public ResponseEntity<Page<GroupResponse>> getAllGroups(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String category,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             Pageable pageable) {
-        return ResponseEntity.ok(groupQueryService.getAllGroups(search, category, pageable));
+        return ResponseEntity.ok(groupQueryService.getAllGroups(search, category, userId, pageable));
     }
 
     @GetMapping("/my")
@@ -37,8 +38,10 @@ public class GroupController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<GroupResponse> getGroup(@PathVariable Long id) {
-        return ResponseEntity.ok(groupQueryService.getGroupById(id));
+    public ResponseEntity<GroupResponse> getGroup(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId) {
+        return ResponseEntity.ok(groupQueryService.getGroupById(id, userId));
     }
 
     @GetMapping("/{id}/members")

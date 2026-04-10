@@ -32,12 +32,14 @@ const GroupDetailPage = () => {
   });
 
   const isJoined = Boolean(group?.isJoined);
+  const canLeaveGroup = isJoined && currentRole !== 'ROLE_ADMIN';
   const canViewMessages = currentRole === 'ROLE_ADMIN' || isJoined;
 
   const { data: discussions, isLoading: discussionsLoading } = useQuery({
     queryKey: ['group', id, 'discussions'],
     queryFn: () => groupService.getGroupDiscussions(groupId),
     enabled: Number.isFinite(groupId) && canViewMessages,
+    refetchInterval: canViewMessages ? 4000 : false,
   });
 
   const { data: members, isLoading: membersLoading } = useQuery({
@@ -125,6 +127,8 @@ const GroupDetailPage = () => {
   };
 
   const handleLeaveGroup = async () => {
+    if (!canLeaveGroup) return;
+
     const groupName = group?.name || 'this group';
     const confirmed = await requestConfirmation({
       title: 'Leave Group?',
@@ -218,7 +222,7 @@ const GroupDetailPage = () => {
               >
                 {joinGroupMutation.isPending ? 'Joining...' : 'Join Group'}
               </button>
-            ) : (
+            ) : canLeaveGroup ? (
               <button
                 onClick={() => void handleLeaveGroup()}
                 disabled={leaveGroupMutation.isPending}
@@ -226,6 +230,10 @@ const GroupDetailPage = () => {
               >
                 Leave Group
               </button>
+            ) : (
+              <div className="bg-white/20 text-white px-4 py-2 rounded font-semibold">
+                Admin Member
+              </div>
             )}
           </div>
         </div>
