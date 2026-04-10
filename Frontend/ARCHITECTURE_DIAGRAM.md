@@ -16,7 +16,7 @@
 │  └──────────────┴──────────────┴──────────────┴──────────────────┘  │
 │  ┌──────────────┬──────────────┬──────────────┬──────────────────┐  │
 │  │  User        │  Settings    │   Reviews    │   Payment        │  │
-│  │  Profile     │  & Security  │  & Ratings   │   Checkout       │  │
+│  │  Profile     │  (Password)  │  & Ratings   │   Checkout       │  │
 │  └──────────────┴──────────────┴──────────────┴──────────────────┘  │
 └─────────────────────────────────────────────────────────────────────┘
                                     ↓
@@ -91,7 +91,7 @@ Redirect to Dashboard
 
 ### Session Booking Flow
 ```
-Mentor Discovery Page (GET /api/mentors)
+Mentor Discovery Page (GET /api/mentors/search)
     ↓
 User Selects Mentor → Mentor Profile Page
     ↓
@@ -100,6 +100,8 @@ Click "Book Session" → Opens Booking Modal
 Select Date/Duration → POST /api/sessions
     ↓
 Session Created (Status: REQUESTED)
+    ↓
+Duplicate slot validation (backend + UI guardrails)
     ↓
 Notification to Mentor
     ↓
@@ -345,13 +347,14 @@ DELETE /api/sessions/:id             → Cancel session
 
 ### Mentors Service
 ```
-GET    /api/mentors                  → List mentors with filters
+GET    /api/mentors/search           → List mentors with filters (skill/rating/minPrice/maxPrice/search)
 GET    /api/mentors/:id              → Get mentor profile
 GET    /api/mentors/me               → Get my mentor profile
 POST   /api/mentors                  → Apply as mentor
 PUT    /api/mentors/:id              → Update mentor profile
-GET    /api/mentors/:id/availability → Get availability
-PUT    /api/mentors/:id/availability → Update availability
+GET    /api/mentors/me/availability  → Get availability
+POST   /api/mentors/me/availability  → Add availability slot
+DELETE /api/mentors/me/availability/:slotId → Delete availability slot
 ```
 
 ### Groups Service
@@ -385,9 +388,7 @@ GET    /api/users/me                 → Get my profile
 GET    /api/users/:id                → Get user profile
 PUT    /api/users/me                 → Update profile
 POST   /api/users/me/upload-image    → Upload profile image
-PUT    /api/users/me/change-password → Change password
-GET    /api/users/me/preferences     → Get preferences
-PUT    /api/users/me/preferences     → Update preferences
+POST   /api/auth/reset-password      → Password reset (OTP mode or authenticated current-password mode)
 ```
 
 ### Notifications Service

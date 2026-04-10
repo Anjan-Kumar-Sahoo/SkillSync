@@ -76,10 +76,10 @@
   - Personal information
   
 - ✅ `src/pages/settings/SettingsPage.tsx`
-  - Notification preferences
-  - Password management
-  - Security settings
-  - Privacy controls
+  - Password management only
+  - Uses `POST /api/auth/reset-password`
+  - Current/new/confirm password validation
+  - No Notification Preferences or Security & Privacy tabs
 
 ### Mentor Pages (NEW/ENHANCED)
 - ✅ `src/pages/mentors/DiscoverMentorsPage.tsx` (existing, enhanced)

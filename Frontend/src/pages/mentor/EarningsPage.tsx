@@ -43,6 +43,7 @@ const EarningsPage = () => {
         return null;
       }
     },
+    refetchInterval: 30000,
   });
 
   const { data: completedSessions = [], isLoading: sessionsLoading } = useQuery<MentorSession[]>({
@@ -67,6 +68,7 @@ const EarningsPage = () => {
 
       return sessions;
     },
+    refetchInterval: 30000,
   });
 
   const hourlyRate = Number(mentorProfile?.hourlyRate ?? 0);

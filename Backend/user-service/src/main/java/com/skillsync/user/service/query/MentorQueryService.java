@@ -12,13 +12,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
+import jakarta.persistence.criteria.JoinType;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -73,8 +78,66 @@ public class MentorQueryService {
     }
 
     public Page<MentorProfileResponse> searchMentors(Pageable pageable) {
-        return mentorProfileRepository.findByStatus(MentorStatus.APPROVED, pageable)
+        return searchMentors(null, null, null, null, null, pageable);
+    }
+
+    public Page<MentorProfileResponse> searchMentors(
+            String skill,
+            Double rating,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            String search,
+            Pageable pageable) {
+        Specification<MentorProfile> specification = Specification
+                .where((root, query, cb) -> cb.equal(root.get("status"), MentorStatus.APPROVED));
+
+        if (rating != null) {
+            specification = specification.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("avgRating"), rating));
+        }
+
+        if (minPrice != null) {
+            specification = specification.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("hourlyRate"), minPrice));
+        }
+
+        if (maxPrice != null) {
+            specification = specification.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("hourlyRate"), maxPrice));
+        }
+
+        if (search != null && !search.isBlank()) {
+            String normalizedSearch = "%" + search.trim().toLowerCase() + "%";
+            specification = specification.and((root, query, cb) -> cb.like(
+                    cb.lower(cb.coalesce(root.get("bio"), "")),
+                    normalizedSearch));
+        }
+
+        if (skill != null && !skill.isBlank()) {
+            List<Long> matchingSkillIds = resolveSkillIds(skill);
+            if (matchingSkillIds.isEmpty()) {
+                return new PageImpl<>(List.of(), pageable, 0);
+            }
+
+            specification = specification.and((root, query, cb) -> {
+                if (query != null) {
+                    query.distinct(true);
+                }
+                return root.join("skills", JoinType.LEFT).get("skillId").in(matchingSkillIds);
+            });
+        }
+
+        return mentorProfileRepository.findAll(specification, pageable)
                 .map(p -> enrichProfile(MentorMapper.toResponse(p)));
+    }
+
+    private List<Long> resolveSkillIds(String skillSearchText) {
+        try {
+            return skillServiceClient.searchSkills(skillSearchText.trim()).stream()
+                    .map(SkillSummary::id)
+                    .filter(Objects::nonNull)
+                    .toList();
+        } catch (Exception e) {
+            log.warn("Failed to resolve skill ids for search text '{}': {}", skillSearchText, e.getMessage());
+            return List.of();
+        }
     }
 
     private MentorProfileResponse enrichProfile(MentorProfileResponse profile) {

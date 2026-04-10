@@ -8,6 +8,7 @@ const DiscoverMentorsPage = () => {
   const navigate = useNavigate();
   
   const [draftFilters, setDraftFilters] = useState({ skill: '', rating: '', priceRange: '' });
+  const [appliedFilters, setAppliedFilters] = useState({ skill: '', rating: '', priceRange: '' });
 
   const [page, setPage] = useState(0);
   
@@ -17,11 +18,11 @@ const DiscoverMentorsPage = () => {
 
   // Fetch Skills for dropdown
   const { data: skillsData } = useQuery({
-    queryKey: ['skills'],
+    queryKey: ['skills', 'catalog'],
     queryFn: async () => {
       try {
-        const res = await api.get('/api/skills');
-        return res.data;
+        const res = await api.get('/api/skills?page=0&size=200', { _skipErrorRedirect: true } as any);
+        return Array.isArray(res.data?.content) ? res.data.content : [];
       } catch {
         return [];
       }
@@ -31,10 +32,31 @@ const DiscoverMentorsPage = () => {
   const skills = Array.isArray(skillsData) ? skillsData : [];
 
   // Fetch Mentors
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['mentors', page],
+  const { data, isLoading } = useQuery({
+    queryKey: ['mentors', 'search', page, appliedFilters.skill, appliedFilters.rating, appliedFilters.priceRange],
     queryFn: async () => {
-      const res = await api.get(`/api/mentors/search?page=${page}&size=9`);
+      const params = new URLSearchParams();
+      params.set('page', String(page));
+      params.set('size', '9');
+
+      if (appliedFilters.skill) {
+        params.set('skill', appliedFilters.skill);
+      }
+
+      if (appliedFilters.rating) {
+        params.set('rating', appliedFilters.rating);
+      }
+
+      if (appliedFilters.priceRange === 'under50') {
+        params.set('maxPrice', '50');
+      } else if (appliedFilters.priceRange === '50to100') {
+        params.set('minPrice', '50');
+        params.set('maxPrice', '100');
+      } else if (appliedFilters.priceRange === 'over100') {
+        params.set('minPrice', '100');
+      }
+
+      const res = await api.get(`/api/mentors/search?${params.toString()}`);
       return res.data;
     }
   });
@@ -55,16 +77,17 @@ const DiscoverMentorsPage = () => {
   }, [data, page]);
 
   const applyFilters = () => {
-
-
     setPage(0);
-    setTimeout(() => refetch(), 0);
+    setMentorsList([]);
+    setAppliedFilters({ ...draftFilters });
   };
 
   const clearFilters = () => {
-    setDraftFilters({ skill: '', rating: '', priceRange: '' });
-
+    const reset = { skill: '', rating: '', priceRange: '' };
+    setDraftFilters(reset);
+    setAppliedFilters(reset);
     setPage(0);
+    setMentorsList([]);
   };
 
   const getInitials = (first?: string, last?: string) => {
@@ -99,7 +122,7 @@ const DiscoverMentorsPage = () => {
           >
             <option value="">All Skills</option>
             {skills.map((s: any) => (
-              <option key={typeof s === 'string' ? s : s.name} value={typeof s === 'string' ? s : s.name}>
+              <option key={typeof s === 'string' ? s : (s.id ?? s.name)} value={typeof s === 'string' ? s : s.name}>
                 {typeof s === 'string' ? s : s.name}
               </option>
             ))}
@@ -128,9 +151,9 @@ const DiscoverMentorsPage = () => {
             className="w-full h-10 bg-surface-container px-3 rounded-lg text-sm font-semibold outline-none focus:ring-1 focus:ring-primary border border-transparent"
           >
             <option value="">Any Price</option>
-            <option value="under50">Under $50</option>
-            <option value="50to100">$50–$100</option>
-            <option value="over100">$100+</option>
+            <option value="under50">Under ₹50</option>
+            <option value="50to100">₹50-₹100</option>
+            <option value="over100">₹100+</option>
           </select>
         </div>
 

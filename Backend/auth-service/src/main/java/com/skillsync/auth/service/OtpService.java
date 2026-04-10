@@ -46,7 +46,7 @@ public class OtpService {
                 .build();
 
         otpTokenRepository.save(otpToken);
-        emailService.sendOtpEmail(user.getEmail(), otp, user.getFirstName());
+        emailService.sendOtpEmail(user.getEmail(), otp, user.getFirstName(), type);
 
         log.info("OTP generated and sent to: {}", user.getEmail());
     }

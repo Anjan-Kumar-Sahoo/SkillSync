@@ -31,3 +31,12 @@ This document confirms that all identified issues have been resolved across the 
 
 ## Documentation Updates
 - Inserted addendum to `/docs/03_Frontend_Design_and_API_Contract.md` logging the deprecations and API mutations accurately aligning the UI and architectural docs to reality.
+
+## 2026-04-10 Production Behavior Alignment
+- Settings UI is now password-only. Notification Preferences and Security & Privacy sections were removed from profile/settings flows.
+- Password updates now reuse `POST /api/auth/reset-password` with authenticated `currentPassword` flow; no separate user-service password endpoint is used.
+- Mentor discovery filters now map to backend params (`skill`, `rating`, `minPrice`, `maxPrice`, `search`) and skill dropdown loading is paginated-catalog based.
+- Learner booking flow now enforces duplicate-slot prevention both in UI and backend with message: `Session already booked for this slot`.
+- Mentor availability now blocks duplicate slots in backend with message: `Slot already exists`.
+- Mentor dashboard metrics align with session states (cancelled excluded from total; earnings widgets refreshed after completion).
+- Notification and auth emails were upgraded to shared rich HTML templates for session, payment, mentor, review, OTP/password, and welcome flows.

@@ -1,7 +1,7 @@
 ﻿# Frontend Complete Implementation
 
-Date: 2026-04-06
-Status: Presentation-ready
+Date: 2026-04-10
+Status: Presentation-ready (production fixes synced)
 
 ## 1. Frontend objective
 Deliver a role-based web application that is easy to maintain and aligned with the backend microservices contract.
@@ -39,6 +39,7 @@ Protected routes:
 - /groups
 - /profile
 - /settings
+- /settings/password
 
 Role-based redirect:
 - /dashboard -> learner/mentor/admin home
@@ -51,11 +52,18 @@ Role-based redirect:
 
 ### 5.2 Forgot password
 - User enters email on forgot-password page
+- OTP is delivered over email
 - App routes to reset-password page
 - User enters OTP and new password
 - Password reset completes and user returns to login
 
-### 5.3 OAuth password setup
+### 5.3 In-app password change
+- Settings page is password-only
+- Uses existing endpoint `POST /api/auth/reset-password`
+- Sends `currentPassword`, `newPassword`, `confirmPassword`
+- Backend validates current password and invalidates refresh tokens after success
+
+### 5.4 OAuth password setup
 - setup-password page uses one password field
 - Includes visibility toggle and live password constraints
 
@@ -63,20 +71,31 @@ Role-based redirect:
 - Profile edit no longer auto-submits on edit transition
 - Avatar persistence now uses profile avatarUrl update contract
 - User-service backend supports avatarUrl in update payload
+- Profile no longer exposes Notification Preferences or Security & Privacy quick links
+- Password updates are centralized under `/settings` and `/settings/password`
 
 ## 7. Session UX update
 - Learner-only mentor search action is hidden for mentor users in session empty states
+- Mentor discovery skill filter now loads from paginated skill catalog API
+- Mentor search applies backend filters (`skill`, `rating`, `minPrice`, `maxPrice`, `search`)
+- Duplicate booking prevention added on both backend and frontend guardrails
+- Learner booking CTA disables with exact message: `Session already booked for this slot`
+- Mentor availability duplicate slot protection returns `Slot already exists`
+- Mentor dashboard totals exclude `CANCELLED`, and earnings widgets auto-refresh
 
 ## 8. API integration pattern
 - Services encapsulate endpoint calls
 - Components avoid direct Axios calls when service wrappers exist
 - Mutations invalidate query caches on success
+- Password update reuses auth reset endpoint instead of introducing a new user endpoint
 
 ## 9. Demo checklist (frontend)
 - Login and role-aware dashboard redirect
 - Forgot password OTP reset flow
+- In-app password change from settings
 - Profile edit including avatar URL
-- Mentor dashboard and sessions screen behavior
+- Mentor dashboard counts after cancellation/completion changes
+- Duplicate slot/booking validation behavior (learner + mentor flows)
 
 ## 10. Known operational note
 Current deployment path is manual due to CI minute quota:

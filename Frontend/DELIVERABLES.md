@@ -174,9 +174,8 @@ TypeScript:         100% coverage
 
 ### User Pages
 - ✅ Profile Management (edit, upload image)
-- ✅ Settings (theme, notifications, preferences)
-- ✅ Password Management
-- ✅ Security & Privacy
+- ✅ Settings (password-only)
+- ✅ Password Management (uses shared auth reset-password endpoint)
 
 ### Social Pages
 - ✅ Groups Browse (search, category, pagination)

@@ -408,7 +408,8 @@ export const RoleGuard = ({ allowedRoles, children }: RoleGuardProps) => {
 |---|---|---|
 | Login | `/login` | Email + password, "Remember me", links to register/forgot-password |
 | Register | `/register` | Email, password, first name, last name, confirm password |
-| Forgot Password | `/forgot-password` | Email input, sends reset link |
+| Forgot Password | `/forgot-password` | Email input, triggers OTP for password reset |
+| Reset Password | `/reset-password` | OTP + new password form for forgot-password completion |
 
 ### 3.4.2 Dashboard
 
@@ -424,14 +425,14 @@ export const RoleGuard = ({ allowedRoles, children }: RoleGuardProps) => {
 |---|---|---|
 | Mentor Discovery | `/mentors` | Search bar, filter sidebar, paginated mentor grid, sort controls |
 | Mentor Profile | `/mentors/:id` | Full profile, skills, availability calendar, reviews, "Book Session" CTA |
-| Mentor Application | `/mentors/apply` | Multi-step form: bio, experience, rate, skills selection, **Razorpay payment ($9)** |
+| Mentor Application | `/mentors/apply` | Multi-step form: bio, experience, rate, skills selection, **Razorpay payment (₹9)** |
 
 ### 3.4.4 Session Screens
 
 | Screen | Route | Description |
 |---|---|---|
 | My Sessions | `/sessions` | Tab-based: Upcoming, Pending, Completed, Cancelled + filter by date range |
-| Book Session Modal | (overlay) | Date picker, time slot selection, topic, description, confirm, **Razorpay payment ($9)** |
+| Book Session Modal | (overlay) | Date picker, time slot selection, topic, description, confirm, **Razorpay payment (₹9)** |
 | Session Detail Modal | (overlay) | Full session info, status, actions (accept/reject/cancel/complete/review) |
 
 ### 3.4.5 Group Screens
@@ -456,6 +457,7 @@ export const RoleGuard = ({ allowedRoles, children }: RoleGuardProps) => {
 | Screen | Route | Description |
 |---|---|---|
 | Profile | `/profile` | Edit profile form, avatar upload, skill management |
+| Settings | `/settings` | Password-only account settings page (current/new/confirm password) |
 | Payment History | `/payments/history` | Table of past payments (mentor fees, session bookings) |
 | 404 | `*` | "Page not found" with link to dashboard |
 
@@ -2255,5 +2257,6 @@ Here is one fully verified example of a cross-system workflow logic combining to
      -   * M e n t o r s *   n o   l o n g e r   s e e   l e a r n e r - o r i e n t e d   ' F i n d   M e n t o r '   a c t i o n s   o n   t h e i r   s e s s i o n s   v i e w . 
      -   * G l o b a l * :   R e m o v e d   n a v   s e a r c h   b a r s   a n d   a v a t a r   u p l o a d   s t a t e s ;   d e f a u l t e d   t o   i n i t i a l i z e d   p r o f i l e   c o l o r s   e x c l u s i v e l y   d r i v e n   b y   u s e r   ' f i r s t N a m e '   a n d   ' l a s t N a m e '   p a y l o a d   d a t a . 
  -   * * M e n t o r   A v a i l a b i l i t y   C o n t r a c t * * :   M i g r a t e d   f r o m   m o c k e d   v o l a t i l e   s t a t e s   t o   r o b u s t   b a c k e n d   p e r s i s t e n c e   e n d p o i n t s :   ' G E T   / a p i / u s e r s / m e n t o r / a v a i l a b i l i t y ' ,   ' P O S T   / a p i / u s e r s / m e n t o r / a v a i l a b i l i t y ' ,   ' D E L E T E   / a p i / u s e r s / m e n t o r / a v a i l a b i l i t y / { i d } ' . 
-  
+ 
+ 
  

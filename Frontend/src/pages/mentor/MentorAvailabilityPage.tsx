@@ -40,8 +40,9 @@ const MentorAvailabilityPage = () => {
       queryClient.invalidateQueries({ queryKey: ['mentor', 'availability'] });
       queryClient.invalidateQueries({ queryKey: ['mentor', 'my'] });
     },
-    onError: () => {
-      showToast({ message: 'Failed to add availability slot.', type: 'error' });
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || 'Failed to add availability slot.';
+      showToast({ message, type: 'error' });
     },
   });
 
@@ -94,6 +95,12 @@ const MentorAvailabilityPage = () => {
 
         <div className="bg-surface-container-lowest rounded-2xl p-6 md:p-8 shadow-sm border border-outline-variant/15">
           <h2 className="text-2xl font-extrabold text-on-surface mb-6">Add Weekly Slot</h2>
+
+          <div className="mb-6 rounded-xl border border-primary/20 bg-primary/10 px-4 py-3">
+            <p className="text-sm font-semibold text-on-surface">
+              Sessions may last between 30 minutes to 2 hours depending on discussion. Minimum 30 minutes, maximum 2 hours.
+            </p>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div>

@@ -253,7 +253,7 @@ const LearnerDashboardPage = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-on-surface mb-1">Hourly Rate (USD)</label>
+                  <label className="block text-sm font-bold text-on-surface mb-1">Hourly Rate (₹ per hour)</label>
                   <input
                     type="number"
                     min={5}

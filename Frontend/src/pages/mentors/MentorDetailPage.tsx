@@ -80,6 +80,48 @@ const MentorDetailPage = () => {
   });
   const bookedSessions = bookedSessionsData || [];
 
+  const { data: learnerActiveSessionsData } = useQuery({
+    queryKey: ['sessions', 'learner', 'active-bookings', id],
+    queryFn: async () => {
+      try {
+        const params = new URLSearchParams();
+        params.set('page', '0');
+        params.set('size', '200');
+        params.append('status', 'REQUESTED');
+        params.append('status', 'ACCEPTED');
+        const res = await api.get(`/api/sessions/learner?${params.toString()}`, { _skipErrorRedirect: true } as any);
+        return Array.isArray(res.data?.content) ? res.data.content : [];
+      } catch {
+        return [];
+      }
+    },
+    enabled: !!id,
+  });
+  const learnerActiveSessions = Array.isArray(learnerActiveSessionsData) ? learnerActiveSessionsData : [];
+
+  const hasDuplicateBookingForSelection = (mentorUserId: number) => {
+    if (!selectedSlot) return false;
+
+    const [hours, minutes] = String(selectedSlot.startTime).split(':');
+    const selectedStart = new Date(selectedDateStr);
+    selectedStart.setHours(Number(hours), Number(minutes), 0, 0);
+    const selectedStartEpoch = selectedStart.getTime();
+
+    return learnerActiveSessions.some((session: any) => {
+      const sessionMentorId = Number(session.mentorId);
+      if (sessionMentorId !== mentorUserId) return false;
+
+      const sessionStartRaw = session.startTime || session.sessionDate;
+      if (!sessionStartRaw) return false;
+
+      const sessionStartEpoch = new Date(sessionStartRaw).getTime();
+      const sessionDuration = Number(session.durationMinutes ?? 60);
+      const isActiveStatus = session.status === 'REQUESTED' || session.status === 'ACCEPTED';
+
+      return isActiveStatus && sessionStartEpoch === selectedStartEpoch && sessionDuration === bookingDuration;
+    });
+  };
+
   const verifyPaymentMutation = useMutation({
     mutationFn: async (paymentDetails: any) => api.post('/api/payments/verify', paymentDetails),
     onSuccess: () => {
@@ -119,6 +161,12 @@ const MentorDetailPage = () => {
       showToast({ message: 'Invalid mentor information. Please refresh and try again.', type: 'error' });
       return;
     }
+
+    if (hasDuplicateBookingForSelection(mentorUserId)) {
+      showToast({ message: 'Session already booked for this slot', type: 'error' });
+      return;
+    }
+
     const mentorName = `${m.firstName || ''} ${m.lastName || ''}`.trim() || 'Mentor';
 
     // Build a session date from the selectedDateStr + slot time
@@ -225,6 +273,10 @@ const MentorDetailPage = () => {
   const hourlyRate = Number(m.hourlyRate || 0);
   const estimatedCost = (hourlyRate * bookingDuration) / 60;
   const isProcessing = loadingStep !== '';
+  const mentorUserIdForSelection = Number(m.userId);
+  const hasDuplicateLearnerBooking = Number.isFinite(mentorUserIdForSelection)
+    ? hasDuplicateBookingForSelection(mentorUserIdForSelection)
+    : false;
 
   const reviews = reviewsData?.content || [];
 
@@ -449,7 +501,7 @@ const MentorDetailPage = () => {
 
             <button
               onClick={handlePayNow}
-              disabled={isProcessing}
+              disabled={isProcessing || hasDuplicateLearnerBooking}
               className="w-full h-14 gradient-btn text-white font-extrabold text-lg rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-70 active:scale-[0.98] transition-all flex items-center justify-center gap-3 relative group"
             >
               {isProcessing && <span className="absolute inset-0 bg-white/20 animate-pulse"></span>}
@@ -463,11 +515,13 @@ const MentorDetailPage = () => {
                   </span>
                 </>
               ) : (
-                <>
-                  <span className="material-symbols-outlined text-[22px]">lock</span>
-                  Pay Now — ₹{estimatedCost.toFixed(0)}
-                  <span className="material-symbols-outlined text-[20px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                </>
+                hasDuplicateLearnerBooking ? 'Session already booked for this slot' : (
+                  <>
+                    <span className="material-symbols-outlined text-[22px]">lock</span>
+                    Pay Now - ₹{estimatedCost.toFixed(0)}
+                    <span className="material-symbols-outlined text-[20px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                  </>
+                )
               )}
             </button>
 

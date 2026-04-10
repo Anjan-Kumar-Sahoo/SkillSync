@@ -29,33 +29,13 @@ const MentorDashboardPage = () => {
 
   const mentorId = mentorData?.id;
 
-  // Stats Queries
-  const { data: totalSessionsObj } = useQuery({
-    queryKey: ['sessions', 'total'],
+  const { data: mentorSessionsObj } = useQuery({
+    queryKey: ['sessions', 'mentor', 'dashboard-summary'],
     queryFn: async () => {
-      const res = await api.get('/api/sessions/mentor?page=0&size=1', { _skipErrorRedirect: true } as any);
+      const res = await api.get('/api/sessions/mentor?page=0&size=200', { _skipErrorRedirect: true } as any);
       return res.data;
-    }
-  });
-
-  const { data: pendingReqsObj } = useQuery({
-    queryKey: ['sessions', 'requested'],
-    queryFn: async () => {
-      const res = await api.get('/api/sessions/mentor?page=0&size=50', { _skipErrorRedirect: true } as any);
-      const allSessions = res.data?.content || [];
-      const requested = allSessions.filter((s: any) => s.status === 'REQUESTED');
-      return { ...res.data, content: requested.slice(0, 5), totalElements: requested.length };
-    }
-  });
-
-  const { data: upcomingObj } = useQuery({
-    queryKey: ['sessions', 'accepted'],
-    queryFn: async () => {
-      const res = await api.get('/api/sessions/mentor?page=0&size=50', { _skipErrorRedirect: true } as any);
-      const allSessions = res.data?.content || [];
-      const accepted = allSessions.filter((s: any) => s.status === 'ACCEPTED');
-      return { ...res.data, content: accepted.slice(0, 5), totalElements: accepted.length };
-    }
+    },
+    refetchInterval: 20000,
   });
 
   // Reviews Query
@@ -91,6 +71,8 @@ const MentorDashboardPage = () => {
     onSuccess: () => {
       showToast({ message: 'Session marked complete!', type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['mentor', 'earnings'] });
+      queryClient.invalidateQueries({ queryKey: ['mentor', 'earnings', 'completed-sessions'] });
     }
   });
 
@@ -100,8 +82,12 @@ const MentorDashboardPage = () => {
     return p.length > 1 ? `${p[0][0]}${p[1][0]}`.toUpperCase() : p[0][0].toUpperCase();
   };
 
-  const pendingRequests = pendingReqsObj?.content || [];
-  const upcomingSessions = upcomingObj?.content || [];
+  const allMentorSessions = mentorSessionsObj?.content || [];
+  const pendingRequests = allMentorSessions.filter((session: any) => session.status === 'REQUESTED').slice(0, 5);
+  const pendingRequestsCount = allMentorSessions.filter((session: any) => session.status === 'REQUESTED').length;
+  const upcomingSessions = allMentorSessions.filter((session: any) => session.status === 'ACCEPTED').slice(0, 5);
+  const upcomingSessionsCount = allMentorSessions.filter((session: any) => session.status === 'ACCEPTED').length;
+  const totalSessionsCount = allMentorSessions.filter((session: any) => session.status !== 'CANCELLED').length;
   const recentReviews = recentReviewsObj?.content || [];
   const mentorReviewCount = Number(mentorData?.reviewCount ?? mentorData?.totalReviews ?? 0);
   const mentorRating = Number(mentorData?.avgRating ?? mentorData?.rating ?? 0);
@@ -207,7 +193,7 @@ const MentorDashboardPage = () => {
       {/* Stats Row */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-2">
         <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/10 flex flex-col items-center justify-center text-center">
-          <span className="text-4xl font-black text-on-surface mb-1">{totalSessionsObj?.totalElements || 0}</span>
+          <span className="text-4xl font-black text-on-surface mb-1">{totalSessionsCount}</span>
           <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Total Sessions</span>
         </div>
         <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/10 flex flex-col items-center justify-center text-center">
@@ -218,8 +204,8 @@ const MentorDashboardPage = () => {
           <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Average Rating</span>
         </div>
         <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/10 flex flex-col items-center justify-center text-center">
-          <span className={`text-4xl font-black mb-1 ${pendingReqsObj?.totalElements > 0 ? 'text-amber-500' : 'text-emerald-500'}`}>
-            {pendingReqsObj?.totalElements || 0}
+          <span className={`text-4xl font-black mb-1 ${pendingRequestsCount > 0 ? 'text-amber-500' : 'text-emerald-500'}`}>
+            {pendingRequestsCount}
           </span>
           <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Pending Requests</span>
         </div>
@@ -229,8 +215,8 @@ const MentorDashboardPage = () => {
       <section className="mb-4">
         <div className="flex items-center gap-3 mb-4">
           <h2 className="text-xl font-bold text-on-surface">Action Required</h2>
-          {pendingRequests.length > 0 && (
-            <span className="bg-error text-white text-xs font-bold px-2 py-0.5 rounded-full">{pendingRequests.length} Pending</span>
+          {pendingRequestsCount > 0 && (
+            <span className="bg-error text-white text-xs font-bold px-2 py-0.5 rounded-full">{pendingRequestsCount} Pending</span>
           )}
         </div>
 
@@ -292,7 +278,7 @@ const MentorDashboardPage = () => {
       <section className="mb-4">
         <h2 className="text-xl font-bold text-on-surface mb-4">Upcoming Sessions</h2>
         <div className="space-y-4">
-          {upcomingSessions.length > 0 ? (
+          {upcomingSessionsCount > 0 ? (
             upcomingSessions.map((session: any) => (
               <div key={session.id} className="bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-outline-variant/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">

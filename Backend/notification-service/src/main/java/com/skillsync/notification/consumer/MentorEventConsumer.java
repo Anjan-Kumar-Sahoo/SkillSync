@@ -11,6 +11,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Component
@@ -34,9 +35,27 @@ public class MentorEventConsumer {
 
         try {
             UserSummary user = authServiceClient.getUserById(userId);
-            emailService.sendEmail(user.email(), "Welcome to SkillSync Mentors!", "mentor-approved",
-                    Map.of("recipientName", user.firstName(),
-                            "actionUrl", appBaseUrl + "/mentor/dashboard"));
+            Map<String, String> details = new LinkedHashMap<>();
+            details.put("Role", "Mentor");
+            details.put("Status", "Approved");
+            details.put("Next Step", "Start managing sessions and availability");
+
+            emailService.sendEmail(
+                user.email(),
+                "Welcome to SkillSync Mentors!",
+                "system-email",
+                Map.of(
+                    "recipientName", displayName(user),
+                    "title", "Welcome to SkillSync Mentors",
+                    "preheader", "Your mentor application is now approved.",
+                    "primaryMessage", "You are now live as a mentor on SkillSync.",
+                    "detailsTitle", "Important details",
+                    "detailsHtml", emailService.buildDetailsHtml(details),
+                    "actionText", "Open Mentor Dashboard",
+                    "actionUrl", appBaseUrl + "/mentor",
+                    "footerNote", "Keep your availability updated so learners can book quickly."
+                )
+            );
         } catch (Exception e) {
             log.error("Failed to send mentor approval email to user {}: {}", userId, e.getMessage());
         }
@@ -50,7 +69,42 @@ public class MentorEventConsumer {
         notificationCommandService.createAndPush(userId, "MENTOR_REJECTED",
                 "Mentor Application Update",
                 "Your mentor application was not approved. Reason: " + (reason != null ? reason : "Not specified"));
+
+        try {
+            UserSummary user = authServiceClient.getUserById(userId);
+            Map<String, String> details = new LinkedHashMap<>();
+            details.put("Status", "Not approved");
+            details.put("Reason", reason != null && !reason.isBlank() ? reason : "Not specified");
+            details.put("Next Step", "Update your profile and re-apply");
+
+            emailService.sendEmail(
+                    user.email(),
+                    "Mentor Application Update - SkillSync",
+                    "system-email",
+                    Map.of(
+                            "recipientName", displayName(user),
+                            "title", "Mentor Application Update",
+                            "preheader", "Your mentor application was reviewed.",
+                            "primaryMessage", "Your current submission was not approved this time.",
+                            "detailsTitle", "Important details",
+                            "detailsHtml", emailService.buildDetailsHtml(details),
+                            "actionText", "Open SkillSync",
+                            "actionUrl", appBaseUrl + "/profile",
+                            "footerNote", "You can improve your profile and submit another application anytime."
+                    )
+            );
+        } catch (Exception e) {
+            log.error("Failed to send mentor rejection email to user {}: {}", userId, e.getMessage());
+        }
+
         log.info("Processed MENTOR_REJECTED event for user {}", userId);
+    }
+
+    private String displayName(UserSummary user) {
+        String first = user.firstName() != null ? user.firstName().trim() : "";
+        String last = user.lastName() != null ? user.lastName().trim() : "";
+        String full = (first + " " + last).trim();
+        return full.isEmpty() ? user.email() : full;
     }
 
     private Long toLong(Object value) {

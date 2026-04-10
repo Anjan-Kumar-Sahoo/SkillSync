@@ -86,20 +86,20 @@ const NotificationsPage = () => {
 
   const getNotificationColor = (type: string) => {
     const colors: Record<string, string> = {
-      SESSION_REQUEST: 'bg-blue-50 border-blue-200',
-      SESSION_REQUESTED: 'bg-blue-50 border-blue-200',
-      SESSION_REQUESTED_CONFIRMATION: 'bg-indigo-50 border-indigo-200',
-      SESSION_ACCEPTED: 'bg-green-50 border-green-200',
-      SESSION_APPROVED: 'bg-green-50 border-green-200',
-      SESSION_REJECTED: 'bg-red-50 border-red-200',
-      SESSION_CANCELLED: 'bg-red-50 border-red-200',
-      SESSION_COMPLETED: 'bg-emerald-50 border-emerald-200',
-      MENTOR_APPROVED: 'bg-yellow-50 border-yellow-200',
-      REVIEW_RECEIVED: 'bg-purple-50 border-purple-200',
-      SYSTEM: 'bg-gray-50 border-gray-200',
-      GROUP_INVITE: 'bg-teal-50 border-teal-200',
+      SESSION_REQUEST: 'border-l-blue-500',
+      SESSION_REQUESTED: 'border-l-blue-500',
+      SESSION_REQUESTED_CONFIRMATION: 'border-l-indigo-500',
+      SESSION_ACCEPTED: 'border-l-green-500',
+      SESSION_APPROVED: 'border-l-green-500',
+      SESSION_REJECTED: 'border-l-red-500',
+      SESSION_CANCELLED: 'border-l-red-500',
+      SESSION_COMPLETED: 'border-l-emerald-500',
+      MENTOR_APPROVED: 'border-l-amber-500',
+      REVIEW_RECEIVED: 'border-l-fuchsia-500',
+      SYSTEM: 'border-l-slate-500',
+      GROUP_INVITE: 'border-l-teal-500',
     };
-    return colors[type] || 'bg-gray-50 border-gray-200';
+    return colors[type] || 'border-l-slate-500';
   };
 
   return (
@@ -114,10 +114,10 @@ const NotificationsPage = () => {
         {/* Controls */}
         <div className="flex justify-between items-center">
           <div>
-            <p className="text-gray-600">
+            <p className="text-on-surface-variant">
               {unreadCount > 0 ? (
                 <>
-                  You have <span className="font-bold text-purple-600">{unreadCount}</span> unread
+                  You have <span className="font-bold text-primary">{unreadCount}</span> unread
                   notification{unreadCount > 1 ? 's' : ''}
                 </>
               ) : (
@@ -129,7 +129,7 @@ const NotificationsPage = () => {
             <button
               onClick={() => markAllAsReadMutation.mutate()}
               disabled={markAllAsReadMutation.isPending}
-              className="text-blue-600 hover:text-blue-700 font-medium text-sm disabled:opacity-50"
+              className="text-primary hover:text-primary-dark font-medium text-sm disabled:opacity-50"
             >
               Mark all as read
             </button>
@@ -138,29 +138,29 @@ const NotificationsPage = () => {
 
         {/* Notifications List */}
         {isLoading ? (
-          <p className="text-center text-gray-500 py-8">Loading notifications...</p>
+          <p className="text-center text-on-surface-variant py-8">Loading notifications...</p>
         ) : notifications.length > 0 ? (
           <div className="space-y-3">
             {notifications.map((notification) => (
               <div
                 key={notification.id}
                 className={`rounded-lg p-4 border-2 transition ${
-                  notification.isRead ? 'opacity-75' : 'opacity-100'
-                } ${getNotificationColor(notification.type)}`}
+                  notification.isRead ? 'opacity-80 bg-surface-container-low border-outline-variant/20' : 'opacity-100 bg-surface-container-lowest border-outline-variant/30 ring-1 ring-primary/15'
+                } border-l-4 ${getNotificationColor(notification.type)}`}
               >
                 <div className="flex items-start gap-4">
                   <span className="text-2xl mt-1">{getNotificationIcon(notification.type)}</span>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">{notification.title}</h3>
-                    <p className="text-gray-700 text-sm mt-1">{notification.message}</p>
-                    <p className="text-xs text-gray-500 mt-2">{formatDateTimeIST(notification.createdAt)}</p>
+                    <h3 className="font-semibold text-on-surface">{notification.title}</h3>
+                    <p className="text-on-surface-variant text-sm mt-1">{notification.message}</p>
+                    <p className="text-xs text-on-surface-variant mt-2">{formatDateTimeIST(notification.createdAt)}</p>
                   </div>
                   <div className="flex gap-2">
                     {!notification.isRead && (
                       <button
                         onClick={() => markAsReadMutation.mutate(notification.id)}
                         disabled={markAsReadMutation.isPending}
-                        className="text-blue-600 hover:text-blue-700 text-xs font-medium disabled:opacity-50"
+                        className="text-primary hover:text-primary-dark text-xs font-medium disabled:opacity-50"
                       >
                         Mark read
                       </button>
@@ -168,7 +168,7 @@ const NotificationsPage = () => {
                     <button
                       onClick={() => void handleDeleteNotification(notification.id)}
                       disabled={deleteNotificationMutation.isPending}
-                      className="text-red-600 hover:text-red-700 text-xs font-medium disabled:opacity-50"
+                      className="text-error hover:text-error text-xs font-medium disabled:opacity-50"
                     >
                       Delete
                     </button>
@@ -178,9 +178,9 @@ const NotificationsPage = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-            <p className="text-lg text-gray-500 mb-4">No notifications yet</p>
-            <p className="text-sm text-gray-400">You'll see updates here when you get session requests, approvals, and more</p>
+          <div className="text-center py-12 bg-surface-container-lowest rounded-lg border border-outline-variant/20">
+            <p className="text-lg text-on-surface-variant mb-4">No notifications yet</p>
+            <p className="text-sm text-on-surface-variant">You'll see updates here when you get session requests, approvals, and more</p>
           </div>
         )}
       </div>

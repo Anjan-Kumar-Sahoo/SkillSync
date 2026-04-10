@@ -245,20 +245,6 @@ const UserProfilePage = () => {
               <p className="font-medium text-gray-900">Change Password</p>
               <p className="text-sm text-gray-500">Update your password regularly for security</p>
             </button>
-            <button
-              onClick={() => navigate('/settings/preferences')}
-              className="w-full text-left p-4 rounded bg-gray-50 hover:bg-gray-100 transition border border-gray-200"
-            >
-              <p className="font-medium text-gray-900">Notification Preferences</p>
-              <p className="text-sm text-gray-500">Manage how you receive notifications</p>
-            </button>
-            <button
-              onClick={() => navigate('/settings/security')}
-              className="w-full text-left p-4 rounded bg-gray-50 hover:bg-gray-100 transition border border-gray-200"
-            >
-              <p className="font-medium text-gray-900">Security & Privacy</p>
-              <p className="text-sm text-gray-500">Control your account security</p>
-            </button>
           </div>
         </div>
       </div>

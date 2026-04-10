@@ -34,6 +34,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
     private final OtpService otpService;
+    private final EmailService emailService;
     private final CacheService cacheService;
 
     private static final int MAX_REFRESH_TOKENS = 5;
@@ -115,6 +116,12 @@ public class AuthService {
         
         log.info("User registration completed for: {}", user.getEmail());
 
+        try {
+            emailService.sendWelcomeEmail(user.getEmail(), user.getFirstName());
+        } catch (Exception ex) {
+            log.warn("Failed to dispatch welcome email to {}: {}", user.getEmail(), ex.getMessage());
+        }
+
         return generateAuthResponse(user);
     }
 
@@ -187,21 +194,49 @@ public class AuthService {
 
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
+        resetPassword(request, null);
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request, String authenticatedEmail) {
+        validatePasswordConfirmation(request);
+
+        boolean isAuthenticatedPasswordUpdate = authenticatedEmail != null
+                && !authenticatedEmail.isBlank()
+                && request.currentPassword() != null
+                && !request.currentPassword().isBlank();
+
+        if (isAuthenticatedPasswordUpdate) {
+            AuthUser user = authUserRepository.findByEmail(authenticatedEmail)
+                    .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+
+            if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+                throw new RuntimeException("Current password is incorrect");
+            }
+
+            if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
+                throw new RuntimeException("New password must be different from current password");
+            }
+
+            applyPasswordUpdate(user, request.newPassword());
+            log.info("Authenticated password reset completed for user: {}", user.getEmail());
+            return;
+        }
+
+        if (request.email() == null || request.email().isBlank()) {
+            throw new RuntimeException("Email is mandatory");
+        }
+
+        if (request.otp() == null || request.otp().isBlank()) {
+            throw new RuntimeException("OTP is mandatory");
+        }
+
         otpService.verifyOtp(request.email(), request.otp(), OtpType.PASSWORD_RESET);
 
         AuthUser user = authUserRepository.findByEmail(request.email())
                 .orElseThrow(() -> new RuntimeException("User not found with email: " + request.email()));
 
-        // Update password
-        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
-        authUserRepository.save(user);
-
-        // Invalidate all refresh tokens for this user
-        refreshTokenRepository.deleteByUser(user);
-
-        // Invalidate Redis profile cache in user-service
-        cacheService.evict(CacheService.vKey("user:profile:" + user.getId()));
-
+        applyPasswordUpdate(user, request.newPassword());
         log.info("Password reset successfully for user: {}", request.email());
     }
 
@@ -299,6 +334,22 @@ public class AuthService {
         cacheService.evict(CacheService.vKey("user:profile:" + user.getId()));
 
         log.info("Password setup completed for OAuth user: {}", user.getEmail());
+    }
+
+    private void validatePasswordConfirmation(ResetPasswordRequest request) {
+        if (request.confirmPassword() != null && !request.confirmPassword().isBlank()
+                && !request.newPassword().equals(request.confirmPassword())) {
+            throw new RuntimeException("Passwords do not match");
+        }
+    }
+
+    private void applyPasswordUpdate(AuthUser user, String newPassword) {
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        user.setPasswordSet(true);
+        authUserRepository.save(user);
+
+        refreshTokenRepository.deleteByUser(user);
+        cacheService.evict(CacheService.vKey("user:profile:" + user.getId()));
     }
 
     private AuthResponse generateAuthResponse(AuthUser user) {

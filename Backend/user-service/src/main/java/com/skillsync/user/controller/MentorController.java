@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+
 @RestController
 @RequestMapping("/api/mentors")
 @RequiredArgsConstructor
@@ -22,8 +24,14 @@ public class MentorController {
     // ─── QUERIES ───
 
     @GetMapping("/search")
-    public ResponseEntity<Page<MentorProfileResponse>> searchMentors(Pageable pageable) {
-        return ResponseEntity.ok(mentorQueryService.searchMentors(pageable));
+    public ResponseEntity<Page<MentorProfileResponse>> searchMentors(
+            @RequestParam(required = false) String skill,
+            @RequestParam(required = false) Double rating,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) String search,
+            Pageable pageable) {
+        return ResponseEntity.ok(mentorQueryService.searchMentors(skill, rating, minPrice, maxPrice, search, pageable));
     }
 
     @GetMapping("/{id}")

@@ -81,8 +81,6 @@ const AppRoutes = () => {
         <Route path="/profile" element={<UserProfilePage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/settings/password" element={<SettingsPage />} />
-        <Route path="/settings/preferences" element={<SettingsPage />} />
-        <Route path="/settings/security" element={<SettingsPage />} />
         <Route path="/help" element={<HelpCenterPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
       </Route>

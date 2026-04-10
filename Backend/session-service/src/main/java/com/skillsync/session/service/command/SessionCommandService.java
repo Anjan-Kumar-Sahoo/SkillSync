@@ -16,6 +16,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -39,6 +40,17 @@ public class SessionCommandService {
 
         if (learnerId.equals(mentorUserId)) {
             throw new RuntimeException("Cannot book a session with yourself");
+        }
+
+        boolean duplicateSlotAlreadyBooked = sessionRepository.existsByMentorIdAndLearnerIdAndSessionDateAndDurationMinutesAndStatusIn(
+                mentorUserId,
+                learnerId,
+                request.sessionDate(),
+                request.durationMinutes(),
+                List.of(SessionStatus.REQUESTED, SessionStatus.ACCEPTED)
+        );
+        if (duplicateSlotAlreadyBooked) {
+            throw new RuntimeException("Session already booked for this slot");
         }
 
 

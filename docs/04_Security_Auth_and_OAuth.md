@@ -247,12 +247,27 @@ Users can now securely reset forgotten passwords via a multi-step flow.
 1.  **Request**: `POST /api/auth/forgot-password`
     - Generates a `PASSWORD_RESET` type OTP.
     - Sends an email to the user.
-2.  **Verify**: `POST /api/auth/reset-password`
-    - Payload: `email`, `otp`, `newPassword`.
-    - Validates OTP attempts and expiry.
-    - Hashes the new password using BCrypt.
-    - **Security**: Invalidates all active refresh tokens for the user in `auth.refresh_tokens`.
-    - **Cache**: Evicts the `user:profile:<userId>` cache in Redis to ensure consistency across the system.
+2.  **Verify/Apply**: `POST /api/auth/reset-password`
+  - **Forgot-password mode** payload: `email`, `otp`, `newPassword`, `confirmPassword`.
+  - Validates OTP attempts and expiry.
+  - Hashes the new password using BCrypt.
+  - **Security**: Invalidates all active refresh tokens for the user in `auth.refresh_tokens`.
+  - **Cache**: Evicts the `user:profile:<userId>` cache in Redis to ensure consistency across the system.
+
+### 1.2.1 Authenticated Password Change (Same Endpoint)
+
+SkillSync also supports in-app password updates without creating a separate API.
+
+1.  **Authenticated request**: `POST /api/auth/reset-password`
+  - Payload: `currentPassword`, `newPassword`, `confirmPassword`.
+  - Auth context resolved from JWT (`Authorization` header or `accessToken` cookie).
+2.  **Validation**
+  - Current password must match stored hash.
+  - New password must differ from current password.
+  - `newPassword` and `confirmPassword` must match.
+3.  **Post-update hardening**
+  - Refresh tokens are invalidated.
+  - Profile cache is evicted.
 
 ### 1.3 OAuth + JWT Hybrid Flow (CORRECTED V3)
 

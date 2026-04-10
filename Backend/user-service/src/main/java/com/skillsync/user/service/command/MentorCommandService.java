@@ -115,6 +115,20 @@ public class MentorCommandService {
         MentorProfile profile = mentorProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Mentor profile not found"));
 
+                if (!request.startTime().isBefore(request.endTime())) {
+                        throw new RuntimeException("End time must be after start time");
+                }
+
+                boolean alreadyExists = availabilitySlotRepository.existsByMentor_IdAndDayOfWeekAndStartTimeAndEndTime(
+                                profile.getId(),
+                                request.dayOfWeek(),
+                                request.startTime(),
+                                request.endTime()
+                );
+                if (alreadyExists) {
+                        throw new RuntimeException("Slot already exists");
+                }
+
         AvailabilitySlot slot = AvailabilitySlot.builder()
                 .mentor(profile).dayOfWeek(request.dayOfWeek())
                 .startTime(request.startTime()).endTime(request.endTime())

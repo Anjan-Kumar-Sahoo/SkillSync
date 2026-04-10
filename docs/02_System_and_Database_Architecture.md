@@ -89,7 +89,7 @@ Each microservice owns its dedicated PostgreSQL database. No cross-service joins
 | POST | `/api/auth/refresh` | PUBLIC | Refresh access token |
 | POST | `/api/auth/logout` | AUTHENTICATED | Invalidate refresh token |
 | POST | `/api/auth/forgot-password` | PUBLIC | Send password reset email |
-| POST | `/api/auth/reset-password` | PUBLIC | Reset password with token |
+| POST | `/api/auth/reset-password` | PUBLIC / AUTHENTICATED | Reset password via OTP flow (forgot-password) or authenticated current-password flow |
 | GET  | `/api/auth/verify/{token}` | PUBLIC | Email verification |
 | GET  | `/api/auth/validate` | INTERNAL | Validate JWT (used by Gateway) |
 
@@ -432,7 +432,7 @@ public record AvailabilitySlotRequest(
 
 #### Business Logic
 - Only ROLE_LEARNER can apply (checked via JWT role claim)
-- Application requires â‰¥50 char bio, â‰¥1 skill, hourly rate $5â€“$500
+- Application requires at least 50 character bio, at least 1 skill, hourly rate in the 5 to 500 range
 - Admin sees paginated pending applications, newest first
 - On approval: user role updated to ROLE_MENTOR via inter-service call to Auth Service
 - On rejection: reason stored, user can re-apply after 30 days
