@@ -75,7 +75,7 @@ public class GroupService {
     }
 
     private GroupResponse mapToResponse(LearningGroup g, boolean joined) {
-        int count = g.getMembers() != null ? g.getMembers().size() : (int) memberRepository.countByGroupId(g.getId());
+        int count = (int) memberRepository.countByGroupId(g.getId());
         return new GroupResponse(g.getId(), g.getName(), g.getDescription(), g.getCategory(), g.getMaxMembers(), count, g.getCreatedBy(), g.getCreatedAt(), joined);
     }
 

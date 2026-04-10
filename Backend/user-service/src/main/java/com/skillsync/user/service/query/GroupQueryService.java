@@ -51,8 +51,7 @@ public class GroupQueryService {
                 Duration.ofSeconds(groupTtl), () -> {
                     LearningGroup group = groupRepository.findById(id).orElse(null);
                     if (group == null) return null;
-                    int count = group.getMembers() != null ? group.getMembers().size()
-                            : (int) memberRepository.countByGroupId(group.getId());
+                int count = (int) memberRepository.countByGroupId(group.getId());
                     return GroupMapper.toResponse(group, count, false);
                 });
 
@@ -69,16 +68,14 @@ public class GroupQueryService {
         Set<Long> joinedGroupIds = resolveJoinedGroupIds(groupsPage.getContent(), userId);
 
         return groupsPage.map(g -> {
-            int count = g.getMembers() != null ? g.getMembers().size()
-                    : (int) memberRepository.countByGroupId(g.getId());
+            int count = (int) memberRepository.countByGroupId(g.getId());
             return GroupMapper.toResponse(g, count, joinedGroupIds.contains(g.getId()));
         });
     }
 
     public Page<GroupResponse> getMyGroups(Long userId, Pageable pageable) {
         return groupRepository.findMyGroups(userId, pageable).map(g -> {
-            int count = g.getMembers() != null ? g.getMembers().size()
-                    : (int) memberRepository.countByGroupId(g.getId());
+            int count = (int) memberRepository.countByGroupId(g.getId());
             return GroupMapper.toResponse(g, count, true);
         });
     }
