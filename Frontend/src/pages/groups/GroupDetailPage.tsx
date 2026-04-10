@@ -219,7 +219,11 @@ const GroupDetailPage = () => {
               </div>
             </div>
 
-            {!isJoined ? (
+            {currentRole === 'ROLE_ADMIN' ? (
+              <div className="h-10 px-4 inline-flex items-center rounded-lg bg-primary/10 text-primary font-semibold border border-primary/20">
+                Admin Viewer
+              </div>
+            ) : !isJoined ? (
               <button
                 onClick={() => joinGroupMutation.mutate()}
                 disabled={joinGroupMutation.isPending}

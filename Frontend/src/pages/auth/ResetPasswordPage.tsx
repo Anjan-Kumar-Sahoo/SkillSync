@@ -8,6 +8,7 @@ import { useToast } from '../../components/ui/Toast';
 const ResetPasswordPage = () => {
   const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
   const [timeLeft, setTimeLeft] = useState(300);
+  const [otpVerified, setOtpVerified] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
@@ -39,9 +40,24 @@ const ResetPasswordPage = () => {
     { label: 'One uppercase letter', met: /[A-Z]/.test(newPassword) },
     { label: 'One lowercase letter', met: /[a-z]/.test(newPassword) },
     { label: 'One number', met: /\d/.test(newPassword) },
-    { label: 'One special character', met: /[@$!%*?&#]/.test(newPassword) },
+    { label: 'One special character', met: /[^A-Za-z0-9]/.test(newPassword) },
   ];
   const allConstraintsMet = constraints.every((c) => c.met);
+
+  const verifyOtpMutation = useMutation({
+    mutationFn: async (payload: { email: string; otp: string }) => {
+      const response = await api.post('/api/auth/verify-password-reset-otp', payload, { _skipErrorRedirect: true } as any);
+      return response.data;
+    },
+    onSuccess: () => {
+      setOtpVerified(true);
+      showToast({ message: 'OTP verified. You can now set a new password.', type: 'success' });
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || 'Invalid OTP. Please try again.';
+      showToast({ message, type: 'error' });
+    },
+  });
 
   const resetMutation = useMutation({
     mutationFn: async (payload: { email: string; otp: string; newPassword: string }) => {
@@ -66,6 +82,7 @@ const ResetPasswordPage = () => {
     onSuccess: () => {
       setTimeLeft(300);
       setOtp(Array(6).fill(''));
+      setOtpVerified(false);
       showToast({ message: 'Reset OTP sent successfully.', type: 'success' });
     },
     onError: (error: any) => {
@@ -98,6 +115,11 @@ const ResetPasswordPage = () => {
   const handleSubmit = () => {
     const otpCode = otp.join('');
 
+    if (!otpVerified) {
+      showToast({ message: 'Verify OTP first.', type: 'error' });
+      return;
+    }
+
     if (otpCode.length !== 6) {
       showToast({ message: 'Please enter all 6 OTP digits.', type: 'error' });
       return;
@@ -109,6 +131,16 @@ const ResetPasswordPage = () => {
     }
 
     resetMutation.mutate({ email, otp: otpCode, newPassword });
+  };
+
+  const handleVerifyOtp = () => {
+    const otpCode = otp.join('');
+    if (otpCode.length !== 6) {
+      showToast({ message: 'Please enter all 6 OTP digits.', type: 'error' });
+      return;
+    }
+
+    verifyOtpMutation.mutate({ email, otp: otpCode });
   };
 
   const formatTime = (seconds: number) => {
@@ -141,59 +173,74 @@ const ResetPasswordPage = () => {
               onChange={(e) => handleOtpChange(idx, e.target.value)}
               onKeyDown={(e) => handleOtpKeyDown(idx, e)}
               className="w-12 h-14 md:w-14 md:h-16 text-center text-xl font-bold bg-surface-container-low border border-outline-variant/30 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all duration-200"
+              disabled={otpVerified}
             />
           ))}
         </div>
 
-        <div className="mb-3">
-          <label className="text-sm font-semibold text-on-surface-variant block mb-1">New Password</label>
-          <div className="relative">
-            <input
-              type={showPassword ? 'text' : 'password'}
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full h-12 pl-4 pr-12 bg-surface-container-low border border-outline-variant/30 rounded-xl focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all duration-200"
-              placeholder="Enter your new password"
-            />
+        {!otpVerified ? (
+          <button
+            onClick={handleVerifyOtp}
+            disabled={!isOtpComplete || verifyOtpMutation.isPending || timeLeft === 0}
+            className="mt-2 flex items-center justify-center w-full h-12 gradient-btn text-white font-bold rounded-xl shadow-md hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 disabled:opacity-70 disabled:scale-100 disabled:shadow-none"
+          >
+            {verifyOtpMutation.isPending ? <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span> : 'Verify OTP'}
+          </button>
+        ) : (
+          <>
+            <div className="mb-3">
+              <label className="text-sm font-semibold text-on-surface-variant block mb-1">New Password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full h-12 pl-4 pr-12 bg-surface-container-low border border-outline-variant/30 rounded-xl focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all duration-200"
+                  placeholder="Enter your new password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-lg hover:bg-surface-container transition-colors text-on-surface-variant"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  <span className="material-symbols-outlined text-[20px]">{showPassword ? 'visibility_off' : 'visibility'}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="mb-6 rounded-xl border border-outline-variant/20 bg-surface-container-low p-4 space-y-2">
+              {constraints.map((constraint) => (
+                <p
+                  key={constraint.label}
+                  className={`flex items-center text-sm font-medium ${constraint.met ? 'text-emerald-600' : 'text-on-surface-variant'}`}
+                >
+                  <span className="material-symbols-outlined text-[16px] mr-2">{constraint.met ? 'check_circle' : 'radio_button_unchecked'}</span>
+                  {constraint.label}
+                </p>
+              ))}
+            </div>
+
             <button
-              type="button"
-              onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-lg hover:bg-surface-container transition-colors text-on-surface-variant"
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              onClick={handleSubmit}
+              disabled={!allConstraintsMet || resetMutation.isPending}
+              className="mt-2 flex items-center justify-center w-full h-12 gradient-btn text-white font-bold rounded-xl shadow-md hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 disabled:opacity-70 disabled:scale-100 disabled:shadow-none"
             >
-              <span className="material-symbols-outlined text-[20px]">{showPassword ? 'visibility_off' : 'visibility'}</span>
+              {resetMutation.isPending ? <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span> : 'Reset Password'}
             </button>
-          </div>
-        </div>
-
-        <div className="mb-6 rounded-xl border border-outline-variant/20 bg-surface-container-low p-4 space-y-2">
-          {constraints.map((constraint) => (
-            <p
-              key={constraint.label}
-              className={`flex items-center text-sm font-medium ${constraint.met ? 'text-primary' : 'text-on-surface-variant'}`}
-            >
-              <span className="material-symbols-outlined text-[16px] mr-2">{constraint.met ? 'check_circle' : 'radio_button_unchecked'}</span>
-              {constraint.label}
-            </p>
-          ))}
-        </div>
-
-        <button
-          onClick={handleSubmit}
-          disabled={!isOtpComplete || !allConstraintsMet || resetMutation.isPending || timeLeft === 0}
-          className="mt-2 flex items-center justify-center w-full h-12 gradient-btn text-white font-bold rounded-xl shadow-md hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 disabled:opacity-70 disabled:scale-100 disabled:shadow-none"
-        >
-          {resetMutation.isPending ? <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span> : 'Verify OTP & Reset Password'}
-        </button>
+          </>
+        )}
 
         <div className="mt-8 flex flex-col items-center space-y-2">
-          <p className="text-sm font-semibold text-on-surface-variant">{timeLeft > 0 ? `${formatTime(timeLeft)} remaining` : 'Code expired'}</p>
+          <p className="text-sm font-semibold text-on-surface-variant">
+            {otpVerified ? 'OTP verified' : (timeLeft > 0 ? `${formatTime(timeLeft)} remaining` : 'Code expired')}
+          </p>
           <button
             onClick={() => {
               if (timeLeft > 0 || resendMutation.isPending) return;
               resendMutation.mutate();
             }}
-            disabled={timeLeft > 0 || resendMutation.isPending}
+            disabled={otpVerified || timeLeft > 0 || resendMutation.isPending}
             className={`text-sm font-bold ${timeLeft > 0 ? 'text-outline hover:no-underline' : 'text-primary hover:underline'}`}
           >
             {resendMutation.isPending ? 'Sending...' : 'Resend OTP'}

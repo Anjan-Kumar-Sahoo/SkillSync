@@ -34,6 +34,13 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
             List<SessionStatus> statuses
     );
 
+    boolean existsByMentorIdAndLearnerIdAndSessionDateAndStatusIn(
+           Long mentorId,
+           Long learnerId,
+           LocalDateTime sessionDate,
+           List<SessionStatus> statuses
+    );
+
     @Query("SELECT s FROM Session s WHERE s.mentorId = :mentorId AND s.status IN ('REQUESTED','ACCEPTED') " +
            "AND s.sessionDate < :endTime AND FUNCTION('TIMESTAMPADD', MINUTE, s.durationMinutes, s.sessionDate) > :startTime")
     List<Session> findConflictingSessions(@Param("mentorId") Long mentorId,

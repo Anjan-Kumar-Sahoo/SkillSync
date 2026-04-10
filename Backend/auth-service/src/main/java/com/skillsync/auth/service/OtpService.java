@@ -73,6 +73,19 @@ public class OtpService {
      */
     @Transactional
     public boolean verifyOtp(String email, String otp, OtpType type) {
+        return verifyOtp(email, otp, type, true);
+    }
+
+    /**
+     * Validate OTP without consuming it.
+     * Used by password reset flow before final password submission.
+     */
+    @Transactional
+    public boolean validateOtp(String email, String otp, OtpType type) {
+        return verifyOtp(email, otp, type, false);
+    }
+
+    private boolean verifyOtp(String email, String otp, OtpType type, boolean consumeToken) {
         AuthUser user = authUserRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
 
@@ -112,15 +125,17 @@ public class OtpService {
         }
 
         // Success
-        otpToken.setUsed(true);
-        otpTokenRepository.save(otpToken);
+        if (consumeToken) {
+            otpToken.setUsed(true);
+            otpTokenRepository.save(otpToken);
+        }
 
         if (type == OtpType.REGISTRATION) {
             user.setVerified(true);
             authUserRepository.save(user);
         }
 
-        log.info("OTP verified for: {} type: {}", email, type);
+        log.info("OTP {} for: {} type: {}", consumeToken ? "verified" : "validated", email, type);
         return true;
     }
 

@@ -21,7 +21,6 @@ const MentorDetailPage = () => {
   const { showToast } = useToast();
 
   const [selectedSlot, setSelectedSlot] = useState<any>(null);
-  const [bookingDuration, setBookingDuration] = useState(60);
   const [loadingStep, setLoadingStep] = useState<'' | 'session' | 'order' | 'verify'>('');
   const pendingSessionIdRef = useRef<number | null>(null);
 
@@ -99,8 +98,19 @@ const MentorDetailPage = () => {
   });
   const learnerActiveSessions = Array.isArray(learnerActiveSessionsData) ? learnerActiveSessionsData : [];
 
-  const hasDuplicateBookingForSelection = (mentorUserId: number) => {
-    if (!selectedSlot) return false;
+  const getSlotDurationMinutes = (slot: any): number => {
+    if (!slot) return 0;
+    const [startHours, startMinutes] = String(slot.startTime).split(':').map(Number);
+    const [endHours, endMinutes] = String(slot.endTime).split(':').map(Number);
+
+    const startTotalMinutes = (Number.isFinite(startHours) ? startHours : 0) * 60 + (Number.isFinite(startMinutes) ? startMinutes : 0);
+    const endTotalMinutes = (Number.isFinite(endHours) ? endHours : 0) * 60 + (Number.isFinite(endMinutes) ? endMinutes : 0);
+    const duration = endTotalMinutes - startTotalMinutes;
+    return duration > 0 ? duration : 0;
+  };
+
+  const hasDuplicateBookingForSelection = (mentorUserId: number, slotDurationMinutes: number) => {
+    if (!selectedSlot || slotDurationMinutes <= 0) return false;
 
     const [hours, minutes] = String(selectedSlot.startTime).split(':');
     const selectedStart = new Date(selectedDateStr);
@@ -118,7 +128,7 @@ const MentorDetailPage = () => {
       const sessionDuration = Number(session.durationMinutes ?? 60);
       const isActiveStatus = session.status === 'REQUESTED' || session.status === 'ACCEPTED';
 
-      return isActiveStatus && sessionStartEpoch === selectedStartEpoch && sessionDuration === bookingDuration;
+      return isActiveStatus && sessionStartEpoch === selectedStartEpoch && sessionDuration === slotDurationMinutes;
     });
   };
 
@@ -162,7 +172,13 @@ const MentorDetailPage = () => {
       return;
     }
 
-    if (hasDuplicateBookingForSelection(mentorUserId)) {
+    const selectedDurationMinutes = getSlotDurationMinutes(selectedSlot);
+    if (selectedDurationMinutes < 30 || selectedDurationMinutes > 120) {
+      showToast({ message: 'Invalid slot duration. Please pick another slot.', type: 'error' });
+      return;
+    }
+
+    if (hasDuplicateBookingForSelection(mentorUserId, selectedDurationMinutes)) {
       showToast({ message: 'Session already booked for this slot', type: 'error' });
       return;
     }
@@ -185,7 +201,7 @@ const MentorDetailPage = () => {
         topic: 'Mentoring Session',
         description: `Session with ${mentorName} on ${weekdayNames[selectedSlot.dayOfWeek]}`,
         sessionDate: localDateTimeStr,
-        durationMinutes: bookingDuration,
+        durationMinutes: selectedDurationMinutes,
       }, { _skipErrorRedirect: true } as any);
       const sessionId = sessionRes.data.id;
       pendingSessionIdRef.current = sessionId;
@@ -271,11 +287,12 @@ const MentorDetailPage = () => {
   const mentorRating = mentorReviews > 0 ? rawRating : 0;
   const slots = (m.availability || []).filter((s: any) => s.isActive !== false);
   const hourlyRate = Number(m.hourlyRate || 0);
-  const estimatedCost = (hourlyRate * bookingDuration) / 60;
+  const selectedDurationMinutes = selectedSlot ? getSlotDurationMinutes(selectedSlot) : 0;
+  const estimatedCost = (hourlyRate * selectedDurationMinutes) / 60;
   const isProcessing = loadingStep !== '';
   const mentorUserIdForSelection = Number(m.userId);
   const hasDuplicateLearnerBooking = Number.isFinite(mentorUserIdForSelection)
-    ? hasDuplicateBookingForSelection(mentorUserIdForSelection)
+    ? hasDuplicateBookingForSelection(mentorUserIdForSelection, selectedDurationMinutes)
     : false;
 
   const reviews = reviewsData?.content || [];
@@ -398,9 +415,10 @@ const MentorDetailPage = () => {
                   const isSelected = selectedSlot?.id === slot.id;
                   const pad = (n: number) => n.toString().padStart(2, '0');
                   const [h, m] = String(slot.startTime).split(':');
+                  const slotDurationMinutes = getSlotDurationMinutes(slot);
                   const slotDateTimeStr = `${selectedDateStr}T${pad(Number(h))}:${pad(Number(m))}:00`;
                   const slotStartEpoch = new Date(slotDateTimeStr).getTime();
-                  const slotEndEpoch = slotStartEpoch + bookingDuration * 60000;
+                  const slotEndEpoch = slotStartEpoch + slotDurationMinutes * 60000;
                   
                   // Check against booked sessions
                   const isBooked = bookedSessions.some((bs: any) => {
@@ -479,19 +497,10 @@ const MentorDetailPage = () => {
               </div>
             </div>
 
-            <div className="mb-4">
-              <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest block mb-1 pl-1">Duration</label>
-              <select
-                value={bookingDuration}
-                onChange={(e) => setBookingDuration(parseInt(e.target.value))}
-                disabled={isProcessing}
-                className="w-full h-12 bg-surface-container border border-outline-variant/20 rounded-xl px-4 text-sm font-semibold text-on-surface outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
-              >
-                <option value="30">30 minutes</option>
-                <option value="60">1 hour</option>
-                <option value="90">1 hour 30 min</option>
-                <option value="120">2 hours</option>
-              </select>
+            <div className="mb-4 rounded-xl border border-outline-variant/20 bg-surface-container p-4">
+              <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Fixed Slot Duration</p>
+              <p className="text-sm font-bold text-on-surface mt-1">{selectedDurationMinutes} minutes</p>
+              <p className="text-xs text-on-surface-variant mt-1">Session length is fixed by the selected availability slot.</p>
             </div>
 
             <div className="flex justify-between items-center bg-surface-container rounded-xl p-4 mb-4 border border-outline-variant/10">

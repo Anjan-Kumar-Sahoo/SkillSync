@@ -21,8 +21,20 @@ const DiscoverMentorsPage = () => {
     queryKey: ['skills', 'catalog'],
     queryFn: async () => {
       try {
-        const res = await api.get('/api/skills?page=0&size=200', { _skipErrorRedirect: true } as any);
-        return Array.isArray(res.data?.content) ? res.data.content : [];
+        const size = 200;
+        const pagesToFetch = 10;
+        const collected: any[] = [];
+
+        for (let page = 0; page < pagesToFetch; page += 1) {
+          const res = await api.get(`/api/skills?page=${page}&size=${size}`, { _skipErrorRedirect: true } as any);
+          const content = Array.isArray(res.data?.content) ? res.data.content : [];
+          if (content.length === 0) break;
+          collected.push(...content);
+          if (res.data?.last !== false) break;
+        }
+
+        const uniqueById = new Map(collected.map((skill) => [skill.id, skill]));
+        return Array.from(uniqueById.values());
       } catch {
         return [];
       }

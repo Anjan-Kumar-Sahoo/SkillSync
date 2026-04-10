@@ -34,9 +34,21 @@ This document confirms that all identified issues have been resolved across the 
 
 ## 2026-04-10 Production Behavior Alignment
 - Settings UI is now password-only. Notification Preferences and Security & Privacy sections were removed from profile/settings flows.
-- Password updates now reuse `POST /api/auth/reset-password` with authenticated `currentPassword` flow; no separate user-service password endpoint is used.
+- Password updates now reuse `POST /api/auth/reset-password` in auth-service; no separate user-service password endpoint is used.
 - Mentor discovery filters now map to backend params (`skill`, `rating`, `minPrice`, `maxPrice`, `search`) and skill dropdown loading is paginated-catalog based.
 - Learner booking flow now enforces duplicate-slot prevention both in UI and backend with message: `Session already booked for this slot`.
 - Mentor availability now blocks duplicate slots in backend with message: `Slot already exists`.
 - Mentor dashboard metrics align with session states (cancelled excluded from total; earnings widgets refreshed after completion).
 - Notification and auth emails were upgraded to shared rich HTML templates for session, payment, mentor, review, OTP/password, and welcome flows.
+
+## 2026-04-11 Consolidated Final Alignment
+- Password reset is now strictly OTP-based for both forgot-password and in-app settings flow.
+- Added frontend step gating: email -> OTP verify -> new password (no confirm-password field).
+- Added backend-integrated endpoint usage in UI: `POST /api/auth/verify-password-reset-otp`.
+- Added live password checklist with submit disabled until all constraints pass.
+- Admin routes are role-guarded in frontend (`/admin*` requires `ROLE_ADMIN`).
+- Admin can open any group chat directly and act as super viewer for read/send messaging.
+- Booking duration in learner flow is fixed to selected availability slot (dynamic duration selector removed).
+- Duplicate booking guard tightened for same mentor + date + time.
+- Mentor availability disclaimer standardized to: `Sessions may last between 30 minutes to 2 hours depending on discussion.`
+- Notification page header and action contrast adjusted for dark mode readability.

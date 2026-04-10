@@ -146,12 +146,12 @@ const GroupsPage = () => {
                         </span>
                       </div>
 
-                      {group.isJoined ? (
+                      {group.isJoined || role === 'ROLE_ADMIN' ? (
                         <button
                           onClick={() => navigate(`/groups/${group.id}`)}
                           className="w-full h-10 bg-primary text-on-primary rounded-lg font-bold hover:bg-primary-dark transition-colors"
                         >
-                          Open Group
+                          {role === 'ROLE_ADMIN' ? 'Open Chat' : 'Open Group'}
                         </button>
                       ) : (
                         <button

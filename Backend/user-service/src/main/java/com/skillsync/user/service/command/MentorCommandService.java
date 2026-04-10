@@ -19,6 +19,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Optional;
 
@@ -117,6 +118,11 @@ public class MentorCommandService {
 
                 if (!request.startTime().isBefore(request.endTime())) {
                         throw new RuntimeException("End time must be after start time");
+                }
+
+                long slotDurationMinutes = Duration.between(request.startTime(), request.endTime()).toMinutes();
+                if (slotDurationMinutes < 30 || slotDurationMinutes > 120) {
+                        throw new RuntimeException("Slot duration must be between 30 and 120 minutes");
                 }
 
                 boolean alreadyExists = availabilitySlotRepository.existsByMentor_IdAndDayOfWeekAndStartTimeAndEndTime(

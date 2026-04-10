@@ -166,13 +166,16 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Password reset OTP sent to email"));
     }
 
+    @PostMapping("/verify-password-reset-otp")
+    public ResponseEntity<Map<String, String>> verifyPasswordResetOtp(
+            @Valid @RequestBody VerifyPasswordResetOtpRequest request) {
+        authService.verifyPasswordResetOtp(request.email(), request.otp());
+        return ResponseEntity.ok(Map.of("message", "OTP verified successfully"));
+    }
+
     @PostMapping("/reset-password")
-    public ResponseEntity<Map<String, String>> resetPassword(
-            @Valid @RequestBody ResetPasswordRequest request,
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @CookieValue(value = "accessToken", required = false) String accessToken) {
-        String authenticatedEmail = resolveAuthenticatedEmail(authHeader, accessToken);
-        authService.resetPassword(request, authenticatedEmail);
+    public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
         return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
     }
 
@@ -343,26 +346,6 @@ public class AuthController {
         }
 
         return normalized;
-    }
-
-    private String resolveAuthenticatedEmail(String authHeader, String accessTokenCookie) {
-        String token = extractTokenFromRequest(authHeader, accessTokenCookie);
-        if (!StringUtils.hasText(token) || !jwtTokenProvider.isTokenValid(token)) {
-            return null;
-        }
-
-        try {
-            return jwtTokenProvider.extractEmail(token);
-        } catch (Exception ex) {
-            return null;
-        }
-    }
-
-    private String extractTokenFromRequest(String authHeader, String accessTokenCookie) {
-        if (StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7);
-        }
-        return StringUtils.hasText(accessTokenCookie) ? accessTokenCookie : null;
     }
 
     private record CookieOptions(boolean secure, String sameSite, String domain) {}

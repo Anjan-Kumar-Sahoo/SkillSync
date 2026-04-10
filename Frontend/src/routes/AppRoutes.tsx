@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 
 import ProtectedRoute from '../components/layout/ProtectedRoute';
+import RoleGuard from '../components/layout/RoleGuard';
 import AuthLayout from '../components/layout/AuthLayout';
 
 import LoginPage from '../pages/auth/LoginPage';
@@ -67,11 +68,13 @@ const AppRoutes = () => {
         <Route path="/mentor/availability" element={<MentorAvailabilityPage />} />
         <Route path="/mentor/earnings" element={<EarningsPage />} />
         <Route path="/mentor/sessions" element={<MySessionsPage />} />
-        <Route path="/admin" element={<AdminDashboardPage />} />
-        <Route path="/admin/users" element={<UsersCenterPage />} />
-        <Route path="/admin/mentor-approvals" element={<MentorApprovalsPage />} />
-        <Route path="/admin/skills" element={<AdminSkillsPage />} />
-        <Route path="/admin/groups" element={<AdminGroupsPage />} />
+        <Route element={<RoleGuard allowedRoles={['ROLE_ADMIN']} />}>
+          <Route path="/admin" element={<AdminDashboardPage />} />
+          <Route path="/admin/users" element={<UsersCenterPage />} />
+          <Route path="/admin/mentor-approvals" element={<MentorApprovalsPage />} />
+          <Route path="/admin/skills" element={<AdminSkillsPage />} />
+          <Route path="/admin/groups" element={<AdminGroupsPage />} />
+        </Route>
         <Route path="/mentors" element={<DiscoverMentorsPage />} />
         <Route path="/mentors/:id" element={<MentorDetailPage />} />
         <Route path="/sessions" element={<MySessionsPage />} />

@@ -6,6 +6,23 @@ Updated for final presentation on 2026-04-06. Start with docs/00_Presentation_Pl
 
 # 04 Security Auth and OAuth
 
+## 2026-04-11 Consolidated Security Updates
+
+### OTP-based password reset contract
+- Password reset is fully OTP-based for Admin, Mentor, and Learner.
+- Endpoints:
+  - `POST /api/auth/forgot-password` -> generates and sends 6-digit OTP (5-minute expiry)
+  - `POST /api/auth/verify-password-reset-otp` -> validates OTP before password entry
+  - `POST /api/auth/reset-password` -> consumes OTP and saves new password
+- OTP retry protection: max-attempt threshold enforced server-side with attempt tracking.
+- Password policy is enforced in backend: 8-100 chars with uppercase, lowercase, number, and special character.
+- Successful password reset invalidates refresh tokens.
+
+### Email template standard
+- OTP and welcome emails in auth-service use styled branded HTML templates.
+- Notification service emails (session, mentor, payment, review events) use shared `system-email` template.
+- All production emails use card-style HTML with inline-safe styling and CTA sections.
+
 
 
 ---

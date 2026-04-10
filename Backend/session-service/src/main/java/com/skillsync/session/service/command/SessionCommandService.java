@@ -42,11 +42,10 @@ public class SessionCommandService {
             throw new RuntimeException("Cannot book a session with yourself");
         }
 
-        boolean duplicateSlotAlreadyBooked = sessionRepository.existsByMentorIdAndLearnerIdAndSessionDateAndDurationMinutesAndStatusIn(
+        boolean duplicateSlotAlreadyBooked = sessionRepository.existsByMentorIdAndLearnerIdAndSessionDateAndStatusIn(
                 mentorUserId,
                 learnerId,
                 request.sessionDate(),
-                request.durationMinutes(),
                 List.of(SessionStatus.REQUESTED, SessionStatus.ACCEPTED)
         );
         if (duplicateSlotAlreadyBooked) {

@@ -6,6 +6,27 @@ Updated for final presentation on 2026-04-06. Start with docs/00_Presentation_Pl
 
 # 03 Frontend Design and API Contract
 
+## 2026-04-11 Consolidated Contract Deltas
+
+### Password OTP flow
+- `POST /api/auth/forgot-password`: send password reset OTP.
+- `POST /api/auth/verify-password-reset-otp`: validate OTP before enabling password entry UI.
+- `POST /api/auth/reset-password`: reset password with `{ email, otp, newPassword }`.
+- UI contract: no confirm-password field; live checklist gates submit.
+
+### Group messaging (admin super viewer)
+- Admin can open any group from group listing/admin group console.
+- Admin can fetch `/api/groups/{id}/messages` without joining group.
+- Admin can post `/api/groups/{id}/message` and moderate messages.
+
+### Booking and availability validation
+- Duplicate booking blocked for same mentor + date + time in active states (`REQUESTED`, `ACCEPTED`).
+- Mentor slot creation blocks exact duplicate day/start/end and enforces slot duration between 30 and 120 minutes.
+- Learner booking duration is fixed by selected slot (no dynamic duration selector).
+
+### Mentor availability disclaimer
+- Availability UI shows: `Sessions may last between 30 minutes to 2 hours depending on discussion.`
+
 
 
 ---

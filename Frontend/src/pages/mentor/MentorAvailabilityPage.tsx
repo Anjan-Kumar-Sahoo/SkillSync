@@ -96,9 +96,10 @@ const MentorAvailabilityPage = () => {
         <div className="bg-surface-container-lowest rounded-2xl p-6 md:p-8 shadow-sm border border-outline-variant/15">
           <h2 className="text-2xl font-extrabold text-on-surface mb-6">Add Weekly Slot</h2>
 
-          <div className="mb-6 rounded-xl border border-primary/20 bg-primary/10 px-4 py-3">
+          <div className="mb-6 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 flex items-start gap-2">
+            <span className="material-symbols-outlined text-primary text-[18px] mt-0.5">info</span>
             <p className="text-sm font-semibold text-on-surface">
-              Sessions may last between 30 minutes to 2 hours depending on discussion. Minimum 30 minutes, maximum 2 hours.
+              Sessions may last between 30 minutes to 2 hours depending on discussion.
             </p>
           </div>
 

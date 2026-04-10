@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import PageLayout from '../../components/layout/PageLayout';
 import groupService from '../../services/groupService';
 import { useToast } from '../../components/ui/Toast';
@@ -17,6 +18,7 @@ const initialForm = {
 };
 
 const AdminGroupsPage = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const { requestConfirmation } = useActionConfirm();
@@ -187,7 +189,7 @@ const AdminGroupsPage = () => {
         <div className="bg-surface-container-lowest border border-outline-variant/10 rounded-2xl p-6 shadow-sm">
           <h1 className="text-3xl font-extrabold text-on-surface tracking-tight">Manage Groups</h1>
           <p className="text-on-surface-variant mt-2">
-            Admin can create groups, edit group details, and remove members.
+            Admin can create groups, open any group chat, read and send messages, and manage members.
           </p>
         </div>
 
@@ -279,6 +281,13 @@ const AdminGroupsPage = () => {
                             className="text-[10px] font-bold bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1.5 rounded-lg transition"
                           >
                             Members
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/groups/${group.id}`)}
+                            className="text-[10px] font-bold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3 py-1.5 rounded-lg transition"
+                          >
+                            Open Chat
                           </button>
                           <button
                             type="button"

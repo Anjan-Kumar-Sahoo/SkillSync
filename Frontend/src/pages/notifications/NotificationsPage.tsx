@@ -106,9 +106,9 @@ const NotificationsPage = () => {
     <PageLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg p-8 text-white">
-          <h1 className="text-3xl font-bold mb-2">Notifications</h1>
-          <p className="text-purple-100">Stay updated with your mentoring activities</p>
+        <div className="bg-surface-container-lowest rounded-lg p-8 border border-outline-variant/20 shadow-sm">
+          <h1 className="text-3xl font-bold mb-2 text-on-surface">Notifications</h1>
+          <p className="text-on-surface-variant">Stay updated with your mentoring activities</p>
         </div>
 
         {/* Controls */}
@@ -129,7 +129,7 @@ const NotificationsPage = () => {
             <button
               onClick={() => markAllAsReadMutation.mutate()}
               disabled={markAllAsReadMutation.isPending}
-              className="text-primary hover:text-primary-dark font-medium text-sm disabled:opacity-50"
+              className="text-primary hover:opacity-80 font-medium text-sm disabled:opacity-50"
             >
               Mark all as read
             </button>
@@ -160,7 +160,7 @@ const NotificationsPage = () => {
                       <button
                         onClick={() => markAsReadMutation.mutate(notification.id)}
                         disabled={markAsReadMutation.isPending}
-                        className="text-primary hover:text-primary-dark text-xs font-medium disabled:opacity-50"
+                        className="text-primary hover:opacity-80 text-xs font-medium disabled:opacity-50"
                       >
                         Mark read
                       </button>

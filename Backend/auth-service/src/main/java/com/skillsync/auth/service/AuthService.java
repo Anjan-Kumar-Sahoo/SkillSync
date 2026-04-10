@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +39,9 @@ public class AuthService {
     private final CacheService cacheService;
 
     private static final int MAX_REFRESH_TOKENS = 5;
+    private static final Pattern STRONG_PASSWORD_PATTERN = Pattern.compile(
+            "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,100}$"
+    );
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -107,6 +111,8 @@ public class AuthService {
         if (user.isPasswordSet() && !user.getPasswordHash().equals("PENDING")) {
             throw new RuntimeException("Registration already completed for this user.");
         }
+
+        validateStrongPassword(request.password());
 
         user.setFirstName(request.firstName());
         user.setLastName(request.lastName());
@@ -193,48 +199,23 @@ public class AuthService {
     }
 
     @Transactional
-    public void resetPassword(ResetPasswordRequest request) {
-        resetPassword(request, null);
+    public void verifyPasswordResetOtp(String email, String otp) {
+        otpService.validateOtp(email, otp, OtpType.PASSWORD_RESET);
+        log.info("Password reset OTP validated for: {}", email);
     }
 
     @Transactional
-    public void resetPassword(ResetPasswordRequest request, String authenticatedEmail) {
-        validatePasswordConfirmation(request);
-
-        boolean isAuthenticatedPasswordUpdate = authenticatedEmail != null
-                && !authenticatedEmail.isBlank()
-                && request.currentPassword() != null
-                && !request.currentPassword().isBlank();
-
-        if (isAuthenticatedPasswordUpdate) {
-            AuthUser user = authUserRepository.findByEmail(authenticatedEmail)
-                    .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
-
-            if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
-                throw new RuntimeException("Current password is incorrect");
-            }
-
-            if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
-                throw new RuntimeException("New password must be different from current password");
-            }
-
-            applyPasswordUpdate(user, request.newPassword());
-            log.info("Authenticated password reset completed for user: {}", user.getEmail());
-            return;
-        }
-
-        if (request.email() == null || request.email().isBlank()) {
-            throw new RuntimeException("Email is mandatory");
-        }
-
-        if (request.otp() == null || request.otp().isBlank()) {
-            throw new RuntimeException("OTP is mandatory");
-        }
+    public void resetPassword(ResetPasswordRequest request) {
+        validateStrongPassword(request.newPassword());
 
         otpService.verifyOtp(request.email(), request.otp(), OtpType.PASSWORD_RESET);
 
         AuthUser user = authUserRepository.findByEmail(request.email())
                 .orElseThrow(() -> new RuntimeException("User not found with email: " + request.email()));
+
+        if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
+            throw new RuntimeException("New password must be different from current password");
+        }
 
         applyPasswordUpdate(user, request.newPassword());
         log.info("Password reset successfully for user: {}", request.email());
@@ -326,6 +307,8 @@ public class AuthService {
             throw new RuntimeException("Password is already set for this account.");
         }
 
+        validateStrongPassword(request.password());
+
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setPasswordSet(true);
         authUserRepository.save(user);
@@ -336,10 +319,15 @@ public class AuthService {
         log.info("Password setup completed for OAuth user: {}", user.getEmail());
     }
 
-    private void validatePasswordConfirmation(ResetPasswordRequest request) {
-        if (request.confirmPassword() != null && !request.confirmPassword().isBlank()
-                && !request.newPassword().equals(request.confirmPassword())) {
-            throw new RuntimeException("Passwords do not match");
+    private void validateStrongPassword(String password) {
+        if (password == null || password.isBlank()) {
+            throw new RuntimeException("Password is mandatory");
+        }
+
+        if (!STRONG_PASSWORD_PATTERN.matcher(password).matches()) {
+            throw new RuntimeException(
+                    "Password must be 8-100 chars and include uppercase, lowercase, number, and special character"
+            );
         }
     }
 
