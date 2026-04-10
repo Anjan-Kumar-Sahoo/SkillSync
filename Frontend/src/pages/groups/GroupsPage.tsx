@@ -68,13 +68,15 @@ const GroupsPage = () => {
   return (
     <PageLayout>
       <div className="space-y-6">
-        <div className="bg-gradient-to-r from-green-600 to-teal-600 rounded-lg p-8 text-white">
-          <h1 className="text-3xl font-bold mb-2">Learning Groups</h1>
-          <p className="text-green-100">Join communities and communicate with members in group messages.</p>
+        <div className="bg-surface-container-lowest border border-outline-variant/10 rounded-2xl p-6 shadow-sm">
+          <h1 className="text-3xl font-extrabold text-on-surface tracking-tight">Learning Groups</h1>
+          <p className="text-on-surface-variant mt-2">
+            Explore communities, join discussions, and collaborate with peers in real-time.
+          </p>
         </div>
 
-        <div className="border-b border-gray-200">
-          <div className="flex space-x-8">
+        <div className="bg-surface-container-lowest border border-outline-variant/10 rounded-xl p-1.5 inline-flex gap-1 shadow-sm overflow-x-auto max-w-full scrollbar-hide">
+          <div className="flex gap-1">
             {['explore', 'mygroups'].map((tab) => (
               <button
                 key={tab}
@@ -82,10 +84,10 @@ const GroupsPage = () => {
                   setActiveTab(tab as typeof activeTab);
                   setPage(0);
                 }}
-                className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
+                className={`whitespace-nowrap px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 capitalize ${
                   activeTab === tab
-                    ? 'border-green-500 text-green-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'bg-primary text-white shadow-md scale-[1.02]'
+                    : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
                 }`}
               >
                 {tab === 'explore' ? 'Explore Groups' : 'Joined Groups'}
@@ -96,7 +98,7 @@ const GroupsPage = () => {
 
         {activeTab === 'explore' && (
           <div className="space-y-4">
-            <div className="flex gap-4">
+            <div className="bg-surface-container-lowest border border-outline-variant/10 rounded-2xl p-4 shadow-sm flex flex-col lg:flex-row items-stretch gap-3">
               <input
                 type="text"
                 placeholder="Search groups..."
@@ -105,12 +107,12 @@ const GroupsPage = () => {
                   setSearch(event.target.value);
                   setPage(0);
                 }}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="flex-1 h-10 bg-surface-container px-3 rounded-lg text-sm font-semibold text-on-surface outline-none focus:ring-1 focus:ring-primary border border-transparent"
               />
               {role === 'ROLE_ADMIN' && (
                 <button
                   onClick={() => navigate('/admin/groups')}
-                  className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition"
+                  className="h-10 px-5 bg-primary text-on-primary rounded-lg font-bold hover:bg-primary-dark transition-colors"
                 >
                   Manage Groups
                 </button>
@@ -118,7 +120,11 @@ const GroupsPage = () => {
             </div>
 
             {exploreLoading ? (
-              <p className="text-center text-gray-500 py-8">Loading groups...</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="h-44 bg-surface-container-lowest rounded-2xl border border-outline-variant/10 animate-pulse" />
+                ))}
+              </div>
             ) : exploreData?.content && exploreData.content.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {exploreData.content.map((group: any) => {
@@ -127,15 +133,15 @@ const GroupsPage = () => {
                   return (
                     <div
                       key={group.id}
-                      className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition"
+                      className="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/10 hover:shadow-md hover:border-outline-variant/25 transition"
                     >
-                      <h3 className="font-bold text-gray-900 mb-2">{group.name}</h3>
-                      <p className="text-sm text-gray-600 mb-4 line-clamp-2">{group.description}</p>
+                      <h3 className="font-bold text-on-surface mb-2 text-lg">{group.name}</h3>
+                      <p className="text-sm text-on-surface-variant mb-4 line-clamp-2">{group.description}</p>
                       <div className="flex items-center justify-between mb-4">
-                        <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                        <span className="text-xs bg-surface-container text-on-surface-variant px-2 py-1 rounded font-semibold">
                           {group.category}
                         </span>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-on-surface-variant font-semibold">
                           {group.memberCount}/{group.maxMembers || '?'} members
                         </span>
                       </div>
@@ -143,7 +149,7 @@ const GroupsPage = () => {
                       {group.isJoined ? (
                         <button
                           onClick={() => navigate(`/groups/${group.id}`)}
-                          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+                          className="w-full h-10 bg-primary text-on-primary rounded-lg font-bold hover:bg-primary-dark transition-colors"
                         >
                           Open Group
                         </button>
@@ -151,7 +157,7 @@ const GroupsPage = () => {
                         <button
                           onClick={() => joinGroupMutation.mutate(group.id)}
                           disabled={isJoining}
-                          className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition disabled:opacity-50"
+                          className="w-full h-10 bg-surface-container-high text-on-surface rounded-lg font-bold hover:bg-surface-container-highest transition-colors disabled:opacity-50"
                         >
                           {isJoining ? 'Joining...' : 'Join Group'}
                         </button>
@@ -161,7 +167,9 @@ const GroupsPage = () => {
                 })}
               </div>
             ) : (
-              <p className="text-center text-gray-500 py-8">No groups found</p>
+              <div className="bg-surface-container-lowest rounded-2xl p-10 text-center border border-outline-variant/10 shadow-sm">
+                <p className="text-on-surface-variant font-semibold">No groups found</p>
+              </div>
             )}
 
             {exploreData && exploreData.totalElements > 10 && (
@@ -169,17 +177,17 @@ const GroupsPage = () => {
                 <button
                   onClick={() => setPage(Math.max(0, page - 1))}
                   disabled={page === 0}
-                  className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                  className="px-4 py-2 rounded-lg text-sm font-bold bg-surface-container hover:bg-surface-container-high text-on-surface disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
-                <span className="px-4 py-2">
+                <span className="px-4 py-2 text-sm font-semibold text-on-surface-variant">
                   Page {page + 1} of {Math.ceil(exploreData.totalElements / 10)}
                 </span>
                 <button
                   onClick={() => setPage(page + 1)}
                   disabled={page >= Math.ceil(exploreData.totalElements / 10) - 1}
-                  className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                  className="px-4 py-2 rounded-lg text-sm font-bold bg-surface-container hover:bg-surface-container-high text-on-surface disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
                 </button>
@@ -191,33 +199,37 @@ const GroupsPage = () => {
         {activeTab === 'mygroups' && (
           <div className="space-y-4">
             {myGroupsLoading ? (
-              <p className="text-center text-gray-500 py-8">Loading your groups...</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="h-44 bg-surface-container-lowest rounded-2xl border border-outline-variant/10 animate-pulse" />
+                ))}
+              </div>
             ) : myGroupsData?.content && myGroupsData.content.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {myGroupsData.content.map((group: any) => (
                   <div
                     key={group.id}
-                    className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition"
+                    className="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/10 hover:shadow-md hover:border-outline-variant/25 transition"
                   >
-                    <h3 className="font-bold text-gray-900 mb-2">{group.name}</h3>
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">{group.description}</p>
+                    <h3 className="font-bold text-on-surface mb-2 text-lg">{group.name}</h3>
+                    <p className="text-sm text-on-surface-variant mb-4 line-clamp-2">{group.description}</p>
                     <div className="flex items-center justify-between mb-4">
-                      <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                      <span className="text-xs bg-surface-container text-on-surface-variant px-2 py-1 rounded font-semibold">
                         {group.category}
                       </span>
-                      <span className="text-xs text-gray-500">{group.memberCount} members</span>
+                      <span className="text-xs text-on-surface-variant font-semibold">{group.memberCount} members</span>
                     </div>
                     <div className="flex gap-2">
                       <button
                         onClick={() => navigate(`/groups/${group.id}`)}
-                        className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition text-sm"
+                        className="flex-1 h-10 bg-primary text-on-primary rounded-lg font-bold hover:bg-primary-dark transition-colors text-sm"
                       >
                         View
                       </button>
                       <button
                         onClick={() => void handleLeaveGroup(group.id, group.name)}
                         disabled={leaveGroupMutation.isPending}
-                        className="flex-1 bg-red-600 text-white py-2 rounded hover:bg-red-700 transition text-sm disabled:opacity-50"
+                        className="flex-1 h-10 bg-error text-white rounded-lg font-bold hover:opacity-90 transition text-sm disabled:opacity-50"
                       >
                         Leave
                       </button>
@@ -226,7 +238,9 @@ const GroupsPage = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-center text-gray-500 py-8">You haven't joined any groups yet</p>
+              <div className="bg-surface-container-lowest rounded-2xl p-10 text-center border border-outline-variant/10 shadow-sm">
+                <p className="text-on-surface-variant font-semibold">You have not joined any groups yet</p>
+              </div>
             )}
           </div>
         )}

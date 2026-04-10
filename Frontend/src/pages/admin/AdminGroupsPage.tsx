@@ -39,6 +39,7 @@ const AdminGroupsPage = () => {
   const { data: groupsData, isLoading } = useQuery({
     queryKey: ['admin', 'groups', page, searchText, categoryFilter],
     queryFn: () => groupService.getGroups(searchText, categoryFilter || undefined, page, PAGE_SIZE),
+    refetchInterval: 5000,
   });
 
   const { data: membersData, isLoading: membersLoading } = useQuery({
@@ -53,8 +54,14 @@ const AdminGroupsPage = () => {
       showToast({ message: 'Group created successfully', type: 'success' });
       setShowCreateModal(false);
       setCreateForm(initialForm);
+      setSearchInput('');
+      setSearchText('');
+      setCategoryFilter('');
+      setPage(0);
       queryClient.invalidateQueries({ queryKey: ['admin', 'groups'] });
       queryClient.invalidateQueries({ queryKey: ['groups'] });
+      void queryClient.refetchQueries({ queryKey: ['admin', 'groups'] });
+      void queryClient.refetchQueries({ queryKey: ['groups'] });
     },
     onError: () => showToast({ message: 'Failed to create group', type: 'error' }),
   });

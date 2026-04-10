@@ -170,8 +170,8 @@ const GroupDetailPage = () => {
   if (groupLoading) {
     return (
       <PageLayout>
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-lg text-gray-500">Loading group...</div>
+        <div className="bg-surface-container-lowest rounded-2xl p-12 border border-outline-variant/10 shadow-sm text-center">
+          <div className="text-lg font-semibold text-on-surface-variant">Loading group...</div>
         </div>
       </PageLayout>
     );
@@ -180,11 +180,11 @@ const GroupDetailPage = () => {
   if (!group) {
     return (
       <PageLayout>
-        <div className="text-center py-12">
-          <p className="text-lg text-gray-500 mb-4">Group not found</p>
+        <div className="bg-surface-container-lowest rounded-2xl p-12 border border-outline-variant/10 shadow-sm text-center">
+          <p className="text-lg text-on-surface-variant mb-4 font-semibold">Group not found</p>
           <button
             onClick={() => navigate('/groups')}
-            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+            className="h-10 px-6 bg-primary text-on-primary rounded-lg font-bold hover:bg-primary-dark transition-colors"
           >
             Back to Groups
           </button>
@@ -198,19 +198,23 @@ const GroupDetailPage = () => {
       <div className="space-y-6">
         <button
           onClick={() => navigate('/groups')}
-          className="text-blue-600 hover:text-blue-700 flex items-center gap-2"
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"
         >
           ← Back to Groups
         </button>
 
-        <div className="bg-gradient-to-r from-teal-600 to-green-600 rounded-lg p-8 text-white">
+        <div className="bg-surface-container-lowest rounded-2xl p-6 border border-outline-variant/10 shadow-sm">
           <div className="flex justify-between items-start gap-4">
             <div>
-              <h1 className="text-3xl font-bold">{group.name}</h1>
-              <p className="text-teal-100 mt-2">{group.description}</p>
-              <div className="flex gap-4 mt-4 text-sm">
-                <span>{group.memberCount}/{group.maxMembers || '?'} members</span>
-                <span>{group.category}</span>
+              <h1 className="text-3xl font-extrabold text-on-surface tracking-tight">{group.name}</h1>
+              <p className="text-on-surface-variant mt-2">{group.description}</p>
+              <div className="flex flex-wrap gap-3 mt-4 text-sm">
+                <span className="px-2.5 py-1 rounded-md bg-surface-container text-on-surface-variant font-semibold">
+                  {group.memberCount}/{group.maxMembers || '?'} members
+                </span>
+                <span className="px-2.5 py-1 rounded-md bg-surface-container text-on-surface-variant font-semibold">
+                  {group.category}
+                </span>
               </div>
             </div>
 
@@ -218,7 +222,7 @@ const GroupDetailPage = () => {
               <button
                 onClick={() => joinGroupMutation.mutate()}
                 disabled={joinGroupMutation.isPending}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:opacity-50"
+                className="h-10 px-5 bg-primary text-on-primary rounded-lg font-bold hover:bg-primary-dark transition-colors disabled:opacity-50"
               >
                 {joinGroupMutation.isPending ? 'Joining...' : 'Join Group'}
               </button>
@@ -226,28 +230,28 @@ const GroupDetailPage = () => {
               <button
                 onClick={() => void handleLeaveGroup()}
                 disabled={leaveGroupMutation.isPending}
-                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition disabled:opacity-50"
+                className="h-10 px-5 bg-error text-white rounded-lg font-bold hover:opacity-90 transition disabled:opacity-50"
               >
                 Leave Group
               </button>
             ) : (
-              <div className="bg-white/20 text-white px-4 py-2 rounded font-semibold">
+              <div className="h-10 px-4 inline-flex items-center rounded-lg bg-surface-container text-on-surface font-semibold">
                 Admin Member
               </div>
             )}
           </div>
         </div>
 
-        <div className="border-b border-gray-200">
-          <div className="flex space-x-8">
+        <div className="bg-surface-container-lowest border border-outline-variant/10 rounded-xl p-1.5 inline-flex gap-1 shadow-sm overflow-x-auto max-w-full scrollbar-hide">
+          <div className="flex gap-1">
             {['discussion', 'members'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as typeof activeTab)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
+                className={`whitespace-nowrap px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 capitalize ${
                   activeTab === tab
-                    ? 'border-teal-500 text-teal-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'bg-primary text-white shadow-md scale-[1.02]'
+                    : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
                 }`}
               >
                 {tab}
@@ -259,12 +263,12 @@ const GroupDetailPage = () => {
         {activeTab === 'discussion' && (
           <div className="space-y-6">
             {!canViewMessages ? (
-              <div className="text-center py-10 bg-gray-50 rounded-lg border border-gray-200">
-                <p className="text-gray-600 mb-3">Join this group to access member-only messages.</p>
+              <div className="text-center py-10 bg-surface-container-lowest rounded-2xl border border-outline-variant/10 shadow-sm">
+                <p className="text-on-surface-variant mb-3 font-semibold">Join this group to access member-only messages.</p>
                 <button
                   onClick={() => joinGroupMutation.mutate()}
                   disabled={joinGroupMutation.isPending}
-                  className="bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700 transition disabled:opacity-50"
+                  className="h-10 px-5 bg-primary text-on-primary rounded-lg font-bold hover:bg-primary-dark transition-colors disabled:opacity-50"
                 >
                   {joinGroupMutation.isPending ? 'Joining...' : 'Join to Start Messaging'}
                 </button>
@@ -273,33 +277,33 @@ const GroupDetailPage = () => {
               <>
                 <button
                   onClick={() => setShowDiscussionForm((value) => !value)}
-                  className="bg-teal-600 text-white px-6 py-2 rounded hover:bg-teal-700 transition"
+                  className="h-10 px-6 bg-primary text-on-primary rounded-lg font-bold hover:bg-primary-dark transition-colors"
                 >
-                  + New Message
+                  {showDiscussionForm ? 'Close Composer' : '+ New Message'}
                 </button>
 
                 {showDiscussionForm && (
-                  <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                  <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/10">
                     <form onSubmit={handlePostDiscussion} className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <label className="block text-sm font-bold text-on-surface-variant mb-1">Title</label>
                         <input
                           type="text"
                           value={newDiscussionTitle}
                           onChange={(event) => setNewDiscussionTitle(event.target.value)}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                          className="w-full h-10 bg-surface-container px-3 rounded-lg text-sm font-semibold text-on-surface outline-none focus:ring-1 focus:ring-primary border border-transparent"
                           placeholder="Message title"
                           required
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                        <label className="block text-sm font-bold text-on-surface-variant mb-1">Message</label>
                         <textarea
                           value={newDiscussionContent}
                           onChange={(event) => setNewDiscussionContent(event.target.value)}
                           rows={4}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                          className="w-full bg-surface-container px-3 py-2 rounded-lg text-sm font-semibold text-on-surface outline-none focus:ring-1 focus:ring-primary border border-transparent"
                           placeholder="Write your message"
                           required
                         />
@@ -309,14 +313,14 @@ const GroupDetailPage = () => {
                         <button
                           type="submit"
                           disabled={postDiscussionMutation.isPending}
-                          className="bg-teal-600 text-white px-6 py-2 rounded hover:bg-teal-700 transition disabled:opacity-50"
+                          className="h-10 px-6 bg-primary text-on-primary rounded-lg font-bold hover:bg-primary-dark transition-colors disabled:opacity-50"
                         >
                           {postDiscussionMutation.isPending ? 'Posting...' : 'Post Message'}
                         </button>
                         <button
                           type="button"
                           onClick={() => setShowDiscussionForm(false)}
-                          className="bg-gray-300 text-gray-900 px-6 py-2 rounded hover:bg-gray-400 transition"
+                          className="h-10 px-6 rounded-lg text-sm font-bold bg-surface-container hover:bg-surface-container-high text-on-surface"
                         >
                           Cancel
                         </button>
@@ -326,7 +330,11 @@ const GroupDetailPage = () => {
                 )}
 
                 {discussionsLoading ? (
-                  <p className="text-center text-gray-500 py-8">Loading messages...</p>
+                  <div className="space-y-3">
+                    {Array.from({ length: 3 }).map((_, index) => (
+                      <div key={index} className="h-24 bg-surface-container-lowest rounded-2xl border border-outline-variant/10 animate-pulse" />
+                    ))}
+                  </div>
                 ) : discussions?.content && discussions.content.length > 0 ? (
                   <div className="space-y-4">
                     {discussions.content.map((discussion: DiscussionPayload) => {
@@ -336,11 +344,11 @@ const GroupDetailPage = () => {
                         deleteDiscussionMutation.variables === discussion.id;
 
                       return (
-                        <div key={discussion.id} className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                        <div key={discussion.id} className="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/10">
                           <div className="flex justify-between items-start gap-4 mb-3">
                             <div>
-                              <h3 className="font-bold text-gray-900">{discussion.title}</h3>
-                              <p className="text-sm text-gray-500">
+                              <h3 className="font-bold text-on-surface">{discussion.title}</h3>
+                              <p className="text-sm text-on-surface-variant">
                                 by {discussion.authorName} ({discussion.authorRole.replace('ROLE_', '')})
                                 {' • '}
                                 {new Date(discussion.createdAt).toLocaleString()}
@@ -357,14 +365,14 @@ const GroupDetailPage = () => {
                               </button>
                             )}
                           </div>
-                          <p className="text-gray-700 whitespace-pre-wrap">{discussion.content}</p>
+                          <p className="text-on-surface whitespace-pre-wrap">{discussion.content}</p>
                         </div>
                       );
                     })}
                   </div>
                 ) : (
-                  <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
-                    <p className="text-gray-500">No messages yet. Start the conversation.</p>
+                  <div className="text-center py-8 bg-surface-container-lowest rounded-2xl border border-outline-variant/10 shadow-sm">
+                    <p className="text-on-surface-variant font-semibold">No messages yet. Start the conversation.</p>
                   </div>
                 )}
               </>
@@ -375,22 +383,26 @@ const GroupDetailPage = () => {
         {activeTab === 'members' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {membersLoading ? (
-              <p className="text-center col-span-2 text-gray-500 py-8">Loading members...</p>
+              <div className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className="h-28 bg-surface-container-lowest rounded-2xl border border-outline-variant/10 animate-pulse" />
+                ))}
+              </div>
             ) : members?.content && members.content.length > 0 ? (
               members.content.map((member: GroupMemberPayload) => {
                 const canRemove = currentRole === 'ROLE_ADMIN' && member.role !== 'OWNER';
                 const isRemoving = removeMemberMutation.isPending && removeMemberMutation.variables === member.userId;
 
                 return (
-                  <div key={member.id} className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                  <div key={member.id} className="bg-surface-container-lowest rounded-2xl p-4 shadow-sm border border-outline-variant/10">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="font-medium text-gray-900">{member.name}</p>
-                        <p className="text-sm text-gray-500">{member.email}</p>
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="font-medium text-on-surface">{member.name}</p>
+                        <p className="text-sm text-on-surface-variant">{member.email}</p>
+                        <p className="text-xs text-on-surface-variant mt-1">
                           Joined {new Date(member.joinedAt).toLocaleDateString()}
                         </p>
-                        <p className="text-[10px] font-black text-gray-500 mt-1">{member.role}</p>
+                        <p className="text-[10px] font-black text-on-surface-variant mt-1">{member.role}</p>
                       </div>
 
                       {canRemove && (
@@ -408,7 +420,9 @@ const GroupDetailPage = () => {
                 );
               })
             ) : (
-              <p className="text-center col-span-2 text-gray-500 py-8">No members</p>
+              <div className="text-center col-span-2 py-8 bg-surface-container-lowest rounded-2xl border border-outline-variant/10 shadow-sm">
+                <p className="text-on-surface-variant font-semibold">No members</p>
+              </div>
             )}
           </div>
         )}
