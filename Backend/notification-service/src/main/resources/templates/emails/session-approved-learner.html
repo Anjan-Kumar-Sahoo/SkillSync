@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Session Approved - SkillSync</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #222;">
+    <p>Hello <span th:text="${learnerName}">Learner</span>,</p>
+
+    <p>Your session has been approved by the mentor.</p>
+
+    <p>
+        Mentor: <span th:text="${mentorEmail}">mentor@example.com</span><br/>
+        Date: <span th:text="${date}">2026-04-10</span><br/>
+        Time: <span th:text="${time}">07:30 PM</span>
+    </p>
+
+    <p>You can now attend the session at the scheduled time.</p>
+
+    <p>SkillSync Team</p>
+</body>
+</html>

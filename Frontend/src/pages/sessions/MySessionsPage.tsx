@@ -34,9 +34,8 @@ const MySessionsPage = () => {
   const [activeTab, setActiveTab] = useState<Tab>('Upcoming');
   const [page, setPage] = useState(0);
 
-  const [reviewModalData, setReviewModalData] = useState<{ isOpen: boolean; sessionId: number; mentorId: number }>({
+  const [reviewModalData, setReviewModalData] = useState<{ isOpen: boolean; mentorId: number }>({
     isOpen: false,
-    sessionId: 0,
     mentorId: 0,
   });
 
@@ -262,7 +261,7 @@ const MySessionsPage = () => {
 
                     {!isMentor && session.status === 'COMPLETED' && (
                       <button 
-                        onClick={() => setReviewModalData({ isOpen: true, sessionId: session.id, mentorId: session.mentorId })}
+                        onClick={() => setReviewModalData({ isOpen: true, mentorId: session.mentorId })}
                         className="bg-primary/10 hover:bg-primary/20 text-primary px-4 py-2 rounded-lg text-sm font-bold transition-colors border border-primary/20 shrink-0"
                       >
                         Leave Review
@@ -279,7 +278,6 @@ const MySessionsPage = () => {
       <ReviewModal 
         isOpen={reviewModalData.isOpen} 
         onClose={() => setReviewModalData(prev => ({ ...prev, isOpen: false }))} 
-        sessionId={reviewModalData.sessionId} 
         mentorId={reviewModalData.mentorId} 
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ['sessions'] })}
       />

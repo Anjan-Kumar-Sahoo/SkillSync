@@ -155,7 +155,7 @@ public class GroupController {
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/message/{discussionId}")
+    @DeleteMapping({"/message/{discussionId}", "/messages/{discussionId}"})
     public ResponseEntity<Void> deleteMessage(
             @PathVariable Long discussionId,
             @RequestHeader("X-User-Id") Long userId,

@@ -26,6 +26,7 @@ const NotificationsPage = () => {
     mutationFn: (id: number) => notificationService.markAsRead(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['unread-notifications'] });
     },
   });
 
@@ -35,6 +36,7 @@ const NotificationsPage = () => {
     onSuccess: () => {
       showToast({ message: 'All notifications marked as read', type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['unread-notifications'] });
     },
   });
 
@@ -43,6 +45,7 @@ const NotificationsPage = () => {
     mutationFn: (id: number) => notificationService.deleteNotification(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['unread-notifications'] });
     },
   });
 
@@ -66,8 +69,13 @@ const NotificationsPage = () => {
   const getNotificationIcon = (type: string) => {
     const icons: Record<string, string> = {
       SESSION_REQUEST: '📅',
+      SESSION_REQUESTED: '📅',
+      SESSION_REQUESTED_CONFIRMATION: '📨',
       SESSION_ACCEPTED: '✅',
+      SESSION_APPROVED: '✅',
       SESSION_REJECTED: '❌',
+      SESSION_CANCELLED: '🚫',
+      SESSION_COMPLETED: '🏁',
       MENTOR_APPROVED: '⭐',
       REVIEW_RECEIVED: '⭐',
       SYSTEM: 'ℹ️',
@@ -79,8 +87,13 @@ const NotificationsPage = () => {
   const getNotificationColor = (type: string) => {
     const colors: Record<string, string> = {
       SESSION_REQUEST: 'bg-blue-50 border-blue-200',
+      SESSION_REQUESTED: 'bg-blue-50 border-blue-200',
+      SESSION_REQUESTED_CONFIRMATION: 'bg-indigo-50 border-indigo-200',
       SESSION_ACCEPTED: 'bg-green-50 border-green-200',
+      SESSION_APPROVED: 'bg-green-50 border-green-200',
       SESSION_REJECTED: 'bg-red-50 border-red-200',
+      SESSION_CANCELLED: 'bg-red-50 border-red-200',
+      SESSION_COMPLETED: 'bg-emerald-50 border-emerald-200',
       MENTOR_APPROVED: 'bg-yellow-50 border-yellow-200',
       REVIEW_RECEIVED: 'bg-purple-50 border-purple-200',
       SYSTEM: 'bg-gray-50 border-gray-200',

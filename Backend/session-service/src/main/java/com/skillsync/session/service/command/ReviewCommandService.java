@@ -7,6 +7,8 @@ import com.skillsync.session.entity.Review;
 import com.skillsync.session.entity.Session;
 import com.skillsync.session.enums.SessionStatus;
 import com.skillsync.session.event.ReviewSubmittedEvent;
+import com.skillsync.session.feign.AuthServiceClient;
+import com.skillsync.session.feign.MentorProfileClient;
 import com.skillsync.session.mapper.ReviewMapper;
 import com.skillsync.session.repository.ReviewRepository;
 import com.skillsync.session.repository.SessionRepository;
@@ -15,6 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Map;
 
 /**
  * CQRS Command Service for Review operations.
@@ -29,27 +33,32 @@ public class ReviewCommandService {
     private final SessionRepository sessionRepository;
     private final RabbitTemplate rabbitTemplate;
     private final CacheService cacheService;
+    private final AuthServiceClient authServiceClient;
+    private final MentorProfileClient mentorProfileClient;
 
     @Transactional
-    public ReviewResponse submitReview(Long reviewerId, CreateReviewRequest request) {
-        Session session = sessionRepository.findById(request.sessionId())
-                .orElseThrow(() -> new RuntimeException("Session not found: " + request.sessionId()));
-
-        if (session.getStatus() != SessionStatus.COMPLETED) {
-            throw new RuntimeException("Can only review completed sessions");
-        }
-        if (!reviewerId.equals(session.getLearnerId())) {
-            throw new RuntimeException("Only the learner can review");
-        }
-        if (reviewRepository.existsBySessionId(request.sessionId())) {
-            throw new RuntimeException("Session already reviewed");
+    public ReviewResponse submitReview(Long reviewerId, ReviewRequest request) {
+        Long mentorId = resolveMentorUserId(request.mentorId());
+        Map<String, Object> mentor = fetchUserById(mentorId);
+        if (!isMentorUser(mentor)) {
+            throw new RuntimeException("Invalid mentor id: " + request.mentorId());
         }
 
-        Long mentorId = session.getMentorId();
+        if (reviewRepository.existsByMentorIdAndReviewerId(mentorId, reviewerId)) {
+            throw new RuntimeException("You have already reviewed this mentor");
+        }
+
+        Session session = sessionRepository
+                .findFirstByMentorIdAndLearnerIdAndStatusOrderBySessionDateDesc(
+                        mentorId,
+                        reviewerId,
+                        SessionStatus.COMPLETED
+                )
+                .orElseThrow(() -> new RuntimeException("No completed session found with this mentor"));
 
         Review review = Review.builder()
-                .sessionId(request.sessionId()).mentorId(mentorId).reviewerId(reviewerId)
-                .rating(request.rating()).comment(request.comment()).build();
+                .sessionId(session.getId()).mentorId(mentorId).reviewerId(reviewerId)
+                .rating(request.rating()).comment(normalizeComment(request.comment())).build();
         review = reviewRepository.saveAndFlush(review);
 
         // Invalidate versioned review caches
@@ -61,15 +70,77 @@ public class ReviewCommandService {
         long totalReviews = reviewRepository.countByMentorId(mentorId);
         try {
             rabbitTemplate.convertAndSend(RabbitMQConfig.REVIEW_EXCHANGE, "review.submitted",
-                    new ReviewSubmittedEvent(review.getId(), mentorId, request.rating(),
+                    new ReviewSubmittedEvent(review.getId(), mentorId, review.getRating(),
                             avgRating != null ? avgRating : 0.0, (int) totalReviews,
-                            request.comment()));
+                            review.getComment()));
         } catch (Exception e) {
             log.error("Failed to publish review event: {}", e.getMessage());
         }
 
         log.info("[CQRS:COMMAND] Review {} submitted. Cache invalidated.", review.getId());
         return ReviewMapper.toResponse(review);
+    }
+
+    private String normalizeComment(String comment) {
+        if (comment == null) {
+            return null;
+        }
+        String normalized = comment.trim();
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private Long resolveMentorUserId(Long requestedMentorId) {
+        if (requestedMentorId == null) {
+            throw new RuntimeException("Mentor ID is required");
+        }
+
+        Map<String, Object> user = fetchUserById(requestedMentorId);
+        if (isMentorUser(user)) {
+            return requestedMentorId;
+        }
+
+        Long mappedUserId = mapMentorProfileIdToUserId(requestedMentorId);
+        if (mappedUserId != null) {
+            Map<String, Object> mappedUser = fetchUserById(mappedUserId);
+            if (isMentorUser(mappedUser)) {
+                return mappedUserId;
+            }
+        }
+
+        throw new RuntimeException("Invalid mentor id: " + requestedMentorId);
+    }
+
+    private Map<String, Object> fetchUserById(Long userId) {
+        try {
+            return authServiceClient.getUserById(userId);
+        } catch (Exception e) {
+            log.warn("Unable to validate user {} via auth-service: {}", userId, e.getMessage());
+            return null;
+        }
+    }
+
+    private boolean isMentorUser(Map<String, Object> userPayload) {
+        if (userPayload == null) {
+            return false;
+        }
+        Object role = userPayload.get("role");
+        return "ROLE_MENTOR".equals(String.valueOf(role));
+    }
+
+    private Long mapMentorProfileIdToUserId(Long mentorProfileId) {
+        try {
+            Map<String, Object> mentorProfile = mentorProfileClient.getMentorById(mentorProfileId);
+            Object userIdValue = mentorProfile.get("userId");
+            if (userIdValue instanceof Number number) {
+                return number.longValue();
+            }
+            if (userIdValue != null) {
+                return Long.parseLong(String.valueOf(userIdValue));
+            }
+        } catch (Exception e) {
+            log.debug("Mentor profile lookup failed for id {}: {}", mentorProfileId, e.getMessage());
+        }
+        return null;
     }
 
     public void deleteReview(Long id) {

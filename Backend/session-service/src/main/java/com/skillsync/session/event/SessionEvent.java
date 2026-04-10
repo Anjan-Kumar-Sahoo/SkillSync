@@ -12,4 +12,5 @@ public class SessionEvent {
     private String topic;
     private String status;
     private String reason;
+    private String sessionDateTime;
 }

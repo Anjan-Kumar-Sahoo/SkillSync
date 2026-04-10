@@ -20,7 +20,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
@@ -68,7 +67,7 @@ class SessionServiceTest {
         verify(cacheService).evict(CacheService.vKey("session:1"));
         verify(cacheService).evictByPattern(CacheService.vKey("session:learner:3:*"));
         verify(cacheService).evictByPattern(CacheService.vKey("session:mentor:2:*"));
-        verify(rabbitTemplate, never()).convertAndSend(
+        verify(rabbitTemplate).convertAndSend(
             eq("session.exchange"),
             eq("session.requested"),
             any(com.skillsync.session.event.SessionEvent.class)

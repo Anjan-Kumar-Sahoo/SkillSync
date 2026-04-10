@@ -40,6 +40,12 @@ public class NotificationController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/read/{id}")
+    public ResponseEntity<Void> markAsReadPost(@PathVariable Long id) {
+        notificationCommandService.markAsRead(id);
+        return ResponseEntity.ok().build();
+    }
+
     @PutMapping("/read-all")
     public ResponseEntity<Void> markAllAsRead(@RequestHeader("X-User-Id") Long userId) {
         notificationCommandService.markAllAsRead(userId);

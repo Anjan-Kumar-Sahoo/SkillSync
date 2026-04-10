@@ -16,8 +16,6 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -53,6 +51,9 @@ public class SessionCommandService {
 
         // Invalidate user session caches
         invalidateSessionCaches(session);
+
+        // Notify mentor and learner that the request has been created.
+        publishEvent(session, "session.requested");
 
         log.info("[CQRS:COMMAND] Session {} created in REQUESTED state (awaiting payment confirmation). Cache invalidated.",
             session.getId());
@@ -191,7 +192,8 @@ public class SessionCommandService {
         try {
             SessionEvent event = new SessionEvent(session.getId(), session.getMentorId(),
                     session.getLearnerId(), session.getTopic(), session.getStatus().name(),
-                    session.getCancelReason());
+                    session.getCancelReason(),
+                    session.getSessionDate() != null ? session.getSessionDate().toString() : null);
             rabbitTemplate.convertAndSend(RabbitMQConfig.SESSION_EXCHANGE, routingKey, event);
         } catch (Exception e) {
             log.error("Failed to publish session event: {}", e.getMessage());

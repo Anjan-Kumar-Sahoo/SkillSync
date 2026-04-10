@@ -2,11 +2,9 @@ import api from './axios';
 import type { ReviewData } from '../store/slices/reviewsSlice';
 
 export interface CreateReviewPayload {
-  sessionId: number;
   mentorId: number;
   rating: number;
   comment: string;
-  isAnonymous?: boolean;
 }
 
 export interface UpdateReviewPayload {

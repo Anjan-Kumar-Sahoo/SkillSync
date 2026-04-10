@@ -4,7 +4,19 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 export interface NotificationData {
   id: number;
   userId: number;
-  type: 'SESSION_REQUEST' | 'SESSION_ACCEPTED' | 'SESSION_REJECTED' | 'MENTOR_APPROVED' | 'REVIEW_RECEIVED' | 'SYSTEM' | 'GROUP_INVITE';
+  type:
+    | 'SESSION_REQUEST'
+    | 'SESSION_REQUESTED'
+    | 'SESSION_REQUESTED_CONFIRMATION'
+    | 'SESSION_ACCEPTED'
+    | 'SESSION_APPROVED'
+    | 'SESSION_REJECTED'
+    | 'SESSION_CANCELLED'
+    | 'SESSION_COMPLETED'
+    | 'MENTOR_APPROVED'
+    | 'REVIEW_RECEIVED'
+    | 'SYSTEM'
+    | 'GROUP_INVITE';
   title: string;
   message: string;
   isRead: boolean;

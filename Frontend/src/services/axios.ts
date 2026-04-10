@@ -19,7 +19,7 @@ if (isProd && configuredUrl && new URL(configuredUrl).hostname === 'skillsync.mr
     configuredUrl = 'https://api.skillsync.mraks.dev';
 }
 
-const API_BASE_URL = configuredUrl || (isProd ? 'https://api.skillsync.mraks.dev' : 'http://localhost:8080');
+export const API_BASE_URL = configuredUrl || (isProd ? 'https://api.skillsync.mraks.dev' : 'http://localhost:8080');
 
 const api = axios.create({
   baseURL: API_BASE_URL,

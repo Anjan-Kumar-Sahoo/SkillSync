@@ -1,12 +1,28 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/axios';
+import notificationService from '../../services/notificationService';
 import type { RootState } from '../../store';
 import ThemeToggleButton from '../ui/ThemeToggleButton';
 
 const Navbar = () => {
   const user = useSelector((state: RootState) => state.auth.user);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!user?.id) {
+      return;
+    }
+
+    const unsubscribe = notificationService.subscribeToNotifications(() => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['unread-notifications'] });
+    });
+
+    return unsubscribe;
+  }, [queryClient, user?.id]);
 
   const { data: notificationData } = useQuery({
     queryKey: ['unread-notifications', user?.id || 'unknown'],

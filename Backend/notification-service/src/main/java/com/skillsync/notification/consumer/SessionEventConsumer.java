@@ -8,9 +8,10 @@ import com.skillsync.notification.service.command.NotificationCommandService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 @Component
@@ -22,27 +23,60 @@ public class SessionEventConsumer {
     private final EmailService emailService;
     private final AuthServiceClient authServiceClient;
 
-    @Value("${app.base-url:https://skillsync.mraks.dev}")
-    private String appBaseUrl;
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("hh:mm a");
 
     @RabbitListener(queues = RabbitMQConfig.SESSION_NOTIFICATION_REQUESTED_QUEUE)
     public void handleSessionRequested(Map<String, Object> event) {
         Long mentorId = toLong(event.get("mentorId"));
+        Long learnerId = toLong(event.get("learnerId"));
         String topic = (String) event.get("topic");
+
         notificationCommandService.createAndPush(mentorId, "SESSION_REQUESTED",
-                "New Session Request",
-                "You have a new session request for: " + topic);
+            "Session Requested",
+            "New session request received");
+
+        notificationCommandService.createAndPush(learnerId, "SESSION_REQUESTED_CONFIRMATION",
+            "Session Requested",
+            "Your session request has been sent");
+
         try {
             UserSummary mentor = authServiceClient.getUserById(mentorId);
-            emailService.sendEmail(mentor.email(), "New Session Request on SkillSync!", "session-booked",
-                    Map.of("recipientName", mentor.firstName(),
-                            "message", "A learner has requested a session for topic: '" + topic + "'. Please review and accept it from your dashboard.",
-                            "actionUrl", appBaseUrl + "/mentor/sessions",
-                            "actionText", "View Requests"));
+            UserSummary learner = authServiceClient.getUserById(learnerId);
+            LocalDateTime sessionDateTime = parseDateTime(event.get("sessionDateTime"));
+            String date = formatDate(sessionDateTime);
+            String time = formatTime(sessionDateTime);
+
+            emailService.sendEmail(
+                mentor.email(),
+                "New Session Request - SkillSync",
+                "session-requested-mentor",
+                Map.of(
+                    "mentorName", displayName(mentor),
+                    "learnerEmail", learner.email(),
+                    "date", date,
+                    "time", time,
+                    "topic", topic != null ? topic : "Session"
+                )
+            );
+
+            emailService.sendEmail(
+                learner.email(),
+                "Session Requested Successfully",
+                "session-requested-learner",
+                Map.of(
+                    "learnerName", displayName(learner),
+                    "mentorEmail", mentor.email(),
+                    "date", date,
+                    "time", time,
+                    "topic", topic != null ? topic : "Session"
+                )
+            );
         } catch (Exception e) {
-            log.error("Failed to send session requested email to mentor {}: {}", mentorId, e.getMessage());
+            log.error("Failed to send session requested emails for mentor {} and learner {}: {}",
+                mentorId, learnerId, e.getMessage());
         }
-        log.info("Processed SESSION_REQUESTED event for mentor {}", mentorId);
+        log.info("Processed SESSION_REQUESTED event for mentor {} and learner {}", mentorId, learnerId);
     }
 
     @RabbitListener(queues = RabbitMQConfig.SESSION_NOTIFICATION_ACCEPTED_QUEUE)
@@ -51,38 +85,35 @@ public class SessionEventConsumer {
         Long mentorId = toLong(event.get("mentorId"));
         String topic = (String) event.get("topic");
 
-        notificationCommandService.createAndPush(learnerId, "SESSION_ACCEPTED",
-                "Session Confirmed!",
-                "Your session for '" + topic + "' is confirmed.");
+        notificationCommandService.createAndPush(learnerId, "SESSION_APPROVED",
+            "Session Approved",
+            "Your session has been approved");
 
-        notificationCommandService.createAndPush(mentorId, "SESSION_ACCEPTED",
-                "New Session Booked!",
-                "A learner has booked and confirmed a session for '" + topic + "'.");
-
-        // Email notification to Learner
         try {
             UserSummary learner = authServiceClient.getUserById(learnerId);
-            emailService.sendEmail(learner.email(), "SkillSync Session Confirmed!", "session-booked",
-                    Map.of("recipientName", learner.firstName(),
-                            "message", "Your session for '" + topic + "' has been successfully booked and paid for.",
-                            "actionUrl", appBaseUrl + "/learner/sessions",
-                            "actionText", "View Sessions"));
+            UserSummary mentor = authServiceClient.getUserById(mentorId);
+            LocalDateTime sessionDateTime = parseDateTime(event.get("sessionDateTime"));
+            String date = formatDate(sessionDateTime);
+            String time = formatTime(sessionDateTime);
+
+            emailService.sendEmail(
+                learner.email(),
+                "Session Approved - SkillSync",
+                "session-approved-learner",
+                Map.of(
+                    "learnerName", displayName(learner),
+                    "mentorEmail", mentor.email(),
+                    "date", date,
+                    "time", time,
+                    "topic", topic != null ? topic : "Session"
+                )
+            );
         } catch (Exception e) {
             log.error("Failed to send session accepted email to learner {}: {}", learnerId, e.getMessage());
         }
 
-        // Email notification to Mentor
-        try {
-            UserSummary mentor = authServiceClient.getUserById(mentorId);
-            emailService.sendEmail(mentor.email(), "New Session Booked on SkillSync!", "session-booked",
-                    Map.of("recipientName", mentor.firstName(),
-                            "message", "A learner has successfully booked and paid for a session with you on topic: '" + topic + "'.",
-                            "actionUrl", appBaseUrl + "/mentor/sessions",
-                            "actionText", "View Schedule"));
-        } catch (Exception e) {
-            log.error("Failed to send session accepted email to mentor {}: {}", mentorId, e.getMessage());
-        }
-        log.info("Processed SESSION_ACCEPTED event for learner {} and mentor {}", learnerId, mentorId);
+        log.info("Processed SESSION_ACCEPTED event for learner {} (mentor {} informed only at request stage)",
+            learnerId, mentorId);
     }
 
     @RabbitListener(queues = RabbitMQConfig.SESSION_NOTIFICATION_REJECTED_QUEUE)
@@ -118,5 +149,37 @@ public class SessionEventConsumer {
     private Long toLong(Object value) {
         if (value instanceof Number) return ((Number) value).longValue();
         return Long.parseLong(String.valueOf(value));
+    }
+
+    private LocalDateTime parseDateTime(Object value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return LocalDateTime.parse(String.valueOf(value));
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private String formatDate(LocalDateTime dateTime) {
+        if (dateTime == null) {
+            return "TBD";
+        }
+        return DATE_FORMATTER.format(dateTime);
+    }
+
+    private String formatTime(LocalDateTime dateTime) {
+        if (dateTime == null) {
+            return "TBD";
+        }
+        return TIME_FORMATTER.format(dateTime);
+    }
+
+    private String displayName(UserSummary user) {
+        String first = user.firstName() != null ? user.firstName().trim() : "";
+        String last = user.lastName() != null ? user.lastName().trim() : "";
+        String full = (first + " " + last).trim();
+        return full.isEmpty() ? user.email() : full;
     }
 }

@@ -6,12 +6,11 @@ import { useToast } from '../ui/Toast';
 interface ReviewModalProps {
   isOpen: boolean;
   onClose: () => void;
-  sessionId: number;
   mentorId: number;
   onSuccess: () => void;
 }
 
-const ReviewModal = ({ isOpen, onClose, sessionId, mentorId, onSuccess }: ReviewModalProps) => {
+const ReviewModal = ({ isOpen, onClose, mentorId, onSuccess }: ReviewModalProps) => {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
@@ -21,10 +20,9 @@ const ReviewModal = ({ isOpen, onClose, sessionId, mentorId, onSuccess }: Review
     mutationFn: async () => {
       const trimmedComment = comment.trim();
       const payload = {
-        sessionId,
         mentorId,
         rating,
-        comment: trimmedComment.length > 0 ? trimmedComment : null,
+        comment: trimmedComment,
       };
       const res = await api.post('/api/reviews', payload);
       return res.data;

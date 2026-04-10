@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface SessionRepository extends JpaRepository<Session, Long> {
@@ -19,6 +20,11 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
     Page<Session> findByMentorIdAndStatusIn(Long mentorId, List<SessionStatus> statuses, Pageable pageable);
     Page<Session> findByMentorIdAndStatus(Long mentorId, SessionStatus status, Pageable pageable);
     List<Session> findByMentorIdAndStatusIn(Long mentorId, List<SessionStatus> statuses);
+    Optional<Session> findFirstByMentorIdAndLearnerIdAndStatusOrderBySessionDateDesc(
+           Long mentorId,
+           Long learnerId,
+           SessionStatus status
+    );
 
     @Query("SELECT s FROM Session s WHERE s.mentorId = :mentorId AND s.status IN ('REQUESTED','ACCEPTED') " +
            "AND s.sessionDate < :endTime AND FUNCTION('TIMESTAMPADD', MINUTE, s.durationMinutes, s.sessionDate) > :startTime")

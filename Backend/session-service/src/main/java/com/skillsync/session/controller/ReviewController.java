@@ -48,7 +48,7 @@ public class ReviewController {
     @PostMapping
     public ResponseEntity<ReviewResponse> submitReview(
             @RequestHeader("X-User-Id") Long userId,
-            @Valid @RequestBody CreateReviewRequest request) {
+            @Valid @RequestBody ReviewRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(reviewCommandService.submitReview(userId, request));
     }

@@ -16,6 +16,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Page<Review> findByReviewerIdOrderByCreatedAtDesc(Long reviewerId, Pageable pageable);
     Optional<Review> findBySessionId(Long sessionId);
     boolean existsBySessionId(Long sessionId);
+    boolean existsByMentorIdAndReviewerId(Long mentorId, Long reviewerId);
     @Query("SELECT AVG(r.rating) FROM Review r WHERE r.mentorId = :mentorId")
     Double calculateAverageRating(@Param("mentorId") Long mentorId);
     @Query("SELECT r.rating, COUNT(r) FROM Review r WHERE r.mentorId = :mentorId GROUP BY r.rating")
