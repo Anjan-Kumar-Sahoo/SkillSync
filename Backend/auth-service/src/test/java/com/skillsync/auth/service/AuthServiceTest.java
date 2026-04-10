@@ -270,10 +270,10 @@ class AuthServiceTest {
                     .provider("google").providerId("google-id-123").build();
 
             when(authUserRepository.findByEmail("oauth@gmail.com")).thenReturn(Optional.of(oauthUser));
-            when(passwordEncoder.encode("myNewPassword")).thenReturn("encodedNewPassword");
+            when(passwordEncoder.encode("MyNewPassword1!")).thenReturn("encodedNewPassword");
             when(authUserRepository.save(any())).thenReturn(oauthUser);
 
-            SetupPasswordRequest request = new SetupPasswordRequest("oauth@gmail.com", "myNewPassword");
+            SetupPasswordRequest request = new SetupPasswordRequest("oauth@gmail.com", "MyNewPassword1!");
             authService.setupPassword(request);
 
             assertTrue(oauthUser.isPasswordSet());
