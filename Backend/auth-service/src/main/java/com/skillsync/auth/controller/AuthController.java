@@ -223,6 +223,15 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
+    @PutMapping("/internal/users/{id}/name")
+    public ResponseEntity<Void> updateUserNameInternal(
+            @PathVariable Long id,
+            @RequestParam String firstName,
+            @RequestParam String lastName) {
+        authService.updateUserName(id, firstName, lastName);
+        return ResponseEntity.ok().build();
+    }
+
     private void addAuthCookies(HttpServletResponse response, AuthResponse authResponse, HttpServletRequest request) {
         addAuthCookies(
                 response,

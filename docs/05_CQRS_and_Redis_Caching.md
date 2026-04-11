@@ -6,6 +6,27 @@ Updated for final presentation on 2026-04-06. Start with docs/00_Presentation_Pl
 
 # 05 CQRS and Redis Caching
 
+## 2026-04-11 QA Round 2 CQRS Delta
+
+### Mentor metrics consistency model
+- Session service now owns mentor metric computation through a shared aggregation service.
+- Metrics are derived from completed sessions only.
+
+### Weighted average for unrated completions
+- Completed sessions without an explicit review are represented using `defaultRatingApplied = true`.
+- Aggregation applies default weight `2.5` for each such session.
+- When a real review is submitted for that session, default contribution is removed.
+
+### Event-driven cross-service projection sync
+- Session service publishes `review.summary.updated` after:
+  - Session completion
+  - Review submission
+- Event payload includes:
+  - `mentorId`
+  - `avgRating`
+  - `totalReviews`
+  - `totalSessions`
+- User service consumes this event and updates mentor projections used by discovery and profile APIs.
 
 
 ---

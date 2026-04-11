@@ -3,6 +3,7 @@ package com.skillsync.user.service;
 import com.skillsync.cache.CacheService;
 import com.skillsync.user.dto.*;
 import com.skillsync.user.entity.Profile;
+import com.skillsync.user.feign.AuthServiceClient;
 import com.skillsync.user.feign.SkillServiceClient;
 import com.skillsync.user.repository.ProfileRepository;
 import com.skillsync.user.repository.UserSkillRepository;
@@ -29,6 +30,7 @@ class UserServiceTest {
 
     @Mock private ProfileRepository profileRepository;
     @Mock private UserSkillRepository userSkillRepository;
+    @Mock private AuthServiceClient authServiceClient;
     @Mock private SkillServiceClient skillServiceClient;
     @Mock private CacheService cacheService;
 
@@ -124,6 +126,7 @@ class UserServiceTest {
         verify(profileRepository).save(any(Profile.class));
         verify(cacheService).evict(CacheService.vKey("user:profile:100"));
         verify(cacheService).evict(CacheService.vKey("user:profile:id:1"));
+        verify(authServiceClient).updateUserName(100L, "Jane", "Doe");
     }
 
     @Test

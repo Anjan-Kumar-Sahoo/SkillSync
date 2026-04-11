@@ -19,6 +19,10 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     boolean existsByMentorIdAndReviewerId(Long mentorId, Long reviewerId);
     @Query("SELECT AVG(r.rating) FROM Review r WHERE r.mentorId = :mentorId")
     Double calculateAverageRating(@Param("mentorId") Long mentorId);
+
+    @Query("SELECT COALESCE(SUM(r.rating), 0) FROM Review r WHERE r.mentorId = :mentorId")
+    Double calculateTotalRating(@Param("mentorId") Long mentorId);
+
     @Query("SELECT r.rating, COUNT(r) FROM Review r WHERE r.mentorId = :mentorId GROUP BY r.rating")
     List<Object[]> getRatingDistribution(@Param("mentorId") Long mentorId);
     long countByMentorId(Long mentorId);

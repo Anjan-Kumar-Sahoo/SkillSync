@@ -46,4 +46,10 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
     List<Session> findConflictingSessions(@Param("mentorId") Long mentorId,
                                           @Param("startTime") LocalDateTime startTime,
                                           @Param("endTime") LocalDateTime endTime);
+
+       long countByStatus(SessionStatus status);
+
+       long countByMentorIdAndStatus(Long mentorId, SessionStatus status);
+
+       long countByMentorIdAndStatusAndDefaultRatingAppliedTrue(Long mentorId, SessionStatus status);
 }

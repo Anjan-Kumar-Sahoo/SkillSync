@@ -76,6 +76,17 @@ public class AdminController {
     public ResponseEntity<Void> updateUserRole(
             @PathVariable Long id, @RequestBody Map<String, String> body) {
         String role = body.get("role");
+
+        if ("ROLE_MENTOR".equals(role)) {
+            mentorCommandService.promoteUserToMentor(id);
+            return ResponseEntity.ok().build();
+        }
+
+        if ("ROLE_LEARNER".equals(role)) {
+            mentorCommandService.demoteUserToLearner(id, "Role updated to learner by admin");
+            return ResponseEntity.ok().build();
+        }
+
         authServiceClient.updateUserRole(id, role);
         return ResponseEntity.ok().build();
     }

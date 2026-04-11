@@ -115,8 +115,9 @@ const MentorProfilePage = () => {
   const colorIndex = mentor.firstName.charCodeAt(0) % 5;
   const colors = ['from-blue-500 to-indigo-500', 'from-emerald-400 to-teal-500', 'from-violet-500 to-purple-500', 'from-amber-400 to-orange-500', 'from-rose-400 to-red-500'];
   const avatarClass = colors[colorIndex];
-  const mentorReviewCount = Number(mentor.reviewCount ?? reviewsData?.totalElements ?? 0);
+  const mentorSessions = Number(mentor.totalSessions ?? 0);
   const mentorAverageRating = Number(mentor.avgRating ?? mentor.rating ?? 0);
+  const isNewMentor = mentorSessions === 0;
 
   const formatTimeOnlyIST = (value: string) => {
     const dateValue = new Date(value);
@@ -145,7 +146,7 @@ const MentorProfilePage = () => {
                     {initials}
                   </div>
                   <div className="absolute -bottom-2 -left-2 bg-gray-900/90 backdrop-blur-sm text-white rounded-lg px-2.5 py-1 text-sm font-bold shadow-md flex items-center gap-1 border border-white/10">
-                    <span className="text-amber-400">★</span> {mentorReviewCount > 0 ? mentorAverageRating.toFixed(1) : 'NEW'}
+                    <span className="text-amber-400">★</span> {isNewMentor ? 'NEW' : mentorAverageRating.toFixed(1)}
                   </div>
                 </div>
 

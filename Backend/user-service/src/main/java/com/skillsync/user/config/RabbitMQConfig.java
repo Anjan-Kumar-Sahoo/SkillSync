@@ -122,4 +122,9 @@ public class RabbitMQConfig {
     public Binding userReviewSubmittedBinding() {
         return BindingBuilder.bind(userReviewSubmittedQueue()).to(reviewExchange()).with("review.submitted");
     }
+
+    @Bean
+    public Binding userReviewSummaryUpdatedBinding() {
+        return BindingBuilder.bind(userReviewSubmittedQueue()).to(reviewExchange()).with("review.summary.updated");
+    }
 }

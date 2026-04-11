@@ -30,7 +30,7 @@ class ReviewEventCacheSyncConsumerTest {
 
         consumer.handleReviewSubmitted(event);
 
-        verify(mentorCommandService).updateAvgRating(2L, 4.5, 10);
+        verify(mentorCommandService).updateMentorMetrics(2L, 4.5, 10, null);
     }
 
     @Test
@@ -44,6 +44,6 @@ class ReviewEventCacheSyncConsumerTest {
 
         consumer.handleReviewSubmitted(event);
 
-        verify(mentorCommandService).updateAvgRating(7L, 4.8, 16);
+        verify(mentorCommandService).updateMentorMetrics(7L, 4.8, 16, null);
     }
 }

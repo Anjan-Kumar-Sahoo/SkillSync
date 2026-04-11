@@ -26,7 +26,7 @@ export interface MentorProfile {
   bio: string;
   experienceYears: number;
   hourlyRate: number;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
   averageRating: number;
   skills: string[];
 }

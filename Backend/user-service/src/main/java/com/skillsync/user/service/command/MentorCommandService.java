@@ -21,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -40,8 +42,41 @@ public class MentorCommandService {
 
     @Transactional
     public MentorProfileResponse apply(Long userId, MentorApplicationRequest request) {
-        if (mentorProfileRepository.existsByUserId(userId)) {
-            throw new RuntimeException("User already has a mentor application");
+                Optional<MentorProfile> existingProfile = mentorProfileRepository.findByUserId(userId);
+                if (existingProfile.isPresent()) {
+                        MentorProfile profile = existingProfile.get();
+
+                        if (profile.getStatus() == MentorStatus.PENDING) {
+                                throw new RuntimeException("Mentor application is already pending review");
+                        }
+
+                        if (profile.getStatus() == MentorStatus.APPROVED) {
+                                throw new RuntimeException("User is already an approved mentor");
+                        }
+
+                        profile.setBio(request.bio());
+                        profile.setExperienceYears(request.experienceYears());
+                        profile.setHourlyRate(request.hourlyRate());
+                        profile.setStatus(MentorStatus.PENDING);
+                        profile.setRejectionReason(null);
+
+                        if (profile.getSkills() == null) {
+                                profile.setSkills(new ArrayList<>());
+                        } else {
+                                profile.getSkills().clear();
+                        }
+
+                        for (Long skillId : request.skillIds()) {
+                                MentorSkill skill = MentorSkill.builder()
+                                                .mentor(profile).skillId(skillId).build();
+                                profile.getSkills().add(skill);
+                        }
+
+                        profile = mentorProfileRepository.save(profile);
+                        cacheService.evictByPattern(CacheService.vKey("user:mentor:pending:*"));
+                        invalidateMentorCaches(profile.getId(), profile.getUserId());
+                        log.info("[CQRS:COMMAND] Mentor application re-submitted (PENDING) for userId: {}", userId);
+                        return MentorMapper.toResponse(profile);
         }
 
         MentorProfile profile = MentorProfile.builder()
@@ -78,6 +113,7 @@ public class MentorCommandService {
                 .orElseThrow(() -> new RuntimeException("Mentor not found: " + mentorId));
 
         profile.setStatus(MentorStatus.APPROVED);
+        profile.setRejectionReason(null);
         mentorProfileRepository.save(profile);
 
         // If this fails, it MUST throw an exception to trigger a @Transactional rollback.
@@ -108,6 +144,64 @@ public class MentorCommandService {
         invalidateMentorCaches(mentorId, profile.getUserId());
         log.info("[CQRS:COMMAND] Mentor {} rejected. Cache invalidated.", mentorId);
     }
+
+        @Transactional
+        public void promoteUserToMentor(Long userId) {
+                MentorProfile profile = mentorProfileRepository.findByUserId(userId)
+                                .map(existing -> {
+                                        existing.setStatus(MentorStatus.APPROVED);
+                                        existing.setRejectionReason(null);
+                                        return existing;
+                                })
+                                .orElseGet(() -> MentorProfile.builder()
+                                                .userId(userId)
+                                                .bio("")
+                                                .experienceYears(0)
+                                                .hourlyRate(java.math.BigDecimal.ZERO)
+                                                .avgRating(0.0)
+                                                .totalReviews(0)
+                                                .totalSessions(0)
+                                                .status(MentorStatus.APPROVED)
+                                                .skills(new ArrayList<>())
+                                                .slots(new ArrayList<>())
+                                                .build());
+
+                profile = mentorProfileRepository.save(profile);
+                authServiceClient.updateUserRole(userId, "ROLE_MENTOR");
+
+                Map<String, Object> event = new HashMap<>();
+                event.put("mentorId", profile.getId());
+                event.put("userId", userId);
+                event.put("source", "admin");
+                rabbitTemplate.convertAndSend(RabbitMQConfig.MENTOR_EXCHANGE, "mentor.promoted", event);
+
+                invalidateMentorCaches(profile.getId(), profile.getUserId());
+                log.info("[CQRS:COMMAND] User {} promoted to mentor.", userId);
+        }
+
+        @Transactional
+        public void demoteUserToLearner(Long userId, String reason) {
+                Optional<MentorProfile> profileOptional = mentorProfileRepository.findByUserId(userId);
+                profileOptional.ifPresent(profile -> {
+                        profile.setStatus(MentorStatus.SUSPENDED);
+                        profile.setRejectionReason(reason);
+                        mentorProfileRepository.save(profile);
+                        invalidateMentorCaches(profile.getId(), profile.getUserId());
+                });
+
+                authServiceClient.updateUserRole(userId, "ROLE_LEARNER");
+
+                Map<String, Object> event = new HashMap<>();
+                profileOptional.ifPresent(profile -> event.put("mentorId", profile.getId()));
+                event.put("userId", userId);
+                event.put("reason", (reason == null || reason.isBlank()) ? "Role changed to learner by admin" : reason);
+                event.put("source", "admin");
+                rabbitTemplate.convertAndSend(RabbitMQConfig.MENTOR_EXCHANGE, "mentor.demoted", event);
+
+                cacheService.evictByPattern(CacheService.vKey("user:mentor:search:*"));
+                cacheService.evictByPattern(CacheService.vKey("user:mentor:pending:*"));
+                log.info("[CQRS:COMMAND] User {} demoted to learner.", userId);
+        }
 
 
 
@@ -160,6 +254,11 @@ public class MentorCommandService {
 
     @Transactional
     public void updateAvgRating(Long mentorId, double avgRating, int totalReviews) {
+                updateMentorMetrics(mentorId, avgRating, totalReviews, null);
+        }
+
+        @Transactional
+        public void updateMentorMetrics(Long mentorId, double avgRating, int totalReviews, Long totalSessions) {
         Optional<MentorProfile> profileById = mentorProfileRepository.findById(mentorId);
         MentorProfile profile = profileById.orElseGet(() -> mentorProfileRepository.findByUserId(mentorId)
                 .orElseThrow(() -> new RuntimeException("Mentor not found for identifier: " + mentorId)));
@@ -171,6 +270,9 @@ public class MentorCommandService {
 
         profile.setAvgRating(avgRating);
         profile.setTotalReviews(totalReviews);
+                if (totalSessions != null) {
+                        profile.setTotalSessions(Math.toIntExact(totalSessions));
+                }
         mentorProfileRepository.save(profile);
 
         invalidateMentorCaches(profile.getId(), profile.getUserId());

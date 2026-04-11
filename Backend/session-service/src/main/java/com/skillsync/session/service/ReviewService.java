@@ -77,14 +77,28 @@ public class ReviewService {
     }
 
     public MentorRatingSummary getMentorRatingSummary(Long mentorId) {
-        Double avg = reviewRepository.calculateAverageRating(mentorId);
         long total = reviewRepository.countByMentorId(mentorId);
+        long completedSessions = sessionRepository.countByMentorIdAndStatus(mentorId, SessionStatus.COMPLETED);
+        long defaultRatedSessions = sessionRepository
+            .countByMentorIdAndStatusAndDefaultRatingAppliedTrue(mentorId, SessionStatus.COMPLETED);
+        double totalExplicitRating = reviewRepository.calculateTotalRating(mentorId);
+        double avg = completedSessions == 0
+            ? 0.0
+            : (totalExplicitRating + (defaultRatedSessions * 2.5d)) / completedSessions;
         List<Object[]> distribution = reviewRepository.getRatingDistribution(mentorId);
         Map<Integer, Integer> distMap = new HashMap<>();
         for (Object[] row : distribution) {
             distMap.put((Integer) row[0], ((Long) row[1]).intValue());
         }
-        return new MentorRatingSummary(mentorId, avg != null ? avg : 0.0, (int) total, distMap);
+        return new MentorRatingSummary(
+            mentorId,
+            avg,
+            (int) total,
+            completedSessions,
+            defaultRatedSessions,
+            completedSessions == 0,
+            distMap
+        );
     }
 
     public void deleteReview(Long id) { reviewRepository.deleteById(id); }

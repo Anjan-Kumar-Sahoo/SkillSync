@@ -12,6 +12,7 @@ import com.skillsync.session.feign.MentorProfileClient;
 import com.skillsync.session.mapper.ReviewMapper;
 import com.skillsync.session.repository.ReviewRepository;
 import com.skillsync.session.repository.SessionRepository;
+import com.skillsync.session.service.MentorMetricsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -35,44 +36,64 @@ public class ReviewCommandService {
     private final CacheService cacheService;
     private final AuthServiceClient authServiceClient;
     private final MentorProfileClient mentorProfileClient;
+    private final MentorMetricsService mentorMetricsService;
 
     @Transactional
     public ReviewResponse submitReview(Long reviewerId, ReviewRequest request) {
+        Session session = sessionRepository.findById(request.sessionId())
+                .orElseThrow(() -> new RuntimeException("Session not found: " + request.sessionId()));
+
+        if (session.getStatus() != SessionStatus.COMPLETED) {
+            throw new RuntimeException("Can only review completed sessions");
+        }
+
+        if (!reviewerId.equals(session.getLearnerId())) {
+            throw new RuntimeException("Only the learner can review this session");
+        }
+
         Long mentorId = resolveMentorUserId(request.mentorId());
-        Map<String, Object> mentor = fetchUserById(mentorId);
+        if (!mentorId.equals(session.getMentorId())) {
+            throw new RuntimeException("Mentor does not match the completed session");
+        }
+
+        Map<String, Object> mentor = fetchUserById(session.getMentorId());
         if (!isMentorUser(mentor)) {
             throw new RuntimeException("Invalid mentor id: " + request.mentorId());
         }
 
-        if (reviewRepository.existsByMentorIdAndReviewerId(mentorId, reviewerId)) {
-            throw new RuntimeException("You have already reviewed this mentor");
+        if (reviewRepository.existsBySessionId(session.getId())) {
+            throw new RuntimeException("This session has already been reviewed");
         }
-
-        Session session = sessionRepository
-                .findFirstByMentorIdAndLearnerIdAndStatusOrderBySessionDateDesc(
-                        mentorId,
-                        reviewerId,
-                        SessionStatus.COMPLETED
-                )
-                .orElseThrow(() -> new RuntimeException("No completed session found with this mentor"));
 
         Review review = Review.builder()
                 .sessionId(session.getId()).mentorId(mentorId).reviewerId(reviewerId)
                 .rating(request.rating()).comment(normalizeComment(request.comment())).build();
         review = reviewRepository.saveAndFlush(review);
 
+        if (session.isDefaultRatingApplied()) {
+            session.setDefaultRatingApplied(false);
+            sessionRepository.save(session);
+        }
+
         // Invalidate versioned review caches
         cacheService.evictByPattern(CacheService.vKey("review:mentor:" + mentorId + ":*"));
         cacheService.evictByPattern(CacheService.vKey("review:user:" + reviewerId + ":*"));
 
         // Publish event
-        Double avgRating = reviewRepository.calculateAverageRating(mentorId);
-        long totalReviews = reviewRepository.countByMentorId(mentorId);
+        var metrics = mentorMetricsService.calculateMentorMetrics(mentorId);
         try {
             rabbitTemplate.convertAndSend(RabbitMQConfig.REVIEW_EXCHANGE, "review.submitted",
                     new ReviewSubmittedEvent(review.getId(), mentorId, review.getRating(),
-                            avgRating != null ? avgRating : 0.0, (int) totalReviews,
+                            metrics.averageRating(), metrics.totalReviews(),
                             review.getComment()));
+
+            rabbitTemplate.convertAndSend(RabbitMQConfig.REVIEW_EXCHANGE, "review.summary.updated",
+                    Map.of(
+                            "mentorId", mentorId,
+                            "avgRating", metrics.averageRating(),
+                            "totalReviews", metrics.totalReviews(),
+                            "totalSessions", metrics.completedSessions()
+                    ));
         } catch (Exception e) {
             log.error("Failed to publish review event: {}", e.getMessage());
         }

@@ -57,6 +57,11 @@ public class SessionController {
         return ResponseEntity.ok(sessionQueryService.getSessionCount());
     }
 
+    @GetMapping("/mentor/{mentorId}/metrics")
+    public ResponseEntity<MentorMetricsResponse> getMentorMetrics(@PathVariable Long mentorId) {
+        return ResponseEntity.ok(sessionQueryService.getMentorMetrics(mentorId));
+    }
+
 
     @PostMapping
     public ResponseEntity<SessionResponse> createSession(

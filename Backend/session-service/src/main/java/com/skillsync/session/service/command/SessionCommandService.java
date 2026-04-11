@@ -10,6 +10,7 @@ import com.skillsync.session.feign.AuthServiceClient;
 import com.skillsync.session.feign.MentorProfileClient;
 import com.skillsync.session.mapper.SessionMapper;
 import com.skillsync.session.repository.SessionRepository;
+import com.skillsync.session.service.MentorMetricsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -33,6 +34,7 @@ public class SessionCommandService {
     private final CacheService cacheService;
     private final AuthServiceClient authServiceClient;
     private final MentorProfileClient mentorProfileClient;
+    private final MentorMetricsService mentorMetricsService;
 
     @Transactional
     public SessionResponse createSession(Long learnerId, CreateSessionRequest request) {
@@ -57,6 +59,7 @@ public class SessionCommandService {
                 .mentorId(mentorUserId).learnerId(learnerId)
                 .topic(request.topic()).description(request.description())
                 .sessionDate(request.sessionDate()).durationMinutes(request.durationMinutes())
+            .defaultRatingApplied(false)
                 .status(SessionStatus.REQUESTED).build();
         session = sessionRepository.save(session);
 
@@ -133,10 +136,12 @@ public class SessionCommandService {
         Session session = getAndValidateOwnership(sessionId, mentorId, true);
         validateTransition(session, SessionStatus.COMPLETED);
         session.setStatus(SessionStatus.COMPLETED);
+        session.setDefaultRatingApplied(true);
         session = sessionRepository.save(session);
 
         invalidateSessionCaches(session);
         publishEvent(session, "session.completed");
+        publishMentorMetricsUpdate(session.getMentorId());
         return SessionMapper.toResponse(session);
     }
 
@@ -208,6 +213,21 @@ public class SessionCommandService {
             rabbitTemplate.convertAndSend(RabbitMQConfig.SESSION_EXCHANGE, routingKey, event);
         } catch (Exception e) {
             log.error("Failed to publish session event: {}", e.getMessage());
+        }
+    }
+
+    private void publishMentorMetricsUpdate(Long mentorId) {
+        try {
+            var metrics = mentorMetricsService.calculateMentorMetrics(mentorId);
+            rabbitTemplate.convertAndSend(RabbitMQConfig.REVIEW_EXCHANGE, "review.summary.updated",
+                    Map.of(
+                            "mentorId", mentorId,
+                            "avgRating", metrics.averageRating(),
+                            "totalReviews", metrics.totalReviews(),
+                            "totalSessions", metrics.completedSessions()
+                    ));
+        } catch (Exception e) {
+            log.error("Failed to publish mentor metrics update for mentor {}: {}", mentorId, e.getMessage());
         }
     }
 

@@ -21,6 +21,8 @@ public class RabbitMQConfig {
     public static final String MENTOR_EXCHANGE = "mentor.exchange";
     public static final String MENTOR_NOTIFICATION_APPROVED_QUEUE = "notification.mentor.approved.queue";
     public static final String MENTOR_NOTIFICATION_REJECTED_QUEUE = "notification.mentor.rejected.queue";
+    public static final String MENTOR_NOTIFICATION_PROMOTED_QUEUE = "notification.mentor.promoted.queue";
+    public static final String MENTOR_NOTIFICATION_DEMOTED_QUEUE = "notification.mentor.demoted.queue";
 
     // Review events
     public static final String REVIEW_EXCHANGE = "review.exchange";
@@ -55,8 +57,12 @@ public class RabbitMQConfig {
     @Bean public TopicExchange mentorExchange() { return new TopicExchange(MENTOR_EXCHANGE, true, false); }
     @Bean public Queue notifMentorApproved() { return QueueBuilder.durable(MENTOR_NOTIFICATION_APPROVED_QUEUE).build(); }
     @Bean public Queue notifMentorRejected() { return QueueBuilder.durable(MENTOR_NOTIFICATION_REJECTED_QUEUE).build(); }
+    @Bean public Queue notifMentorPromoted() { return QueueBuilder.durable(MENTOR_NOTIFICATION_PROMOTED_QUEUE).build(); }
+    @Bean public Queue notifMentorDemoted() { return QueueBuilder.durable(MENTOR_NOTIFICATION_DEMOTED_QUEUE).build(); }
     @Bean public Binding bindMentorApproved() { return BindingBuilder.bind(notifMentorApproved()).to(mentorExchange()).with("mentor.approved"); }
     @Bean public Binding bindMentorRejected() { return BindingBuilder.bind(notifMentorRejected()).to(mentorExchange()).with("mentor.rejected"); }
+    @Bean public Binding bindMentorPromoted() { return BindingBuilder.bind(notifMentorPromoted()).to(mentorExchange()).with("mentor.promoted"); }
+    @Bean public Binding bindMentorDemoted() { return BindingBuilder.bind(notifMentorDemoted()).to(mentorExchange()).with("mentor.demoted"); }
 
     // Review event queues and bindings
     @Bean public TopicExchange reviewExchange() { return new TopicExchange(REVIEW_EXCHANGE, true, false); }

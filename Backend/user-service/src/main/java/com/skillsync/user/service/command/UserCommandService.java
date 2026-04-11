@@ -4,6 +4,7 @@ import com.skillsync.cache.CacheService;
 import com.skillsync.user.dto.*;
 import com.skillsync.user.entity.Profile;
 import com.skillsync.user.entity.UserSkill;
+import com.skillsync.user.feign.AuthServiceClient;
 import com.skillsync.user.mapper.UserMapper;
 import com.skillsync.user.repository.ProfileRepository;
 import com.skillsync.user.repository.UserSkillRepository;
@@ -25,6 +26,7 @@ public class UserCommandService {
 
     private final ProfileRepository profileRepository;
     private final UserSkillRepository userSkillRepository;
+    private final AuthServiceClient authServiceClient;
     private final CacheService cacheService;
 
     @Transactional
@@ -41,6 +43,23 @@ public class UserCommandService {
 
         profile.setProfileCompletePct(calculateCompleteness(profile));
         profile = profileRepository.save(profile);
+
+        if (request.firstName() != null || request.lastName() != null) {
+            String firstName = profile.getFirstName();
+            String lastName = profile.getLastName();
+
+            if (firstName == null || lastName == null) {
+                var authUser = authServiceClient.getUserById(userId);
+                if (firstName == null) {
+                    firstName = asText(authUser.get("firstName"));
+                }
+                if (lastName == null) {
+                    lastName = asText(authUser.get("lastName"));
+                }
+            }
+
+            authServiceClient.updateUserName(userId, firstName, lastName);
+        }
 
         // Invalidate versioned caches
         cacheService.evict(CacheService.vKey("user:profile:" + userId));
@@ -84,5 +103,12 @@ public class UserCommandService {
         if (profile.getPhone() != null) score += 20;
         if (profile.getLocation() != null) score += 20;
         return score;
+    }
+
+    private String asText(Object value) {
+        if (value == null) {
+            return "";
+        }
+        return String.valueOf(value);
     }
 }

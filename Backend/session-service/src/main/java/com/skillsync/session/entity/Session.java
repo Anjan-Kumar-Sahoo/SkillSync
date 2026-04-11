@@ -20,6 +20,8 @@ public class Session {
     @Column(nullable = false) private LocalDateTime sessionDate;
     private int durationMinutes;
     private String meetingLink;
+    @Column(nullable = false)
+    private boolean defaultRatingApplied;
     @Enumerated(EnumType.STRING) @Column(nullable = false) private SessionStatus status;
     private String cancelReason;
     @CreatedDate @Column(updatable = false) private LocalDateTime createdAt;

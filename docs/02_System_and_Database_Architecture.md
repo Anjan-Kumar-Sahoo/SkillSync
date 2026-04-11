@@ -6,6 +6,26 @@ Updated for final presentation on 2026-04-06. Start with docs/00_Presentation_Pl
 
 # 02 System and Database Architecture
 
+## 2026-04-11 QA Round 2 Architecture Deltas
+
+### Session metric source of truth
+- Session counts shown to learners, mentors, and admin now use completed sessions only.
+- Session service is the canonical source via status-scoped aggregation (`COMPLETED`).
+
+### Mentor metrics endpoint
+- Added endpoint: `GET /api/sessions/mentor/{mentorId}/metrics`.
+- Response fields:
+    - `completedSessions`
+    - `averageRating`
+    - `totalReviews`
+    - `defaultRatedSessions`
+    - `newMentor`
+
+### Default rating state model
+- `sessions.sessions` includes `default_rating_applied` (boolean, non-null).
+- On session completion, `default_rating_applied` becomes `true` for unrated completed sessions.
+- On review submission for that session, it is switched to `false`.
+
 
 
 ---

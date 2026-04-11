@@ -8,6 +8,31 @@ Updated for final presentation on 2026-04-06. Start with docs/00_Presentation_Pl
 
 ## 2026-04-11 Consolidated Contract Deltas
 
+### QA Round 2 API and UI deltas
+
+#### Session-bound review submission
+- `POST /api/reviews` now requires `sessionId` in payload.
+- Backend validation enforces that session belongs to learner, is `COMPLETED`, and matches selected mentor.
+- Duplicate review protection is now session-scoped (one review per completed session).
+
+#### Mentor card and profile badge behavior
+- `NEW` badge is now based on `totalSessions == 0` (not review count).
+- Rating display uses mentor metrics derived from completed sessions.
+
+#### OTP verify UX behavior
+- Verify OTP page supports full-code paste into any OTP input.
+- Pasted values are sanitized to digits, split across inputs, and focus is managed automatically.
+- Arrow key navigation and improved backspace behavior are enabled for keyboard users.
+
+#### Admin user center search behavior
+- Search input is debounced by 500ms during typing.
+- Pressing Enter or clicking Search executes immediately.
+- Previous in-flight request is canceled before a newer search request is sent.
+
+#### Profile name propagation
+- After profile save, updated first and last name is reflected immediately in frontend global auth state.
+- Backend also syncs updated names to auth service internal user data for token/user summary consistency.
+
 ### Password OTP flow
 - `POST /api/auth/forgot-password`: send password reset OTP.
 - `POST /api/auth/verify-password-reset-otp`: validate OTP before enabling password entry UI.

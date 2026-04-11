@@ -100,6 +100,83 @@ public class MentorEventConsumer {
         log.info("Processed MENTOR_REJECTED event for user {}", userId);
     }
 
+    @RabbitListener(queues = RabbitMQConfig.MENTOR_NOTIFICATION_PROMOTED_QUEUE)
+    public void handleMentorPromoted(Map<String, Object> event) {
+        Long userId = toLong(event.get("userId"));
+
+        notificationCommandService.createAndPush(userId, "MENTOR_PROMOTED",
+                "You are now a Mentor",
+                "Congratulations. Your role has been promoted to mentor and mentor access is now active.");
+
+        try {
+            UserSummary user = authServiceClient.getUserById(userId);
+            Map<String, String> details = new LinkedHashMap<>();
+            details.put("Role", "Mentor");
+            details.put("Access", "Mentor dashboard is now enabled");
+            details.put("Next steps", "Set availability, complete your profile, and start accepting sessions");
+
+            emailService.sendEmail(
+                    user.email(),
+                    "You are now a Mentor",
+                    "system-email",
+                    Map.of(
+                            "recipientName", displayName(user),
+                            "title", "You are now a Mentor",
+                            "preheader", "Mentor access has been granted.",
+                            "primaryMessage", "Congratulations. You now have full mentor access on SkillSync.",
+                            "detailsTitle", "What to do next",
+                            "detailsHtml", emailService.buildDetailsHtml(details),
+                            "actionText", "Open Mentor Dashboard",
+                            "actionUrl", appBaseUrl + "/mentor",
+                            "footerNote", "Stay active and keep your availability up to date to receive more bookings."
+                    )
+            );
+        } catch (Exception e) {
+            log.error("Failed to send mentor promotion email to user {}: {}", userId, e.getMessage());
+        }
+
+        log.info("Processed MENTOR_PROMOTED event for user {}", userId);
+    }
+
+    @RabbitListener(queues = RabbitMQConfig.MENTOR_NOTIFICATION_DEMOTED_QUEUE)
+    public void handleMentorDemoted(Map<String, Object> event) {
+        Long userId = toLong(event.get("userId"));
+        String reason = (String) event.get("reason");
+
+        notificationCommandService.createAndPush(userId, "MENTOR_DEMOTED",
+                "Role Updated",
+                "Your role has been changed to learner by admin. You may re-apply for mentor access.");
+
+        try {
+            UserSummary user = authServiceClient.getUserById(userId);
+            Map<String, String> details = new LinkedHashMap<>();
+            details.put("Current role", "Learner");
+            details.put("Change reason", reason != null && !reason.isBlank() ? reason : "Updated by admin");
+            details.put("Re-apply", "You can submit a fresh mentor application from your profile");
+
+            emailService.sendEmail(
+                    user.email(),
+                    "Role Updated",
+                    "system-email",
+                    Map.of(
+                            "recipientName", displayName(user),
+                            "title", "Role Updated",
+                            "preheader", "Your SkillSync role has changed.",
+                            "primaryMessage", "Your role has been updated to learner. You can re-apply for mentor access anytime.",
+                            "detailsTitle", "Important details",
+                            "detailsHtml", emailService.buildDetailsHtml(details),
+                            "actionText", "Open Profile",
+                            "actionUrl", appBaseUrl + "/profile",
+                            "footerNote", "If you need help with re-application, contact support."
+                    )
+            );
+        } catch (Exception e) {
+            log.error("Failed to send mentor demotion email to user {}: {}", userId, e.getMessage());
+        }
+
+        log.info("Processed MENTOR_DEMOTED event for user {}", userId);
+    }
+
     private String displayName(UserSummary user) {
         String first = user.firstName() != null ? user.firstName().trim() : "";
         String last = user.lastName() != null ? user.lastName().trim() : "";

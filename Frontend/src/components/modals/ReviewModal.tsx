@@ -7,10 +7,11 @@ interface ReviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   mentorId: number;
+  sessionId: number;
   onSuccess: () => void;
 }
 
-const ReviewModal = ({ isOpen, onClose, mentorId, onSuccess }: ReviewModalProps) => {
+const ReviewModal = ({ isOpen, onClose, mentorId, sessionId, onSuccess }: ReviewModalProps) => {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
@@ -20,6 +21,7 @@ const ReviewModal = ({ isOpen, onClose, mentorId, onSuccess }: ReviewModalProps)
     mutationFn: async () => {
       const trimmedComment = comment.trim();
       const payload = {
+        sessionId,
         mentorId,
         rating,
         comment: trimmedComment,

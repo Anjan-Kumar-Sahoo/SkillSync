@@ -87,10 +87,12 @@ const MentorDashboardPage = () => {
   const pendingRequestsCount = allMentorSessions.filter((session: any) => session.status === 'REQUESTED').length;
   const upcomingSessions = allMentorSessions.filter((session: any) => session.status === 'ACCEPTED').slice(0, 5);
   const upcomingSessionsCount = allMentorSessions.filter((session: any) => session.status === 'ACCEPTED').length;
-  const totalSessionsCount = allMentorSessions.filter((session: any) => session.status !== 'CANCELLED').length;
+  const totalSessionsCount = Number(
+    mentorData?.totalSessions ?? allMentorSessions.filter((session: any) => session.status === 'COMPLETED').length
+  );
   const recentReviews = recentReviewsObj?.content || [];
-  const mentorReviewCount = Number(mentorData?.reviewCount ?? mentorData?.totalReviews ?? 0);
   const mentorRating = Number(mentorData?.avgRating ?? mentorData?.rating ?? 0);
+  const isNewMentor = totalSessionsCount === 0;
 
   const getSessionDisplayName = (session: any) => {
     if (session.learnerName) return session.learnerName;
@@ -198,8 +200,8 @@ const MentorDashboardPage = () => {
         </div>
         <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/10 flex flex-col items-center justify-center text-center">
           <span className="text-4xl font-black text-primary mb-1">
-            {mentorReviewCount > 0 ? mentorRating.toFixed(1) : 'NEW'}
-            {mentorReviewCount > 0 && <span className="text-amber-500 text-3xl"> ★</span>}
+            {isNewMentor ? 'NEW' : mentorRating.toFixed(1)}
+            {!isNewMentor && <span className="text-amber-500 text-3xl"> ★</span>}
           </span>
           <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Average Rating</span>
         </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import PageLayout from '../../components/layout/PageLayout';
 import api from '../../services/axios';
@@ -16,19 +16,50 @@ const UsersCenterPage = () => {
   const [roleFilter, setRoleFilter] = useState('');
   const [searchText, setSearchText] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const [isDebouncing, setIsDebouncing] = useState(false);
+  const debounceTimerRef = useRef<number | null>(null);
+  const firstDebounceRunRef = useRef(true);
 
-  const { data: usersData, isLoading } = useQuery({
+  const applySearchValue = (value: string) => {
+    setSearchText(value.trim());
+    setPage(0);
+  };
+
+  const { data: usersData, isLoading, isFetching } = useQuery({
     queryKey: ['admin', 'users', page, roleFilter, searchText],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const params = new URLSearchParams();
       params.append('page', String(page));
       params.append('size', String(PAGE_SIZE));
       if (roleFilter) params.append('role', roleFilter);
       if (searchText) params.append('search', searchText);
-      const { data } = await api.get(`/api/admin/users?${params.toString()}`);
+      const { data } = await api.get(`/api/admin/users?${params.toString()}`, { signal });
       return data;
     },
   });
+
+  useEffect(() => {
+    if (firstDebounceRunRef.current) {
+      firstDebounceRunRef.current = false;
+      return;
+    }
+
+    if (debounceTimerRef.current) {
+      window.clearTimeout(debounceTimerRef.current);
+    }
+
+    setIsDebouncing(true);
+    debounceTimerRef.current = window.setTimeout(() => {
+      applySearchValue(searchInput);
+      setIsDebouncing(false);
+    }, 500);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        window.clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [searchInput]);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -64,13 +95,22 @@ const UsersCenterPage = () => {
   const currentPage = Number(usersData?.number ?? page);
 
   const handleSearch = () => {
-    setSearchText(searchInput.trim());
-    setPage(0);
+    if (debounceTimerRef.current) {
+      window.clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+    setIsDebouncing(false);
+    applySearchValue(searchInput);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleSearch();
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSearch();
+    }
   };
+
+  const isSearching = isDebouncing || isFetching;
 
   const handleDeleteUser = async (id: number, email: string) => {
     const confirmed = await requestConfirmation({
@@ -147,10 +187,17 @@ const UsersCenterPage = () => {
               onClick={handleSearch}
               className="h-10 px-5 gradient-btn text-white font-bold rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95 self-end"
             >
-              Search
+              {isSearching ? 'Searching...' : 'Search'}
             </button>
           </div>
         </div>
+
+        {isSearching && (
+          <div className="flex items-center gap-2 text-xs font-semibold text-on-surface-variant px-1">
+            <span className="material-symbols-outlined text-[16px] animate-spin">autorenew</span>
+            Running search...
+          </div>
+        )}
 
         {/* Table */}
         <div className="bg-surface-container-lowest border border-outline-variant/10 rounded-2xl shadow-sm overflow-hidden">

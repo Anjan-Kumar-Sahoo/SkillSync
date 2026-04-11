@@ -282,9 +282,11 @@ const MentorDetailPage = () => {
   const m = mentor as any;
   const mentorDisplayName = `${m.firstName || ''} ${m.lastName || ''}`.trim() || 'Mentor';
   const mentorReviews = Number(m.reviewCount ?? m.totalReviews ?? 0);
+  const mentorSessions = Number(m.totalSessions ?? 0);
   const mentorExperience = Number(m.experience ?? m.experienceYears ?? 0);
   const rawRating = Number(m.rating ?? m.avgRating ?? 0);
-  const mentorRating = mentorReviews > 0 ? rawRating : 0;
+  const mentorRating = rawRating;
+  const isNewMentor = mentorSessions === 0;
   const slots = (m.availability || []).filter((s: any) => s.isActive !== false);
   const hourlyRate = Number(m.hourlyRate || 0);
   const selectedDurationMinutes = selectedSlot ? getSlotDurationMinutes(selectedSlot) : 0;
@@ -335,7 +337,7 @@ const MentorDetailPage = () => {
               </div>
               <div className="flex items-center gap-4">
                 <div className="text-right">
-                  {mentorReviews > 0 ? (
+                  {!isNewMentor ? (
                     <>
                       <div className="flex items-center gap-1">
                         <span className="text-amber-500 text-2xl">★</span>

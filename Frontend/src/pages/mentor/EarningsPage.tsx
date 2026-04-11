@@ -5,6 +5,7 @@ import PageLayout from '../../components/layout/PageLayout';
 
 type MentorProfile = {
   hourlyRate?: number | string;
+  totalSessions?: number;
 };
 
 type MentorSession = {
@@ -95,10 +96,10 @@ const EarningsPage = () => {
       thisMonth,
       pendingPayout: lifetime,
       lifetime,
-      completedSessions: completedSessions.length,
+      completedSessions: Number(mentorProfile?.totalSessions ?? completedSessions.length),
       thisMonthSessions,
     };
-  }, [completedSessions, hourlyRate]);
+  }, [completedSessions, hourlyRate, mentorProfile?.totalSessions]);
 
   const recentCompleted = useMemo(
     () =>

@@ -190,6 +190,25 @@ public class AuthService {
     }
 
     @Transactional
+    public void updateUserName(Long userId, String firstName, String lastName) {
+        AuthUser user = authUserRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        String safeFirstName = firstName == null ? "" : firstName.trim();
+        String safeLastName = lastName == null ? "" : lastName.trim();
+        if (safeFirstName.isBlank() || safeLastName.isBlank()) {
+            throw new RuntimeException("Both firstName and lastName are required");
+        }
+
+        user.setFirstName(safeFirstName);
+        user.setLastName(safeLastName);
+        authUserRepository.save(user);
+
+        cacheService.evict(CacheService.vKey("user:profile:" + user.getId()));
+        log.info("User name updated for userId: {}", userId);
+    }
+
+    @Transactional
     public void forgotPassword(ForgotPasswordRequest request) {
         AuthUser user = authUserRepository.findByEmail(request.email())
                 .orElseThrow(() -> new RuntimeException("User not found with email: " + request.email()));

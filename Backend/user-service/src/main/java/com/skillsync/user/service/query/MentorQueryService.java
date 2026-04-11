@@ -5,6 +5,7 @@ import com.skillsync.user.dto.*;
 import com.skillsync.user.entity.MentorProfile;
 import com.skillsync.user.mapper.MentorMapper;
 import com.skillsync.user.feign.AuthServiceClient;
+import com.skillsync.user.feign.SessionServiceClient;
 import com.skillsync.user.repository.MentorProfileRepository;
 import com.skillsync.user.enums.MentorStatus;
 import java.util.Map;
@@ -39,6 +40,7 @@ public class MentorQueryService {
     private final MentorProfileRepository mentorProfileRepository;
     private final CacheService cacheService;
     private final AuthServiceClient authServiceClient;
+    private final SessionServiceClient sessionServiceClient;
     private final com.skillsync.user.feign.SkillServiceClient skillServiceClient;
 
     @Value("${cache.ttl.mentor:600}")
@@ -183,7 +185,38 @@ public class MentorQueryService {
                 log.warn("Failed to enrich skill names for mentor userId {}: {}", profile.userId(), e.getMessage());
             }
         }
+
+        // 3. Enrich metrics from session-service (single source of truth)
+        try {
+            Map<String, Object> metrics = sessionServiceClient.getMentorMetrics(profile.userId());
+            enriched = new MentorProfileResponse(
+                    enriched.id(), enriched.userId(),
+                    enriched.firstName(), enriched.lastName(),
+                    enriched.email(), enriched.avatarUrl(),
+                    enriched.bio(), enriched.experienceYears(),
+                    enriched.hourlyRate(), asDouble(metrics.get("averageRating"), enriched.avgRating()),
+                    asInt(metrics.get("totalReviews"), enriched.totalReviews()),
+                    asInt(metrics.get("completedSessions"), enriched.totalSessions()),
+                    enriched.status(), enriched.skills(), enriched.availability()
+            );
+        } catch (Exception e) {
+            log.warn("Failed to enrich session metrics for mentor userId {}: {}", profile.userId(), e.getMessage());
+        }
         
         return enriched;
+    }
+
+    private int asInt(Object value, int fallback) {
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        return fallback;
+    }
+
+    private double asDouble(Object value, double fallback) {
+        if (value instanceof Number number) {
+            return number.doubleValue();
+        }
+        return fallback;
     }
 }

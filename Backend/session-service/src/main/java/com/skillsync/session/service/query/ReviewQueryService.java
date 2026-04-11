@@ -5,6 +5,7 @@ import com.skillsync.session.dto.*;
 import com.skillsync.session.entity.Review;
 import com.skillsync.session.mapper.ReviewMapper;
 import com.skillsync.session.repository.ReviewRepository;
+import com.skillsync.session.service.MentorMetricsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,10 +14,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 /**
  * CQRS Query Service for Review operations.
  * Cache-aside with stampede + penetration protection (5-minute TTL).
@@ -27,6 +24,7 @@ import java.util.Map;
 public class ReviewQueryService {
 
     private final ReviewRepository reviewRepository;
+    private final MentorMetricsService mentorMetricsService;
     private final CacheService cacheService;
 
     @Value("${cache.ttl.review:300}")
@@ -64,15 +62,7 @@ public class ReviewQueryService {
 
         return cacheService.getOrLoad(cacheKey, MentorRatingSummary.class,
                 Duration.ofSeconds(reviewTtl), () -> {
-                    Double avg = reviewRepository.calculateAverageRating(mentorId);
-                    long total = reviewRepository.countByMentorId(mentorId);
-                    List<Object[]> distribution = reviewRepository.getRatingDistribution(mentorId);
-                    Map<Integer, Integer> distMap = new HashMap<>();
-                    for (Object[] row : distribution) {
-                        distMap.put((Integer) row[0], ((Long) row[1]).intValue());
-                    }
-                    return new MentorRatingSummary(
-                            mentorId, avg != null ? avg : 0.0, (int) total, distMap);
+                    return mentorMetricsService.calculateMentorRatingSummary(mentorId);
                 });
     }
 

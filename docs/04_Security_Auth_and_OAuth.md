@@ -8,6 +8,18 @@ Updated for final presentation on 2026-04-06. Start with docs/00_Presentation_Pl
 
 ## 2026-04-11 Consolidated Security Updates
 
+### Internal auth profile-name synchronization
+- Added internal endpoint: `PUT /api/auth/internal/users/{id}/name`.
+- Used by user-service after profile updates to keep auth user summary names in sync.
+- Endpoint is internal-service only and not exposed for public frontend traffic.
+
+### Role transition notification hardening
+- Admin promote and demote actions now emit dedicated role-transition events.
+- Notification service consumes these events to produce consistent in-app alerts and system emails.
+- Email subjects standardized:
+  - Promotion: `You are now a Mentor`
+  - Demotion: `Role Updated`
+
 ### OTP-based password reset contract
 - Password reset is fully OTP-based for Admin, Mentor, and Learner.
 - Endpoints:

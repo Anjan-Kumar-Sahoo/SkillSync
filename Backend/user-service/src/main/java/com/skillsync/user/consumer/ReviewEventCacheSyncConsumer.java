@@ -1,6 +1,5 @@
 package com.skillsync.user.consumer;
 
-import com.skillsync.cache.CacheService;
 import com.skillsync.user.service.command.MentorCommandService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,11 +37,16 @@ public class ReviewEventCacheSyncConsumer {
             }
             double avgRating = ((Number) avgRatingValue).doubleValue();
             int totalReviews = ((Number) event.get("totalReviews")).intValue();
+            Long totalSessions = null;
+            Object totalSessionsValue = event.get("totalSessions");
+            if (totalSessionsValue instanceof Number totalSessionsNumber) {
+                totalSessions = totalSessionsNumber.longValue();
+            }
 
             // Idempotent: recalculated avg/total from source; safe to replay
-            mentorCommandService.updateAvgRating(mentorId, avgRating, totalReviews);
-            log.info("[CACHE-SYNC] Updated mentor {} rating: avg={}, total={} (versioned keys invalidated)",
-                    mentorId, avgRating, totalReviews);
+            mentorCommandService.updateMentorMetrics(mentorId, avgRating, totalReviews, totalSessions);
+            log.info("[CACHE-SYNC] Updated mentor {} metrics: avg={}, totalReviews={}, totalSessions={}",
+                    mentorId, avgRating, totalReviews, totalSessions);
         } catch (Exception e) {
             log.error("[CACHE-SYNC] Failed to process review event for cache sync: {}", e.getMessage());
         }

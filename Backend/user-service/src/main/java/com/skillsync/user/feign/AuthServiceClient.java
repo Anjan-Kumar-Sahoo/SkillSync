@@ -10,6 +10,12 @@ public interface AuthServiceClient {
     @PutMapping("/api/auth/internal/users/{id}/role")
     void updateUserRole(@PathVariable("id") Long id, @RequestParam("role") String role);
 
+        @PutMapping("/api/auth/internal/users/{id}/name")
+        void updateUserName(
+            @PathVariable("id") Long id,
+            @RequestParam("firstName") String firstName,
+            @RequestParam("lastName") String lastName);
+
     @GetMapping("/api/auth/internal/users")
     Map<String, Object> getAllUsers(
             @RequestParam("page") int page,

@@ -108,7 +108,8 @@ const LearnerDashboardPage = () => {
 
   const groups = Array.isArray(groupsData) ? groupsData : groupsData?.content || [];
   const mentorStatus = myMentorProfile?.status || null;
-  const mentorApplied = Boolean(myMentorProfile);
+  const canReapply = mentorStatus === 'REJECTED' || mentorStatus === 'SUSPENDED';
+  const mentorApplied = Boolean(myMentorProfile) && !canReapply;
   const skills = Array.isArray(allSkills) ? allSkills : [];
 
   const getInitials = (name?: string) => {
@@ -179,12 +180,16 @@ const LearnerDashboardPage = () => {
           </div>
         ) : (
           <>
-            <p className="text-sm text-on-surface-variant mb-4">Share your expertise and start mentoring learners.</p>
+            <p className="text-sm text-on-surface-variant mb-4">
+              {canReapply
+                ? 'Your mentor role was demoted/rejected. You can submit a fresh mentor application now.'
+                : 'Share your expertise and start mentoring learners.'}
+            </p>
             <button
               onClick={() => setShowApplyForm(true)}
               className="w-full gradient-btn text-white py-2.5 rounded-xl font-bold"
             >
-              Start Mentor Application
+              {canReapply ? 'Re-apply as Mentor' : 'Start Mentor Application'}
             </button>
           </>
         )}
@@ -391,8 +396,9 @@ const LearnerDashboardPage = () => {
               <div key={i} className="h-48 rounded-xl bg-surface-container-low animate-pulse"></div>
             ))
           ) : mentors?.content?.map((mnt: any) => {
-            const reviewCount = Number(mnt.totalReviews ?? mnt.reviewCount ?? 0);
             const avgRating = Number(mnt.avgRating ?? mnt.rating ?? 0);
+            const sessionsHeld = Number(mnt.totalSessions ?? 0);
+            const isNewMentor = sessionsHeld === 0;
 
             return (
               <div key={mnt.id} className="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-transparent hover:border-primary/20 hover:-translate-y-1 transition-all duration-300 flex flex-col">
@@ -408,7 +414,7 @@ const LearnerDashboardPage = () => {
                     <h3 className="font-bold text-on-surface leading-tight">{mnt.firstName} {mnt.lastName}</h3>
                     <div className="flex items-center gap-1 bg-secondary-container/30 px-2 py-0.5 rounded text-xs font-bold text-on-secondary-container">
                       <span className="material-symbols-outlined text-[14px]">star</span>
-                      {reviewCount > 0 ? avgRating.toFixed(1) : 'NEW'}
+                      {isNewMentor ? 'NEW' : avgRating.toFixed(1)}
                     </div>
                   </div>
                   <p className="text-xs font-medium text-on-surface-variant mt-1 line-clamp-2">{mnt.headline}</p>

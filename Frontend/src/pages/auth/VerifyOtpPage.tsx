@@ -1,16 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
-import type { KeyboardEvent } from 'react';
+import type { ClipboardEvent, KeyboardEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import api from '../../services/axios';
 import { useToast } from '../../components/ui/Toast';
 
+const OTP_LENGTH = 6;
+
 const VerifyOtpPage = () => {
-  const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
+  const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const [timeLeft, setTimeLeft] = useState(300); // 5 mins in seconds
   const [attempts, setAttempts] = useState(0);
   
-  const inputRefs = useRef<(HTMLInputElement | null)[]>(Array(6).fill(null));
+  const inputRefs = useRef<(HTMLInputElement | null)[]>(Array(OTP_LENGTH).fill(null));
   
   const location = useLocation();
   const navigate = useNavigate();
@@ -64,7 +66,7 @@ const VerifyOtpPage = () => {
     onSuccess: () => {
       setTimeLeft(300);
       setAttempts(0);
-      setOtp(Array(6).fill(''));
+      setOtp(Array(OTP_LENGTH).fill(''));
       showToast({ message: 'OTP resent successfully.', type: 'success' });
     },
     onError: (error: any) => {
@@ -73,27 +75,87 @@ const VerifyOtpPage = () => {
     }
   });
 
-  const handleChange = (index: number, value: string) => {
-    if (isNaN(Number(value))) return;
+  const applyDigitsFromIndex = (index: number, rawValue: string) => {
+    const digits = rawValue.replace(/\D/g, '');
+    if (!digits) {
+      return;
+    }
+
     const newOtp = [...otp];
-    newOtp[index] = value.slice(-1); // Only take last char if pasted
+    let cursor = index;
+
+    for (const digit of digits) {
+      if (cursor >= OTP_LENGTH) {
+        break;
+      }
+      newOtp[cursor] = digit;
+      cursor += 1;
+    }
+
     setOtp(newOtp);
 
-    // Auto-focus next input
-    if (value && index < 5) {
+    const firstEmptyFromCursor = newOtp.findIndex((digit, idx) => idx >= index && digit === '');
+    const firstEmpty = firstEmptyFromCursor === -1 ? newOtp.findIndex((digit) => digit === '') : firstEmptyFromCursor;
+    if (firstEmpty === -1) {
+      inputRefs.current[OTP_LENGTH - 1]?.focus();
+      return;
+    }
+
+    inputRefs.current[firstEmpty]?.focus();
+  };
+
+  const handleChange = (index: number, value: string) => {
+    if (value === '') {
+      const newOtp = [...otp];
+      newOtp[index] = '';
+      setOtp(newOtp);
+      return;
+    }
+
+    const digits = value.replace(/\D/g, '');
+    if (!digits) return;
+
+    if (digits.length > 1) {
+      applyDigitsFromIndex(index, digits);
+      return;
+    }
+
+    const newOtp = [...otp];
+    newOtp[index] = digits;
+    setOtp(newOtp);
+
+    if (index < OTP_LENGTH - 1) {
       inputRefs.current[index + 1]?.focus();
     }
   };
 
+  const handlePaste = (index: number, event: ClipboardEvent<HTMLInputElement>) => {
+    event.preventDefault();
+    const pastedValue = event.clipboardData.getData('text');
+    applyDigitsFromIndex(index, pastedValue);
+  };
+
   const handleKeyDown = (index: number, e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Backspace') {
-      if (otp[index] === '' && index > 0) {
-        inputRefs.current[index - 1]?.focus();
-      } else {
+      if (otp[index] !== '') {
         const newOtp = [...otp];
         newOtp[index] = '';
         setOtp(newOtp);
+        return;
       }
+
+      if (index > 0) {
+        const newOtp = [...otp];
+        newOtp[index - 1] = '';
+        setOtp(newOtp);
+        inputRefs.current[index - 1]?.focus();
+      }
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      e.preventDefault();
+      inputRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowRight' && index < OTP_LENGTH - 1) {
+      e.preventDefault();
+      inputRefs.current[index + 1]?.focus();
     } else if (e.key === 'Enter') {
       handleSubmit();
     }
@@ -101,7 +163,7 @@ const VerifyOtpPage = () => {
 
   const handleSubmit = () => {
     const otpCode = otp.join('');
-    if (otpCode.length !== 6) {
+    if (otpCode.length !== OTP_LENGTH) {
       showToast({ message: 'Please enter the 6-digit OTP.', type: 'error' });
       return;
     }
@@ -137,10 +199,13 @@ const VerifyOtpPage = () => {
               ref={el => { inputRefs.current[idx] = el; }}
               type="text"
               inputMode="numeric"
+              autoComplete="one-time-code"
               maxLength={1}
               value={digit}
               onChange={e => handleChange(idx, e.target.value)}
+              onPaste={e => handlePaste(idx, e)}
               onKeyDown={e => handleKeyDown(idx, e)}
+              onFocus={e => e.currentTarget.select()}
               className="w-12 h-14 md:w-14 md:h-16 text-center text-xl font-bold bg-surface-container-low border border-outline-variant/30 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all duration-200"
             />
           ))}

@@ -6,6 +6,25 @@ Updated for final presentation on 2026-04-06. Start with docs/00_Presentation_Pl
 
 # 07 Testing and QA Strategy
 
+## 2026-04-11 QA Round 2 Validation Snapshot
+
+### Backend module test runs (post-fix)
+- `session-service`: `mvn -DskipITs test` -> PASS (13 tests, 0 failures)
+- `user-service`: `mvn -DskipITs test` -> PASS (19 tests, 0 failures)
+- `auth-service`: `mvn -DskipITs test` -> PASS (16 tests, 0 failures)
+- `notification-service`: `mvn -DskipITs test` -> PASS (13 tests, 0 failures)
+
+### Frontend build validation
+- `Frontend`: `npm run build` -> PASS (`tsc -b` + `vite build`)
+
+### QA Round 2 checks covered by this run
+- Session count consistency verified via completed-session-only aggregation changes.
+- Review contract update verified with session-bound payload (`sessionId`).
+- Profile name propagation path verified by tests updated for auth internal sync.
+- Mentor metric event sync verified through updated consumer tests.
+
+### Notes
+- Config Server connection warnings appear in test logs when local config-server is not running; tests still pass using local test configuration.
 
 
 ---

@@ -2,13 +2,16 @@ import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import userService from '../../services/userService';
 import PageLayout from '../../components/layout/PageLayout';
 import { useToast } from '../../components/ui/Toast';
 import type { RootState } from '../../store';
+import { updateUserName } from '../../store/slices/authSlice';
 
 const UserProfilePage = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const role = useSelector((state: RootState) => state.auth.role);
@@ -68,6 +71,10 @@ const UserProfilePage = () => {
     onSuccess: () => {
       showToast({ message: 'Profile updated successfully', type: 'success' });
       setIsEditing(false);
+      dispatch(updateUserName({
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+      }));
       queryClient.invalidateQueries({ queryKey: ['user', 'profile'] });
     },
     onError: (error: any) => {

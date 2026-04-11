@@ -197,9 +197,9 @@ const DiscoverMentorsPage = () => {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {mentorsList.map((mentor) => {
-              const reviewCount = Number(mentor.totalReviews ?? mentor.reviewCount ?? 0);
               const avgRating = Number(mentor.avgRating ?? mentor.rating ?? 0);
               const sessionsHeld = Number(mentor.totalSessions ?? 0);
+              const isNewMentor = sessionsHeld === 0;
 
               return (
                 <div key={mentor.id} className="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm border border-outline-variant/10 hover:-translate-y-1 hover:shadow-xl hover:border-primary/20 transition-all duration-300 group flex flex-col">
@@ -223,7 +223,7 @@ const DiscoverMentorsPage = () => {
 
                       <div className="text-right shrink-0">
                         <p className="text-xs font-black text-on-surface">
-                          {reviewCount > 0 ? `★ ${avgRating.toFixed(1)}` : '★ NEW'}
+                          {isNewMentor ? '★ NEW' : `★ ${avgRating.toFixed(1)}`}
                         </p>
                         <p className="text-[11px] font-semibold text-on-surface-variant">
                           {sessionsHeld} session{sessionsHeld === 1 ? '' : 's'} held

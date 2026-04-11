@@ -6,6 +6,7 @@ import com.skillsync.session.entity.Session;
 import com.skillsync.session.enums.SessionStatus;
 import com.skillsync.session.mapper.SessionMapper;
 import com.skillsync.session.repository.SessionRepository;
+import com.skillsync.session.service.MentorMetricsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +27,7 @@ import java.util.List;
 public class SessionQueryService {
 
     private final SessionRepository sessionRepository;
+    private final MentorMetricsService mentorMetricsService;
     private final CacheService cacheService;
 
     @Value("${cache.ttl.session:300}")
@@ -60,7 +62,11 @@ public class SessionQueryService {
     }
 
     public long getSessionCount() {
-        return sessionRepository.count();
+        return sessionRepository.countByStatus(SessionStatus.COMPLETED);
+    }
+
+    public MentorMetricsResponse getMentorMetrics(Long mentorId) {
+        return mentorMetricsService.calculateMentorMetrics(mentorId);
     }
 
     public Page<SessionResponse> getSessionsByMentor(Long mentorId, Pageable pageable) {
