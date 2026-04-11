@@ -22,8 +22,8 @@ const initialState: AuthState = {
 
 interface SetCredentialsPayload {
   user: UserSummary | null;
-  accessToken: string;
-  refreshToken: string;
+  accessToken?: string | null;
+  refreshToken?: string | null;
 }
 
 const authSlice = createSlice({
@@ -33,8 +33,16 @@ const authSlice = createSlice({
     setCredentials(state, action: PayloadAction<SetCredentialsPayload>) {
       const { user, accessToken, refreshToken } = action.payload;
       state.user = user;
-      state.accessToken = accessToken;
-      state.refreshToken = refreshToken;
+
+      // Preserve existing token values when callers only want to update user identity.
+      if (typeof accessToken !== 'undefined' && accessToken !== null && accessToken !== '') {
+        state.accessToken = accessToken;
+      }
+
+      if (typeof refreshToken !== 'undefined' && refreshToken !== null && refreshToken !== '') {
+        state.refreshToken = refreshToken;
+      }
+
       state.isAuthenticated = true;
       if (user) {
         state.role = user.role as UserRole;

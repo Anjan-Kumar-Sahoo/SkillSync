@@ -115,6 +115,30 @@ api.interceptors.response.use(
 
         // Only force logout when the refresh token is definitely invalid/expired.
         if (isInvalidSessionStatus(refreshStatus)) {
+          try {
+            // Multi-tab or timing races can briefly fail refresh while a valid cookie session still exists.
+            const meResponse = await api.get('/api/auth/me', {
+              _skipErrorRedirect: true,
+              _skipAuthRedirect: true,
+            } as any);
+
+            if (meResponse?.data) {
+              const currentRefreshToken = store.getState().auth.refreshToken;
+              store.dispatch(setCredentials({
+                user: meResponse.data,
+                accessToken: store.getState().auth.accessToken || '',
+                refreshToken: currentRefreshToken || '',
+              }));
+
+              if (originalRequest.headers) {
+                delete originalRequest.headers.Authorization;
+              }
+              return api(originalRequest);
+            }
+          } catch {
+            // Fall through to forced logout only when sanity check also fails.
+          }
+
           store.dispatch(logout());
           window.location.href = '/login?reason=session_expired';
         }

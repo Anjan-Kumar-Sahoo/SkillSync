@@ -10,6 +10,8 @@ export const AuthLoader = ({ children }: { children: ReactNode }) => {
   const dispatch = useDispatch();
   const location = useLocation();
   const user = useSelector((state: RootState) => state.auth.user);
+  const accessToken = useSelector((state: RootState) => state.auth.accessToken);
+  const refreshToken = useSelector((state: RootState) => state.auth.refreshToken);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,7 +45,11 @@ export const AuthLoader = ({ children }: { children: ReactNode }) => {
           } as any);
 
           if (mounted && data) {
-            dispatch(setCredentials({ accessToken: '', refreshToken: '', user: data }));
+            dispatch(setCredentials({
+              accessToken: accessToken ?? undefined,
+              refreshToken: refreshToken ?? undefined,
+              user: data,
+            }));
           }
         };
 
@@ -80,7 +86,7 @@ export const AuthLoader = ({ children }: { children: ReactNode }) => {
     initAuth();
 
     return () => { mounted = false; };
-  }, [dispatch, user, location.pathname]);
+  }, [dispatch, user, accessToken, refreshToken, location.pathname]);
 
   if (loading) {
     return (
