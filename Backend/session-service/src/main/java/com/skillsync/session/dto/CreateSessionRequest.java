@@ -8,5 +8,5 @@ public record CreateSessionRequest(
         @NotBlank String topic,
         String description,
         @Future LocalDateTime sessionDate,
-        @Min(15) @Max(180) int durationMinutes
+        @Min(30) @Max(120) int durationMinutes
 ) {}

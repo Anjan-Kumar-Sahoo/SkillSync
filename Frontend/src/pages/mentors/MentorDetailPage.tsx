@@ -21,6 +21,7 @@ const MentorDetailPage = () => {
   const { showToast } = useToast();
 
   const [selectedSlot, setSelectedSlot] = useState<any>(null);
+  const [selectedDurationMinutes, setSelectedDurationMinutes] = useState<number>(60);
   const [loadingStep, setLoadingStep] = useState<'' | 'session' | 'order' | 'verify'>('');
   const pendingSessionIdRef = useRef<number | null>(null);
 
@@ -109,6 +110,18 @@ const MentorDetailPage = () => {
     return duration > 0 ? duration : 0;
   };
 
+  const getDurationOptionsForSlot = (slot: any): number[] => {
+    const slotDuration = getSlotDurationMinutes(slot);
+    const maxAllowed = Math.min(120, slotDuration);
+    const options: number[] = [];
+
+    for (let value = 30; value <= maxAllowed; value += 30) {
+      options.push(value);
+    }
+
+    return options;
+  };
+
   const hasDuplicateBookingForSelection = (mentorUserId: number, slotDurationMinutes: number) => {
     if (!selectedSlot || slotDurationMinutes <= 0) return false;
 
@@ -172,9 +185,9 @@ const MentorDetailPage = () => {
       return;
     }
 
-    const selectedDurationMinutes = getSlotDurationMinutes(selectedSlot);
-    if (selectedDurationMinutes < 30 || selectedDurationMinutes > 120) {
-      showToast({ message: 'Invalid slot duration. Please pick another slot.', type: 'error' });
+    const validDurationOptions = getDurationOptionsForSlot(selectedSlot);
+    if (!validDurationOptions.includes(selectedDurationMinutes)) {
+      showToast({ message: 'Please select a valid duration between 30 and 120 minutes.', type: 'error' });
       return;
     }
 
@@ -289,7 +302,8 @@ const MentorDetailPage = () => {
   const isNewMentor = mentorSessions === 0;
   const slots = (m.availability || []).filter((s: any) => s.isActive !== false);
   const hourlyRate = Number(m.hourlyRate || 0);
-  const selectedDurationMinutes = selectedSlot ? getSlotDurationMinutes(selectedSlot) : 0;
+  const selectedSlotDuration = selectedSlot ? getSlotDurationMinutes(selectedSlot) : 0;
+  const selectedDurationOptions = selectedSlot ? getDurationOptionsForSlot(selectedSlot) : [];
   const estimatedCost = (hourlyRate * selectedDurationMinutes) / 60;
   const isProcessing = loadingStep !== '';
   const mentorUserIdForSelection = Number(m.userId);
@@ -402,6 +416,7 @@ const MentorDetailPage = () => {
                  onChange={(e) => {
                     setSelectedDateStr(e.target.value);
                     setSelectedSlot(null);
+                    setSelectedDurationMinutes(60);
                  }}
                  className="h-10 bg-surface-container border border-outline-variant/30 rounded-lg px-3 text-sm font-bold text-on-surface focus:ring-2 focus:ring-primary outline-none"
                />
@@ -436,7 +451,21 @@ const MentorDetailPage = () => {
                   return (
                     <button
                       key={slot.id}
-                      onClick={() => setSelectedSlot(isSelected ? null : slot)}
+                      onClick={() => {
+                        if (isSelected) {
+                          setSelectedSlot(null);
+                          setSelectedDurationMinutes(60);
+                          return;
+                        }
+
+                        setSelectedSlot(slot);
+                        const options = getDurationOptionsForSlot(slot);
+                        if (options.length === 0) {
+                          setSelectedDurationMinutes(60);
+                          return;
+                        }
+                        setSelectedDurationMinutes(options.includes(60) ? 60 : options[options.length - 1]);
+                      }}
                       disabled={isUnavailable}
                       className={`flex items-center justify-between rounded-xl border p-4 transition-all text-left w-full ${
                         isUnavailable
@@ -500,9 +529,35 @@ const MentorDetailPage = () => {
             </div>
 
             <div className="mb-4 rounded-xl border border-outline-variant/20 bg-surface-container p-4">
-              <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Fixed Slot Duration</p>
-              <p className="text-sm font-bold text-on-surface mt-1">{selectedDurationMinutes} minutes</p>
-              <p className="text-xs text-on-surface-variant mt-1">Session length is fixed by the selected availability slot.</p>
+              <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Session Duration</p>
+                  <p className="text-sm font-bold text-on-surface mt-1">Choose 30 to 120 minutes</p>
+                  <p className="text-xs text-on-surface-variant mt-1">
+                    Available for this slot: up to {selectedSlotDuration} minutes.
+                  </p>
+                </div>
+
+                <div className="w-full md:w-64">
+                  <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest block mb-1">Duration</label>
+                  <select
+                    value={selectedDurationMinutes}
+                    onChange={(e) => setSelectedDurationMinutes(Number(e.target.value))}
+                    disabled={selectedDurationOptions.length === 0}
+                    className="w-full h-11 px-3 bg-surface-container-low border border-outline-variant/30 rounded-lg text-sm font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    {selectedDurationOptions.map((duration) => (
+                      <option key={duration} value={duration}>{duration} minutes</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {selectedDurationOptions.length === 0 && (
+                <p className="text-xs text-error mt-3">
+                  This slot is shorter than 30 minutes and cannot be booked. Please select another slot.
+                </p>
+              )}
             </div>
 
             <div className="flex justify-between items-center bg-surface-container rounded-xl p-4 mb-4 border border-outline-variant/10">
@@ -512,7 +567,7 @@ const MentorDetailPage = () => {
 
             <button
               onClick={handlePayNow}
-              disabled={isProcessing || hasDuplicateLearnerBooking}
+              disabled={isProcessing || hasDuplicateLearnerBooking || selectedDurationOptions.length === 0}
               className="w-full h-14 gradient-btn text-white font-extrabold text-lg rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-70 active:scale-[0.98] transition-all flex items-center justify-center gap-3 relative group"
             >
               {isProcessing && <span className="absolute inset-0 bg-white/20 animate-pulse"></span>}
@@ -526,7 +581,7 @@ const MentorDetailPage = () => {
                   </span>
                 </>
               ) : (
-                hasDuplicateLearnerBooking ? 'Session already booked for this slot' : (
+                hasDuplicateLearnerBooking ? 'Session already booked for this slot' : selectedDurationOptions.length === 0 ? 'Selected slot is too short' : (
                   <>
                     <span className="material-symbols-outlined text-[22px]">lock</span>
                     Pay Now - ₹{estimatedCost.toFixed(0)}
