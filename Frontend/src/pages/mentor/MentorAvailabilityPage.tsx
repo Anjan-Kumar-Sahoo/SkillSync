@@ -79,7 +79,7 @@ const MentorAvailabilityPage = () => {
 
   return (
     <PageLayout>
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <button

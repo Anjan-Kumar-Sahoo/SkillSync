@@ -172,7 +172,7 @@ const SettingsPage = () => {
 
   return (
     <PageLayout>
-      <div className="max-w-2xl mx-auto">
+      <div className="w-full">
         <div className="bg-gradient-to-r from-indigo-600 to-blue-600 rounded-lg p-8 text-white">
           <h1 className="text-3xl font-bold">Change Password</h1>
           <p className="text-indigo-100 mt-2">Secure your account with OTP verification.</p>

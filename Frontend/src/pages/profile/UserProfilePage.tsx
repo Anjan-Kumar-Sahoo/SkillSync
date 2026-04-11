@@ -114,7 +114,7 @@ const UserProfilePage = () => {
 
   return (
     <PageLayout>
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg p-8 text-white">
           <h1 className="text-3xl font-bold">My Profile</h1>

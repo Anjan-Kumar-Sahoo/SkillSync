@@ -309,7 +309,7 @@ const MentorDetailPage = () => {
 
   return (
     <PageLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         {/* Back */}
         <button
           onClick={() => navigate('/mentors')}
@@ -409,7 +409,7 @@ const MentorDetailPage = () => {
           </div>
 
           {slots.filter((s: any) => s.dayOfWeek === new Date(selectedDateStr).getDay()).length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {[...slots]
                 .filter((s: any) => s.dayOfWeek === new Date(selectedDateStr).getDay())
                 .sort((a: any, b: any) => String(a.startTime).localeCompare(String(b.startTime)))

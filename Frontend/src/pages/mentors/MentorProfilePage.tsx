@@ -130,10 +130,10 @@ const MentorProfilePage = () => {
       <Navbar />
       
       <main className="flex-1 overflow-y-auto pt-6 pb-20 px-4 md:px-8">
-        <div className="max-w-[1100px] mx-auto flex flex-col lg:flex-row gap-8 items-start">
+        <div className="w-full flex flex-col lg:flex-row gap-8 items-start">
           
           {/* LEFT COLUMN */}
-          <div className="flex-1 w-full max-w-2xl space-y-10">
+          <div className="flex-1 w-full space-y-10">
             {/* HERo */}
             <div className="bg-surface-container-lowest p-8 rounded-2xl shadow-sm border border-outline-variant/10 relative">
               <button onClick={() => navigate(-1)} className="absolute top-4 right-4 p-2 text-on-surface-variant hover:text-primary transition-colors flex items-center bg-surface-container hover:bg-surface-container-high rounded-full">

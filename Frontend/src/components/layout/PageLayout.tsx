@@ -20,9 +20,9 @@ const PageLayout = ({ children, rightPanel }: PageLayoutProps) => {
       <div className="flex-1 flex flex-col min-w-0 ml-20 lg:ml-64 transition-all duration-300">
         <Navbar />
         
-        <main className="flex-1 overflow-x-hidden overflow-y-auto w-full p-4 md:p-6 lg:p-8 scroll-smooth">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto w-full p-4 md:p-6 lg:p-8 2xl:p-10 scroll-smooth">
           {rightPanel ? (
-            <div className="max-w-7xl mx-auto flex flex-col xl:flex-row gap-6 lg:gap-8">
+            <div className="w-full flex flex-col xl:flex-row gap-6 lg:gap-8">
               <div className="flex-1 min-w-0 flex flex-col gap-6 lg:gap-8">
                 {children}
               </div>
@@ -31,7 +31,7 @@ const PageLayout = ({ children, rightPanel }: PageLayoutProps) => {
               </aside>
             </div>
           ) : (
-            <div className="max-w-7xl mx-auto flex flex-col gap-6 lg:gap-8">
+            <div className="w-full flex flex-col gap-6 lg:gap-8">
               {children}
             </div>
           )}
