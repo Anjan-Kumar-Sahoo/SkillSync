@@ -9,13 +9,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class CsrfOriginFilter implements GlobalFilter, Ordered {
 
-    @Value("${app.cors.allowed-origins:https://skillsync.mraks.dev,https://skillsync.udayasri.dev}")
+    @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
 
     @Override
@@ -30,7 +32,10 @@ public class CsrfOriginFilter implements GlobalFilter, Ordered {
         // Only apply to mutating methods
         if (List.of("POST", "PUT", "DELETE", "PATCH").contains(method)) {
             String origin = exchange.getRequest().getHeaders().getFirst("Origin");
-            Set<String> allowed = Set.of(allowedOrigins.split(","));
+            Set<String> allowed = Arrays.stream(allowedOrigins.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toSet());
             
             // If origin is present, it must be in the allowed list
             if (origin != null && !allowed.contains(origin.trim())) {

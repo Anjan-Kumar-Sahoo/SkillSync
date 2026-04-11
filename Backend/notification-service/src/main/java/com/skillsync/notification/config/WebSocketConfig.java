@@ -7,11 +7,13 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
+import java.util.Arrays;
+
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    @Value("${app.cors.allowed-origins:https://skillsync.mraks.dev,https://skillsync.udayasri.dev}")
+    @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
 
     @Override
@@ -24,7 +26,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws/notifications")
-                .setAllowedOrigins(allowedOrigins.split(","))
+                .setAllowedOrigins(Arrays.stream(allowedOrigins.split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .toArray(String[]::new))
                 .withSockJS();
     }
 }

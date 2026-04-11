@@ -104,9 +104,9 @@ class NotificationServiceTest {
     @Test
     @DisplayName("Delete notification - invalidates cache")
     void deleteNotification_shouldCallRepositoryAndInvalidateCache() {
-        when(notificationRepository.findById(1L)).thenReturn(Optional.of(testNotification));
-        notificationCommandService.deleteNotification(1L);
-        verify(notificationRepository).deleteById(1L);
+        when(notificationRepository.findByIdAndUserId(1L, 100L)).thenReturn(Optional.of(testNotification));
+        notificationCommandService.deleteNotification(100L, 1L);
+        verify(notificationRepository).delete(testNotification);
         verify(cacheService).evict(CacheService.vKey("notification:unread:100"));
     }
 }

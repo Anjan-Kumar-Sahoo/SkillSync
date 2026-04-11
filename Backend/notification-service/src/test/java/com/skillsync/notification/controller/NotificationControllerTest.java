@@ -47,7 +47,7 @@ class NotificationControllerTest {
     @Test
     @DisplayName("DELETE /api/notifications/{id} - deletes notification")
     void deleteNotification_shouldReturn200() throws Exception {
-        mockMvc.perform(delete("/api/notifications/1"))
+        mockMvc.perform(delete("/api/notifications/1").header("X-User-Id", "100"))
                 .andExpect(status().isOk());
     }
 }
