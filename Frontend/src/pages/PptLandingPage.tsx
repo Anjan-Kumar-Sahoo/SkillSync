@@ -49,6 +49,11 @@ const resolveMonitoringLinks = (): MonitoringLink[] => {
   const monitoringBaseUrl = import.meta.env.VITE_MONITORING_BASE_URL || backendBaseUrl;
   const swaggerUrl = import.meta.env.VITE_SWAGGER_URL;
   const eurekaUrl = import.meta.env.VITE_EUREKA_URL;
+  const rabbitmqUrl = import.meta.env.VITE_RABBITMQ_URL;
+  const prometheusUrl = import.meta.env.VITE_PROMETHEUS_URL;
+  const grafanaUrl = import.meta.env.VITE_GRAFANA_URL;
+  const lokiReadyUrl = import.meta.env.VITE_LOKI_READY_URL;
+  const zipkinUrl = import.meta.env.VITE_ZIPKIN_URL;
   const sonarUrl = import.meta.env.VITE_SONAR_URL || DEFAULT_SONAR_URL;
 
   try {
@@ -67,33 +72,34 @@ const resolveMonitoringLinks = (): MonitoringLink[] => {
       ? `${monitoringProtocol}//${monitoringHost}:${monitoringParsed.port}`
       : `${monitoringProtocol}//${monitoringHost}`;
 
-    const onMonitoringPort = (port: number, suffix = '') =>
-      `${monitoringProtocol}//${monitoringHost}:${port}${suffix}`;
+    // Public dashboards are proxied behind NGINX path routes, not exposed ports.
+    const onMonitoringPath = (path: string) =>
+      new URL(path, `${monitoringOrigin}/`).toString();
 
     return [
       {
         name: 'Eureka',
         description: 'Service discovery dashboard',
         status: 'ACTIVE',
-        href: eurekaUrl || `${monitoringOrigin}${DEFAULT_EUREKA_PATH}`,
+        href: eurekaUrl || onMonitoringPath(DEFAULT_EUREKA_PATH),
       },
       {
         name: 'RabbitMQ',
         description: 'Message broker management',
         status: 'ACTIVE',
-        href: onMonitoringPort(15672),
+        href: rabbitmqUrl || onMonitoringPath('/rabbitmq/'),
       },
       {
         name: 'Prometheus',
         description: 'Metrics collection and queries',
         status: 'ACTIVE',
-        href: onMonitoringPort(9090),
+        href: prometheusUrl || onMonitoringPath('/prometheus/'),
       },
       {
         name: 'Grafana',
         description: 'Dashboards and alerting',
         status: 'ACTIVE',
-        href: onMonitoringPort(3000),
+        href: grafanaUrl || onMonitoringPath('/grafana/'),
       },
       {
         name: 'SonarCloud',
@@ -105,13 +111,13 @@ const resolveMonitoringLinks = (): MonitoringLink[] => {
         name: 'Loki Ready',
         description: 'Log aggregation health endpoint',
         status: 'CHECK',
-        href: onMonitoringPort(3100, '/ready'),
+        href: lokiReadyUrl || onMonitoringPath('/loki/ready'),
       },
       {
         name: 'Zipkin',
         description: 'Distributed tracing UI',
         status: 'ACTIVE',
-        href: onMonitoringPort(9411),
+        href: zipkinUrl || onMonitoringPath('/zipkin/'),
       },
       {
         name: 'Gateway Swagger',
