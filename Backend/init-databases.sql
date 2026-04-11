@@ -32,6 +32,8 @@ CREATE SCHEMA IF NOT EXISTS skills;
 \c skillsync_session
 CREATE SCHEMA IF NOT EXISTS sessions;
 CREATE SCHEMA IF NOT EXISTS reviews;
+ALTER TABLE IF EXISTS sessions.sessions
+ADD COLUMN IF NOT EXISTS default_rating_applied BOOLEAN NOT NULL DEFAULT FALSE;
 
 \c skillsync_notification
 CREATE SCHEMA IF NOT EXISTS notifications;
