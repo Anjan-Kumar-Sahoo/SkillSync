@@ -49,6 +49,15 @@ const NotificationsPage = () => {
     },
   });
 
+  const clearAllNotificationsMutation = useMutation({
+    mutationFn: () => notificationService.clearAllNotifications(),
+    onSuccess: () => {
+      showToast({ message: 'All notifications deleted', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['unread-notifications'] });
+    },
+  });
+
   const notifications = notificationsData?.content || [];
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
@@ -64,6 +73,20 @@ const NotificationsPage = () => {
     }
 
     deleteNotificationMutation.mutate(notificationId);
+  };
+
+  const handleDeleteAllNotifications = async () => {
+    const confirmed = await requestConfirmation({
+      title: 'Delete All Notifications?',
+      message: 'Are you sure you want to delete all notifications? This cannot be undone.',
+      confirmLabel: 'Yes, delete all',
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    clearAllNotificationsMutation.mutate();
   };
 
   const getNotificationIcon = (type: string) => {
@@ -112,7 +135,7 @@ const NotificationsPage = () => {
         </div>
 
         {/* Controls */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-wrap justify-between items-center gap-3">
           <div>
             <p className="text-on-surface-variant">
               {unreadCount > 0 ? (
@@ -125,15 +148,27 @@ const NotificationsPage = () => {
               )}
             </p>
           </div>
-          {unreadCount > 0 && (
-            <button
-              onClick={() => markAllAsReadMutation.mutate()}
-              disabled={markAllAsReadMutation.isPending}
-              className="text-primary hover:opacity-80 font-medium text-sm disabled:opacity-50"
-            >
-              Mark all as read
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {unreadCount > 0 && (
+              <button
+                onClick={() => markAllAsReadMutation.mutate()}
+                disabled={markAllAsReadMutation.isPending}
+                className="text-primary hover:opacity-80 font-medium text-sm disabled:opacity-50"
+              >
+                Mark all as read
+              </button>
+            )}
+
+            {notifications.length > 0 && (
+              <button
+                onClick={() => void handleDeleteAllNotifications()}
+                disabled={clearAllNotificationsMutation.isPending}
+                className="text-error hover:opacity-80 font-medium text-sm disabled:opacity-50"
+              >
+                Delete all
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Notifications List */}

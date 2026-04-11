@@ -60,11 +60,20 @@ public class NotificationCommandService {
         cacheService.evict(CacheService.vKey("notification:unread:" + userId));
     }
 
-    public void deleteNotification(Long notificationId) {
-        Notification notification = notificationRepository.findById(notificationId).orElse(null);
-        if (notification != null) {
-            cacheService.evict(CacheService.vKey("notification:unread:" + notification.getUserId()));
-        }
-        notificationRepository.deleteById(notificationId);
+    @Transactional
+    public void deleteNotification(Long userId, Long notificationId) {
+        Notification notification = notificationRepository.findByIdAndUserId(notificationId, userId)
+                .orElseThrow(() -> new RuntimeException("Notification not found"));
+
+        notificationRepository.delete(notification);
+        cacheService.evict(CacheService.vKey("notification:unread:" + userId));
+    }
+
+    @Transactional
+    public int deleteAllNotifications(Long userId) {
+        int deletedCount = notificationRepository.deleteAllByUserId(userId);
+        cacheService.evict(CacheService.vKey("notification:unread:" + userId));
+        log.info("[CQRS:COMMAND] Deleted {} notifications for user {}", deletedCount, userId);
+        return deletedCount;
     }
 }

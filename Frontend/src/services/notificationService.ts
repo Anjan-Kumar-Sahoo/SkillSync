@@ -53,8 +53,13 @@ class NotificationService {
   }
 
   async clearAllNotifications(): Promise<void> {
-    const allNotifications = await this.getNotifications();
-    await Promise.all(allNotifications.content.map((notification) => this.deleteNotification(notification.id)));
+    try {
+      await api.delete('/api/notifications/all');
+    } catch {
+      // Backward-compatible fallback for older backend versions.
+      const allNotifications = await this.getNotifications(0, 200);
+      await Promise.all(allNotifications.content.map((notification) => this.deleteNotification(notification.id)));
+    }
   }
 
   subscribeToNotifications(listener: (notification: NotificationData) => void): () => void {

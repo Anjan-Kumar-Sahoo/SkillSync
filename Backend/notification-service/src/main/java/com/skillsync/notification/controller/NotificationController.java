@@ -53,8 +53,15 @@ public class NotificationController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteNotification(@PathVariable Long id) {
-        notificationCommandService.deleteNotification(id);
+    public ResponseEntity<Void> deleteNotification(@RequestHeader("X-User-Id") Long userId,
+                                                   @PathVariable Long id) {
+        notificationCommandService.deleteNotification(userId, id);
         return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/all")
+    public ResponseEntity<Map<String, Integer>> deleteAllNotifications(@RequestHeader("X-User-Id") Long userId) {
+        int deletedCount = notificationCommandService.deleteAllNotifications(userId);
+        return ResponseEntity.ok(Map.of("deleted", deletedCount));
     }
 }
