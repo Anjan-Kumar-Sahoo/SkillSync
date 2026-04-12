@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkillSync Server Command Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/docs/pipeline.css" />
+  <style>
+    :root {
+      --bg-deep: #050505;
+      --glass-bg: rgba(255, 255, 255, 0.02);
+      --glass-border: rgba(255, 255, 255, 0.05);
+      --neon-blue: #3b82f6;
+      --neon-cyan: #06b6d4;
+      --neon-purple: #8b5cf6;
+      --neon-pink: #ec4899;
+      --neon-orange: #f59e0b;
+      --neon-green: #10b981;
+    }
+
+    body {
+      background: radial-gradient(circle at center top, #111827 0%, var(--bg-deep) 100%);
+      color: #e2e8f0;
+      overflow-x: hidden;
+    }
+
+    /* ─── NEXT GEN HERO ─── */
+    .hero-matrix {
+      position: relative;
+      padding: 10rem 2rem 6rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .ultra-title {
+      font-size: 5rem;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, #ffffff 0%, rgba(255,255,255,0.4) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 40px rgba(255,255,255,0.1));
+    }
+
+    .ultra-desc {
+      font-size: 1.25rem;
+      color: #94a3b8;
+      max-width: 600px;
+      line-height: 1.6;
+    }
+
+    /* ─── ISOMETRIC 3D TOPOLOGY ─── */
+    .isometric-stage {
+      position: relative;
+      height: 800px;
+      perspective: 2000px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 6rem;
+      overflow: visible;
+    }
+
+    .iso-container {
+      position: relative;
+      width: 600px;
+      height: 600px;
+      transform: rotateX(60deg) rotateZ(-45deg);
+      transform-style: preserve-3d;
+      transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    .isometric-stage:hover .iso-container {
+      transform: rotateX(50deg) rotateZ(-35deg);
+    }
+
+    .iso-layer {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      border: 1px solid var(--glass-border);
+      background: rgba(10, 15, 25, 0.4);
+      backdrop-filter: blur(8px);
+      border-radius: 24px;
+      display: grid;
+      place-items: center;
+      transform-style: preserve-3d;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+
+    .layer-db { transform: translateZ(0px); border-color: rgba(239, 68, 68, 0.2); }
+    .layer-redis { transform: translateZ(100px); border-color: rgba(245, 158, 11, 0.2); }
+    .layer-broker { transform: translateZ(200px); border-color: rgba(168, 85, 247, 0.2); }
+    .layer-services { transform: translateZ(300px); border-color: rgba(16, 185, 129, 0.2); background: transparent; border: none; box-shadow: none; pointer-events: none;}
+    .layer-gateway { transform: translateZ(440px); border-color: rgba(6, 182, 212, 0.3); width: 200px; height: 200px; margin: auto; }
+
+    .iso-node {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 1rem;
+      border-radius: 12px;
+      color: white;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      transition: all 0.3s ease;
+      pointer-events: auto;
+    }
+    
+    .iso-node:hover {
+      background: rgba(255,255,255,0.1);
+      transform: translateY(-10px) translateZ(20px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 30px var(--hover-glow);
+    }
+
+    .grid-db { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; padding: 2rem; width: 100%; height: 100%; }
+    .grid-services { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; padding: 1rem; width: 100%; height: 100%; }
+
+    .layer-label {
+      position: absolute;
+      top: -30px;
+      left: 0;
+      color: var(--text-muted);
+      font-family: 'Space Grotesk', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      font-size: 0.8rem;
+    }
+
+    /* ─── GLASSMORPHIC DATA STREAMS ─── */
+    .stream-container {
+      max-width: 1200px;
+      margin: 0 auto 10rem;
+      position: relative;
+    }
+    
+    .stream-card {
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(255,255,255,0.05);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 32px;
+      padding: 4rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 40px 80px rgba(0,0,0,0.5);
+    }
+
+    .stream-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.06), transparent 40%);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      pointer-events: none;
+    }
+    .stream-card:hover::before { opacity: 1; }
+
+    /* ─── ROLE MATRIX ─── */
+    .role-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-top: 3rem; }
+    .role-card { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); padding: 2rem; border-radius: 20px; transition: 0.3s; position: relative; overflow: hidden; }
+    .role-card::after { content: ''; position:absolute; top:0; left:0; width:100%; height:4px; background: var(--role-color); }
+    .role-card:hover { transform: translateY(-10px); border-color: rgba(255,255,255,0.2); box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 40px var(--role-glow); }
+    .role-icon { font-size: 2.5rem; margin-bottom: 1rem; color: var(--role-color); }
+    .role-title { font-size: 1.5rem; margin-bottom: 0.5rem; color: white; }
+    .role-subtitle { font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-bottom: 1.5rem; letter-spacing: 2px; text-transform: uppercase; }
+    .role-list { list-style: none; padding: 0; margin: 0; }
+    .role-list li { margin-bottom: 0.8rem; font-size: 0.9rem; position: relative; padding-left: 1.5rem; color: var(--text-secondary); line-height: 1.5; }
+    .role-list li::before { content: '→'; color: var(--role-color); position: absolute; left: 0; font-weight: bold; }
+
+    /* ─── SERVICE CODEX ─── */
+    .service-deepdive { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.05); padding: 3rem; border-radius: 24px; margin-bottom: 3rem; position: relative; overflow: hidden; }
+    .service-deepdive::before { content: ''; position:absolute; top:0; left:0; width:4px; height:100%; background: var(--theme); box-shadow: 0 0 20px var(--theme);}
+    .service-deepdive h3 { font-size: 2.2rem; color: white; display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;}
+    .sd-desc { color: #a1a1aa; font-size: 1.1rem; line-height: 1.6; margin-bottom: 2rem; max-width: 900px;}
+    .sd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+    .sd-box { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 2rem; border-radius: 16px; transition: 0.3s;}
+    .sd-box:hover { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.04);}
+    .sd-box h4 { color: var(--theme); margin-bottom: 1rem; font-size: 1.1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px;}
+    .sd-list { list-style: none; padding: 0; }
+    .sd-list li { color: #cbd5e1; font-size: 0.95rem; margin-bottom: 1rem; line-height: 1.6; padding-left: 1.5rem; position: relative;}
+    .sd-list li::before { content: '▹'; position: absolute; left: 0; color: var(--theme); font-weight: bold;}
+    .radius-alert { background: rgba(255, 255, 255, 0.03); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; margin-top: 2rem; color: #e2e8f0; font-size: 0.95rem; line-height:1.6; border: 1px solid rgba(255,255,255,0.05); border-left: 4px solid var(--theme);}
+    .radius-alert strong { color: var(--theme); font-size: 1.1rem; letter-spacing: 1px; display: block; margin-bottom: 0.5rem;}
+    .codex-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; margin-top: 3rem; }
+    .codex-card { display: flex; flex-direction: column; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); padding: 2rem; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; transition: all 0.4s; overflow: hidden; }
+    .codex-card:hover { border-color: var(--card-glow); box-shadow: 0 10px 40px var(--card-shadow); transform: scale(1.02); }
+    .codex-card::before { content: ''; position:absolute; right: -20px; top: -20px; width: 100px; height: 100px; background: var(--card-glow); filter: blur(50px); opacity: 0.1; }
+    .codex-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .codex-header h3 { font-size: 1.5rem; color: white; margin: 0; text-shadow: 0 2px 10px var(--card-shadow);}
+    .codex-tag { padding: 0.3rem 0.8rem; border-radius: 6px; font-size: 0.7rem; letter-spacing:1px; text-transform:uppercase; font-weight: bold; background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); }
+    .codex-desc { color: #cbd5e1; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1.5rem; font-weight: 300;}
+    .codex-ul { list-style: none; padding: 0; display: grid; gap: 0.8rem; }
+    .codex-ul li { font-size: 0.85rem; color: #a1a1aa; display: flex; align-items: flex-start; gap: 0.5rem; line-height: 1.5; }
+    .codex-ul li strong { color: var(--card-glow); width: 110px; flex-shrink: 0; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px;}
+    
+    /* ─── ANIMATED DATA PACKETS ─── */
+    .circuit-track { height: 4px; background: rgba(255,255,255,0.05); border-radius: 4px; position: relative; overflow: hidden; margin: 2rem 0; }
+    .data-packet { position: absolute; top: 0; left: -100px; height: 100%; width: 100px; background: linear-gradient(90deg, transparent, var(--stream-color), transparent); animation: packet-flow 3s cubic-bezier(0.4, 0, 0.2, 1) infinite; box-shadow: 0 0 20px var(--stream-color); }
+    @keyframes packet-flow { 0% { left: -100px; } 100% { left: 100%; } }
+
+    /* ─── BADGES ─── */
+    .status-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(16, 185, 129, 0.1); color: #34d399; padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.2); }
+    .status-badge.purple { background: rgba(139, 92, 246, 0.1); color:#a78bfa; border-color: rgba(139,92,246,0.2);}
+    .status-badge.orange { background: rgba(245, 158, 11, 0.1); color:#fbbf24; border-color: rgba(245,158,11,0.2);}
+    .status-badge.cyan { background: rgba(6, 182, 212, 0.1); color:#22d3ee; border-color: rgba(6, 182, 212, 0.2);}
+    .status-dot { width: 6px; height: 6px; background: currentColor; border-radius: 50%; box-shadow: 0 0 10px currentColor; animation: blink 2s infinite; }
+    @keyframes blink { 0%, 100% {opacity: 1;} 50% {opacity: 0.3;} }
+
+    /* ─── SAGA DIAGRAM ─── */
+    .saga-grid { display: grid; grid-template-columns: 200px 1fr; gap: 3rem; margin-top: 3rem; }
+    .saga-step { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 1.5rem; position: relative; transition: all 0.3s; }
+    .saga-step:hover { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.2); transform: translateX(10px); }
+    .saga-number { position: absolute; top: -15px; left: -15px; width: 40px; height: 40px; background: var(--bg-deep); border: 2px solid var(--neon-pink); color: var(--neon-pink); border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 1.2rem; box-shadow: 0 0 20px rgba(236, 72, 153, 0.4); }
+    
+    /* ─── REALTIME ENGINE TERMINAL ─── */
+    .stomp-terminal { background: #000; border-radius: 16px; border: 1px solid #333; padding: 1.5rem; font-family: 'SFMono-Regular', Consolas, monospace; color: #10b981; font-size: 0.85rem; line-height: 1.6; box-shadow: inset 0 0 20px rgba(0,0,0,1); position: relative; overflow: hidden; }
+    .stomp-terminal::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 100%; background: linear-gradient(rgba(16,185,129,0.05) 50%, transparent 50%); background-size: 100% 4px; pointer-events: none; }
+    .terminal-typewriter { overflow: hidden; white-space: nowrap; border-right: 2px solid #10b981; animation: typing 3s steps(40, end), cursor .5s step-end infinite alternate; }
+    @keyframes typing { from { width: 0 } to { width: 100% } }
+    @keyframes cursor { 50% { border-color: transparent } }
+  </style>
+</head>
+<body>
+
+  <!-- TOPNAV -->
+  <header class="topbar" id="topbar" style="background: rgba(5,5,5,0.8); border-bottom: 1px solid rgba(255,255,255,0.05);">
+    <a class="brand" href="/docs/index.html">
+      <img src="/favicon.png" alt="SkillSync" class="brand-icon" style="height: 24px; filter: drop-shadow(0 0 8px rgba(255,255,255,0.5));" /> 
+      <span style="letter-spacing: 1px; font-weight: 600;">SkillSync</span>
+    </a>
+    <div class="nav-extra" style="display:flex; gap: 1rem;">
+      <a href="/docs/index.html" class="nav-link-secondary" style="color:var(--text-muted); font-size:0.85rem;">Architecture</a>
+      <a href="/docs/frontend.html" class="nav-link-secondary" style="color:var(--text-muted); font-size:0.85rem;">Frontend Space</a>
+      <a href="/docs/deployment.html" class="nav-link-secondary" style="color:var(--text-muted); font-size:0.85rem;">Deployment</a>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero-matrix">
+    <div class="status-badge purple" style="margin-bottom: 2rem;">
+      <div class="status-dot"></div> System Operations Command
+    </div>
+    <h1 class="ultra-title">The Foundation of<br>SkillSync's Engine</h1>
+    <p class="ultra-desc">
+      A perfectly orchestrated symphony of 6 autonomous microservices, real-time message brokering, memory-speed caching, and localized data persistence.
+    </p>
+  </section>
+
+  <!-- ISOMETRIC 3D TOPOLOGY -->
+  <section class="isometric-stage">
+    <div class="iso-container" id="iso-engine">
+      
+      <div class="iso-layer layer-db">
+        <span class="layer-label">Persistent Schemas (PostgreSQL)</span>
+        <div class="grid-db">
+          <div class="iso-node" style="--hover-glow: rgba(239, 68, 68, 0.8);">auth_db</div>
+          <div class="iso-node" style="--hover-glow: rgba(239, 68, 68, 0.8);">user_db</div>
+          <div class="iso-node" style="--hover-glow: rgba(239, 68, 68, 0.8);">skill_db</div>
+          <div class="iso-node" style="--hover-glow: rgba(239, 68, 68, 0.8);">session_db</div>
+          <div class="iso-node" style="--hover-glow: rgba(239, 68, 68, 0.8);">payment_db</div>
+          <div class="iso-node" style="--hover-glow: rgba(239, 68, 68, 0.8);">notify_db</div>
+        </div>
+      </div>
+
+      <div class="iso-layer layer-redis">
+        <span class="layer-label">Shared Cache (CQRS Read Models)</span>
+        <div class="iso-node" style="width:80%; --hover-glow: rgba(245, 158, 11, 0.8); background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.3); color: #fcd34d;">
+          Redis Edge Cluster
+        </div>
+      </div>
+
+      <div class="iso-layer layer-broker">
+        <span class="layer-label">Event Bus (Async Operations)</span>
+        <div class="iso-node" style="width:80%; --hover-glow: rgba(168, 85, 247, 0.8); background: rgba(168,85,247,0.1); border-color: rgba(168,85,247,0.3); color: #d8b4fe;">
+          RabbitMQ Stream Broker
+        </div>
+      </div>
+
+      <div class="iso-layer layer-services">
+        <span class="layer-label" style="text-shadow: 0 2px 10px rgba(0,0,0,0.8);">Domain Microservices</span>
+        <div class="grid-services">
+          <div class="iso-node" style="--hover-glow: var(--neon-blue);">Auth<br>Service</div>
+          <div class="iso-node" style="--hover-glow: var(--neon-cyan);">User<br>Service</div>
+          <div class="iso-node" style="--hover-glow: var(--neon-green);">Skill<br>Service</div>
+          <div class="iso-node" style="--hover-glow: var(--neon-orange);">Session<br>Service</div>
+          <div class="iso-node" style="--hover-glow: var(--neon-pink);">Payment<br>Service</div>
+          <div class="iso-node" style="--hover-glow: var(--neon-purple);">Notify<br>Service</div>
+        </div>
+      </div>
+
+      <div class="iso-layer layer-gateway">
+        <span class="layer-label">Ingress Route</span>
+        <div class="iso-node" style="width:80%; height:80%; display:grid; place-items:center; border-radius: 50%; --hover-glow: rgba(6, 182, 212, 1); background: rgba(6,182,212,0.1); border: 2px solid var(--neon-cyan); box-shadow: inset 0 0 20px rgba(6,182,212,0.4), 0 0 30px rgba(6,182,212,0.6);">
+          API Gateway
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEEP DIVE: MICROSERVICE CODEX -->
+  <section class="stream-container">
+    <div class="status-badge cyan" style="margin-bottom: 1rem;"><div class="status-dot"></div> System Components explained</div>
+    <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">The Microservice Codex</h2>
+    <p style="color: var(--text-secondary); max-width: 800px; font-size: 1.1rem; margin-bottom: 2rem;">Every domain within SkillSync operates with absolute autonomy. Each microservice manages its own separate PostgreSQL database layer and scales completely independently to address its unique traffic loads. Listed below is bit-by-bit coverage of their operations.</p>
+    
+    <div class="codex-deepdive-container">
+      
+      <!-- 1. Auth Service -->
+      <div class="service-deepdive" style="--theme: var(--neon-blue);">
+        <h3><span style="font-size: 2.5rem;">🔑</span> Auth Service</h3>
+        <p class="sd-desc">The cryptographic gatekeeper. Responsible for securely hashing passwords, validating external Google OAuth payloads, and issuing the signed JWTs that physically unlock the rest of the private network.</p>
+        
+        <div class="sd-grid">
+          <div class="sd-box">
+            <h4>APIs & Services Exposed</h4>
+            <ul class="sd-list">
+              <li><code>POST /auth/login</code> - Native credential verification</li>
+              <li><code>POST /auth/google</code> - OAuth2 Payload unwrapping natively</li>
+              <li><code>POST /auth/refresh</code> - Minting new access tokens from Redis</li>
+              <li><code>POST /auth/reset-password</code> - Secure email reset dispatch</li>
+            </ul>
+          </div>
+          <div class="sd-box">
+            <h4>Internal State & Dependencies</h4>
+            <ul class="sd-list">
+              <li><strong>Schema:</strong> Completely isolated <code>auth_db</code> PostgreSQL ownership</li>
+              <li><strong>Cache:</strong> Stores active refresh tokens centrally in the <code>Redis Edge Cluster</code></li>
+              <li><strong>Sync REST:</strong> Pings User Service on first Google Login to explicitly create missing profiles</li>
+            </ul>
+          </div>
+        </div>
+        <div class="radius-alert">
+          <strong>Boundary & Operating Radius</strong>
+          Auth Service strictly manages ONLY cryptographic identity and authentication states. It operates within a rigid radius. It is explicitly forbidden from maintaining user profiles, handling payments, or storing skill tags. Once it verifies identity and signs the JWT, its job is entirely complete. It does not control authorization (which Gateway handles).
+        </div>
+      </div>
+
+      <!-- 2. User Service -->
+      <div class="service-deepdive" style="--theme: var(--neon-cyan);">
+        <h3><span style="font-size: 2.5rem;">👥</span> User Service</h3>
+        <p class="sd-desc">The core central authority. It houses the massive operational logic detailing mentor applications, learner profiles, study group formations, and the complex authorization linkages.</p>
+        
+        <div class="sd-grid">
+          <div class="sd-box">
+            <h4>APIs & Services Exposed</h4>
+            <ul class="sd-list">
+              <li><code>GET /users/profile</code> - Retrieves public user topologies</li>
+              <li><code>POST /users/mentors</code> - Mentor application initiation</li>
+              <li><code>PUT /users/admin/approve</code> - Admin-level mutation of roles</li>
+              <li><code>POST /groups</code> - Study group logic logic creation</li>
+            </ul>
+          </div>
+          <div class="sd-box">
+            <h4>Internal State & Dependencies</h4>
+            <ul class="sd-list">
+              <li><strong>Schema:</strong> Maintains heavy read-write bounds over <code>user_db</code></li>
+              <li><strong>CQRS Cache:</strong> Mirrors its group schemas and active profiles directly into <code>Redis</code> for massive-scale zero-latency reads.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="radius-alert">
+          <strong>Boundary & Operating Radius</strong>
+          The User Service handles anything dealing with physical profiles, role assignment data, or social grouping. It acts as the "source of truth". However, its radius ends at social entities. It cannot process payments, and it cannot directly log someone in. It solely houses data relating to WHO the subject is.
+        </div>
+      </div>
+
+      <!-- 3. Skill Service -->
+      <div class="service-deepdive" style="--theme: var(--neon-green);">
+        <h3><span style="font-size: 2.5rem;">📚</span> Skill Service</h3>
+        <p class="sd-desc">The domain catalog mapping thousands of technology topics into categorized trees. It provides lightning-fast paginated search endpoints so learners can discover Mentors based on exact, standardized topic strings.</p>
+        
+        <div class="sd-grid">
+          <div class="sd-box">
+            <h4>APIs & Services Exposed</h4>
+            <ul class="sd-list">
+              <li><code>GET /skills</code> - Master catalog acquisition</li>
+              <li><code>GET /skills/search</code> - Deep indexed keyword searches</li>
+              <li><code>GET /skills/categories</code> - Taxonomic hierarchical returns</li>
+            </ul>
+          </div>
+          <div class="sd-box">
+            <h4>Internal State & Dependencies</h4>
+            <ul class="sd-list">
+              <li><strong>Schema:</strong> Maintains extreme index depths in <code>skill_db</code></li>
+              <li><strong>Isolation:</strong> Requires essentially zero cross-talk with other services. Fully decoupled utility.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="radius-alert">
+          <strong>Boundary & Operating Radius</strong>
+          The Skill Service operates with the smallest, most defined radius on the platform. It literally only cares about the existence of tags (e.g., "React", "Docker"). It does NOT know which users have which skills (that is the User Service's radius). It simply acts as the master dictionary for the system.
+        </div>
+      </div>
+
+      <!-- 4. Session Service -->
+      <div class="service-deepdive" style="--theme: var(--neon-orange);">
+        <h3><span style="font-size: 2.5rem;">📅</span> Session Service</h3>
+        <p class="sd-desc">The most transactionally sensitive application on the platform. Exists entirely to prevent double-booking, lock physical time-slots, enforce Mentor availability caps, and aggregate reviews.</p>
+        
+        <div class="sd-grid">
+          <div class="sd-box">
+            <h4>APIs & Services Exposed</h4>
+            <ul class="sd-list">
+              <li><code>POST /sessions/book</code> - Initializes mentorship saga</li>
+              <li><code>PUT /sessions/schedule</code> - Mutates availability matrices</li>
+              <li><code>POST /sessions/reviews</code> - Locks in post-session ratings</li>
+            </ul>
+          </div>
+          <div class="sd-box">
+            <h4>Internal State & Dependencies</h4>
+            <ul class="sd-list">
+              <li><strong>Schema:</strong> Operates <code>session_db</code> with strict locking</li>
+              <li><strong>Async Sagas:</strong> Publishes <code>session.pending</code> to RabbitMQ allowing Payment Svc to activate asynchronously.</li>
+              <li><strong>Sync Ping:</strong> Validates Mentor explicitly with User Svc before allowing a pending booking.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="radius-alert">
+          <strong>Boundary & Operating Radius</strong>
+          The Session Service radius controls "Time". If an entity wishes to occupy time, it must go through Session logic. It locks availability globally but it delegates financial operations. It operates in PENDING modes, waiting for external systems (RabbitMQ) to finalize its states.
+        </div>
+      </div>
+
+      <!-- 5. Payment Service -->
+      <div class="service-deepdive" style="--theme: var(--neon-pink);">
+        <h3><span style="font-size: 2.5rem;">💳</span> Payment Service</h3>
+        <p class="sd-desc">The financial ledger. Operates completely in the background without UI intervention. It takes abstract events, communicates exclusively with Razorpay's API, and listens endlessly for Webhook callbacks.</p>
+        
+        <div class="sd-grid">
+          <div class="sd-box">
+            <h4>APIs & Services Exposed</h4>
+            <ul class="sd-list">
+              <li><code>POST /payments/init</code> - Internal initialization protocol</li>
+              <li><code>POST /payments/webhook</code> - Razorpay's external asynchronous callback ping targeting our backend</li>
+              <li><code>POST /payments/refund</code> - Saga compensation routine</li>
+            </ul>
+          </div>
+          <div class="sd-box">
+            <h4>Internal State & Dependencies</h4>
+            <ul class="sd-list">
+              <li><strong>Schema:</strong> <code>payment_db</code> functions as an append-only write ledger mapping transaction IDs</li>
+              <li><strong>Saga Broadcaster:</strong> Listens to <code>session.pending</code> and natively broadcasts <code>payment.success</code> and <code>payment.failed</code> backwards out via RabbitMQ to finish the transaction.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="radius-alert">
+          <strong>Boundary & Operating Radius</strong>
+          The Payment Radius strictly bounds money. The Payment service does not know what a "Session" or "Mentorship" is. It only knows what an OrderID and an Amount is. Once Razorpay processes it, Payment Svc drops a generic success token into the bus, completely blind to what the downstream services actually do with it.
+        </div>
+      </div>
+
+      <!-- 6. Notify Service -->
+      <div class="service-deepdive" style="--theme: var(--neon-purple);">
+        <h3><span style="font-size: 2.5rem;">🔔</span> Notification Service</h3>
+        <p class="sd-desc">The communications hub. A service that functions as a pure real-time data terminal. It consumes messaging events and fires them out of the platform via Emails and TCP pipe pushes.</p>
+        
+        <div class="sd-grid">
+          <div class="sd-box">
+            <h4>APIs & Services Exposed</h4>
+            <ul class="sd-list">
+              <li><code>WS /ws</code> - The primary STOMP WebSocket entrance</li>
+              <li><code>GET /notifications/unread</code> - Fetches offline history</li>
+              <li><code>PUT /notifications/read</code> - Mutates badge state</li>
+            </ul>
+          </div>
+          <div class="sd-box">
+            <h4>Internal State & Dependencies</h4>
+            <ul class="sd-list">
+              <li><strong>Schema:</strong> <code>notify_db</code> manages fast ephemeral "Read/Unread" booleans</li>
+              <li><strong>Protocols:</strong> Maintains native JavaMailSender pools for SMTP dispatches.</li>
+              <li><strong>Broker:</strong> Operates an in-memory SimpleBroker pushing WebSockets.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="radius-alert">
+          <strong>Boundary & Operating Radius</strong>
+          The Notification Service radius strictly manages delivery. It has absolutely no decision-making power. It does not create content, it solely relays it. If Session says "booking complete", Notification sends the email. If User Svc says "group chat sent", Notification immediately broadcasts it to the active sockets.
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- DEEP DIVE: AUTHORITY BOUNDARIES -->
+  <section class="stream-container">
+    <div class="status-badge orange" style="margin-bottom: 1rem;"><div class="status-dot"></div> Role Topography</div>
+    <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">Jurisdiction & Radius of Work</h2>
+    <p style="color: var(--text-secondary); max-width: 800px; font-size: 1.1rem; margin-bottom: 2rem;">Every request passing through the API Gateway yields its JWT token. The Gateway extracts the embedded Role claims, injects `X-User-Role` headers, and enforces rigid architectural boundaries globally. No service trusts the client; they only trust the Gateway.</p>
+
+    <div class="role-grid">
+      
+      <!-- Learner Radius -->
+      <div class="role-card" style="--role-color: #34d399; --role-glow: rgba(16,185,129,0.3);">
+        <div class="role-icon">✦</div>
+        <h3 class="role-title">The Learner</h3>
+        <div class="role-subtitle">Radius: Consumer / Explorer</div>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem; line-height:1.6;">Learners sit at the base of the access tree. They possess sweeping GET permissions to traverse the application, but their POST radii are strictly isolated to their own IDs.</p>
+        <ul class="role-list">
+          <li><strong>Can</strong> query `Skill Svc` to search thousands of topics via Redis mappings.</li>
+          <li><strong>Can</strong> execute `POST /sessions/book` triggering the Saga to pay a mentor.</li>
+          <li><strong>Can</strong> establish WebSockets to chat inside study groups they belong to.</li>
+          <li><strong>Cannot</strong> access mentor payout algorithms or modify system categories.</li>
+        </ul>
+      </div>
+
+      <!-- Mentor Radius -->
+      <div class="role-card" style="--role-color: #60a5fa; --role-glow: rgba(59,130,246,0.3);">
+        <div class="role-icon">✧</div>
+        <h3 class="role-title">The Mentor</h3>
+        <div class="role-subtitle">Radius: Creator / Earner</div>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem; line-height:1.6;">Mentors operate within an elevated business logic layer. Their token claims grant direct write access to scheduling grids and group ownership logic.</p>
+        <ul class="role-list">
+          <li><strong>Can</strong> hit `PUT /sessions/schedule` to mutate global availability matrices.</li>
+          <li><strong>Can</strong> execute `POST /groups/manage` yielding admin rights over specific chats.</li>
+          <li><strong>Can</strong> read sensitive feedback loops bypassing standard learner views.</li>
+          <li><strong>Cannot</strong> unilaterally approve other potential mentors.</li>
+        </ul>
+      </div>
+
+      <!-- Admin Radius -->
+      <div class="role-card" style="--role-color: #f87171; --role-glow: rgba(239,68,68,0.3);">
+        <div class="role-icon">★</div>
+        <h3 class="role-title">The Administrator</h3>
+        <div class="role-subtitle">Radius: Global Supervisor</div>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem; line-height:1.6;">Admins hold overriding absolute logic access. The Gateway specifically permits their tokens past the highly restricted `/admin/**` endpoint layers across all services.</p>
+        <ul class="role-list">
+          <li><strong>Can</strong> mutate the catalog hitting `/admin/skills` to permanently add/delete topics.</li>
+          <li><strong>Can</strong> approve or reject queued Mentor Applications bypassing automated checks.</li>
+          <li><strong>Can</strong> access global system analytics sweeping across the entire platform.</li>
+          <li><strong>Can</strong> force-cancel active sagas if dispute resolution is required.</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- DEEP DIVE: AUTHENTICATION (CARRY-OVER) -->
+  <section class="stream-container">
+    <div class="status-badge" style="margin-bottom: 1rem;"><div class="status-dot"></div> Security Protocol</div>
+    <h2 style="font-size: 2.5rem; margin-bottom: 2rem;">Authentication Pipeline</h2>
+    
+    <div class="stream-card">
+      <h3 style="color: white; font-size: 1.5rem; margin-bottom: 0.5rem;">The JWT Issuance Pipeline</h3>
+      <p style="color: var(--text-secondary); margin-bottom: 2rem;">How the physical JSON Web Token is minted and dispersed across the Redis Cluster.</p>
+      
+      <div style="display:flex; justify-content:space-between; color: var(--neon-cyan); font-weight: 600; font-family:'Space Grotesk',sans-serif;">
+        <span>Client Post</span>
+        <span>Gateway Filter</span>
+        <span>Auth Service</span>
+        <span>Redis Store</span>
+      </div>
+
+      <div class="circuit-track">
+        <div class="data-packet" style="--stream-color: var(--neon-cyan);"></div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; margin-top: 3rem;">
+        <div>
+          <h4 style="color: white; margin-bottom: 0.5rem;">1. Intercept</h4>
+          <p style="color: var(--text-secondary); font-size: 0.9rem;">The Spring Cloud Gateway catches `/api/**`. If there is no token, it hard rejects `401 Unauthorized`.</p>
+        </div>
+        <div>
+          <h4 style="color: white; margin-bottom: 0.5rem;">2. Vault Operations</h4>
+          <p style="color: var(--text-secondary); font-size: 0.9rem;">Auth Service verifies Google payload, hits `auth_db`, mints secure JWT keys, and lodges identity in Redis.</p>
+        </div>
+        <div>
+          <h4 style="color: white; margin-bottom: 0.5rem;">3. Identity Headers</h4>
+          <p style="color: var(--text-secondary); font-size: 0.9rem;">Gateway unwraps the token and strictly injects `X-User-Role` downstream locking the radius per user type permanently.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEEP DIVE: REALTIME EVENT ENGINE (CARRY-OVER) -->
+  <section class="stream-container">
+    <div class="status-badge purple" style="margin-bottom: 1rem;"><div class="status-dot"></div> Broker Mechanics</div>
+    <h2 style="font-size: 2.5rem; margin-bottom: 2rem;">Asynchronous CQRS & WebSockets</h2>
+    
+    <div class="stream-card">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;">
+        <div>
+          <h3 style="color: white; font-size: 1.5rem; margin-bottom: 0.5rem;">The Social Synchronization</h3>
+          <p style="color: var(--text-secondary); margin-bottom: 2rem;">How group creations and social chats flow without bogging down the database.</p>
+          
+          <ul style="list-style:none; padding:0; display:grid; gap: 1.5rem;">
+            <li style="position:relative; padding-left: 2rem;">
+              <span style="position:absolute; left:0; top:0; color: var(--neon-purple);">◆</span>
+              <strong style="color:white; display:block;">CQRS Read Segregation</strong>
+              <span style="color:var(--text-secondary); font-size:0.9rem;">When a Mentor updates a group, `user_db` writes the truth, but simultaneously fires a sync to `Redis`. Learners querying `/groups` hit Redis for massive scale zero-latency reads.</span>
+            </li>
+            <li style="position:relative; padding-left: 2rem;">
+              <span style="position:absolute; left:0; top:0; color: var(--neon-green);">◆</span>
+              <strong style="color:white; display:block;">STOMP In-Memory Routing</strong>
+              <span style="color:var(--text-secondary); font-size:0.9rem;">Live Chats do not touch SQL. Messages push to `Notification Svc` which acts as a pure TCP router, broadcasting frames directly to active connected sockets.</span>
+            </li>
+          </ul>
+        </div>
+        <div class="stomp-terminal">
+          <div class="terminal-typewriter">
+            > CONNECT ws://skillsync/ws<br>
+            > ACCEPTED session_id=x7f9a2<br>
+            > SUBSCRIBE id=sub-0 topic=/groups/14<br>
+            <br>
+            [ASYNC_PUSH] payload: {<br>
+              &nbsp;&nbsp;"sender": "Mentor Sarah",<br>
+              &nbsp;&nbsp;"type": "CHAT_MSG",<br>
+              &nbsp;&nbsp;"content": "Let's begin!"<br>
+            }<br>
+            > SENDING via TCP Frame [OK]
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEEP DIVE: THE FINANCIAL SAGA (CARRY-OVER) -->
+  <section class="stream-container">
+    <div class="status-badge" style="margin-bottom: 1rem; border-color:var(--neon-pink); color:var(--neon-pink); background: rgba(236, 72, 153, 0.1);"><div class="status-dot"></div> Distributed Transactions</div>
+    <h2 style="font-size: 2.5rem; margin-bottom: 2rem;">The Mentorship Saga Engine</h2>
+    
+    <div class="stream-card" style="box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 40px 80px rgba(236, 72, 153, 0.1);">
+      <p style="color: var(--text-secondary); max-width: 600px;">When money is involved across distributed networks, we deploy the <b>Saga Pattern</b>—a heavily regulated, state-machine driven event chain linked solely via RabbitMQ.</p>
+
+      <div class="saga-grid">
+        <div style="border-right: 1px solid rgba(255,255,255,0.1); padding-right: 2rem; display:flex; flex-direction:column; justify-content:center;">
+          <h3 style="color:var(--neon-pink); font-size:1.2rem; margin-bottom: 1rem;">The Golden Rule</h3>
+          <p style="color:var(--text-secondary); font-size:0.85rem;">If the Razorpay webhook fails, the Payment Service emits `<code style="background:rgba(239,68,68,0.2);color:#f87171;padding:2px 6px;border-radius:4px;">payment.failed</code>`. The Session Service consumes this and automatically fires a <b>compensation operation</b>—cancelling the mentorship, unbooking the slot, and ensuring absolute data consistency.</p>
+        </div>
+        <div style="display:grid; gap: 1.5rem;">
+          <div class="saga-step">
+            <div class="saga-number">1</div>
+            <h4 style="color:white; margin-bottom:0.3rem;">Initialization (Session Svc)</h4>
+            <p style="color:var(--text-secondary); font-size:0.85rem;">Validates mentor limits with User Svc. Creates `session_record` as <b>PENDING(1)</b>. Drops `<code style="background:rgba(255,255,255,0.1);padding:2px;border-radius:2px;">session.requested</code>` block into RabbitMQ.</p>
+          </div>
+          <div class="saga-step">
+            <div class="saga-number">2</div>
+            <h4 style="color:white; margin-bottom:0.3rem;">Financial Ledgering (Payment Svc)</h4>
+            <p style="color:var(--text-secondary); font-size:0.85rem;">Picks up request. Reaches out to Razorpay externally. Locks ledger states. Awaits asynchronous Webhook resolution.</p>
+          </div>
+          <div class="saga-step">
+            <div class="saga-number">3</div>
+            <h4 style="color:white; margin-bottom:0.3rem;">Settlement & Delivery (Notify Svc)</h4>
+            <p style="color:var(--text-secondary); font-size:0.85rem;">Upon `payment.success` event via RabbitMQ, Session explicitly overwrites state to <b>CONFIRMED(3)</b>. Notify Svc instantly fires receipt via SMTP JavaMailSender.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="/docs/pipeline.js"></script>
+  <script>
+    document.querySelectorAll('.stream-card, .codex-card').forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty('--mouse-x', `${x}px`);
+        card.style.setProperty('--mouse-y', `${y}px`);
+      });
+    });
+  </script>
+</body>
+</html>

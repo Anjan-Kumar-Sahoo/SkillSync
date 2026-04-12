@@ -1,4 +1,4 @@
-﻿import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import logo from '../assets/skillsync-logo.png';
 import './PptLandingPage.css';
 import ThemeToggleButton from '../components/ui/ThemeToggleButton';
@@ -23,24 +23,24 @@ type MonitoringLink = {
 
 const docsLinks: DocLink[] = [
   {
+    title: 'Architecture Overview',
+    description: 'Scroll-driven interactive journey mapping the complete lifecycle of a request from client to cloud.',
+    href: '/docs/index.html',
+  },
+  {
     title: 'Backend Architecture',
-    description: 'Service topology, data boundaries, and domain ownership.',
-    href: '/ui-docs/BE-ARCHITECTURE.html',
+    description: 'Scroll-driven visualization of service topology, event flow, saga, CQRS, and observability.',
+    href: '/docs/backend.html',
   },
   {
     title: 'Frontend Architecture',
-    description: 'Component tree, state flow, and API integration model.',
-    href: '/ui-docs/FE-ARCHITECTURE.html',
-  },
-  {
-    title: 'Payment Saga',
-    description: 'Outbox, compensation, retries, and consistency strategy.',
-    href: '/ui-docs/PAYMENT_SAGA.html',
+    description: 'Scroll-driven visualization of app structure, state flow, routing, auth, and realtime channels.',
+    href: '/docs/frontend.html',
   },
   {
     title: 'Deployment & DevOps',
-    description: 'Container runtime, ingress, CI/CD and observability setup.',
-    href: '/ui-docs/DEPLOYMENT.html',
+    description: 'Scroll-driven visualization of CI/CD, cloud runtime, traffic flow, and operational commands.',
+    href: '/docs/deployment.html',
   },
 ];
 

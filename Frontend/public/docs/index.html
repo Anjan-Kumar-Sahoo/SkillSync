@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkillSync Global Architecture</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/docs/pipeline.css" />
+  <style>
+    :root {
+      --bg-deep: #050505;
+      --neon-blue: #3b82f6; --neon-cyan: #06b6d4; --neon-purple: #8b5cf6;
+      --neon-pink: #ec4899; --neon-orange: #f59e0b; --neon-green: #10b981;
+    }
+    body { background: radial-gradient(circle at center top, #111827 0%, var(--bg-deep) 100%); color: #e2e8f0; overflow-x: hidden; }
+    
+    .hero-matrix { padding: 10rem 2rem 6rem; text-align: center; display: flex; flex-direction: column; align-items: center; z-index: 10; position:relative;}
+    .ultra-title { font-size: 5rem; font-weight: 700; letter-spacing: -0.04em; line-height: 1.1; margin-bottom: 1.5rem; background: linear-gradient(135deg, #ffffff 0%, rgba(255,255,255,0.4) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 40px rgba(255,255,255,0.1)); }
+    .ultra-desc { font-size: 1.25rem; color: #94a3b8; max-width: 600px; line-height: 1.6; }
+    
+    /* ─── 3D ORBIT SYSTEM ─── */
+    .orbit-stage { position: relative; height: 600px; display: flex; justify-content: center; align-items: center; margin-bottom: 6rem; perspective: 1000px; }
+    .orbit-core { position: absolute; width: 120px; height: 120px; background: rgba(59,130,246,0.1); border: 2px solid var(--neon-blue); border-radius: 50%; display: grid; place-items: center; box-shadow: 0 0 40px rgba(59,130,246,0.5); z-index: 10; font-weight:bold; color:white; text-align:center;}
+    
+    .orbit-ring { position: absolute; border: 1px dashed rgba(255,255,255,0.1); border-radius: 50%; transform-style: preserve-3d; animation: spin 40s linear infinite; }
+    .ring-1 { width: 300px; height: 300px; animation-duration: 20s; }
+    .ring-2 { width: 500px; height: 500px; animation-duration: 35s; animation-direction: reverse; }
+    
+    .orbit-node { position: absolute; width: 80px; height: 80px; background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; display:grid; place-items:center; color:white; font-size:0.8rem; text-align:center; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+    .n-1 { top: -40px; left: 110px; border-color: var(--neon-cyan); box-shadow: 0 0 20px rgba(6,182,212,0.4); animation: counter-spin 20s linear infinite; }
+    .n-2 { bottom: -40px; right: 110px; border-color: var(--neon-pink); box-shadow: 0 0 20px rgba(236,72,153,0.4); animation: counter-spin 20s linear infinite; }
+    .n-3 { left: -40px; top: 210px; border-color: var(--neon-green); box-shadow: 0 0 20px rgba(16,185,129,0.4); animation: counter-spin 35s linear infinite reverse; }
+    .n-4 { right: -40px; bottom: 210px; border-color: var(--neon-orange); box-shadow: 0 0 20px rgba(245,158,11,0.4); animation: counter-spin 35s linear infinite reverse; }
+
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    @keyframes counter-spin { 100% { transform: rotate(-360deg); } }
+
+    /* ─── GLASS CARDS ─── */
+    .stream-container { max-width: 1200px; margin: 0 auto 10rem; position: relative; }
+    .stream-card { background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(20px); border-radius: 32px; padding: 4rem; position: relative; overflow: hidden; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 40px 80px rgba(0,0,0,0.5); }
+    .stream-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.06), transparent 40%); opacity: 0; transition: opacity 0.5s ease; pointer-events: none; }
+    .stream-card:hover::before { opacity: 1; }
+
+    .landscape-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+    .land-card { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); padding: 2rem; border-radius: 20px; transition: 0.3s; }
+    .land-card:hover { transform: translateY(-10px); border-color: var(--lc-color); box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 40px var(--lc-glow); }
+    .land-card h3 { color: white; font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .land-card p { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; }
+    .land-icon { font-size: 2.5rem; margin-bottom: 1rem; color: var(--lc-color); filter: drop-shadow(0 0 10px var(--lc-glow)); }
+    
+    .status-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(16, 185, 129, 0.1); color: #34d399; padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.2); }
+    .status-dot { width: 6px; height: 6px; background: currentColor; border-radius: 50%; box-shadow: 0 0 10px currentColor; animation: blink 2s infinite; }
+    @keyframes blink { 0%, 100% {opacity: 1;} 50% {opacity: 0.3;} }
+  </style>
+</head>
+<body>
+
+  <!-- TOPNAV -->
+  <header class="topbar" id="topbar" style="background: rgba(5,5,5,0.8); border-bottom: 1px solid rgba(255,255,255,0.05);">
+    <a class="brand" href="/docs/index.html">
+      <img src="/favicon.png" alt="SkillSync" class="brand-icon" style="height: 24px; filter: drop-shadow(0 0 8px rgba(255,255,255,0.5));" /> 
+      <span style="letter-spacing: 1px; font-weight: 600;">SkillSync</span>
+    </a>
+    <div class="nav-extra" style="display:flex; gap: 1rem;">
+      <a href="/docs/frontend.html" class="nav-link-secondary" style="color:var(--text-muted); font-size:0.85rem;">Frontend</a>
+      <a href="/docs/backend.html" class="nav-link-secondary" style="color:var(--text-muted); font-size:0.85rem;">Backend</a>
+      <a href="/docs/deployment.html" class="nav-link-secondary" style="color:var(--text-muted); font-size:0.85rem;">Deployment</a>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero-matrix">
+    <div class="status-badge" style="margin-bottom: 2rem; border-color: rgba(6,182,212,0.3); color: #22d3ee; background: rgba(6,182,212,0.1);">
+      <div class="status-dot"></div> System Architecture Overview
+    </div>
+    <h1 class="ultra-title">The Global Map of<br>SkillSync</h1>
+    <p class="ultra-desc">
+      A massive ecosystem spanning localized React DOMs, Edge routing APIs, and deep infrastructural Postgres schemas.
+    </p>
+  </section>
+
+  <!-- 3D ORBIT VISUAL -->
+  <section class="orbit-stage">
+    
+    <div class="orbit-core">API<br>Gateway</div>
+
+    <div class="orbit-ring ring-1">
+      <div class="orbit-node n-1">Auth Svc</div>
+      <div class="orbit-node n-2">User Svc</div>
+    </div>
+
+    <div class="orbit-ring ring-2">
+      <div class="orbit-node n-3">React SPA</div>
+      <div class="orbit-node n-4">Cloud AWS</div>
+    </div>
+
+  </section>
+
+  <!-- LANDSCAPE -->
+  <section class="stream-container">
+    <h2 style="font-size: 2.5rem; margin-bottom: 2rem; text-align:center;">The Three Pillars</h2>
+    
+    <div class="stream-card" style="padding: 3rem;">
+      <div class="landscape-grid">
+        
+        <a href="/docs/frontend.html" class="land-card" style="--lc-color: #06b6d4; --lc-glow: rgba(6,182,212,0.3); text-decoration:none;">
+          <div class="land-icon">⚛️</div>
+          <h3>Frontend Engine</h3>
+          <p>Explore how React handles component composition, Vite drives lightning fast HMR, and Redux Toolkit & React Query maintain client-side stability.</p>
+        </a>
+
+        <a href="/docs/backend.html" class="land-card" style="--lc-color: #8b5cf6; --lc-glow: rgba(139,92,246,0.3); text-decoration:none;">
+          <div class="land-icon">⚡</div>
+          <h3>Backend Core</h3>
+          <p>Dive into the Spring Cloud microservice ecosystem. Witness how RabbitMQ processes sagas, Redis accelerates queries, and STOMP routes WebSockets.</p>
+        </a>
+
+        <a href="/docs/deployment.html" class="land-card" style="--lc-color: #f59e0b; --lc-glow: rgba(245,158,11,0.3); text-decoration:none;">
+          <div class="land-icon">🚀</div>
+          <h3>Cloud Operations</h3>
+          <p>Review the CI/CD deployment pipeline mapping GitHub Actions into Docker Hub, cascading into our live AWS EC2 reverse proxy topologies.</p>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <script src="/docs/pipeline.js"></script>
+  <script>
+    document.querySelectorAll('.stream-card').forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+        card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+      });
+    });
+  </script>
+</body>
+</html>

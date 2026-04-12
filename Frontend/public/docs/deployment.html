@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkillSync Deployment Engine | Complete Virtualization</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/docs/pipeline.css" />
+  <style>
+    :root {
+      --bg-deep: #050505;
+      --neon-cyan: #06b6d4; --neon-blue: #3b82f6; --neon-pink: #ec4899; --neon-green: #10b981; --neon-purple: #8b5cf6; --neon-orange: #f59e0b;
+    }
+    body { background: radial-gradient(ellipse at bottom, #1e1b4b 0%, var(--bg-deep) 100%); color: #e2e8f0; overflow-x: hidden; }
+    
+    .hero-matrix { padding: 8rem 2rem 4rem; text-align: center; display: flex; flex-direction: column; align-items: center; z-index: 10; position:relative;}
+    .ultra-title { font-size: 4.5rem; font-weight: 700; letter-spacing: -0.04em; line-height: 1.1; margin-bottom: 1.5rem; background: linear-gradient(135deg, #ffffff 0%, rgba(255,255,255,0.4) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 40px rgba(255,255,255,0.1)); }
+    
+    /* ─── MASTER CONTAINER ─── */
+    .stream-container { max-width: 1200px; margin: 0 auto 6rem; position: relative; }
+    .status-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; border: 1px solid rgba(245, 158, 11, 0.2); margin-bottom:1rem;}
+    
+    /* ─── VIRTUALIZATION ENGINE PIPELINES ─── */
+    .v-pipeline { border-left: 2px dashed var(--theme); padding-left: 3rem; position: relative; margin: 3rem 0;}
+    .v-node { position: relative; margin-bottom: 3rem; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.05); padding: 2.5rem; border-radius: 16px; backdrop-filter: blur(10px); transition: 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.5);}
+    .v-node:hover { transform: translateX(10px); border-color: var(--theme); box-shadow: 0 10px 40px rgba(0,0,0,0.8), 0 0 30px var(--glow); }
+    .v-node::before { content: ''; position: absolute; left: -3rem; top: 3.5rem; width: 3rem; height: 2px; background: var(--theme); }
+    .v-node::after { content: ''; position: absolute; left: -3.4rem; top: 3rem; width: 14px; height: 14px; background: var(--bg-deep); border: 2px solid var(--theme); border-radius: 50%; box-shadow: 0 0 15px var(--theme);}
+    
+    .v-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem;}
+    .v-header h3 { font-size: 1.8rem; color: white; margin: 0;}
+    .v-code { background: #000; color: #f59e0b; padding: 1.5rem; border-radius: 12px; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 0.85rem; margin-top: 1.5rem; border: 1px solid #333; overflow-x: auto;}
+    .v-desc { color: #a1a1aa; font-size: 1.05rem; line-height: 1.7;}
+    
+    /* ─── DATA FLOW ANIMATIONS ─── */
+    .flow-packet { position: absolute; left: -3.15rem; top: 0; width: 8px; height: 30px; background: var(--theme); box-shadow: 0 0 20px var(--theme); border-radius: 4px; animation: flowAnim 4s infinite linear;}
+    @keyframes flowAnim { 0% { top: 0; opacity: 0;} 10% { opacity: 1;} 90% { opacity: 1;} 100% { top: 100%; opacity: 0; } }
+    /* ─── DATA FLOW ANIMATIONS ─── */
+    .flow-packet { position: absolute; left: -3.15rem; top: 0; width: 8px; height: 30px; background: var(--theme); box-shadow: 0 0 20px var(--theme); border-radius: 4px; animation: flowAnim 4s infinite linear;}
+    @keyframes flowAnim { 0% { top: 0; opacity: 0;} 10% { opacity: 1;} 90% { opacity: 1;} 100% { top: 100%; opacity: 0; } }
+
+    /* ─── EC2 PIPELINE VISUAL ─── */
+    .pipe-stage { position: relative; height: 500px; display: flex; justify-content: center; align-items: center; margin-bottom: 6rem; }
+    .cloud-nodes { display: flex; gap: 3rem; align-items: center; position: relative; }
+    .cloud-node { background: rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.1); width: 150px; height: 150px; border-radius: 24px; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; z-index: 2; transition: 0.3s; }
+    .cloud-node:hover { transform: translateY(-10px); border-color: var(--node-color); box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 40px var(--node-glow); }
+    .node-icon { font-size: 3rem; margin-bottom: 0.5rem; color: white;}
+    .node-label { font-weight: 700; font-size: 0.9rem; color: white; letter-spacing: 1px;}
+    
+    .connecting-pipe { position: absolute; top: 50%; left: 10%; right: 10%; height: 4px; background: rgba(255,255,255,0.05); transform: translateY(-50%); z-index: 1; border-radius: 4px; overflow: hidden; }
+    .pipe-energy { position: absolute; top: 0; left: -200px; height: 100%; width: 200px; background: linear-gradient(90deg, transparent, var(--neon-orange), transparent); animation: shoot 2s infinite; }
+    @keyframes shoot { to { left: 100%; } }
+  </style>
+</head>
+<body>
+
+  <header class="topbar" id="topbar" style="background: rgba(5,5,5,0.8); border-bottom: 1px solid rgba(255,255,255,0.05);">
+    <a class="brand" href="/docs/index.html"><img src="/favicon.png" alt="SkillSync" class="brand-icon" style="height: 24px;" /><span style="letter-spacing: 1px; font-weight: 600;">SkillSync</span></a>
+    <div class="nav-extra" style="display:flex; gap: 1rem;">
+      <a href="/docs/index.html" class="nav-link-secondary" style="color:var(--text-muted); font-size:0.85rem;">Architecture</a>
+      <a href="/docs/frontend.html" class="nav-link-secondary" style="color:var(--text-muted); font-size:0.85rem;">Frontend</a>
+      <a href="/docs/backend.html" class="nav-link-secondary" style="color:var(--text-muted); font-size:0.85rem;">Backend</a>
+    </div>
+  </header>
+
+  <section class="hero-matrix">
+    <div class="status-badge" style="--theme: var(--neon-orange); border-color:var(--theme); color:var(--theme);"><div class="status-dot"></div> Live Infrastructure</div>
+    <h1 class="ultra-title">Cloud Operations</h1>
+    <p class="ultra-desc">Taking thousands of lines of local code and permanently deploying them onto distributed AWS EC2 Ubuntu instances managed by Docker Compose.</p>
+  </section>
+
+  <!-- PIPELINE ANIMATION -->
+  <section class="pipe-stage">
+    <div class="connecting-pipe"><div class="pipe-energy"></div></div>
+    <div class="cloud-nodes">
+      <div class="cloud-node" style="--node-color: #3b82f6; --node-glow: rgba(59,130,246,0.4);" title="GitHub Actions">
+        <div class="node-icon">🐙</div><div class="node-label">Github CI</div>
+      </div>
+      <div class="cloud-node" style="--node-color: #06b6d4; --node-glow: rgba(6,182,212,0.4);" title="Docker Hub">
+        <div class="node-icon">🐳</div><div class="node-label">Docker Hub</div>
+      </div>
+      <div class="cloud-node" style="--node-color: #f59e0b; --node-glow: rgba(245,158,11,0.4);" title="AWS Cloud Edge">
+        <div class="node-icon">☁️</div><div class="node-label">AWS EC2</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIRTUALIZATION 1: THE GITHUB ACTIONS PIPELINE -->
+  <section class="stream-container">
+    <h2 style="font-size: 2.5rem; margin-bottom: 1rem; color:white;">1. The CI/CD Automation Matrix</h2>
+    <p class="v-desc" style="max-width: 800px; margin-bottom: 2rem;">When an engineer targets pushing to `main`, GitHub Actions spins up an ephemeral runner to physically execute the entire application build natively before dispatching it to production.</p>
+
+    <div class="v-pipeline" style="--theme: var(--neon-blue); --glow: rgba(59,130,246,0.3);">
+      <div class="flow-packet"></div>
+      
+      <div class="v-node">
+        <div class="v-header"><h3>Phase 1: Environment Spin-up & Extraction</h3></div>
+        <p class="v-desc">GitHub executes <code>ubuntu-latest</code>. The <code>actions/checkout@v4</code> action hooks into our repo and literally clones the codebase into the virtual machine. It then installs Java 21 or Node 20 depending on if it's running <code>backend.yml</code> or <code>frontend.yml</code>.</p>
+      </div>
+
+      <div class="v-node">
+        <div class="v-header"><h3>Phase 2: Docker Hub Image Compilation</h3></div>
+        <p class="v-desc">The runner logs into Docker Hub using encrypted Vault Secrets natively mounted to its environment variables. It recursively loops through each service (e.g. <code>/auth-service</code>) and builds the local Dockerfile.</p>
+        <div class="v-code">
+          - name: Build & Push Gateway<br>
+          &nbsp;&nbsp;run: |<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;docker build -t udayasri/skillsync-gateway ./api-gateway<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;docker push udayasri/skillsync-gateway
+        </div>
+      </div>
+
+      <div class="v-node">
+        <div class="v-header"><h3>Phase 3: Secure SSH Penetration</h3></div>
+        <p class="v-desc">Once all images are rebuilt and staged in Docker Hub, GitHub leverages the <code>appleboy/ssh-action</code> script to forcefully break into our remote AWS EC2 instance using our injected `.pem` key.</p>
+      </div>
+      
+      <div class="v-node">
+        <div class="v-header"><h3>Phase 4: Remote EC2 Execution</h3></div>
+        <p class="v-desc">Once inside the EC2 Box, the action executes a direct shell script overriding the live server state without manual human entry.</p>
+        <div class="v-code">
+          script: |<br>
+          &nbsp;&nbsp;cd ~/SkillSync<br>
+          &nbsp;&nbsp;docker compose pull<br>
+          &nbsp;&nbsp;docker compose up -d --remove-orphans<br>
+          &nbsp;&nbsp;docker system prune -f
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIRTUALIZATION 2: NGINX EDGE ROUTING -->
+  <section class="stream-container">
+    <h2 style="font-size: 2.5rem; margin-bottom: 1rem; color:white;">2. The Live Firewall (Nginx Edge Route)</h2>
+    <p class="v-desc" style="max-width: 800px; margin-bottom: 2rem;">The EC2 Firewall physically blocks all ports except 80 and 443. Nginx operates as the sole guardian at the perimeter of the instance mapping inbound web strings to hidden internal ports.</p>
+
+    <div class="v-pipeline" style="--theme: var(--neon-orange); --glow: rgba(245,158,11,0.3);">
+      <div class="flow-packet"></div>
+      
+      <div class="v-node">
+        <div class="v-header"><h3>Cryptographic Decryption</h3></div>
+        <p class="v-desc">When a user navigates to <code>https://skillsync.udayasri.dev</code>, the 443 request hits Nginx. Nginx utilizes Cerbot's LetsEncrypt keys to decrypt the SSL cipher. It then begins to read the raw HTTP string.</p>
+      </div>
+
+      <div class="v-node">
+        <div class="v-header"><h3>The Proxy Rule Engine</h3></div>
+        <p class="v-desc">If the URL specifically matches <code>/api/</code> or <code>/ws/</code>, Nginx rips it from the public internet and drops it into the internal Docker network straight to the Spring API Gateway (Port 8080).</p>
+        <div class="v-code">
+          location /api/ {<br>
+          &nbsp;&nbsp;proxy_pass http://localhost:8080/;<br>
+          &nbsp;&nbsp;proxy_set_header Host $host;<br>
+          &nbsp;&nbsp;proxy_set_header X-Real-IP $remote_addr;<br>
+          }
+        </div>
+        <p class="v-desc" style="margin-top: 1rem;">If the URL does NOT match /api/, Nginx drops it at the Frontend container (Port 5173), loading the Vite React script.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIRTUALIZATION 3: THE DOCKER SWARM BOUNDARY -->
+  <section class="stream-container">
+    <h2 style="font-size: 2.5rem; margin-bottom: 1rem; color:white;">3. The Container Ecosystem</h2>
+    <p class="v-desc" style="max-width: 800px; margin-bottom: 2rem;">Detailed view of how Docker Compose structures the OS virtualization layer natively on EC2.</p>
+
+    <div class="v-pipeline" style="--theme: var(--neon-green); --glow: rgba(16,185,129,0.3);">
+      <div class="flow-packet"></div>
+      
+      <div class="v-node">
+        <div class="v-header"><h3>The "skillsync-net" Bridge</h3></div>
+        <p class="v-desc">We do not map microservices to localized IPs (127.x.x.x). We declare a Docker Bridge Network. This means the <code>auth-service</code> container can literally reach the <code>user-service</code> container by executing a REST call to <code>http://user-service:8082</code> without needing an IP address.</p>
+      </div>
+
+      <div class="v-node">
+        <div class="v-header"><h3>Volume Persistence</h3></div>
+        <p class="v-desc">Docker containers are inherently ephemeral. If they crash, their hard drives wipe permanently. To ensure database safety, we bind Host paths to Container paths.</p>
+        <div class="v-code">
+          volumes:<br>
+          &nbsp;&nbsp;- ./data/postgres:/var/lib/postgresql/data
+        </div>
+        <p class="v-desc" style="margin-top: 1rem;">This command instructs the container to literally save the Postgres tables directly onto the AWS EBS volume so it survives reboots flawlessly.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <script src="/docs/pipeline.js"></script>
+</body>
+</html>

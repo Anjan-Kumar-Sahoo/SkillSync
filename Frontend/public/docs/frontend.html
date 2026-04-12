@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkillSync Frontend Engine | Complete Virtualization</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/docs/pipeline.css" />
+  <style>
+    :root {
+      --bg-deep: #050505;
+      --neon-cyan: #06b6d4; --neon-blue: #3b82f6; --neon-pink: #ec4899; --neon-green: #10b981; --neon-purple: #8b5cf6; --neon-orange: #f59e0b;
+    }
+    body { background: radial-gradient(ellipse at top, #0f172a 0%, var(--bg-deep) 100%); color: #e2e8f0; overflow-x: hidden; }
+    
+    .hero-matrix { padding: 8rem 2rem 4rem; text-align: center; display: flex; flex-direction: column; align-items: center; z-index: 10; position:relative;}
+    .ultra-title { font-size: 4.5rem; font-weight: 700; letter-spacing: -0.04em; line-height: 1.1; margin-bottom: 1.5rem; background: linear-gradient(135deg, #ffffff 0%, rgba(255,255,255,0.4) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 40px rgba(255,255,255,0.1)); }
+    
+    /* ─── MASTER CONTAINER ─── */
+    .stream-container { max-width: 1200px; margin: 0 auto 6rem; position: relative; }
+    .status-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(6, 182, 212, 0.1); color: #06b6d4; padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; border: 1px solid rgba(6, 182, 212, 0.2); margin-bottom:1rem;}
+    
+    /* ─── VIRTUALIZATION ENGINE PIPELINES ─── */
+    .v-pipeline { border-left: 2px dashed var(--theme); padding-left: 3rem; position: relative; margin: 3rem 0;}
+    .v-node { position: relative; margin-bottom: 3rem; background: rgba(15,23,42,0.4); border: 1px solid rgba(255,255,255,0.05); padding: 2.5rem; border-radius: 16px; backdrop-filter: blur(10px); transition: 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.5);}
+    .v-node:hover { transform: translateX(10px); border-color: var(--theme); box-shadow: 0 10px 40px rgba(0,0,0,0.8), 0 0 30px var(--glow); }
+    .v-node::before { content: ''; position: absolute; left: -3rem; top: 3.5rem; width: 3rem; height: 2px; background: var(--theme); }
+    .v-node::after { content: ''; position: absolute; left: -3.4rem; top: 3rem; width: 14px; height: 14px; background: var(--bg-deep); border: 2px solid var(--theme); border-radius: 50%; box-shadow: 0 0 15px var(--theme);}
+    
+    .v-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem;}
+    .v-header h3 { font-size: 1.8rem; color: white; margin: 0;}
+    .v-code { background: #000; color: #10b981; padding: 1.5rem; border-radius: 12px; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 0.85rem; margin-top: 1.5rem; border: 1px solid #333; overflow-x: auto;}
+    .v-desc { color: #a1a1aa; font-size: 1.05rem; line-height: 1.7;}
+    
+    /* ─── DATA FLOW ANIMATIONS ─── */
+    .flow-packet { position: absolute; left: -3.15rem; top: 0; width: 8px; height: 30px; background: var(--theme); box-shadow: 0 0 20px var(--theme); border-radius: 4px; animation: flowAnim 4s infinite linear;}
+    @keyframes flowAnim { 0% { top: 0; opacity: 0;} 10% { opacity: 1;} 90% { opacity: 1;} 100% { top: 100%; opacity: 0; } }
+
+    /* ─── GRID COMPARISONS ─── */
+    .split-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;}
+    .split-box { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 12px; }
+
+    /* ─── REACT COMPONENT ISO TREE ─── */
+    .react-iso { position: relative; height: 600px; perspective: 1500px; display: flex; justify-content: center; align-items: center; margin-bottom: 6rem; }
+    .comp-tree { position: relative; width: 400px; height: 400px; transform: rotateX(60deg) rotateZ(45deg); transform-style: preserve-3d; transition: 1s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .react-iso:hover .comp-tree { transform: rotateX(50deg) rotateZ(35deg); }
+
+    .comp-layer { position: absolute; border: 1px solid rgba(255,255,255,0.1); background: rgba(15,23,42,0.5); backdrop-filter: blur(10px); border-radius: 16px; width:100%; height:100%; display:grid; place-items:center; color:white; font-size:1.2rem; font-weight:700; text-transform:uppercase; letter-spacing:2px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); transition: 0.4s; pointer-events:auto;}
+    
+    .l-1 { transform: translateZ(0px); border-color: rgba(59,130,246,0.3); color: #3b82f6;}
+    .l-2 { transform: translateZ(80px); width: 80%; height: 80%; margin: 10%; border-color: rgba(6,182,212,0.3); color: #06b6d4;}
+    .l-3 { transform: translateZ(160px); width: 60%; height: 60%; margin: 20%; border-color: rgba(16,185,129,0.3); color: #10b981;}
+    .l-4 { transform: translateZ(240px); width: 40%; height: 40%; margin: 30%; border-color: rgba(236,72,153,0.3); color: #ec4899; background: rgba(236,72,153,0.1);}
+    
+    .comp-layer:hover { background: rgba(255,255,255,0.1); transform: translateZ(calc(var(--z, 0) + 20px)); box-shadow: 0 0 30px currentColor; }
+    .l-1 { --z: 0px; } .l-2 { --z: 80px; } .l-3 { --z: 160px; } .l-4 { --z: 240px; }
+  </style>
+</head>
+<body>
+
+  <header class="topbar" id="topbar" style="background: rgba(5,5,5,0.8); border-bottom: 1px solid rgba(255,255,255,0.05);">
+    <a class="brand" href="/docs/index.html"><img src="/favicon.png" alt="SkillSync" class="brand-icon" style="height: 24px;" /><span style="letter-spacing: 1px; font-weight: 600;">SkillSync</span></a>
+    <div class="nav-extra" style="display:flex; gap: 1rem;">
+      <a href="/docs/index.html" class="nav-link-secondary" style="color:var(--text-muted); font-size:0.85rem;">Architecture</a>
+      <a href="/docs/backend.html" class="nav-link-secondary" style="color:var(--text-muted); font-size:0.85rem;">Backend</a>
+      <a href="/docs/deployment.html" class="nav-link-secondary" style="color:var(--text-muted); font-size:0.85rem;">Deployment</a>
+    </div>
+  </header>
+
+  <section class="hero-matrix">
+    <div class="status-badge" style="--theme: var(--neon-cyan); border-color:var(--theme); color:var(--theme);"><div class="status-dot"></div> UI Orchestration Engine</div>
+    <h1 class="ultra-title">Frontend Ecosystem</h1>
+    <p class="ultra-desc">Strictly typed React Components driven by ultra-fast Vite HMR, powered by advanced Redux slices and aggressive React Query caching.</p>
+  </section>
+
+  <!-- 3D COMPONENT TREE -->
+  <section class="react-iso">
+    <div class="comp-tree">
+      <div class="comp-layer l-1">App Shell / Router</div>
+      <div class="comp-layer l-2">Provider Wrappers</div>
+      <div class="comp-layer l-3">Page Components</div>
+      <div class="comp-layer l-4">Reactive UI Hooks</div>
+    </div>
+  </section>
+
+  <!-- VIRTUALIZATION 1: AUTHENTICATION ROUTING -->
+  <section class="stream-container">
+    <h2 style="font-size: 2.5rem; margin-bottom: 1rem; color:white;">1. The Authentication & Routing Gate</h2>
+    <p class="v-desc" style="max-width: 800px; margin-bottom: 2rem;">How SkillSync locks down its DOM trees using React Router and Redux Toolkit. This flow maps the exact journey from the Google Login button to securing protected dashboard routes.</p>
+
+    <div class="v-pipeline" style="--theme: var(--neon-blue); --glow: rgba(59,130,246,0.3);">
+      <div class="flow-packet"></div>
+      
+      <div class="v-node">
+        <div class="v-header"><h3>Step 1: Google OAuth Call</h3></div>
+        <p class="v-desc">The user clicks 'Sign in with Google'. The <code>@react-oauth/google</code> provider catches the pop-up success and extracts the Google `credential` string.</p>
+        <div class="v-code">
+          const loginMutation = useMutation({<br>
+          &nbsp;&nbsp;mutationFn: (token) => axios.post('/api/auth/google', { token }),<br>
+          &nbsp;&nbsp;onSuccess: (data) => dispatch(setCredentials(data))<br>
+          });
+        </div>
+      </div>
+
+      <div class="v-node">
+        <div class="v-header"><h3>Step 2: Redux Storage (authSlice)</h3></div>
+        <p class="v-desc">The successful backend response yields our signed JWT and User object. The Redux Toolkit <code>authSlice</code> synchronously updates global UI memory. Crucially, <code>redux-persist</code> immediately serializes this into local browser storage.</p>
+        <div class="split-grid">
+          <div class="split-box">
+            <strong style="color:var(--theme); display:block; margin-bottom:0.5rem;">State Mutation</strong>
+            <span style="color:#cbd5e1; font-size:0.9rem;">isAuthenticated → TRUE<br>user Role → 'LEARNER' | 'MENTOR' | 'ADMIN'</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="v-node">
+        <div class="v-header"><h3>Step 3: Gateway Resolution (React Router)</h3></div>
+        <p class="v-desc">The <code>&lt;ProtectedRoute&gt;</code> wrapper guarding the `/dashboard` route intercepts the render phase. It reads `useSelector(state => state.auth)`. Seeing validation, it drops the shield and mounts the requested UI components.</p>
+        <div class="v-code">
+          if (!isAuthenticated) return &lt;Navigate to="/login" replace /&gt;;<br>
+          if (requiredRole && userRole !== requiredRole) return &lt;Navigate to="/unauthorized" /&gt;;<br>
+          return &lt;Outlet /&gt;; // Render children securely
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIRTUALIZATION 2: AXIOS INTERCEPTOR PIPELINE -->
+  <section class="stream-container">
+    <h2 style="font-size: 2.5rem; margin-bottom: 1rem; color:white;">2. The Network Interceptor Engine</h2>
+    <p class="v-desc" style="max-width: 800px; margin-bottom: 2rem;">How the frontend ensures absolutely every single outbound API request is aggressively appended with cryptographic proof of identity.</p>
+
+    <div class="v-pipeline" style="--theme: var(--neon-cyan); --glow: rgba(6,182,212,0.3);">
+      <div class="flow-packet"></div>
+      
+      <div class="v-node">
+        <div class="v-header"><h3>The Outbound Hook (Axios Request)</h3></div>
+        <p class="v-desc">A component calls a React Query hook (e.g. <code>fetchMentors()</code>). Before the physical HTTP request leaves the browser tab, the centralized Axios instance literally catches it mid-flight.</p>
+      </div>
+
+      <div class="v-node">
+        <div class="v-header"><h3>Header Injection</h3></div>
+        <p class="v-desc">The interceptor accesses the Redux Store, extracts the current active JWT accessToken, and mutates the outbound HTTP headers.</p>
+        <div class="v-code">
+          api.interceptors.request.use((config) => {<br>
+          &nbsp;&nbsp;const token = store.getState().auth.token;<br>
+          &nbsp;&nbsp;if (token) config.headers.Authorization = `Bearer ${token}`;<br>
+          &nbsp;&nbsp;return config;<br>
+          });
+        </div>
+      </div>
+
+      <div class="v-node">
+        <div class="v-header"><h3>Inbound Fallback (401 Trapping)</h3></div>
+        <p class="v-desc">If the backend rejects the token as "Expired" (401 Unauthorized), the response interceptor catches the error BEFORE it reaches the UI. It pauses the request queue, hits <code>/api/auth/refresh</code>, acquires a new token, updates Redux, and replays the failed request flawlessly without the user ever noticing.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIRTUALIZATION 3: THE SAGA (RAZORPAY OVERLAY) -->
+  <section class="stream-container">
+    <h2 style="font-size: 2.5rem; margin-bottom: 1rem; color:white;">3. Payment Overlay & Booking Workflow</h2>
+    <p class="v-desc" style="max-width: 800px; margin-bottom: 2rem;">The exact UI workflow allowing a Learner to lock a Mentor's time slot and execute a Razorpay financial settlement through the Frontend.</p>
+
+    <div class="v-pipeline" style="--theme: var(--neon-pink); --glow: rgba(236,72,153,0.3);">
+      <div class="flow-packet"></div>
+      
+      <div class="v-node">
+        <div class="v-header"><h3>Step 1: The Schedule Grid</h3></div>
+        <p class="v-desc">The frontend calls the Session Service to gather the Mentor's `available_slots`. The Learner clicks a slot, executing a React Query Mutation to lock it.</p>
+      </div>
+
+      <div class="v-node">
+        <div class="v-header"><h3>Step 2: Backend Initialization</h3></div>
+        <p class="v-desc">Instead of confirming the booking, the backend fires to the Payment service and replies to the Frontend with a generated <code>razorpay_order_id</code>. The booking is now mathematically `PENDING`.</p>
+      </div>
+
+      <div class="v-node">
+        <div class="v-header"><h3>Step 3: Razorpay Hijack</h3></div>
+        <p class="v-desc">The frontend injects the official Razorpay JS SDK script into the DOM. It mounts an iframe overlay directly on the screen, forcing the user into the financial gateway without rerouting the URL.</p>
+        <div class="v-code">
+          const options = {<br>
+          &nbsp;&nbsp;key: import.meta.env.VITE_RAZORPAY_KEY,<br>
+          &nbsp;&nbsp;order_id: backendResponse.orderId,<br>
+          &nbsp;&nbsp;handler: async function (response) {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;await verifyPaymentCallback(response);<br>
+          &nbsp;&nbsp;}<br>
+          };<br>
+          const rzp = new window.Razorpay(options);<br>
+          rzp.open();
+        </div>
+      </div>
+
+      <div class="v-node">
+        <div class="v-header"><h3>Step 4: Callback & Resolution</h3></div>
+        <p class="v-desc">Once Razorpay succeeds, the frontend captures the payload and Posts it back to our API Gateway to officially notify the Session Service that the PENDING state is cleared and finalized.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIRTUALIZATION 4: STOMP REALTIME CHAT ENGINE -->
+  <section class="stream-container">
+    <h2 style="font-size: 2.5rem; margin-bottom: 1rem; color:white;">4. STOMP Realtime Chat Engine</h2>
+    <p class="v-desc" style="max-width: 800px; margin-bottom: 2rem;">How React hooks into the Notification Service's active TCP streams to power instantaneous Group Chat messages without utilizing standard REST fetches.</p>
+
+    <div class="v-pipeline" style="--theme: var(--neon-purple); --glow: rgba(139,92,246,0.3);">
+      <div class="flow-packet"></div>
+      
+      <div class="v-node">
+        <div class="v-header"><h3>Mount & Handshake</h3></div>
+        <p class="v-desc">When a user navigates to `/dashboard/chat`, the <code>ChatContext</code> mounts. It fires up <code>SockJS</code> and upgrades the standard HTTP connection to a continuous WebSocket connection.</p>
+        <div class="v-code">
+          const socket = new SockJS('https://api.../ws');<br>
+          const stompClient = Stomp.over(socket);<br>
+          stompClient.connect({ Authorization: `Bearer ${token}` }, onConnect);
+        </div>
+      </div>
+
+      <div class="v-node">
+        <div class="v-header"><h3>Topic Subscription</h3></div>
+        <p class="v-desc">React dynamically loops through the User's groups array and actively commands the STOMP client to "listen" to those explicit backend topic channels.</p>
+        <div class="v-code">
+          stompClient.subscribe(`/topic/groups/${groupId}`, (payload) => {<br>
+          &nbsp;&nbsp;const newMessage = JSON.parse(payload.body);<br>
+          &nbsp;&nbsp;setMessages(prev => [...prev, newMessage]); // React State Update<br>
+          });
+        </div>
+      </div>
+
+      <div class="v-node">
+        <div class="v-header"><h3>DOM Painting</h3></div>
+        <p class="v-desc">When another user chats via the Notification Server Broker, the frontend <code>setMessages</code> executes instantly. The React DOM reconciler diffs the state and physically drops the new HTML chat bubble on the screen within ~20ms.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIRTUALIZATION 5: ADMIN DASHBOARD MUTATIONS -->
+  <section class="stream-container">
+    <h2 style="font-size: 2.5rem; margin-bottom: 1rem; color:white;">5. Administrator Deep Control</h2>
+    <p class="v-desc" style="max-width: 800px; margin-bottom: 2rem;">How the frontend scales administrative power to manage pending Mentor approvals across the system gracefully.</p>
+
+    <div class="v-pipeline" style="--theme: var(--neon-green); --glow: rgba(16,185,129,0.3);">
+      <div class="flow-packet"></div>
+      
+      <div class="v-node">
+        <div class="v-header"><h3>Paginated Server State</h3></div>
+        <p class="v-desc">React Query fetches <code>/admin/mentors/pending?page=0&size=10</code>. This guarantees the browser isn't overloaded rendering 5,000 pending applications at once. The UI maps the `content` array into Data Table rows.</p>
+      </div>
+
+      <div class="v-node">
+        <div class="v-header"><h3>Optimistic UI Updates</h3></div>
+        <p class="v-desc">When the Admin clicks 'Approve', a TanStack Mutation triggers. Instead of waiting for the User Service to reply (which creates UI lag), the frontend <strong>optimistically edits the React Query Cache immediately</strong>, vanishing the table row instantly to feel infinitely fast, falling back only if the server returns an explicit 500 error.</p>
+        <div class="v-code">
+          onMutate: async (id) => {<br>
+          &nbsp;&nbsp;await queryClient.cancelQueries(['pendingMentors']);<br>
+          &nbsp;&nbsp;const previous = queryClient.getQueryData(['pendingMentors']);<br>
+          &nbsp;&nbsp;queryClient.setQueryData(['pendingMentors'], old => old.filter(m => m.id !== id));<br>
+          &nbsp;&nbsp;return { previous };<br>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="/docs/pipeline.js"></script>
+</body>
+</html>

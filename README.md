@@ -40,10 +40,9 @@ SkillSync is a production-focused mentor-learning platform with role-based workf
 - Frontend implementation details: docs/11_Frontend_Complete_Implementation.md
 
 ## UI documentation for presentation
-- UI DOCS/BE-ARCHITECTURE.html
-- UI DOCS/FE-ARCHITECTURE.html
-- UI DOCS/PAYMENT_SAGA.html
-- UI DOCS/DEPLOYMENT.html
+- Frontend/public/docs/backend.html
+- Frontend/public/docs/frontend.html
+- Frontend/public/docs/deployment.html
 
 ## Manual deployment workflow (current)
 1. Push code to GitHub
