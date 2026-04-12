@@ -1291,3 +1291,121 @@ body#pipeline-page::after {
     justify-content: center;
   }
 }
+
+/* -------------------  GLOBAL RESPONSIVENESS FOR DEEP DIVES  ------------------- */
+@media (max-width: 1024px) {
+  .landscape-grid, .sd-grid, .split-grid, .state-grid, .codex-deepdive-container {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+  .ultra-title {
+    font-size: 3rem !important;
+  }
+  .hero-matrix {
+    padding: 6rem 1rem 3rem !important;
+  }
+  .stream-card, .v-node {
+    padding: 1.5rem !important;
+  }
+  .v-pipeline {
+    padding-left: 1.5rem !important;
+  }
+  .v-node::before {
+    left: -1.5rem !important;
+    width: 1.5rem !important;
+  }
+  .v-node::after {
+    left: -1.9rem !important;
+  }
+  .flow-packet {
+    left: -1.65rem !important;
+  }
+  .split-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Pipeline Deploy tweaks */
+  .cloud-nodes {
+    flex-direction: column !important;
+    gap: 2rem !important;
+  }
+  .pipe-stage {
+    height: auto !important;
+    padding: 2rem 0 !important;
+  }
+  .connecting-pipe {
+    width: 4px !important;
+    height: 100% !important;
+    top: 0 !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+  .pipe-energy {
+    width: 100% !important;
+    height: 150px !important;
+    left: 0 !important;
+    top: -150px !important;
+    background: linear-gradient(180deg, transparent, var(--neon-orange), transparent) !important;
+    animation: shootDown 2s infinite !important;
+  }
+  @keyframes shootDown { to { top: 100%; } }
+
+  /* ISO Tree tweaks */
+  .react-iso {
+    height: 450px !important;
+  }
+  .comp-tree {
+    width: 250px !important;
+    height: 250px !important;
+  }
+  .comp-layer {
+    font-size: 0.9rem !important;
+  }
+  .l-2, .l-3, .l-4 {
+    border-width: 2px !important;
+  }
+
+  /* 3D Orbit / Index tweaks */
+  .orbit-stage {
+    height: 400px !important;
+  }
+  .orbit-ring.ring-1 { width: 220px !important; height: 220px !important; }
+  .orbit-ring.ring-2 { width: 340px !important; height: 340px !important; }
+  .orbit-node { width: 50px !important; height: 50px !important; font-size: 0.65rem !important; }
+  .n-1, .n-2, .n-3, .n-4 { top: auto; bottom: auto; left: auto; right: auto;}
+  .n-1 { top: -25px !important; left: 85px !important; }
+  .n-2 { bottom: -25px !important; right: 85px !important; }
+  .n-3 { left: -25px !important; top: 145px !important; }
+  .n-4 { right: -25px !important; bottom: 145px !important; }
+}
+
+@media (max-width: 640px) {
+  .ultra-title {
+    font-size: 2.2rem !important;
+  }
+  .stream-container {
+    padding: 0 1rem !important;
+  }
+  .topbar {
+    top: 0.5rem !important;
+    padding: 0.4rem 0.8rem !important;
+    width: 95% !important;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .nav-extra {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .brand { margin-bottom: 0.2rem; }
+  
+  /* Backend Grid Tweaks */
+  .grid-3d {
+    transform: rotateX(45deg) rotateZ(0deg) !important;
+    gap: 1rem !important;
+  }
+  .grid-panel {
+    width: 100% !important;
+  }
+}
