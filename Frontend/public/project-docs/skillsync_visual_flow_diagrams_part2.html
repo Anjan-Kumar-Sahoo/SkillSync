@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkillSync — Visual Flow Diagrams Part 2</title>
+<style>
+:root {
+  --bg:#080c10;--bg2:#0e141c;--bg3:#141d28;--bg4:#1a2535;
+  --border:rgba(99,179,237,.1);--border2:rgba(99,179,237,.2);
+  --text:#e2eaf4;--text2:#8fa3bc;--text3:#5a7494;
+  --accent:#63b3ed;--accent2:#48bb78;--accent3:#f6ad55;
+  --accent4:#fc8181;--accent5:#b794f4;--accent6:#76e4f7;
+  --teal:#4fd1c5;--mono:'Cascadia Code','Fira Code','Consolas',monospace;
+  --font:'Segoe UI',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.7}
+#nav{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;padding:16px 0 40px;z-index:50}
+#nav .logo{padding:0 16px 14px;border-bottom:1px solid var(--border);margin-bottom:10px}
+#nav .logo strong{font-size:12px;color:var(--accent);letter-spacing:.06em;text-transform:uppercase;display:block}
+#nav .logo span{font-size:10px;color:var(--text3)}
+#nav .section{padding:12px 16px 3px;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)}
+#nav a{display:block;padding:5px 16px;font-size:11.5px;color:var(--text2);text-decoration:none;border-left:2px solid transparent;transition:all .15s;line-height:1.4}
+#nav a:hover{color:var(--text);border-left-color:var(--accent);background:rgba(99,179,237,.06)}
+#main{margin-left:220px;padding:36px 48px 80px;max-width:1100px}
+.hero{background:linear-gradient(135deg,rgba(99,179,237,.07),rgba(183,148,244,.05),rgba(72,187,120,.05));border:1px solid rgba(99,179,237,.18);border-radius:12px;padding:28px 32px;margin-bottom:36px}
+.hero h1{font-size:24px;font-weight:700;line-height:1.2;margin-bottom:6px}
+.hero p{color:var(--text2);font-size:13px;margin-bottom:16px}
+.badges{display:flex;flex-wrap:wrap;gap:7px}
+.badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.05em;text-transform:uppercase}
+.b-blue{background:rgba(99,179,237,.12);color:#90cdf4;border:1px solid rgba(99,179,237,.3)}
+.b-green{background:rgba(72,187,120,.1);color:#9ae6b4;border:1px solid rgba(72,187,120,.3)}
+.b-purple{background:rgba(183,148,244,.1);color:#d6bcfa;border:1px solid rgba(183,148,244,.3)}
+.b-orange{background:rgba(246,173,85,.1);color:#fbd38d;border:1px solid rgba(246,173,85,.3)}
+.b-teal{background:rgba(79,209,197,.1);color:#81e6d9;border:1px solid rgba(79,209,197,.3)}
+.b-red{background:rgba(252,129,129,.1);color:#feb2b2;border:1px solid rgba(252,129,129,.3)}
+h2{font-size:18px;font-weight:600;margin:40px 0 14px;padding-top:40px;border-top:1px solid var(--border);color:var(--text);display:flex;align-items:center;gap:8px}
+h2:first-of-type{border-top:none;margin-top:20px;padding-top:0}
+h3{font-size:14px;font-weight:600;color:var(--accent6);margin:20px 0 8px}
+h4{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent5);margin:16px 0 6px}
+p{color:var(--text);font-size:13.5px;margin-bottom:10px;line-height:1.75}
+.flow{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:0;margin:14px 0;overflow:hidden}
+.flow-title{background:var(--bg4);padding:10px 16px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border);color:var(--accent)}
+.flow-body{padding:16px 20px;font-family:var(--mono);font-size:12px;line-height:1.8;color:var(--text2);overflow-x:auto;white-space:pre}
+.steps{list-style:none;margin:10px 0}
+.step{display:flex;gap:12px;align-items:flex-start;padding:9px 0;border-bottom:1px solid rgba(99,179,237,.06)}
+.step:last-child{border-bottom:none}
+.snum{min-width:24px;height:24px;background:rgba(99,179,237,.12);color:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:2px}
+.sbody strong{display:block;font-size:13px;color:var(--text)}
+.sbody p{font-size:12.5px;color:var(--text2);margin:3px 0 0}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:16px 20px;margin:12px 0}
+.card-blue{border-left:3px solid var(--accent)}
+.card-green{border-left:3px solid var(--accent2)}
+.card-orange{border-left:3px solid var(--accent3)}
+.card-red{border-left:3px solid var(--accent4)}
+.card-purple{border-left:3px solid var(--accent5)}
+.card-teal{border-left:3px solid var(--teal)}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:12.5px}
+th{text-align:left;padding:8px 12px;background:var(--bg3);color:var(--text2);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border)}
+td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:top}
+tr:hover td{background:rgba(99,179,237,.02)}
+code{font-family:var(--mono);font-size:11.5px;background:rgba(99,179,237,.08);padding:1px 6px;border-radius:4px;color:var(--accent3)}
+.g{color:var(--accent2);font-weight:600}
+.r{color:var(--accent4);font-weight:600}
+.callout{padding:12px 16px;border-radius:8px;margin:12px 0;font-size:13px;display:flex;gap:10px;align-items:flex-start}
+.ci{font-size:16px;flex-shrink:0;margin-top:1px}
+.cb{flex:1}
+.cb strong{color:var(--text);display:block;margin-bottom:3px;font-size:13px}
+.cb p{font-size:12.5px;color:var(--text2);margin:0}
+.c-warn{background:rgba(246,173,85,.07);border:1px solid rgba(246,173,85,.22)}
+.c-info{background:rgba(99,179,237,.06);border:1px solid rgba(99,179,237,.22)}
+.c-danger{background:rgba(252,129,129,.06);border:1px solid rgba(252,129,129,.22)}
+.c-success{background:rgba(72,187,120,.06);border:1px solid rgba(72,187,120,.22)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.status-box{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.status{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;font-family:var(--mono)}
+.s-req{background:rgba(99,179,237,.12);color:#90cdf4;border:1px solid rgba(99,179,237,.3)}
+.s-acc{background:rgba(72,187,120,.12);color:#9ae6b4;border:1px solid rgba(72,187,120,.3)}
+.s-rej{background:rgba(252,129,129,.12);color:#feb2b2;border:1px solid rgba(252,129,129,.3)}
+.s-comp{background:rgba(183,148,244,.12);color:#d6bcfa;border:1px solid rgba(183,148,244,.3)}
+.s-can{background:rgba(246,173,85,.12);color:#fbd38d;border:1px solid rgba(246,173,85,.3)}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:3px}
+@media(max-width:900px){#nav{display:none}#main{margin-left:0;padding:20px 16px 60px}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<aside id="nav">
+  <div class="logo"><strong>SkillSync Flows — Part 2</strong><span>Continued from Part 1</span></div>
+  <div class="section">Session Lifecycle</div>
+  <a href="#session-booking">Session Booking Flow</a>
+  <a href="#session-states">State Machine</a>
+  <a href="#session-payment-saga">Payment → Session Saga</a>
+  <a href="#session-complete">Session Completion</a>
+  <div class="section">Notification System</div>
+  <a href="#rabbitmq-arch">RabbitMQ Architecture</a>
+  <a href="#websocket-flow">WebSocket Push Flow</a>
+  <a href="#notification-callstack">Notification Call Stack</a>
+  <div class="section">Mentor Journey</div>
+  <a href="#mentor-apply">Mentor Application Flow</a>
+  <a href="#mentor-approval">Admin Approval Flow</a>
+  <div class="section">Review System</div>
+  <a href="#review-flow">Review Submission Flow</a>
+  <div class="section">CQRS Pattern</div>
+  <a href="#cqrs">CQRS Architecture</a>
+  <a href="#outbox">Outbox + At-Least-Once</a>
+  <div class="section">Exception Handling</div>
+  <a href="#exception-paths">Exception Flow Paths</a>
+  <a href="#exception-types">Error Response Types</a>
+  <div class="section">Service Mesh</div>
+  <a href="#feign-clients">Feign Client Calls</a>
+  <a href="#eureka-lifecycle">Eureka Lifecycle</a>
+  <a href="#config-server">Config Server Flow</a>
+  <div class="section">Security Deep-Dive</div>
+  <a href="#security-decisions">Architecture Decisions</a>
+  <a href="#csrf-deep">CSRF Protection Detail</a>
+  <a href="#cors-deep">CORS Configuration</a>
+  <div class="section">Interview</div>
+  <a href="#interview-advanced">Advanced Interview Q&A</a>
+  <a href="#summary">Final Summary</a>
+</aside>
+
+<main id="main">
+
+<div class="hero">
+  <h1>SkillSync Visual Flow Diagrams — Part 2</h1>
+  <p>Continued from Part 1. Session lifecycle · RabbitMQ event mesh · CQRS pattern · WebSocket notifications · Mentor journey · Review system · Exception paths · Feign client calls · Eureka & Config Server internals.</p>
+  <div class="badges">
+    <span class="badge b-orange">Session State Machine</span>
+    <span class="badge b-purple">RabbitMQ Event Mesh</span>
+    <span class="badge b-teal">WebSocket (STOMP)</span>
+    <span class="badge b-blue">CQRS Pattern</span>
+    <span class="badge b-green">Outbox Pattern</span>
+    <span class="badge b-red">Saga Orchestrator</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SESSION BOOKING FLOW                                   -->
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="session-booking">📅 Session Booking Flow</h2>
+
+<p>A learner books a session with a mentor. This involves Feign calls to auth-service and user-service for mentor validation, an idempotency check, and a RabbitMQ event published on save.</p>
+
+<div class="flow">
+<div class="flow-title">POST /api/sessions — Session Booking End-to-End</div>
+<div class="flow-body">
+STEP 1: FRONTEND
+  File: src/pages/sessions/MySessionsPage.tsx (or MentorDetailPage.tsx)
+  → api.post('/api/sessions', { mentorId, topic, description, sessionDate, durationMinutes })
+  → Axios interceptor: Authorization: Bearer <jwt>
+
+STEP 2: GATEWAY
+  Route: routes[9] Path=/api/sessions/** → lb://session-service + JwtAuthenticationFilter
+  JwtAuthenticationFilter validates JWT
+  → Strips X-User-Id, injects X-User-Id: 101 (learner), X-User-Role: ROLE_LEARNER
+  → Forwards to session-service
+
+STEP 3: SessionController.createSession()
+  File: com.skillsync.session.controller.SessionController
+  @PostMapping
+  → @RequestHeader("X-User-Id") Long userId = 101L (learner's ID from Gateway)
+  → @Valid @RequestBody CreateSessionRequest { mentorId, topic, desc, sessionDate, durationMinutes }
+  → sessionCommandService.createSession(101L, request)
+
+STEP 4: SessionCommandService.createSession()
+  File: com.skillsync.session.service.command.SessionCommandService
+
+  4a. resolveMentorUserId(request.mentorId()):
+      → fetchUserById(mentorId):
+           authServiceClient.getUserById(mentorId)
+           → Feign: GET http://auth-service/api/auth/internal/users/{id}
+           → Returns: { id, email, role: "ROLE_MENTOR", firstName, lastName }
+      → isMentorUser(user)? checks role == "ROLE_MENTOR"
+      → If NOT a mentor: mapMentorProfileIdToUserId()
+           → mentorProfileClient.getMentorById(mentorId) [Feign to user-service]
+           → Gets userId from profile → resolves actual mentor user ID
+      → Returns: mentorUserId = 202L
+
+  4b. Self-booking guard:
+      → if (learnerId.equals(mentorUserId)) throw "Cannot book with yourself"
+
+  4c. Duplicate booking check (idempotency):
+      → sessionRepository.existsByMentorIdAndLearnerIdAndSessionDateAndStatusIn(
+            202L, 101L, sessionDate, [REQUESTED, ACCEPTED])
+      → EXISTS → throw "Session already booked for this slot"
+
+  4d. Create and save session:
+      → Session { mentorId=202, learnerId=101, topic, desc, sessionDate,
+                  durationMinutes, defaultRatingApplied=false, status=REQUESTED }
+      → sessionRepository.save(session)
+         → INSERT INTO sessions.sessions(...)
+
+  4e. Cache invalidation:
+      → cacheService.evict("v1:session:" + id)
+      → cacheService.evictByPattern("v1:session:learner:101:*")
+      → cacheService.evictByPattern("v1:session:mentor:202:*")
+
+  4f. Publish RabbitMQ event:
+      → publishEvent(session, "session.requested")
+      → SessionEvent { sessionId, mentorId=202, learnerId=101, topic, status="REQUESTED" }
+      → rabbitTemplate.convertAndSend("session.exchange", "session.requested", event)
+      → Jackson2JsonMessageConverter serializes to JSON
+
+STEP 5: RESPONSE
+  → SessionResponse { id, mentorId, learnerId, topic, status="REQUESTED",
+                       sessionDate, durationMinutes, meetingLink=null }
+  → HTTP 201 Created
+
+STEP 6: RABBITMQ — PARALLEL EVENT PROCESSING (async, non-blocking)
+  session.exchange (TopicExchange) routes "session.requested":
+  → notification.session.requested.queue (consumed by notification-service)
+  → session.requested.queue (consumed by session-service itself, if needed)
+
+  notification-service / SessionEventConsumer.handleSessionRequested():
+  → notificationCommandService.createAndPush(mentorId, "SESSION_REQUESTED", ...)
+       → Save Notification to DB
+       → webSocketService.pushToUser(mentorId, notification)  ← Real-time push
+       → cacheService.evict("v1:notification:unread:" + mentorId)
+  → notificationCommandService.createAndPush(learnerId, "SESSION_REQUESTED_CONFIRMATION", ...)
+  → authServiceClient.getUserById(mentorId) + getUserById(learnerId) [Feign]
+  → emailService.sendEmail(mentor.email, "New Session Request - SkillSync", ...)
+  → emailService.sendEmail(learner.email, "Session Booked - SkillSync", ...)
+</div></div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SESSION STATE MACHINE                                  -->
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="session-states">⚙️ Session State Machine</h2>
+
+<p>Defined in <code>SessionStatus.java</code> using a static <code>Map&lt;SessionStatus, Set&lt;SessionStatus&gt;&gt;</code> of allowed transitions. The <code>Session.isTransitionAllowed(target)</code> method is checked before every status change.</p>
+
+<div class="status-box">
+  <span class="status s-req">REQUESTED</span>
+  <span class="status s-acc">ACCEPTED</span>
+  <span class="status s-rej">REJECTED</span>
+  <span class="status s-comp">COMPLETED</span>
+  <span class="status s-can">CANCELLED</span>
+</div>
+
+<div class="flow">
+<div class="flow-title">Allowed State Transitions (SessionStatus.java — ALLOWED_TRANSITIONS Map)</div>
+<div class="flow-body">
+REQUESTED ──→ ACCEPTED    (mentor accepts)
+          ──→ REJECTED    (mentor rejects)
+          ──→ CANCELLED   (learner or mentor cancels / payment fails)
+
+ACCEPTED  ──→ COMPLETED   (mentor marks complete)
+          ──→ CANCELLED   (either party cancels)
+
+REJECTED  ──→ (terminal — no further transitions)
+COMPLETED ──→ (terminal — no further transitions)
+CANCELLED ──→ (terminal — no further transitions)
+
+VALIDATION CODE (SessionCommandService):
+  private void validateTransition(Session session, SessionStatus target) {
+      if (!session.isTransitionAllowed(target)) {
+          throw new RuntimeException(
+              "Cannot transition from " + session.getStatus() + " to " + target);
+      }
+  }
+
+  public boolean isTransitionAllowed(SessionStatus target) {
+      return ALLOWED_TRANSITIONS.getOrDefault(this, Set.of()).contains(target);
+  }
+
+EACH TRANSITION:
+  accept()    → validateTransition(ACCEPTED) → save → invalidateCaches → publishEvent("session.accepted")
+  reject()    → validateTransition(REJECTED) → save → invalidateCaches → publishEvent("session.rejected")
+  cancel()    → checks mentorId OR learnerId ownership → validateTransition(CANCELLED) → publishEvent
+  complete()  → mentorId ownership only → validateTransition(COMPLETED)
+                → defaultRatingApplied=true → publishEvent("session.completed")
+                → publishMentorMetricsUpdate(mentorId) → RabbitMQ "review.summary.updated"
+</div></div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PAYMENT → SESSION SAGA                                 -->
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="session-payment-saga">💳 Payment → Session Saga (Choreography + Outbox)</h2>
+
+<div class="flow">
+<div class="flow-title">Complete Payment + Session Booking Saga with Compensation</div>
+<div class="flow-body">
+PHASE 1: SESSION CREATION (Optimistic — status=REQUESTED)
+═══════════════════════════════════════════════════════════
+Learner books session → POST /api/sessions
+→ SessionCommandService.createSession()
+→ Session { status=REQUESTED } saved to DB  ← "Provisional" booking
+→ RabbitMQ: "session.requested" event published
+→ Learner/Mentor notified via WebSocket + Email
+
+PHASE 2: PAYMENT INITIATION
+════════════════════════════
+Learner initiates payment → POST /api/payments/create-order
+→ PaymentController.createOrder(@RequestHeader("X-User-Id") Long userId)
+→ PaymentService.createOrder():
+   → RazorpayClient.orders().create({ amount, currency: "INR", receipt })
+   → Razorpay returns: { id: "order_xxx", status: "created" }
+   → Payment { userId=101, razorpayOrderId, amount, status=PENDING, referenceId=sessionId }
+   → paymentRepository.save(payment)
+   → SagaState { paymentId, state=ORDER_CREATED }
+   → sagaStateRepository.save(sagaState)
+   → Returns: CreateOrderResponse { orderId, amount, currency, keyId }
+
+PHASE 3: PAYMENT VERIFICATION
+══════════════════════════════
+Learner completes Razorpay checkout → POST /api/payments/verify
+→ PaymentService.verifyPayment():
+   → HMAC Verify: Utils.verifyPaymentSignature(
+         { order_id, payment_id }, razorpaySignature, razorpaySecret)
+   → Mismatch → throw PaymentException(400) → saga stays at ORDER_CREATED
+   → Match ✅ → payment.status = COMPLETED
+   → paymentRepository.save(payment)
+   
+PHASE 4: OUTBOX PATTERN (Atomic event publishing)
+══════════════════════════════════════════════════
+   → OutboxEventService.publishPaymentCompleted(payment):
+      → OutboxEvent { eventType="PAYMENT_COMPLETED",
+                       payload=JSON(PaymentCompletedEvent { orderId, paymentId,
+                                   referenceId=sessionId, type="SESSION_BOOKING",
+                                   userId=101 }),
+                       published=false }
+      → outboxEventRepository.save(event)  ← SAME TRANSACTION as payment save
+      ← If DB fails, BOTH payment + outbox event roll back together (atomicity)
+
+PHASE 5: OUTBOX PUBLISHER (Scheduled Poller)
+═════════════════════════════════════════════
+   OutboxPublisher (scheduled every few seconds):
+   → SELECT * FROM payment.outbox_events WHERE published=false
+   → rabbitTemplate.convertAndSend("payment.exchange", "payment.business.action.v1", event)
+   → event.published = true → outboxEventRepository.save(event)
+
+PHASE 6: CONSUMERS — PARALLEL EVENT HANDLING
+═════════════════════════════════════════════
+RabbitMQ "payment.exchange" routes "payment.business.action.v1":
+  → session.payment.success.queue (session-service)
+  → notification.payment.success.queue (notification-service)
+
+session-service / PaymentEventConsumer.handlePaymentSuccess():
+  → event.type == "SESSION_BOOKING" && event.referenceId != null
+  → SessionCommandService.confirmSessionPayment(sessionId):
+      → Session status: REQUESTED → ACCEPTED
+      → session.meetingLink = "https://meet.jit.si/SkillSync-{id}-{timestamp}"
+      → sessionRepository.save(session)
+      → invalidateSessionCaches()
+      → publishEvent(session, "session.accepted")  ← triggers accept notifications
+
+notification-service / PaymentEventConsumer.handlePaymentSuccess():
+  → notificationCommandService.createAndPush(userId, "PAYMENT_SUCCESS", ...)
+  → Email: "Payment Confirmed - SkillSync"
+
+PHASE 7: SAGA COMPENSATION (Payment Failure)
+═════════════════════════════════════════════
+If payment fails / Razorpay webhook reports failure:
+→ payment.exchange routing key "payment.failed.v1"
+→ session-service / PaymentEventConsumer.handlePaymentFailed():
+   → SessionCommandService.rollbackSessionPayment(sessionId, userId, reason):
+      → Session: REQUESTED → CANCELLED (compensation)
+      → session.cancelReason = "Rolled back due to payment failure"
+      → sessionRepository.save(session)
+      → Only publishes "session.cancelled" event if was previously ACCEPTED
+→ notification-service: "Payment Failed" notification + email
+</div></div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SESSION COMPLETION                                     -->
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="session-complete">✅ Session Completion + Metrics Update</h2>
+
+<div class="flow">
+<div class="flow-title">PUT /api/sessions/{id}/complete — Mentor Completes Session</div>
+<div class="flow-body">
+Mentor clicks "Mark Complete" → PUT /api/sessions/{id}/complete
+  Authorization: Bearer <mentor-jwt>
+
+Gateway → JwtAuthenticationFilter → X-User-Id: 202 injected → session-service
+
+SessionController.completeSession(@PathVariable Long id,
+                                   @RequestHeader("X-User-Id") Long userId=202)
+→ sessionCommandService.completeSession(id, 202)
+
+SessionCommandService.completeSession():
+  → getAndValidateOwnership(sessionId, mentorId=202, isMentor=true):
+       session.getMentorId().equals(userId) → validated ✅
+  → validateTransition(session, COMPLETED)
+       ACCEPTED → COMPLETED ✅  (terminal)
+  → session.status = COMPLETED
+  → session.defaultRatingApplied = true  ← marks rating as pending
+  → sessionRepository.save(session)
+  → invalidateSessionCaches(session)
+  → publishEvent(session, "session.completed")
+       → RabbitMQ → notification-service:
+            Learner gets "Leave Review" email + WebSocket notification
+            Mentor gets "Session Completed" email + dashboard prompt
+  → publishMentorMetricsUpdate(mentorId=202):
+       → mentorMetricsService.calculateMentorMetrics(202):
+            Aggregates avgRating, totalReviews, completedSessions from DB
+       → rabbitTemplate.convertAndSend("review.exchange", "review.summary.updated", metricsMap)
+       → user-service / ReviewEventCacheSyncConsumer listens:
+            Updates MentorProfile { avgRating, totalReviews, totalSessions }
+            Invalidates mentor profile cache
+
+HTTP 200 → SessionResponse { status: "COMPLETED" }
+</div></div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- RABBITMQ ARCHITECTURE                                  -->
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="rabbitmq-arch">📨 RabbitMQ Event Architecture — Complete Map</h2>
+
+<div class="flow">
+<div class="flow-title">All Exchanges, Routing Keys, and Queue Bindings</div>
+<div class="flow-body">
+EXCHANGES (TopicExchange — durable):
+┌─────────────────────────────────────────────────────────────┐
+│  session.exchange    │  payment.exchange    │  mentor.exchange │
+│  review.exchange     │  email.retry.exchange (DirectExchange) │
+└─────────────────────────────────────────────────────────────┘
+
+═══ session.exchange ════════════════════════════════════════════
+Routing Key                  Queue(s) Bound
+────────────────────────────────────────────────────────────────
+"session.requested"   →  notification.session.requested.queue  (notification-svc)
+                      →  session.requested.queue               (session-svc)
+"session.accepted"    →  notification.session.accepted.queue
+                      →  session.accepted.queue
+"session.rejected"    →  notification.session.rejected.queue
+                      →  session.rejected.queue
+"session.cancelled"   →  notification.session.cancelled.queue
+                      →  session.cancelled.queue
+"session.completed"   →  notification.session.completed.queue
+                      →  session.completed.queue
+
+═══ payment.exchange ════════════════════════════════════════════
+Routing Key                     Queue(s) Bound
+────────────────────────────────────────────────────────────────
+"payment.business.action.v1" →  session.payment.success.queue   (session-svc)
+                              →  notification.payment.success.queue (notif-svc)
+"payment.failed.v1"          →  session.payment.failed.queue
+                              →  notification.payment.failed.queue
+"payment.compensated.v1"     →  session.payment.compensated.queue
+                              →  notification.payment.compensated.queue
+"payment.success"            →  notification.payment.success.queue (notif-svc only)
+"payment.failed"             →  notification.payment.failed.queue
+
+═══ mentor.exchange ═════════════════════════════════════════════
+Routing Key               Queue(s) Bound
+────────────────────────────────────────────────────────────────
+"mentor.approved"   →  notification.mentor.approved.queue
+"mentor.rejected"   →  notification.mentor.rejected.queue
+"mentor.promoted"   →  notification.mentor.promoted.queue
+"mentor.demoted"    →  notification.mentor.demoted.queue
+
+═══ review.exchange ═════════════════════════════════════════════
+Routing Key                     Queue(s) Bound
+────────────────────────────────────────────────────────────────
+"review.submitted"           →  notification.review.submitted.queue
+"review.summary.updated"     →  (user-service listens for mentor metrics sync)
+
+═══ email.retry.exchange ════════════════════════════════════════
+DirectExchange — for email delivery retry
+→ email.retry.queue (with DLX → email.dlq after exhausting retries)
+→ EmailRetryConsumer.java retries failed email sends
+→ EmailRetryConsumer handles with exponential backoff
+</div></div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- WEBSOCKET FLOW                                         -->
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="websocket-flow">🔌 WebSocket Real-Time Notification Flow</h2>
+
+<div class="flow">
+<div class="flow-title">STOMP WebSocket Push — From RabbitMQ Consumer to Browser</div>
+<div class="flow-body">
+SETUP (WebSocketConfig.java — notification-service):
+  @EnableWebSocketMessageBroker
+  → registerStompEndpoints: "/ws" endpoint
+  → setApplicationDestinationPrefixes: "/app"
+  → enableSimpleBroker: "/topic", "/queue"
+
+BROWSER CONNECTS:
+  Frontend subscribes to WebSocket at ws://api.skillsync.mraks.dev/ws
+  Route: routes[16] lb:ws://notification-service Path=/ws/**
+  → STOMP CONNECT → SockJS or native WebSocket
+  → Subscribe to: /user/queue/notifications
+                  (user-specific queue via SimpMessagingTemplate)
+
+NOTIFICATION PUSH FLOW:
+  RabbitMQ Consumer (e.g., SessionEventConsumer.handleSessionRequested())
+       ↓
+  NotificationCommandService.createAndPush(userId, type, title, message)
+       ↓
+  1. Notification { userId, type, title, message, isRead=false } → DB INSERT
+  2. NotificationMapper.toResponse(notification) → NotificationResponse DTO
+  3. WebSocketService.pushToUser(userId, notification)
+       → SimpMessagingTemplate.convertAndSendToUser(
+               String.valueOf(userId),          ← user identifier
+               "/queue/notifications",          ← destination suffix
+               notification)                   ← payload (serialized to JSON)
+  4. STOMP broker delivers to browser subscribed to /user/101/queue/notifications
+  5. cacheService.evict("v1:notification:unread:101")
+
+BROWSER RECEIVES:
+  WebSocket message → notification toast / badge update (unread count)
+
+Gateway WebSocket route (routes[16]):
+  lb:ws://notification-service → uses WebSocket-compatible load balancer prefix
+  No JWT filter on /ws/** → WebSocket upgrade is handled differently
+</div></div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- NOTIFICATION CALL STACK                               -->
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="notification-callstack">📊 Notification — Full Call Stack</h2>
+
+<div class="flow">
+<div class="flow-title">Session Accepted → Notifications (DB + WebSocket + Email)</div>
+<div class="flow-body">
+[session-service] sessionCommandService.acceptSession()
+  → publishEvent(session, "session.accepted")
+     → rabbitTemplate.convertAndSend("session.exchange", "session.accepted", sessionEvent)
+
+[notification-service] SessionEventConsumer.handleSessionAccepted(Map<String,Object> event)
+  ← @RabbitListener(queues = "notification.session.accepted.queue")
+  │
+  ├── toLong(event.get("learnerId")) → 101L
+  ├── toLong(event.get("mentorId"))  → 202L
+  │
+  ├── notificationCommandService.createAndPush(101L, "SESSION_APPROVED",
+  │       "Session Approved", "Your session has been approved")
+  │   │
+  │   ├── Notification.builder()...build() → notificationRepository.save()
+  │   │   → INSERT INTO notification.notifications(user_id, type, title, message, is_read, created_at)
+  │   │
+  │   ├── webSocketService.pushToUser(101L, NotificationMapper.toResponse(notification))
+  │   │   → SimpMessagingTemplate.convertAndSendToUser("101", "/queue/notifications", payload)
+  │   │   → Browser receives real-time push  ✅
+  │   │
+  │   └── cacheService.evict("v1:notification:unread:101")
+  │       → Redis: DEL "v1:notification:unread:101"
+  │
+  ├── authServiceClient.getUserById(101L) [Feign → auth-service /internal/users/101]
+  │   → Returns: UserSummary { id, email, firstName, lastName, role }
+  │
+  ├── authServiceClient.getUserById(202L) [Feign → auth-service /internal/users/202]
+  │
+  └── emailService.sendEmail(learner.email, "Session Approved - SkillSync",
+                              "system-email", variables)
+      → EmailService builds HTML email template "system-email"
+      → JavaMailSender.send(MimeMessage)
+      → If fails → EmailRetryConsumer.java via email.retry.exchange
+</div></div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- MENTOR APPLICATION FLOW                               -->
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="mentor-apply">👨‍🏫 Mentor Application Flow</h2>
+
+<div class="flow">
+<div class="flow-title">Learner Applies to Become Mentor → Admin Reviews → Role Updated</div>
+<div class="flow-body">
+PHASE 1: APPLICATION SUBMISSION
+════════════════════════════════
+Learner submits form → POST /api/mentors/apply
+  { bio, experienceYears, hourlyRate, skillIds: [1, 3, 7] }
+  X-User-Id: 101 (injected by Gateway)
+
+MentorController.apply(@RequestHeader("X-User-Id") Long userId, MentorApplicationRequest)
+→ mentorCommandService.apply(101, request)
+
+MentorCommandService.apply():
+  → mentorProfileRepository.findByUserId(101)
+     → EXISTING + PENDING → throw "Application already pending"
+     → EXISTING + APPROVED → throw "Already an approved mentor"
+     → EXISTING + REJECTED → re-apply (update profile, reset to PENDING)
+     → NOT FOUND → create new:
+          MentorProfile { userId=101, bio, experienceYears, hourlyRate,
+                          avgRating=0.0, totalReviews=0, totalSessions=0,
+                          status=PENDING }
+          mentorProfileRepository.save(profile)
+          → For each skillId: MentorSkill { mentor=profile, skillId }
+          → mentorProfileRepository.save(profile) [saves cascade skills]
+  → cacheService.evictByPattern("v1:user:mentor:pending:*")
+  → invalidateMentorCaches(profile.id, profile.userId)
+  → Returns MentorProfileResponse { id, userId, status=PENDING, ... }
+
+PHASE 2: ADMIN VIEWS APPLICATIONS
+═══════════════════════════════════
+Admin dashboard → GET /api/mentors/pending
+→ mentorQueryService.getPendingApplications(pageable)
+→ mentorProfileRepository.findByStatus(PENDING, pageable) [PostgreSQL]
+→ Paginated list of pending applications
+
+PHASE 3: ADMIN APPROVES
+═════════════════════════
+Admin clicks "Approve" → PUT /api/admin/mentors/{id}/approve
+→ AdminController → MentorCommandService.approveMentor(mentorProfileId, adminUserId)
+  → mentorProfile.status = APPROVED
+  → mentorProfileRepository.save(profile)
+  → authServiceClient.updateUserRole(profile.userId, "ROLE_MENTOR")
+       → Feign: PUT /api/auth/internal/users/{id}/role?role=ROLE_MENTOR
+       → AuthService.updateUserRole():
+            user.role = ROLE_MENTOR → authUserRepository.save(user)
+            cacheService.evict("v1:user:profile:" + user.getId())  ← evict stale cache
+  → cacheService.evict("v1:user:mentor:" + mentorProfileId)
+  → rabbitTemplate.convertAndSend("mentor.exchange", "mentor.approved",
+        MentorApprovedEvent { mentorId, userId, email, firstName })
+
+notification-service / MentorEventConsumer.handleMentorApproved():
+  → notificationCommandService.createAndPush(userId, "MENTOR_APPROVED", ...)
+  → webSocketService.pushToUser(userId, ...)
+  → emailService.sendEmail("Mentor Application Approved - SkillSync", ...)
+
+RESULT:
+  → User's next JWT (on next login) will contain role=ROLE_MENTOR
+  → Current JWT is NOT immediately updated (stateless — no revocation)
+  → User must log in again to get new role JWT
+  → NOTE: cacheService.evict() ensures Redis doesn't serve stale profile data
+</div></div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- REVIEW SUBMISSION FLOW                                 -->
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="review-flow">⭐ Review Submission Flow</h2>
+
+<div class="flow">
+<div class="flow-title">POST /api/reviews — Learner Submits Review After Completed Session</div>
+<div class="flow-body">
+TRIGGER: After session.completed notification, learner clicks "Leave Review"
+
+Learner submits → POST /api/reviews
+  { sessionId, mentorId, rating, comment }
+  X-User-Id: 101 (learner)
+
+ReviewController.submitReview(@RequestHeader("X-User-Id") Long userId=101,
+                               @Valid @RequestBody ReviewRequest)
+
+ReviewCommandService.submitReview(101, request):
+  → Validate: session must exist + status=COMPLETED
+  → Validate: userId=101 must be the learner for that session
+  → Check: review not already submitted for this session (idempotency)
+  → Review { sessionId, mentorId, learnerId=101, rating, comment } → DB save
+  → ReviewSubmittedEvent { reviewId, mentorId, rating, comment, learnerId }
+  → rabbitTemplate.convertAndSend("review.exchange", "review.submitted", event)
+
+review.exchange routes "review.submitted":
+  → notification.review.submitted.queue (notification-service):
+       notif-svc: notify mentor "New review received"
+       email: "You received a new review on SkillSync"
+
+  → user-service / ReviewEventCacheSyncConsumer:
+       → Recalculate mentor avgRating, totalReviews
+       → mentorProfile.avgRating = new average
+       → mentorProfile.totalReviews = count + 1
+       → mentorProfileRepository.save(profile)
+       → cacheService.evict("v1:user:mentor:" + mentorId)
+
+HTTP 201 → ReviewResponse { id, sessionId, mentorId, rating, comment, learnerId }
+
+GET /api/reviews/mentor/{mentorId}/summary:
+  → reviewQueryService.getMentorRatingSummary(mentorId)
+  → ReviewRepository aggregate: AVG(rating), COUNT(*) grouped by mentorId
+  → MentorRatingSummary { mentorId, averageRating, totalReviews }
+</div></div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- CQRS PATTERN                                           -->
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="cqrs">🔄 CQRS Pattern — Used Across All Services</h2>
+
+<p>Every microservice (user, session, notification, skill, payment) follows CQRS — Command Query Responsibility Segregation. Commands and queries are in separate classes.</p>
+
+<div class="flow">
+<div class="flow-title">CQRS Architecture — user-service Example</div>
+<div class="flow-body">
+CONTROLLERS:
+  UserController      → UserCommandService + UserQueryService
+  MentorController    → MentorCommandService + MentorQueryService
+  GroupController     → GroupCommandService + GroupQueryService
+  AdminController     → uses both
+
+QUERY SERVICES (READ operations):
+  UserQueryService.java       → getProfile(userId), getProfileById(id), searchUsers()
+  MentorQueryService.java     → getMentorById(), searchMentors(), getPendingApplications()
+  GroupQueryService.java      → getGroup(), listGroups(), searchGroups()
+  All query services use:
+  → CacheService.getOrLoad() — Redis-first, DB fallback
+  → ProfileRepository.findByUserId() (read-only transactions)
+
+COMMAND SERVICES (WRITE operations):
+  UserCommandService.java     → createOrUpdateProfile(), addSkill(), removeSkill()
+  MentorCommandService.java   → apply(), approve(), reject(), addAvailability()
+  GroupCommandService.java    → createGroup(), addMember(), postDiscussion()
+  All command services:
+  → @Transactional (full ACID guarantees)
+  → Cache eviction after write: cacheService.evict() or evictByPattern()
+  → RabbitMQ event publishing for side effects
+  → Feign calls for cross-service data (authServiceClient, skillServiceClient)
+
+WHY CQRS?
+  → Read traffic >> Write traffic in this app (mentors read often, write occasionally)
+  → Query services can be optimized independently (Redis caching, read replicas)
+  → Command services can have heavier validation without slowing down reads
+  → Clear separation of concerns: each class has ONE responsibility
+  → Easier to test: mock the repository in unit tests per service type
+
+SAME PATTERN IN session-service:
+  SessionCommandService  → createSession, acceptSession, rejectSession, completeSession
+  SessionQueryService    → getSessionById, getSessionsByLearner, getSessionsByMentor
+  ReviewCommandService   → submitReview, deleteReview
+  ReviewQueryService     → getMentorReviews, getMentorRatingSummary, getMyReviews
+</div></div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- OUTBOX PATTERN                                         -->
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="outbox">📬 Outbox Pattern — At-Least-Once Delivery</h2>
+
+<div class="flow">
+<div class="flow-title">Why Outbox? — Dual Write Problem Solution</div>
+<div class="flow-body">
+THE PROBLEM (Dual Write):
+  paymentRepository.save(payment);          ← DB commit
+  rabbitTemplate.convertAndSend(...);       ← RabbitMQ publish
+  
+  If RabbitMQ is down when DB succeeds → event LOST forever.
+  If DB fails after RabbitMQ publish → event published but no payment record.
+  This leads to inconsistent state.
+
+THE SOLUTION — Outbox Pattern:
+  @Transactional
+  public void verifyPayment(...) {
+      payment.setStatus(COMPLETED);
+      paymentRepository.save(payment);          ← STEP 1: Update payment
+      
+      OutboxEvent event = OutboxEvent.builder()  ← STEP 2: Write event to SAME DB
+          .eventType("PAYMENT_COMPLETED")
+          .payload(json(paymentCompletedEvent))
+          .published(false)
+          .build();
+      outboxEventRepository.save(event);        ← Same transaction = atomic!
+  }
+  // If EITHER save fails → BOTH roll back → consistent state
+
+OutboxPublisher (scheduled/polled):
+  @Scheduled (or triggered on DB commit)
+  → SELECT * FROM payment.outbox_events WHERE published=false
+  → For each: rabbitTemplate.convertAndSend(exchange, routingKey, payload)
+  → event.published = true → outboxEventRepository.save(event)
+  → AT-LEAST-ONCE: if publisher crashes mid-way, unprocessed events stay
+    in outbox with published=false → retried on next poll
+
+SagaRecoveryScheduler.java:
+  → Scheduled recovery job in payment-service
+  → Finds SagaState records stuck in intermediate states
+  → Triggers retry or compensation for hung sagas
+  → Handles edge cases: Razorpay webhook timeout, consumer restart, etc.
+
+DLQ (Dead Letter Queue):
+  → email.retry.queue has x-dead-letter-exchange configured
+  → After N retries (EmailRetryConsumer), message goes to email.dlq
+  → DlqReplayController.java (in payment-service):
+       POST /api/payments/dlq/replay → replays failed events
+</div></div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- EXCEPTION HANDLING PATHS                              -->
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="exception-paths">🚨 Exception Handling — Two Completely Different Paths</h2>
+
+<div class="flow">
+<div class="flow-title">Exception Flow — Filter Layer vs Controller Layer</div>
+<div class="flow-body">
+PATH A: EXCEPTION IN FILTER LAYER (before DispatcherServlet)
+═══════════════════════════════════════════════════════════════
+Example: JWT expired inside JwtAuthenticationFilter.doFilterInternal()
+
+JwtAuthenticationFilter:
+  → jwtTokenProvider.isTokenValid(token) returns false (ExpiredJwtException)
+  → Authentication NOT set in SecurityContextHolder
+  → filterChain.doFilter() still called (filter doesn't throw)
+  → AnonymousAuthenticationFilter: sets Anonymous authentication
+  → FilterSecurityInterceptor: route requires authenticated() → no auth found
+  → Throws: AccessDeniedException or AuthenticationException
+
+ExceptionTranslationFilter catches:
+  → AuthenticationException → AuthenticationEntryPoint → HTTP 401
+  → AccessDeniedException → AccessDeniedHandler → HTTP 403
+
+  CRITICAL: @ControllerAdvice / GlobalExceptionHandler CANNOT intercept this!
+  The request never reached DispatcherServlet!
+  
+  Gateway-level JWT failure (JwtAuthenticationFilter in Gateway):
+  → onError(exchange, "Invalid or expired token", HttpStatus.UNAUTHORIZED)
+  → exchange.getResponse().setStatusCode(401)
+  → exchange.getResponse().setComplete()  ← terminates reactive chain
+
+PATH B: EXCEPTION IN CONTROLLER/SERVICE LAYER (after DispatcherServlet)
+═════════════════════════════════════════════════════════════════════════
+Example: User not found, bad credentials, validation failure
+
+DispatcherServlet calls Controller
+→ Controller calls Service
+→ Service throws: RuntimeException("User not found")
+                  BadCredentialsException
+                  ResourceNotFoundException
+
+GlobalExceptionHandler (@RestControllerAdvice catches all):
+  File: com.skillsync.auth.exception.GlobalExceptionHandler
+
+  @ExceptionHandler(ResourceNotFoundException.class) → 404
+  @ExceptionHandler(MethodArgumentNotValidException.class) → 400
+  @ExceptionHandler(RuntimeException.class) → 400
+  @ExceptionHandler(Exception.class) → 500
+
+  All return standardized JSON:
+  {
+    "timestamp": "2024-01-01T12:00:00",
+    "status": 400,
+    "error": "BAD_REQUEST",
+    "message": "Email already registered: user@test.com",
+    "path": "/api/auth/register"
+  }
+
+FRONTEND HANDLING:
+  Axios response interceptor:
+  → 401 → trigger token refresh → retry
+  → 403 → navigate('/unauthorized')
+  → 5xx → navigate('/500')
+  → 429/503 → exponential backoff retry (max 3 times)
+  → Other errors → Promise.reject → mutation.onError handles + showToast
+</div></div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- EXCEPTION RESPONSE TYPES                              -->
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="exception-types">📋 Error Response Types — Complete Map</h2>
+
+<table>
+<tr><th>HTTP</th><th>When</th><th>Source</th><th>Frontend Handling</th></tr>
+<tr><td>400</td><td>Bad request / validation failure / bad credentials</td><td>GlobalExceptionHandler.handleRuntimeException() or handleValidationErrors()</td><td>mutation.onError → showToast(error.response.data.message)</td></tr>
+<tr><td>401</td><td>Missing JWT / expired JWT / invalid JWT</td><td>Gateway onError() OR AuthenticationEntryPoint (auth-service filter)</td><td>Axios interceptor → refresh token → retry → if refresh fails: logout + /login</td></tr>
+<tr><td>403</td><td>CSRF origin blocked / wrong role / insufficient permissions</td><td>CsrfOriginFilter (Gateway) / AccessDeniedHandler</td><td>Axios: window.location.href = '/unauthorized'</td></tr>
+<tr><td>404</td><td>Resource not found</td><td>GlobalExceptionHandler.handleResourceNotFound()</td><td>Error toast with message from response body</td></tr>
+<tr><td>429</td><td>Rate limit exceeded</td><td>RateLimitingFilter (Gateway) + Retry-After: 60 header</td><td>Axios: exponential backoff retry (max 3 times, delays: 1s → 2s → 4s)</td></tr>
+<tr><td>500</td><td>Unexpected server error / DB down</td><td>GlobalExceptionHandler.handleGenericException()</td><td>Axios: window.location.href = '/500' (ServerErrorPage.tsx)</td></tr>
+<tr><td>503</td><td>Service unavailable / Eureka no instances</td><td>Spring Cloud Gateway load balancer</td><td>Axios: exponential backoff retry (same as 429)</td></tr>
+</table>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- FEIGN CLIENT CALLS                                     -->
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="feign-clients">🔗 Feign Client Calls — Service-to-Service</h2>
+
+<p>Services communicate internally using <strong>Spring Cloud OpenFeign</strong>. These calls bypass the API Gateway and go directly via Eureka service discovery (<code>lb://service-name</code>). No JWT required — these are trusted internal calls.</p>
+
+<div class="flow">
+<div class="flow-title">All Feign Clients in the Project</div>
+<div class="flow-body">
+user-service Feign Clients:
+  AuthServiceClient.java    → @FeignClient(name="auth-service")
+    getUserById(Long id)    → GET /api/auth/internal/users/{id}
+    getAllUsers(...)         → GET /api/auth/internal/users
+    updateUserRole(id, role)→ PUT /api/auth/internal/users/{id}/role
+    updateUserName(...)     → PUT /api/auth/internal/users/{id}/name
+    deleteUser(id)          → DELETE /api/auth/internal/users/{id}
+
+  SkillServiceClient.java   → @FeignClient(name="skill-service")
+    getSkillsByIds(ids)     → GET /api/skills/batch?ids=1,3,7
+    [enriches mentor profiles with skill names]
+
+  SessionServiceClient.java → @FeignClient(name="session-service")
+    getMentorMetrics(id)    → GET /api/sessions/mentor/{id}/metrics
+    [for mentor profile enrichment]
+
+session-service Feign Clients:
+  AuthServiceClient.java    → @FeignClient(name="auth-service")
+    getUserById(Long id)    → GET /api/auth/internal/users/{id}
+    [validates mentor role before booking]
+
+  MentorProfileClient.java  → @FeignClient(name="user-service")
+    getMentorById(Long id)  → GET /api/mentors/{id}
+    [maps mentorProfileId → userId when booking]
+
+notification-service Feign Clients:
+  AuthServiceClient.java    → @FeignClient(name="auth-service")
+    getUserById(Long id)    → GET /api/auth/internal/users/{id}
+    [resolves userId → email + name for email sending]
+
+WHY FEIGN OVER RESTTEMPLATE?
+  → Declarative: interface + annotation = zero boilerplate HTTP code
+  → Integrates with Eureka: @FeignClient(name="auth-service") → lb://auth-service
+  → Integrates with circuit breakers (Resilience4j-compatible)
+  → Jackson serialization built in
+  → Automatic error decoding (HTTP 4xx/5xx → FeignException)
+
+WHY /api/auth/internal/** ?
+  → These endpoints are BLOCKED by the Gateway (routes[0] → 403)
+  → Only internal service-to-service calls (bypassing Gateway) can reach them
+  → External users can NEVER call internal endpoints
+  → Security layer: Gateway = external guard, /internal/** = trust boundary
+</div></div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- EUREKA LIFECYCLE                                       -->
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="eureka-lifecycle">🗺️ Eureka Lifecycle — Service Discovery</h2>
+
+<div class="flow">
+<div class="flow-title">Service Registration, Heartbeat, and Load Balancing</div>
+<div class="flow-body">
+STARTUP SEQUENCE:
+  1. Config Server starts (port 8888)
+     → Serves centralized application.properties to all services
+     → Gateway, auth-service, etc. use spring.config.import=configserver:http://...
+
+  2. Eureka Server starts (port 8761)
+     → @EnableEurekaServer
+     → Maintains registry: { serviceName → [instance1, instance2, ...] }
+
+  3. Each Microservice starts:
+     → @EnableDiscoveryClient (or @EnableEurekaClient)
+     → Reads config from Config Server (retry: 6 attempts, 2-6s intervals)
+     → Registers with Eureka:
+          POST /eureka/apps/AUTH-SERVICE
+          { instanceId, hostName, ipAddr, port, status: UP, healthCheckUrl }
+     → Heartbeat every 30s: PUT /eureka/apps/AUTH-SERVICE/{instanceId}
+     → Eureka marks UNKNOWN/DOWN after missed heartbeats
+
+GATEWAY ROUTING (lb:// prefix):
+  → spring.cloud.gateway.routes[1].uri=lb://auth-service
+  → LoadBalancerClientFilter resolves "auth-service":
+       → Calls Eureka: GET /eureka/apps/AUTH-SERVICE
+       → Gets list of registered instances
+       → Round-robin selects one instance
+       → Rewrites URI to http://actual-ip:8081/...
+
+  Gateway config:
+  → eureka.client.registry-fetch-interval-seconds=5  (refresh every 5s)
+  → eureka.client.initial-instance-info-replication-interval-seconds=5
+  → eureka.instance.prefer-ip-address=true  (use IP, not hostname)
+
+FAILOVER:
+  → If auth-service instance goes down:
+       → Missed heartbeat → Eureka marks DOWN after 90s default
+       → Gateway stops routing to that instance
+       → Other instances (if any) receive traffic
+  → Feign clients also use Eureka → lb://auth-service resolves to healthy instances
+
+HEALTH CHECKS:
+  → /actuator/health endpoint exposed by each service
+  → management.endpoints.web.exposure.include=health,info,metrics,prometheus
+  → Eureka uses healthCheckUrl to verify instance is actually healthy
+</div></div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- CONFIG SERVER FLOW                                     -->
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="config-server">⚙️ Config Server — Centralized Configuration</h2>
+
+<div class="flow">
+<div class="flow-title">How Services Get Their Configuration</div>
+<div class="flow-body">
+Config Server (port 8888):
+  @EnableConfigServer
+  → Reads from Git/local filesystem
+  → Serves: application.properties + {service-name}.properties
+
+Each Service application.properties:
+  spring.config.import=configserver:http://${CONFIG_SERVER_HOST:skillsync-config}:8888
+  spring.cloud.config.fail-fast=true
+  spring.cloud.config.retry.max-attempts=6
+  spring.cloud.config.retry.initial-interval=2000
+  spring.cloud.config.retry.max-interval=6000
+  spring.cloud.config.retry.multiplier=1.5
+
+STARTUP FLOW:
+  Service starts → Spring tries to import config before autoconfiguration
+  → GET http://skillsync-config:8888/{service-name}/default
+  → Config Server returns: { jwt.secret, spring.datasource.url, redis.host, ... }
+  → Service loads these as properties before beans are created
+  → retry.max-attempts=6 with exponential backoff (2s → 3s → 4.5s → 6s → 6s → 6s)
+
+WHAT'S CENTRALIZED:
+  → jwt.secret=${JWT_SECRET}         ← Same secret across gateway + auth-service
+  → spring.datasource.url            ← DB connection strings
+  → spring.redis.host                ← Redis connection
+  → spring.rabbitmq.host             ← RabbitMQ connection
+  → app.cors.allowed-origins         ← CORS configuration
+  → razorpay.key-id / razorpay.key-secret
+
+WHY CENTRALIZE?
+  → Single source of truth for all service configuration
+  → Change JWT secret in ONE place → all services pick it up (with restart)
+  → Rotate DB passwords without touching 6 different deployment configs
+  → Environment-specific configs: dev/staging/prod via profiles
+</div></div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECURITY ARCHITECTURE DECISIONS                       -->
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="security-decisions">🛡️ Security Architecture Decisions</h2>
+
+<table>
+<tr><th>Decision</th><th>What Was Chosen</th><th>Why</th><th>Trade-off</th></tr>
+<tr>
+  <td>JWT Algorithm</td>
+  <td>HS256 (Symmetric)</td>
+  <td>Auth-service and Gateway are in same trusted infrastructure. Simpler to manage — one shared secret via Config Server.</td>
+  <td>If JWT_SECRET leaks → all tokens forgeable. RS256 would require public/private key pair but allows token verification without the private key.</td>
+</tr>
+<tr>
+  <td>Token Storage</td>
+  <td>Dual: JSON body + HttpOnly Cookie</td>
+  <td>Cookie for XSS resistance (JS can't steal it). JSON body for cross-domain scenarios where cookie isn't sent (CORS restrictions on cross-subdomain).</td>
+  <td>localStorage is XSS-vulnerable but necessary for cross-domain. HttpOnly cookie is CSRF-vulnerable but XSS-safe. SameSite=None mitigates CSRF here.</td>
+</tr>
+<tr>
+  <td>Session Policy</td>
+  <td>SessionCreationPolicy.STATELESS</td>
+  <td>No server-side session stored. JWT is self-contained. Scales horizontally without shared session store.</td>
+  <td>Cannot immediately invalidate access tokens. Must wait for expiry (24h). Mitigated by short-lived tokens + refresh token rotation.</td>
+</tr>
+<tr>
+  <td>Access Token Expiry</td>
+  <td>24 hours (MIN_ACCESS_EXPIRATION_MS)</td>
+  <td>Longer expiry → fewer refresh calls → better UX. Configured via jwt.access-expiration property.</td>
+  <td>Best practice is 15 min. 24h means a stolen token is valid for up to 24h. No blacklist implemented.</td>
+</tr>
+<tr>
+  <td>Password Hashing</td>
+  <td>BCrypt with strength=12</td>
+  <td>BCrypt is slow by design (12 rounds ≈ 250ms on modern hardware). Unique salt per password prevents rainbow table attacks.</td>
+  <td>12 rounds means login takes ~250ms extra. Mitigated by the fact it only happens at login, not on every request.</td>
+</tr>
+<tr>
+  <td>CSRF Protection</td>
+  <td>Disabled in auth-service, custom CsrfOriginFilter at Gateway</td>
+  <td>Spring CSRF is designed for session-based apps with forms. JWT is sent in Authorization header — CSRF doesn't apply to header-based auth. Custom origin check at Gateway provides equivalent protection.</td>
+  <td>Refresh token is in a cookie — CSRF could attack /api/auth/refresh. Mitigated by SameSite=None + custom CsrfOriginFilter checking Origin header.</td>
+</tr>
+<tr>
+  <td>User ID in requests</td>
+  <td>X-User-Id header injected by Gateway ONLY</td>
+  <td>Services trust X-User-Id unconditionally. Gateway strips any client-sent X-User-Id and injects from verified JWT claim. Prevents privilege escalation via header injection.</td>
+  <td>Services have no security layer themselves — they are not safe if accessed directly (bypassing Gateway). Network-level isolation needed in production.</td>
+</tr>
+</table>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- CSRF DEEP DIVE                                         -->
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="csrf-deep">🛡️ CSRF Protection — Actual Implementation</h2>
+
+<div class="flow">
+<div class="flow-title">CsrfOriginFilter.java — What It Actually Does</div>
+<div class="flow-body">
+File: api-gateway/src/main/java/com/skillsync/apigateway/filter/CsrfOriginFilter.java
+@Order(-3)  ← runs FIRST before all other filters
+
+public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+    String method = exchange.getRequest().getMethod().name();
+    
+    if ("OPTIONS".equalsIgnoreCase(method)) {
+        return chain.filter(exchange);  ← NEVER block preflight
+    }
+    
+    if (List.of("POST", "PUT", "DELETE", "PATCH").contains(method)) {
+        String origin = exchange.getRequest().getHeaders().getFirst("Origin");
+        Set<String> allowed = Set.of(allowedOrigins.split(","));
+        // allowedOrigins = "https://skillsync.mraks.dev,https://skillsync.udayasri.dev,
+        //                   http://localhost:5173,http://localhost:3000"
+        
+        if (origin != null && !allowed.contains(origin.trim())) {
+            exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+            return exchange.getResponse().setComplete();  ← Block immediately
+        }
+    }
+    return chain.filter(exchange);  ← GET requests and null Origin pass through
+}
+
+WHAT THIS PROTECTS AGAINST:
+  Malicious site at "evil.com" tries to POST to /api/auth/refresh using victim's cookie:
+  → Browser sends request with Origin: https://evil.com
+  → CsrfOriginFilter: "evil.com" NOT in allowedOrigins → 403 → BLOCKED
+
+WHY THIS IS BETTER THAN SPRING'S DEFAULT CSRF:
+  → Spring's default CSRF requires a CSRF token in every form submission
+  → JWT apps don't use form submissions (it's REST API with JSON)
+  → Origin check is simpler and equally effective for the use case here
+
+LIMITATION:
+  → null Origin header (direct API calls, Postman, curl) PASSES THROUGH
+  → Acceptable: attacker needs to forge a browser request (can't control Origin in real browsers)
+  → A null origin from an actual browser would mean same-origin → safe
+
+AUTH-SERVICE CSRF CONFIG:
+  .csrf(AbstractHttpConfigurer::disable)
+  → CSRF disabled inside auth-service too
+  → Same reasoning: JWT-based, stateless
+  → Gateway's CsrfOriginFilter handles origin validation before reaching auth-service
+</div></div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- CORS CONFIGURATION                                     -->
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="cors-deep">🌐 CORS Configuration — Gateway Level</h2>
+
+<div class="flow">
+<div class="flow-title">CorsConfig.java — api-gateway/config/CorsConfig.java</div>
+<div class="flow-body">
+@Configuration
+public class CorsConfig {
+    @Value("${app.cors.allowed-origins}")
+    private String allowedOrigins;
+    // = "https://skillsync.mraks.dev,https://skillsync.udayasri.dev,
+    //    http://localhost:5173,http://localhost:3000"
+    
+    @Bean
+    public CorsWebFilter corsWebFilter() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of(allowedOrigins.split(",")));
+        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","PATCH","OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);  ← CRITICAL: allows cookies to be sent
+        config.setMaxAge(3600L);           ← browser caches preflight for 1 hour
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return new CorsWebFilter(source);
+    }
+}
+
+CORS PREFLIGHT FLOW (OPTIONS request):
+  Browser: OPTIONS /api/users/me
+    Origin: https://skillsync.mraks.dev
+    Access-Control-Request-Method: GET
+    Access-Control-Request-Headers: Authorization
+  
+  Gateway CorsWebFilter response:
+    Access-Control-Allow-Origin: https://skillsync.mraks.dev  ← echoes the origin
+    Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS
+    Access-Control-Allow-Headers: *
+    Access-Control-Allow-Credentials: true
+    Access-Control-Max-Age: 3600
+  
+  Browser: "OK, real request allowed" → sends actual GET /api/users/me
+
+CROSS-SUBDOMAIN COOKIE CHALLENGE:
+  Frontend: https://skillsync.mraks.dev
+  Backend:  https://api.skillsync.mraks.dev
+  
+  HttpOnly cookies with SameSite=None are sent because:
+  → Domain: .mraks.dev (shared parent domain, set in CookieOptions if configured)
+  → Secure: true (HTTPS required for SameSite=None to work)
+  → withCredentials: true in Axios (tells browser to include cookies)
+  → Access-Control-Allow-Credentials: true (tells browser server accepts credentials)
+  
+  For skillsync.rangaraju.dev (completely different domain):
+  → Cookie NOT sent automatically (cross-origin cookie blocked by SameSite=None restriction)
+  → Axios interceptor attaches JWT from localStorage: Authorization: Bearer <token>
+  → This is WHY tokens are ALSO stored in localStorage — as cross-domain fallback
+</div></div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- ADVANCED INTERVIEW Q&A                                 -->
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="interview-advanced">❓ Advanced Interview Q&A — Part 2</h2>
+
+<h3>RabbitMQ & Events</h3>
+<table>
+<tr><th>Question</th><th>Answer (from actual code)</th></tr>
+<tr>
+  <td>Why use RabbitMQ instead of direct HTTP calls for notifications?</td>
+  <td>Decoupling. If notification-service is down when a session is booked, session-service still succeeds. The event stays in the queue (durable=true) and notification-service processes it when it comes back up. With direct HTTP, session creation would fail if notification-service is unavailable.</td>
+</tr>
+<tr>
+  <td>What is the Outbox Pattern and why is it used in PaymentService?</td>
+  <td>Without Outbox: <code>paymentRepository.save()</code> succeeds, then <code>rabbitTemplate.send()</code> fails → event lost, session never confirmed. With Outbox: both payment record and outbox event are written in the SAME database transaction. <code>OutboxPublisher</code> polls and publishes — if it crashes mid-publish, unprocessed events stay in outbox with <code>published=false</code> → retried. Guarantees at-least-once delivery.</td>
+</tr>
+<tr>
+  <td>What happens if a RabbitMQ consumer throws an exception?</td>
+  <td>From PaymentEventConsumer.java: <code>throw e;</code> is explicit — re-throwing causes RabbitMQ to NACK the message. If a DLQ is configured (email.retry.queue has DLX), the message goes to the dead letter queue after exhausting retries. The <code>DlqReplayController</code> provides an admin endpoint to replay failed events.</td>
+</tr>
+<tr>
+  <td>Why is <code>Jackson2JsonMessageConverter</code> configured as a Bean?</td>
+  <td>RabbitMQ's default serialization is Java object serialization (binary, class-dependent, fragile across versions). Jackson2JsonMessageConverter uses JSON — language-agnostic, readable, and forward-compatible. Both sender and receiver must have the same converter configured.</td>
+</tr>
+</table>
+
+<h3>CQRS & Architecture</h3>
+<table>
+<tr><th>Question</th><th>Answer (from actual code)</th></tr>
+<tr>
+  <td>Why split command and query services if they share the same database?</td>
+  <td>This is "logical CQRS" — same DB, separate service classes. Benefits: command services are @Transactional with cache eviction; query services are read-optimized with Redis caching. If scale demands, can later add read replicas for query services without changing the CQRS interface. Also simpler to test and reason about.</td>
+</tr>
+<tr>
+  <td>What does <code>cacheService.evictByPattern("v1:session:learner:101:*")</code> do?</td>
+  <td>Redis SCAN operation: iterates all keys matching the pattern using a cursor (not KEYS — which blocks Redis). Deletes all paginated session list caches for learner 101. This is necessary because a session state change (accepted, completed) invalidates ALL cached pages of that user's sessions, not just one key.</td>
+</tr>
+<tr>
+  <td>What is the <code>vKey()</code> method in CacheService?</td>
+  <td><code>public static String vKey(String rawKey) { return KEY_VERSION + ":" + rawKey; }</code> → prefixes all cache keys with "v1:". When the cache schema changes (e.g., ProfileResponse gains a new field), increment KEY_VERSION to "v2:" → all old "v1:" caches become stale and are effectively ignored without needing to flush Redis manually.</td>
+</tr>
+</table>
+
+<h3>Session & Mentor Logic</h3>
+<table>
+<tr><th>Question</th><th>Answer (from actual code)</th></tr>
+<tr>
+  <td>Why does createSession() call Feign to validate the mentor?</td>
+  <td>Two reasons: (1) validate the mentorId is actually a ROLE_MENTOR user — a learner could try to book with any userId. (2) Handle the ambiguity between mentorProfileId (from user-service) vs mentorUserId (from auth-service). <code>resolveMentorUserId()</code> first tries auth-service directly, then falls back to user-service's mentor profile to map the profile ID to a user ID.</td>
+</tr>
+<tr>
+  <td>What is <code>session.meetingLink</code> set to after payment confirmation?</td>
+  <td>From <code>confirmSessionPayment()</code>: <code>"https://meet.jit.si/SkillSync-" + session.getId() + "-" + System.currentTimeMillis()</code>. Uses Jitsi Meet (free, open-source video conferencing) with a unique room name per session. No account needed — just join the URL.</td>
+</tr>
+<tr>
+  <td>What does <code>defaultRatingApplied=true</code> mean on session completion?</td>
+  <td>From <code>completeSession()</code>: marks that the session completed and a default rating should be applied if the learner doesn't submit a review. This flag allows a background job to auto-apply a neutral rating after a timeout, preventing mentors from being rated 0 by default for completed sessions without reviews.</td>
+</tr>
+</table>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- FINAL SUMMARY                                          -->
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="summary">🏁 Final Summary — The Complete System in One View</h2>
+
+<div class="flow">
+<div class="flow-title">SkillSync — Everything Connected</div>
+<div class="flow-body">
+FRONTEND (React + Vite + Redux + Axios)
+  AuthSlice  → stores user, accessToken, refreshToken in Redux + localStorage
+  AuthLoader → restores session from cookies on page refresh via /api/auth/me
+  ProtectedRoute → guards routes based on isAuthenticated
+  RoleGuard  → guards routes based on role (LEARNER/MENTOR/ADMIN)
+  axios.ts   → request interceptor (attach JWT) + response interceptor (silent refresh)
+
+          HTTPS (Authorization: Bearer JWT | Cookie: accessToken)
+                              ↓
+API GATEWAY (Spring Cloud Gateway, Netty — port 8080)
+  CsrfOriginFilter   (@Order -3) → blocks cross-origin POST/PUT/DELETE
+  RateLimitingFilter (@Order -2) → 5/10/60/100 req/min by path category
+  SecurityHeadersFilter(@Order -1)→ HSTS, X-Frame-Options, etc.
+  JwtAuthenticationFilter (route)→ validate JWT, strip+inject X-User-* headers
+  Routes → lb://[auth|user|session|payment|notification|skill]-service (Eureka)
+
+          ↓ [auth routes: no JWT filter]   ↓ [all other routes: JwtFilter]
+AUTH-SERVICE (Tomcat, Spring Security, port 8081)
+  SecurityConfig → StateLESS, CSRF disabled, permitAll for auth paths
+  JwtAuthenticationFilter (OncePerRequestFilter) → validate JWT + set SecurityContext
+  AuthController → register / login / refresh / logout / oauth-login / me / internal/**
+  AuthService → authenticate → BCrypt compare → JWT generate → RefreshToken save
+  JwtTokenProvider → HS256 sign/verify using BASE64(JWT_SECRET) from Config Server
+  OtpService → 6-digit SecureRandom OTP → 5min expiry → 5 attempt limit
+  EmailService → Jakarta Mail → OTP emails + welcome emails
+
+USER-SERVICE / SESSION-SERVICE / PAYMENT-SERVICE / NOTIFICATION-SERVICE
+  No Spring Security — trusts X-User-Id from Gateway
+  CQRS: CommandService (write + cache evict + RabbitMQ publish)
+       QueryService (Redis-first cache-aside + DB fallback)
+  Feign Clients: auth-service (/internal/**), user-service (/api/mentors), skill-service
+
+POSTGRESQL (separate schemas: auth / user / session / payment / notification)
+  auth.users          auth.refresh_tokens    auth.otp_tokens
+  user.profiles       user.mentor_profiles   user.learning_groups
+  sessions.sessions   sessions.reviews
+  payment.payments    payment.outbox_events  payment.saga_states
+  notification.notifications
+
+REDIS (skillsync-cache-common CacheService)
+  "v1:user:profile:{id}"           TTL 10min
+  "v1:session:{id}"                TTL varies
+  "v1:session:learner:{id}:*"      pattern eviction on state change
+  "v1:notification:unread:{id}"    TTL varies
+  "v1:user:mentor:{id}"            TTL varies
+  Stampede protection: ReentrantLock per key
+  Null-sentinel: "__NULL__" → prevents cache penetration
+
+RABBITMQ (TopicExchange routing)
+  session.exchange  → session.requested/accepted/rejected/cancelled/completed
+  payment.exchange  → payment.business.action.v1 / payment.failed.v1
+  mentor.exchange   → mentor.approved/rejected/promoted/demoted
+  review.exchange   → review.submitted / review.summary.updated
+  email.retry.exchange (DirectExchange) → retry → DLQ after N attempts
+
+WEBSOCKET (STOMP via notification-service, proxied by Gateway /ws/**)
+  SimpMessagingTemplate.convertAndSendToUser(userId, "/queue/notifications", payload)
+  → Browser receives real-time notification immediately after RabbitMQ event
+
+EUREKA (port 8761) → Service registry, heartbeat, load balancing
+CONFIG SERVER (port 8888) → Central properties: JWT_SECRET, DB URLs, Redis, RabbitMQ
+</div></div>
+
+<div class="card card-green">
+  <h4 style="color:var(--accent2)">Interview-Ready Summary</h4>
+  <p style="font-size:13.5px;line-height:1.8;color:var(--text)">
+    <strong>"SkillSync is a production-grade distributed SaaS platform built on a Cloud-Native Microservices architecture. It uses Spring Cloud Gateway (Netty) as a reactive API Gateway that validates HS256 JWT tokens, performs rate limiting via a sliding-window ConcurrentHashMap, enforces CSRF origin checking, and injects verified user identity as X-User-* headers into downstream requests. The Auth-Service implements a full Spring Security Filter Chain with a custom OncePerRequestFilter for JWT validation, BCrypt-12 password hashing, two-factor OTP verification (SecureRandom, 5-min expiry, 5-attempt limit), Google OAuth linking, and stateful refresh token rotation with FIFO eviction (max 5 per user). All business services follow CQRS — CommandService for transactional writes with cache eviction and RabbitMQ event publishing, QueryService for Redis-cached reads with cache-aside and stampede protection. The Payment flow uses a Saga pattern with the Outbox Pattern for at-least-once delivery guarantee, Razorpay HMAC verification, and automatic session confirmation or compensation via RabbitMQ consumers. Real-time notifications are pushed via STOMP WebSocket through the notification-service. Service discovery uses Netflix Eureka; centralized configuration uses Spring Cloud Config Server; inter-service communication uses declarative Feign clients on internal /api/*/internal/** paths blocked from the Gateway. The React frontend uses Redux Toolkit for state, Axios interceptors for silent JWT refresh with a concurrent-request queue mechanism, and dual token storage (Redux + localStorage for cross-domain, HttpOnly cookies for XSS resistance)."</strong>
+  </p>
+</div>
+
+</main>
+</body>
+</html>

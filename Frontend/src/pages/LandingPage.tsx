@@ -272,7 +272,7 @@ const LandingPage = () => {
             <Link className="ppt-btn ghost" to="/register">
               Create Account
             </Link>
-            <Link className="ppt-btn outline" to="/ppt" style={{ border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)' }}>
+            <Link className="ppt-btn outline" to="/learn" style={{ border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)' }}>
               Watch Docs
             </Link>
           </div>

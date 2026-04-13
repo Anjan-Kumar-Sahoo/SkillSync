@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkillSync Master Security & Architecture Document</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #1c2128;
+    --border: rgba(255,255,255,0.08);
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --text3: #6e7681;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --accent3: #f78166;
+    --accent4: #d2a8ff;
+    --accent5: #ffa657;
+    --accent6: #79c0ff;
+    --teal: #56d364;
+    --warn: #e3b341;
+    --danger: #f85149;
+    --pill-bg: rgba(88,166,255,0.12);
+    --card-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 15px;
+    line-height: 1.75;
+    min-height: 100vh;
+  }
+
+  /* ── Sidebar nav ── */
+  #sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0; width: 240px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    z-index: 100;
+    padding: 20px 0 40px;
+  }
+  #sidebar .logo {
+    padding: 0 20px 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+  #sidebar .logo span {
+    font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--accent); display: block;
+  }
+  #sidebar .logo small { font-size: 11px; color: var(--text3); }
+  #sidebar nav a {
+    display: block; padding: 6px 20px;
+    font-size: 12.5px; color: var(--text2);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: all .15s;
+    line-height: 1.4;
+  }
+  #sidebar nav a:hover { color: var(--text); border-left-color: var(--accent); background: rgba(88,166,255,0.05); }
+  #sidebar nav .section-label {
+    padding: 14px 20px 4px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em;
+    color: var(--text3);
+  }
+
+  /* ── Main content ── */
+  #main { margin-left: 240px; padding: 48px 56px 80px; max-width: 960px; }
+
+  /* ── Typography ── */
+  h1 { font-size: 32px; font-weight: 700; line-height: 1.2; margin-bottom: 8px; }
+  h2 { font-size: 22px; font-weight: 600; line-height: 1.3; margin: 48px 0 16px; padding-top: 48px; border-top: 1px solid var(--border); color: var(--text); }
+  h2:first-of-type { border-top: none; margin-top: 32px; padding-top: 0; }
+  h3 { font-size: 17px; font-weight: 600; margin: 28px 0 10px; color: var(--accent6); }
+  h4 { font-size: 14px; font-weight: 600; margin: 20px 0 8px; color: var(--accent4); text-transform: uppercase; letter-spacing: .05em; }
+  p { margin-bottom: 14px; color: var(--text); }
+  strong { color: var(--text); font-weight: 600; }
+  em { color: var(--accent5); font-style: normal; font-weight: 500; }
+
+  /* ── Hero ── */
+  .hero {
+    background: linear-gradient(135deg, rgba(88,166,255,0.08) 0%, rgba(210,168,255,0.06) 50%, rgba(86,211,100,0.06) 100%);
+    border: 1px solid rgba(88,166,255,0.2);
+    border-radius: 12px;
+    padding: 32px 36px;
+    margin-bottom: 40px;
+  }
+  .hero .subtitle { color: var(--text2); font-size: 14px; margin-top: 6px; margin-bottom: 20px; }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge {
+    font-size: 11px; font-weight: 600; padding: 3px 10px;
+    border-radius: 20px; letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .badge-blue { background: rgba(88,166,255,0.15); color: #79c0ff; border: 1px solid rgba(88,166,255,0.3); }
+  .badge-green { background: rgba(86,211,100,0.12); color: #3fb950; border: 1px solid rgba(86,211,100,0.3); }
+  .badge-purple { background: rgba(210,168,255,0.12); color: #d2a8ff; border: 1px solid rgba(210,168,255,0.3); }
+  .badge-orange { background: rgba(255,166,87,0.12); color: #ffa657; border: 1px solid rgba(255,166,87,0.3); }
+  .badge-red { background: rgba(248,81,73,0.12); color: #f85149; border: 1px solid rgba(248,81,73,0.3); }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 16px 0;
+  }
+  .card-blue { border-left: 3px solid var(--accent); background: rgba(88,166,255,0.04); }
+  .card-green { border-left: 3px solid var(--accent2); background: rgba(63,185,80,0.04); }
+  .card-orange { border-left: 3px solid var(--accent5); background: rgba(255,166,87,0.04); }
+  .card-red { border-left: 3px solid var(--danger); background: rgba(248,81,73,0.04); }
+  .card-purple { border-left: 3px solid var(--accent4); background: rgba(210,168,255,0.04); }
+  .card-teal { border-left: 3px solid var(--teal); background: rgba(86,211,100,0.04); }
+  .card-warn { border-left: 3px solid var(--warn); background: rgba(227,179,65,0.04); }
+
+  .card-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
+  .card-title.blue { color: var(--accent); }
+  .card-title.green { color: var(--accent2); }
+  .card-title.orange { color: var(--accent5); }
+  .card-title.red { color: var(--danger); }
+  .card-title.purple { color: var(--accent4); }
+  .card-title.teal { color: var(--teal); }
+  .card-title.warn { color: var(--warn); }
+
+  /* ── Flow diagrams (text-art) ── */
+  .flow-box {
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 16px 0;
+    overflow-x: auto;
+    white-space: pre;
+    line-height: 1.6;
+    color: var(--text2);
+  }
+
+  /* ── Step list ── */
+  .steps { list-style: none; padding: 0; margin: 12px 0; }
+  .steps li {
+    display: flex; gap: 14px; align-items: flex-start;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .steps li:last-child { border-bottom: none; }
+  .step-num {
+    min-width: 26px; height: 26px;
+    background: var(--pill-bg); color: var(--accent);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; margin-top: 2px; flex-shrink: 0;
+  }
+  .step-body { flex: 1; }
+  .step-body strong { display: block; color: var(--text); font-size: 14px; }
+  .step-body p { font-size: 13.5px; color: var(--text2); margin: 3px 0 0; }
+
+  /* ── Filter chain table ── */
+  table {
+    width: 100%; border-collapse: collapse; margin: 16px 0;
+    font-size: 13.5px;
+  }
+  th {
+    text-align: left; padding: 10px 14px;
+    background: var(--bg3); color: var(--text2);
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+    border-bottom: 1px solid var(--border);
+  }
+  td { padding: 9px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--text); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .status-used { color: var(--accent2); font-weight: 600; }
+  .status-no { color: var(--danger); font-weight: 600; }
+
+  /* ── Code blocks ── */
+  pre {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    margin: 12px 0;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.6;
+    color: #c9d1d9;
+  }
+  code {
+    font-family: var(--mono);
+    font-size: 13px;
+    background: rgba(110,118,129,0.15);
+    border-radius: 4px;
+    padding: 1px 6px;
+    color: var(--accent3);
+  }
+
+  /* ── Analogy box ── */
+  .analogy {
+    display: flex; gap: 16px; align-items: flex-start;
+    background: rgba(210,168,255,0.06);
+    border: 1px solid rgba(210,168,255,0.2);
+    border-radius: 10px; padding: 16px 20px; margin: 16px 0;
+  }
+  .analogy .icon { font-size: 28px; flex-shrink: 0; margin-top: 2px; }
+  .analogy .content strong { color: var(--accent4); font-size: 14px; display: block; margin-bottom: 4px; }
+  .analogy .content p { font-size: 13.5px; color: var(--text2); margin: 0; }
+
+  /* ── Interview Q&A ── */
+  .qa-block { margin: 10px 0; }
+  details {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px; margin: 6px 0;
+    overflow: hidden;
+  }
+  summary {
+    padding: 12px 16px; cursor: pointer;
+    font-size: 13.5px; font-weight: 500;
+    color: var(--accent); list-style: none;
+    display: flex; align-items: center; gap: 8px;
+  }
+  summary::before { content: '▶'; font-size: 10px; transition: transform .2s; flex-shrink: 0; }
+  details[open] summary::before { transform: rotate(90deg); }
+  summary::-webkit-details-marker { display: none; }
+  .qa-answer {
+    padding: 12px 16px 14px; border-top: 1px solid var(--border);
+    font-size: 13.5px; color: var(--text2); line-height: 1.7;
+  }
+
+  /* ── Memory tricks ── */
+  .trick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+  .trick {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 16px;
+  }
+  .trick .emoji { font-size: 22px; margin-bottom: 6px; display: block; }
+  .trick strong { display: block; font-size: 13px; color: var(--text); margin-bottom: 4px; }
+  .trick span { font-size: 12.5px; color: var(--text2); }
+
+  /* ── Callout boxes ── */
+  .callout {
+    padding: 14px 18px; border-radius: 8px; margin: 14px 0;
+    font-size: 13.5px; display: flex; gap: 12px; align-items: flex-start;
+  }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { flex: 1; color: var(--text2); }
+  .callout-body strong { color: var(--text); display: block; margin-bottom: 3px; }
+  .callout-warn { background: rgba(227,179,65,0.08); border: 1px solid rgba(227,179,65,0.25); }
+  .callout-info { background: rgba(88,166,255,0.07); border: 1px solid rgba(88,166,255,0.25); }
+  .callout-danger { background: rgba(248,81,73,0.07); border: 1px solid rgba(248,81,73,0.25); }
+  .callout-success { background: rgba(63,185,80,0.07); border: 1px solid rgba(63,185,80,0.25); }
+
+  /* ── Comparison table ── */
+  .comp-table td:first-child { color: var(--text2); font-weight: 500; }
+  .comp-yes { color: var(--accent2); }
+  .comp-no { color: var(--danger); }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    #sidebar { display: none; }
+    #main { margin-left: 0; padding: 24px 20px 60px; }
+    .trick-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside id="sidebar">
+  <div class="logo">
+    <span>SkillSync</span>
+    <small>Master Security Document</small>
+  </div>
+  <nav>
+    <div class="section-label">Overview</div>
+    <a href="#overview">Big Picture</a>
+    <a href="#actors">Actors & Components</a>
+
+    <div class="section-label">Request Flow</div>
+    <a href="#story">Story: User Clicks Login</a>
+    <a href="#tomcat">Tomcat & Servlet Layer</a>
+    <a href="#delegating">DelegatingFilterProxy</a>
+    <a href="#filterchain">Spring Security Filters</a>
+
+    <div class="section-label">Security Deep-Dive</div>
+    <a href="#auth-flow">Authentication Flow</a>
+    <a href="#jwt">JWT Internals</a>
+    <a href="#threadlocal">ThreadLocal & SecurityContext</a>
+    <a href="#gateway">API Gateway Flow</a>
+    <a href="#keys">Keys & Encryption</a>
+
+    <div class="section-label">Frontend</div>
+    <a href="#frontend">Frontend & Axios</a>
+    <a href="#storage">Token Storage</a>
+    <a href="#redux">Redux & State</a>
+
+    <div class="section-label">Internals</div>
+    <a href="#filters-table">Filter Table</a>
+    <a href="#exceptions">Exception Handling</a>
+    <a href="#redis">Redis & Cache</a>
+    <a href="#refresh">Refresh Tokens</a>
+    <a href="#csrf-cors">CSRF & CORS</a>
+
+    <div class="section-label">Reference</div>
+    <a href="#interview">Interview Q&A</a>
+    <a href="#memory">Memory Tricks</a>
+    <a href="#gaps">Corrections & Gaps</a>
+  </nav>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<main id="main">
+
+  <!-- HERO -->
+  <section class="hero">
+    <h1>SkillSync: Complete Security & Architecture Master Document</h1>
+    <p class="subtitle">End-to-end forensic breakdown — from browser click to database query and back. Beginner-friendly + interview-ready.</p>
+    <div class="badges">
+      <span class="badge badge-blue">Spring Boot Security</span>
+      <span class="badge badge-green">JWT · HS256</span>
+      <span class="badge badge-purple">Microservices</span>
+      <span class="badge badge-orange">React + Redux</span>
+      <span class="badge badge-red">ThreadLocal Internals</span>
+      <span class="badge badge-blue">API Gateway</span>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  SECTION 1 – BIG PICTURE                              -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="overview">1. The Big Picture — What Is SkillSync?</h2>
+
+  <p>SkillSync is a <strong>distributed SaaS platform</strong> built as a collection of microservices. Think of it like a large shopping mall where every shop is independent, but they all share the same entrance gate (API Gateway), the same security company (Auth Service), and the same customer database.</p>
+
+  <div class="analogy">
+    <div class="icon">✈️</div>
+    <div class="content">
+      <strong>Airport Analogy — Remember This Forever</strong>
+      <p><strong>Auth Service</strong> = Passport office. Issues your digital identity (JWT).<br>
+      <strong>API Gateway</strong> = Security checkpoint. Verifies your passport and stamps a boarding pass (injects X-User-Id header).<br>
+      <strong>User-Service / Skill-Service</strong> = Airport lounges. They don't recheck your passport — they trust the stamp on your boarding pass.<br>
+      <strong>PostgreSQL</strong> = Central government database that holds real identity records.<br>
+      <strong>Redis</strong> = Quick reference sheet at the gate so staff don't have to call the government every time.</p>
+    </div>
+  </div>
+
+  <div class="flow-box">┌──────────────────────────────────────────────────────────────────────┐
+│                    SKILLSYNC ARCHITECTURE                            │
+├──────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   Browser (React)                                                    │
+│       │  (HTTPS / JWT in Authorization header)                       │
+│       ▼                                                              │
+│   Nginx / Load Balancer                                              │
+│       │                                                              │
+│       ▼                                                              │
+│   API Gateway (Spring Cloud Gateway — Netty/Reactive)                │
+│       │  Validates JWT signature                                     │
+│       │  Injects X-User-Id header                                    │
+│       │  Routes to correct microservice                              │
+│       ├──────────────────────┬──────────────────────┐               │
+│       ▼                      ▼                      ▼               │
+│  Auth-Service           User-Service           Skill-Service         │
+│  (Tomcat)               (Tomcat)               (Tomcat)             │
+│  Login, Register        Profile, Avatar        Sessions, Matches    │
+│  JWT generation         Trusts X-User-Id       Trusts X-User-Id    │
+│       │                      │                      │               │
+│       └──────────────────────┴──────────────────────┘               │
+│                              │                                       │
+│                    ┌─────────┴─────────┐                            │
+│                    ▼                   ▼                             │
+│               PostgreSQL            Redis                            │
+│             (Source of truth)     (Cache / Speed)                   │
+└──────────────────────────────────────────────────────────────────────┘</div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  SECTION 2 – ACTORS                                   -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="actors">2. Actors & Components</h2>
+
+  <table>
+    <tr><th>Actor</th><th>What It Does</th><th>Real-Life Analogy</th></tr>
+    <tr><td><strong>Browser (React/Vite)</strong></td><td>The user interface. Sends requests, stores tokens, shows data.</td><td>The customer at the mall.</td></tr>
+    <tr><td><strong>Axios (HTTP client)</strong></td><td>Makes API calls. Has interceptors that auto-attach JWTs and auto-retry on 401.</td><td>The customer's personal assistant who knows what ID card to show.</td></tr>
+    <tr><td><strong>Redux (State)</strong></td><td>Keeps the user's logged-in state in memory. AuthSlice holds JWT.</td><td>The wallet that stores the ID card.</td></tr>
+    <tr><td><strong>API Gateway (Netty)</strong></td><td>Entry point for all traffic. Validates JWT, strips spoofed headers, injects verified identity.</td><td>The airport security checkpoint.</td></tr>
+    <tr><td><strong>Auth-Service (Tomcat)</strong></td><td>Issues JWTs. Handles login, register, refresh, logout, OTP, OAuth.</td><td>The passport office.</td></tr>
+    <tr><td><strong>User-Service / Skill-Service (Tomcat)</strong></td><td>Business logic. Trusts the X-User-Id header from Gateway.</td><td>Airport lounges that trust the boarding pass stamp.</td></tr>
+    <tr><td><strong>PostgreSQL</strong></td><td>Stores users, hashed passwords, refresh tokens, profiles.</td><td>The government's identity database.</td></tr>
+    <tr><td><strong>Redis</strong></td><td>Caches user profiles for speed. Invalidated on profile update.</td><td>The quick-reference photocopied sheet so staff don't call HQ every time.</td></tr>
+    <tr><td><strong>Eureka Server</strong></td><td>Service registry. All microservices announce themselves here. Gateway finds them here.</td><td>The office directory board showing which department is on which floor.</td></tr>
+    <tr><td><strong>Spring Cloud Config</strong></td><td>Central configuration store for all services.</td><td>The company's shared policy manual.</td></tr>
+  </table>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  SECTION 3 – STORY: USER CLICKS LOGIN                 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="story">3. The Full Story — "User Clicks Login"</h2>
+
+  <p>Let's trace every single thing that happens when a user types their email and password and hits <strong>Login</strong>. Think of this like a forensic detective following a package from sender to recipient.</p>
+
+  <ul class="steps">
+    <li>
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>User clicks Login in the browser</strong>
+        <p><code>Login.tsx</code> captures the email and password from the form. It calls <code>handleSubmit()</code>.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>Redux dispatches the login action</strong>
+        <p><code>authSlice.ts</code> has a special async function called <code>loginUser</code> (an Async Thunk). It starts the API call and tells Redux: "Login is in progress."</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>Axios sends the POST request</strong>
+        <p>The configured <code>apiClient</code> sends <code>POST /api/auth/login</code> with JSON body <code>{"email":"...","password":"..."}</code>. The request interceptor checks for a token — but since this is a login request, there's nothing to attach yet.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <strong>DNS Resolution & Network</strong>
+        <p><code>api.skillsync.mraks.dev</code> resolves to the IP of the Load Balancer or API Gateway. The TLS (HTTPS) handshake happens — the browser and server negotiate a symmetric session key via asymmetric encryption. All data from this point is encrypted.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <strong>API Gateway receives the request (Netty)</strong>
+        <p>Unlike normal Spring Boot (Tomcat), the Gateway uses <strong>Netty's event loop model</strong> — a single thread handles many connections using non-blocking I/O. The Gateway's <code>JwtAuthenticationFilter</code> runs. Because <code>/api/auth/login</code> is a <em>public path</em>, it is allowed through without token validation.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">6</div>
+      <div class="step-body">
+        <strong>Request reaches Auth-Service (Tomcat)</strong>
+        <p>Tomcat's <strong>Connector (Coyote)</strong> accepts the TCP connection. A worker thread is pulled from the thread pool (e.g., <code>http-nio-8081-exec-3</code>). The <code>CoyoteAdapter</code> converts raw bytes into a proper Java <code>HttpServletRequest</code> object.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">7</div>
+      <div class="step-body">
+        <strong>Spring Security Filter Chain runs</strong>
+        <p>Before the request reaches any controller, it must pass through the Security Filter Chain. Filters run in order (covered in Section 5). The <code>JwtAuthenticationFilter</code> sees no Authorization header for the login path and allows it through.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">8</div>
+      <div class="step-body">
+        <strong>DispatcherServlet routes the request</strong>
+        <p>The "Front Controller." It asks <code>HandlerMapping</code>: "Who handles <code>POST /api/auth/login</code>?" Answer: <code>AuthController.login(LoginRequest)</code>. Spring uses Java reflection to call this method.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">9</div>
+      <div class="step-body">
+        <strong>AuthController receives the request</strong>
+        <p>The JSON body is deserialized into a <code>LoginRequest</code> DTO (Data Transfer Object). The controller calls <code>authService.login(loginRequest)</code>.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">10</div>
+      <div class="step-body">
+        <strong>AuthService delegates to AuthenticationManager</strong>
+        <p>It wraps the credentials in a <code>UsernamePasswordAuthenticationToken</code> and calls <code>authenticationManager.authenticate(token)</code>. This is the key delegation step — Spring's security system now takes over.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">11</div>
+      <div class="step-body">
+        <strong>ProviderManager → DaoAuthenticationProvider</strong>
+        <p>The <code>ProviderManager</code> iterates through its list of providers. It finds <code>DaoAuthenticationProvider</code>, which knows how to handle username/password credentials.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">12</div>
+      <div class="step-body">
+        <strong>UserDetailsServiceImpl → Database query</strong>
+        <p><code>DaoAuthenticationProvider</code> calls your <code>UserDetailsServiceImpl.loadUserByUsername(email)</code>. This queries <code>AuthUserRepository.findByEmail(email)</code> in <strong>PostgreSQL</strong>. It returns a <code>UserDetails</code> object containing the hashed password and roles.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">13</div>
+      <div class="step-body">
+        <strong>BCrypt password comparison</strong>
+        <p><code>BCryptPasswordEncoder.matches(rawPassword, hashedPassword)</code> is called. BCrypt re-hashes the input and compares it to the stored hash. <strong>Why BCrypt?</strong> It's slow by design (12 rounds) to resist brute-force attacks, and it includes a random salt so identical passwords have different hashes.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">14</div>
+      <div class="step-body">
+        <strong>JWT tokens generated</strong>
+        <p>On success, <code>JwtTokenProvider.generateAccessToken(userId, email, role)</code> creates a signed JWT using <strong>HS256</strong>. A refresh token is also created and saved to the database. Spring Security automatically <em>nulls out</em> the password from the Authentication object at this point — a safety feature.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">15</div>
+      <div class="step-body">
+        <strong>Response returned to browser</strong>
+        <p>The controller returns <code>ResponseEntity.ok(authResponse)</code> with the JWT in the JSON body. The refresh token is set as an <strong>HttpOnly, Secure, SameSite=None cookie</strong> via <code>Set-Cookie</code> header. HttpOnly means JavaScript cannot read it — preventing XSS theft.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">16</div>
+      <div class="step-body">
+        <strong>Browser stores tokens, Redux updates</strong>
+        <p>The access token is stored in <code>localStorage</code> (<code>ss_access_token</code>) and Redux state. The Redux <code>authSlice</code> sets <code>isAuthenticated = true</code>. The UI re-renders showing the dashboard.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">17</div>
+      <div class="step-body">
+        <strong>Thread cleanup</strong>
+        <p>After the response is sent, Spring's <code>SecurityContextPersistenceFilter</code> <em>clears the ThreadLocal</em>. The Tomcat worker thread returns to the pool — clean and ready for the next request.</p>
+      </div>
+    </li>
+  </ul>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  SECTION 4 – TOMCAT INTERNALS                         -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="tomcat">4. Tomcat & Servlet Internals</h2>
+
+  <div class="analogy">
+    <div class="icon">🏭</div>
+    <div class="content">
+      <strong>Tomcat = A Post Office</strong>
+      <p>Tomcat receives raw letters (TCP packets), opens the envelope (parses HTTP bytes), and hands the sorted letter to the correct department (your Spring controllers). It also manages a pool of workers (threads) to handle many letters simultaneously.</p>
+    </div>
+  </div>
+
+  <h3>Tomcat's Internal Flow</h3>
+
+  <div class="flow-box">TCP Bytes Arrive at Port 8080/443
+         │
+         ▼
+  NioEndpoint (accepts TCP connection)
+  → Picks a worker thread from the thread pool
+  → e.g. "http-nio-8081-exec-3"
+         │
+         ▼
+  Http11Processor
+  → Reads the raw HTTP bytes off the socket
+         │
+         ▼
+  CoyoteAdapter.service()
+  → Converts internal Coyote request → HttpServletRequest (Servlet API)
+  → Converts internal Coyote response → HttpServletResponse
+         │
+         ▼
+  Servlet Container Routing:
+  Engine → Host (api.skillsync.mraks.dev) → Context (auth-service app)
+         │
+         ▼
+  Filter Chain (Servlet Filters run BEFORE any controller)
+         │
+         ▼
+  DispatcherServlet (Spring MVC Front Controller)
+         │
+         ▼
+  Your @RestController method executes
+         │
+         ▼
+  Response written back to HttpServletResponse → TCP socket</div>
+
+  <h3>Filter vs. Interceptor — Why Does It Matter?</h3>
+
+  <div class="card card-blue">
+    <p class="card-title blue">Key Distinction</p>
+    <p><strong>Filters</strong> are part of the <em>Servlet Container</em> (Tomcat). They run before Spring MVC even knows the request exists. Security filters live here because we want to <em>block unauthorized requests at the gate</em> before wasting memory on controller logic.</p>
+    <p style="margin-top:8px"><strong>Interceptors</strong> are part of <em>Spring MVC</em>. They run after the DispatcherServlet has already routed the request to a controller. They can add logging, audit trails, etc.</p>
+    <p style="margin-top:8px; font-size:13.5px; color:var(--text2)"><strong>Analogy:</strong> Filters = Security guard at the building entrance. Interceptors = The receptionist inside the office who checks your appointment before letting you into a specific room.</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  SECTION 5 – DELEGATING FILTER PROXY                  -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="delegating">5. DelegatingFilterProxy — The Bridge</h2>
+
+  <div class="analogy">
+    <div class="icon">🌉</div>
+    <div class="content">
+      <strong>The Bridge Between Two Worlds</strong>
+      <p>Tomcat lives in one world (Servlet Container). Spring Security lives in another (Spring Application Context). Tomcat doesn't know about Spring Beans. <code>DelegatingFilterProxy</code> is the bridge — it is a standard Servlet Filter that Tomcat recognizes, but internally it delegates all work to the Spring Security filter chain.</p>
+    </div>
+  </div>
+
+  <ul class="steps">
+    <li>
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>Tomcat calls DelegatingFilterProxy</strong>
+        <p>This is a plain old Servlet Filter that Tomcat registers normally.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>Proxy looks up springSecurityFilterChain Bean</strong>
+        <p>It asks the Spring Application Context: "Give me the Bean named <code>springSecurityFilterChain</code>."</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>Control passes to FilterChainProxy</strong>
+        <p>This is the real Spring Security entry point. It holds your list of <code>SecurityFilterChain</code> beans and runs them in order.</p>
+      </div>
+    </li>
+  </ul>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  SECTION 6 – FILTER CHAIN                             -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="filterchain">6. Spring Security Filter Chain — Step by Step</h2>
+
+  <p>Every request passes through these filters in order. Each filter does its job and calls <code>chain.doFilter()</code> to pass the request to the next filter. If a filter decides to block the request, it does NOT call <code>chain.doFilter()</code> — the request stops dead and a response is sent immediately.</p>
+
+  <div class="callout callout-warn">
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-body">
+      <strong>Critical Rule</strong>
+      If any filter does NOT call <code>chain.doFilter()</code>, the request is halted. The user sees an error response (401 or 403). The Controller is NEVER reached.
+    </div>
+  </div>
+
+  <table>
+    <tr><th>#</th><th>Filter</th><th>What It Does</th><th>Status in SkillSync</th></tr>
+    <tr>
+      <td>1</td><td><strong>WebAsyncManagerIntegrationFilter</strong></td>
+      <td>Makes sure the security context is available even in async (non-blocking) request handling.</td>
+      <td class="status-used">✅ USED (Default)</td>
+    </tr>
+    <tr>
+      <td>2</td><td><strong>SecurityContextPersistenceFilter</strong></td>
+      <td>At the start: loads the SecurityContext (usually empty in stateless JWT apps). At the end: <strong>clears the ThreadLocal</strong> to prevent thread poisoning.</td>
+      <td class="status-used">✅ USED (Default)</td>
+    </tr>
+    <tr>
+      <td>3</td><td><strong>HeaderWriterFilter</strong></td>
+      <td>Adds security headers: <code>X-Frame-Options: DENY</code>, <code>X-XSS-Protection</code>, <code>X-Content-Type-Options: nosniff</code>. Protects against Clickjacking and MIME sniffing.</td>
+      <td class="status-used">✅ USED (Default)</td>
+    </tr>
+    <tr>
+      <td>4</td><td><strong>CorsFilter</strong></td>
+      <td>Handles browser's preflight OPTIONS requests. Tells the browser which origins are allowed to call the API. Without this, the React frontend would get "CORS Error."</td>
+      <td class="status-used">✅ USED (Configured in SecurityConfig)</td>
+    </tr>
+    <tr>
+      <td>5</td><td><strong>CsrfFilter</strong></td>
+      <td>Protects against Cross-Site Request Forgery attacks using a secret token in forms.</td>
+      <td class="status-no">❌ DISABLED — JWT is stateless, CSRF not needed</td>
+    </tr>
+    <tr>
+      <td>6</td><td><strong>LogoutFilter</strong></td>
+      <td>Intercepts the <code>/logout</code> URL and handles logout logic.</td>
+      <td class="status-used">✅ USED (Default)</td>
+    </tr>
+    <tr>
+      <td>7</td><td><strong>JwtAuthenticationFilter ⭐</strong></td>
+      <td>YOUR CUSTOM FILTER. Extracts JWT from <code>Authorization</code> header or cookie → validates signature → loads user → populates SecurityContextHolder. Position: before <code>UsernamePasswordAuthenticationFilter</code>.</td>
+      <td class="status-used">✅ USED (Custom — Most Critical)</td>
+    </tr>
+    <tr>
+      <td>8</td><td><strong>UsernamePasswordAuthenticationFilter</strong></td>
+      <td>Spring's default form-login filter. Handles POST to <code>/login</code>. Not needed here because SkillSync uses a manual JSON login via <code>AuthController</code>.</td>
+      <td class="status-no">❌ NOT USED — Replaced by custom JSON login</td>
+    </tr>
+    <tr>
+      <td>9</td><td><strong>AnonymousAuthenticationFilter</strong></td>
+      <td>If no user is logged in (no JWT), it creates a fake "Anonymous" user so the system doesn't crash on null checks. Public pages need this.</td>
+      <td class="status-used">✅ USED (Default)</td>
+    </tr>
+    <tr>
+      <td>10</td><td><strong>ExceptionTranslationFilter</strong></td>
+      <td>The "Try-Catch" of the filter chain. Catches <code>AuthenticationException</code> (→ 401) and <code>AccessDeniedException</code> (→ 403) from later filters. Acts like a customer service agent giving official rejection notices.</td>
+      <td class="status-used">✅ USED (Default)</td>
+    </tr>
+    <tr>
+      <td>11</td><td><strong>FilterSecurityInterceptor</strong></td>
+      <td>The "Final Boss." Checks if the authenticated user has the required role for the requested URL. If a <code>ROLE_LEARNER</code> tries to access <code>/api/admin</code>, this throws <code>AccessDeniedException</code>.</td>
+      <td class="status-used">✅ USED (Default — enforces @PreAuthorize & requestMatchers)</td>
+    </tr>
+    <tr>
+      <td>—</td><td><strong>BasicAuthFilter</strong></td>
+      <td>HTTP Basic Authentication (username:password in every header). Old-school, not used in modern JWT apps.</td>
+      <td class="status-no">❌ NOT USED</td>
+    </tr>
+  </table>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  SECTION 7 – AUTHENTICATION FLOW                      -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="auth-flow">7. Authentication Flow — Code Call Tree</h2>
+
+  <pre>AuthController.login(LoginRequest)
+└── AuthService.login(LoginRequest)
+    ├── authenticationManager.authenticate(UsernamePasswordAuthenticationToken)
+    │   └── ProviderManager.authenticate()  [iterates through providers]
+    │       └── DaoAuthenticationProvider.authenticate()
+    │           ├── UserDetailsServiceImpl.loadUserByUsername(email)
+    │           │   └── AuthUserRepository.findByEmail(email)  [PostgreSQL query]
+    │           │       └── returns AuthUser entity (hashed password + roles)
+    │           └── BCryptPasswordEncoder.matches(rawPwd, hashedPwd)
+    │               → SUCCESS: returns fully populated Authentication object
+    │               → Spring automatically nulls the password from the object ✅
+    ├── JwtTokenProvider.generateAccessToken(userId, email, role)
+    │   └── Uses jjwt library with JWT_SECRET to create HS256 signed token
+    ├── RefreshTokenRepository.save(new RefreshToken)
+    │   └── Saves refresh token to PostgreSQL with 7-day expiry
+    └── ResponseEntity.ok(AuthResponse)
+        └── Sets HttpOnly cookie with refresh token</pre>
+
+  <h3>The Authorization Vote System</h3>
+  <div class="card card-purple">
+    <p class="card-title purple">AccessDecisionManager — The Voting System</p>
+    <p>When the <code>FilterSecurityInterceptor</code> checks permissions, it uses an <strong>AccessDecisionManager</strong>. The default is <code>AffirmativeBased</code> — like a democracy where <em>if even ONE voter says YES</em>, access is granted. Each voter checks one thing (e.g., "Does the user have ROLE_MENTOR?").</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  SECTION 8 – JWT INTERNALS                            -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="jwt">8. JWT — Your Digital Concert Wristband</h2>
+
+  <div class="analogy">
+    <div class="icon">🎫</div>
+    <div class="content">
+      <strong>JWT = Concert Wristband</strong>
+      <p>You show your ID at the ticket booth (Login). They give you a wristband (JWT). For the rest of the night, security at every stage doesn't ask for your ID — they just check your wristband. Even if there are 10 different stages (microservices), the wristband works everywhere. If the wristband expires or is fake, you're denied.</p>
+    </div>
+  </div>
+
+  <h3>JWT Structure — Three Parts</h3>
+
+  <div class="flow-box">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9   ← HEADER (base64)
+        .
+eyJzdWIiOiIxMDEiLCJlbWFpbCI6InVzZXJAc2tpbGxzeW5jLmNvbSIsInJvbGUiOiJST0xFX01FTlRPUiIsImlhdCI6MTcwMDAwMDAwMCwiZXhwIjoxNzAwMDg2NDAwfQ==   ← PAYLOAD (claims)
+        .
+HMACSHA256(header + "." + payload, JWT_SECRET)   ← SIGNATURE</div>
+
+  <table>
+    <tr><th>Claim</th><th>Meaning</th><th>Example Value</th></tr>
+    <tr><td><code>sub</code></td><td>Subject — User ID</td><td>"101"</td></tr>
+    <tr><td><code>email</code></td><td>User's email</td><td>"user@skillsync.com"</td></tr>
+    <tr><td><code>role</code></td><td>User's role</td><td>"ROLE_MENTOR"</td></tr>
+    <tr><td><code>iat</code></td><td>Issued At (timestamp)</td><td>1700000000</td></tr>
+    <tr><td><code>exp</code></td><td>Expiry (timestamp)</td><td>1700086400 (24h later)</td></tr>
+  </table>
+
+  <h3>JWT Validation in JwtAuthenticationFilter</h3>
+  <ul class="steps">
+    <li>
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>Extract token</strong>
+        <p>Read <code>Authorization</code> header. Strip "Bearer " prefix: <code>bearerToken.substring(7)</code>. Also checks the <code>accessToken</code> cookie as a fallback.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>Validate signature</strong>
+        <p>The <code>jjwt</code> library re-computes the HMAC-SHA256 signature using the stored <code>JWT_SECRET</code> and compares it to the token's signature. If they match, the token is genuine and unmodified.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>Check expiry</strong>
+        <p>The <code>exp</code> claim is compared to the current time. If expired, an <code>ExpiredJwtException</code> is thrown → 401 response.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <strong>Load user details & populate SecurityContext</strong>
+        <p>If valid, it extracts the email from claims, calls <code>UserDetailsServiceImpl.loadUserByUsername(email)</code>, creates a <code>UsernamePasswordAuthenticationToken</code>, and sets it in <code>SecurityContextHolder</code>. The request is now "authenticated."</p>
+      </div>
+    </li>
+  </ul>
+
+  <h3>HS256 vs RS256 — Why Symmetric?</h3>
+  <div class="card card-orange">
+    <p class="card-title orange">Design Decision: HS256</p>
+    <p>SkillSync uses <strong>HS256 (Symmetric)</strong> — both the Auth Service and the API Gateway share the <em>same</em> secret key. This works because both services are inside our private infrastructure (same trust boundary). It's faster and simpler.</p>
+    <p style="margin-top:8px"><strong>RS256 (Asymmetric)</strong> would be needed if external third-party services needed to verify our tokens — they could use the public key without ever knowing the private key. For SkillSync's internal cluster, this is unnecessary overhead.</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  SECTION 9 – THREADLOCAL                              -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="threadlocal">9. ThreadLocal & SecurityContext — The Invisible Backpack</h2>
+
+  <div class="analogy">
+    <div class="icon">🎒</div>
+    <div class="content">
+      <strong>ThreadLocal = An Invisible Backpack</strong>
+      <p>Imagine each worker (thread) at the office has an invisible backpack. When they pick up a task (request), the security guard puts the user's identity card in their backpack. As the worker walks through different rooms (Controller, Service, Repository), they always have the identity card on them. When they're done and return to the waiting area (thread pool), the guard empties the backpack — so the next task doesn't accidentally find someone else's identity card in there.</p>
+    </div>
+  </div>
+
+  <h3>Technical Detail</h3>
+  <div class="card card-teal">
+    <p class="card-title teal">SecurityContextHolder Internals</p>
+    <p><code>SecurityContextHolder</code> is a static utility class. Internally, it uses a <code>ThreadLocal&lt;SecurityContext&gt;</code>. <code>ThreadLocal</code> is a Java feature that creates a separate "slot" for each thread — Thread 101 and Thread 102 both have a <code>ThreadLocal</code> variable, but they each see <em>different values</em>. It's like each thread has its own private copy of a variable.</p>
+  </div>
+
+  <h3>Lifecycle</h3>
+  <div class="flow-box">Request arrives → Thread 101 picked from pool
+       ↓
+JwtAuthenticationFilter validates JWT
+       ↓
+SecurityContextHolder.getContext().setAuthentication(user)
+[Thread 101's ThreadLocal now holds User A's identity]
+       ↓
+Controller reads: SecurityContextHolder.getContext().getAuthentication()
+Service reads: SecurityContextHolder.getContext().getAuthentication()
+[All code in Thread 101 can access User A's identity — no need to pass it as parameters]
+       ↓
+Response sent
+       ↓
+SecurityContextPersistenceFilter CLEARS the ThreadLocal
+[Thread 101 is now clean — no identity left in backpack]
+       ↓
+Thread 101 returns to pool — ready for the next user</div>
+
+  <div class="callout callout-danger">
+    <div class="callout-icon">🚨</div>
+    <div class="callout-body">
+      <strong>Thread Poisoning — Critical Bug If Cleanup Fails</strong>
+      If the ThreadLocal is NOT cleared and Tomcat reuses Thread 101 for a different user's request, the new user would be authenticated as the OLD user. This is a catastrophic security bug. Spring prevents it automatically via <code>SecurityContextPersistenceFilter</code>.
+    </div>
+  </div>
+
+  <div class="callout callout-warn">
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-body">
+      <strong>Manual Threads Don't Inherit SecurityContext</strong>
+      If you create a <code>new Thread()</code> inside a service, that new thread does NOT have the SecurityContext. Calling <code>SecurityContextHolder.getContext().getAuthentication()</code> there returns null → NullPointerException. Solution: Use <code>SecurityContextHolder.MODE_INHERITABLETHREADLOCAL</code> or pass the Authentication explicitly.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  SECTION 10 – GATEWAY FLOW                            -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="gateway">10. API Gateway — The Security Checkpoint</h2>
+
+  <div class="card card-blue">
+    <p class="card-title blue">Gateway vs. Service — Double Gating</p>
+    <p>SkillSync uses a "Double Gate" pattern. The Gateway validates JWT signature (cryptographic check — fast, no DB). The Auth Service does the full credential check (DB query — only on login). This means for every API call after login, the DB is NOT queried for authentication — only the gateway's signature check runs. This is what makes microservices scalable.</p>
+  </div>
+
+  <ul class="steps">
+    <li>
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>Netty picks up the TCP packet</strong>
+        <p>The Gateway uses Netty's event loop — a single-threaded, non-blocking model that handles thousands of connections efficiently. Much lighter than Tomcat's thread-per-request model.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>JwtAuthenticationFilter (Reactive) validates token</strong>
+        <p>Extracts JWT, validates HMAC-SHA256 signature using the shared secret. Extracts <code>sub</code> (userId), <code>email</code>, and <code>role</code> claims.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>Request Mutation (Critical Security Step)</strong>
+        <p>The Gateway does TWO things: (1) STRIPS any incoming <code>X-User-Id</code> header — preventing a malicious client from forging their identity. (2) INJECTS the verified <code>X-User-Id</code> header from the JWT claims. Downstream services can trust this header completely.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <strong>Route to downstream service via Eureka</strong>
+        <p>The Gateway uses <code>LoadBalancerClient</code> to look up the target service in Eureka. It forwards the mutated request with the injected headers.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <strong>Internal path blocking</strong>
+        <p>The Gateway explicitly blocks any request to <code>/api/auth/internal/**</code> from external users. These paths are only for service-to-service internal calls.</p>
+      </div>
+    </li>
+  </ul>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  SECTION 11 – KEYS & ENCRYPTION                       -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="keys">11. Keys & Encryption — The Full Picture</h2>
+
+  <h3>Three Layers of Security in One Request</h3>
+
+  <table>
+    <tr><th>Layer</th><th>Type</th><th>Algorithm</th><th>Purpose</th><th>Who Manages It</th></tr>
+    <tr>
+      <td>HTTPS/TLS</td>
+      <td>Hybrid (Asymmetric → Symmetric)</td>
+      <td>RSA handshake → AES session</td>
+      <td>Encrypts all traffic between browser and server</td>
+      <td>Nginx / Let's Encrypt (CA)</td>
+    </tr>
+    <tr>
+      <td>JWT Signing</td>
+      <td>Symmetric</td>
+      <td>HMAC-SHA256 (HS256)</td>
+      <td>Proves the JWT was issued by SkillSync and not tampered with</td>
+      <td>Auth Service (env var: JWT_SECRET)</td>
+    </tr>
+    <tr>
+      <td>Password Hashing</td>
+      <td>One-way hash (not reversible)</td>
+      <td>BCrypt (12 rounds + salt)</td>
+      <td>Stores passwords safely so even a DB leak doesn't expose them</td>
+      <td>Application logic (BCryptPasswordEncoder)</td>
+    </tr>
+  </table>
+
+  <h3>The TLS Handshake — How HTTPS Works</h3>
+  <div class="flow-box">Browser → Server: "Hello! Which encryption do you support?"
+Server → Browser: "Here's my SSL Certificate (contains my Public Key)"
+Browser → CA: "Is this certificate legitimate?" CA confirms ✅
+Browser: Generates a random Symmetric Session Key
+Browser → Server: Symmetric Key encrypted with Server's Public Key
+Server: Decrypts with Private Key → now both have the same Symmetric Key
+Both: Switch to AES encryption for all further communication (fast!)</div>
+
+  <div class="callout callout-danger">
+    <div class="callout-icon">🚨</div>
+    <div class="callout-body">
+      <strong>If JWT_SECRET is leaked</strong>
+      An attacker can forge ANY user token, including Admin tokens. They can bypass all security without knowing any password. Immediate action: rotate the secret in environment variables across ALL services and force all users to log in again.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  SECTION 12 – FRONTEND                                -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="frontend">12. Frontend — The Self-Healing UI</h2>
+
+  <h3>Axios Interceptors</h3>
+
+  <div class="card card-green">
+    <p class="card-title green">Request Interceptor — Auto-Attach JWT</p>
+    <p>Before <em>every</em> API call, the Axios request interceptor reads the <code>accessToken</code> from Redux state and attaches it as <code>Authorization: Bearer &lt;token&gt;</code>. The developer never manually adds this header — it happens automatically for every request.</p>
+  </div>
+
+  <div class="card card-teal">
+    <p class="card-title teal">Response Interceptor — Silent Token Refresh (Self-Healing)</p>
+    <p>If any API call returns <strong>401 Unauthorized</strong> (token expired), the response interceptor automatically:</p>
+    <ol style="margin-left:20px;margin-top:8px;font-size:13.5px;color:var(--text2)">
+      <li>Calls <code>/api/auth/refresh</code> using the HttpOnly cookie (refresh token)</li>
+      <li>Gets a new access token</li>
+      <li>Updates <code>localStorage</code> and Redux state</li>
+      <li>Retries the original failed request with the new token</li>
+    </ol>
+    <p style="margin-top:8px;font-size:13.5px;color:var(--text2)">The user never sees a flicker or a logout. This is the "Self-Healing" behavior.</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  SECTION 13 – TOKEN STORAGE                           -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="storage">13. Token Storage Strategy</h2>
+
+  <table>
+    <tr><th>Token</th><th>Stored In</th><th>Why</th><th>Security Risk</th></tr>
+    <tr>
+      <td><strong>Access Token</strong></td>
+      <td>Redux state + <code>localStorage</code></td>
+      <td>Fast access for API calls. Persists across page refresh.</td>
+      <td>Vulnerable to XSS (JavaScript can read localStorage). Mitigated by short expiry (24h) and React's XSS protections.</td>
+    </tr>
+    <tr>
+      <td><strong>Refresh Token</strong></td>
+      <td>HttpOnly Cookie</td>
+      <td>JavaScript CANNOT read HttpOnly cookies. Only the browser sends them automatically.</td>
+      <td>Protected from XSS. Vulnerable to CSRF — but CSRF is mitigated by <code>SameSite=None</code> + our custom JWT-based auth.</td>
+    </tr>
+  </table>
+
+  <div class="callout callout-info">
+    <div class="callout-icon">💡</div>
+    <div class="callout-body">
+      <strong>The Stateless Paradox</strong>
+      SkillSync uses <em>stateless</em> JWT access tokens (no server storage needed) but <em>stateful</em> refresh tokens (stored in PostgreSQL). This combination gives the best of both worlds: access tokens are fast (no DB hit), and refresh tokens can be revoked (delete from DB to force logout).
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  SECTION 14 – REDUX                                   -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="redux">14. Redux Toolkit — State Management</h2>
+
+  <table>
+    <tr><th>Slice</th><th>What It Manages</th><th>Key Actions</th></tr>
+    <tr>
+      <td><strong>authSlice</strong></td>
+      <td>User identity: isAuthenticated, accessToken, user object</td>
+      <td>loginUser (async thunk), logout, setToken</td>
+    </tr>
+    <tr>
+      <td><strong>themeSlice</strong></td>
+      <td>Premium Theme Studio — real-time UI styling</td>
+      <td>setTheme, toggleDarkMode</td>
+    </tr>
+  </table>
+
+  <p><code>extraReducers</code> is used for async thunks — when <code>loginUser</code> succeeds, Redux automatically updates state. When it fails (wrong password), Redux updates the error state. The UI reacts to these state changes automatically via React's rendering.</p>
+
+  <h3>ProtectedRoute — Route Guard</h3>
+  <p><code>ProtectedRoute.tsx</code> checks <code>state.auth.isAuthenticated</code> before rendering any protected page. If the user is not authenticated, they are redirected to the login page. This is the frontend equivalent of the backend's <code>FilterSecurityInterceptor</code>.</p>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  SECTION 15 – FILTERS TABLE                           -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="filters-table">15. Complete Filter Status — Quick Reference</h2>
+  <table>
+    <tr><th>Component</th><th>Status</th><th>Impact If Removed</th></tr>
+    <tr><td>HeaderWriterFilter</td><td class="status-used">✅ USED</td><td>Browser loses Clickjacking / MIME protection</td></tr>
+    <tr><td>CorsFilter</td><td class="status-used">✅ USED</td><td>React frontend gets CORS error on every API call</td></tr>
+    <tr><td>CsrfFilter</td><td class="status-no">❌ DISABLED</td><td>None — JWT stateless auth makes CSRF irrelevant here</td></tr>
+    <tr><td>LogoutFilter</td><td class="status-used">✅ USED</td><td>Standard logout endpoint breaks</td></tr>
+    <tr><td>JwtAuthenticationFilter</td><td class="status-used">✅ USED (Custom)</td><td>All API calls return 403 — nothing is authenticated</td></tr>
+    <tr><td>UsernamePasswordAuthenticationFilter</td><td class="status-no">❌ NOT USED</td><td>None — replaced by manual JSON login in AuthController</td></tr>
+    <tr><td>AnonymousAuthenticationFilter</td><td class="status-used">✅ USED</td><td>NullPointerException on public pages (no user set)</td></tr>
+    <tr><td>ExceptionTranslationFilter</td><td class="status-used">✅ USED</td><td>Filter errors return 500 instead of proper 401/403</td></tr>
+    <tr><td>FilterSecurityInterceptor</td><td class="status-used">✅ USED</td><td>@PreAuthorize and requestMatchers stop working — everyone gets access to everything</td></tr>
+    <tr><td>BasicAuthFilter</td><td class="status-no">❌ NOT USED</td><td>None</td></tr>
+  </table>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  SECTION 16 – EXCEPTIONS                              -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="exceptions">16. Exception Handling — Two Different Paths</h2>
+
+  <div class="callout callout-warn">
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-body">
+      <strong>Critical: @ControllerAdvice CANNOT catch Filter exceptions</strong>
+      This is a common misconception. The filter chain runs BEFORE Spring MVC. If an exception happens in a filter (like expired JWT), <code>@ControllerAdvice</code> never sees it. It's handled by the filter chain itself.
+    </div>
+  </div>
+
+  <h3>Scenario A — Exception in Filter Layer (e.g., Expired JWT)</h3>
+  <div class="flow-box">JwtAuthenticationFilter throws ExpiredJwtException
+         ↓
+ExceptionTranslationFilter catches it
+         ↓
+AuthenticationEntryPoint sends 401 Unauthorized response
+(JSON or default Spring Security error page)
+         ↓
+Controller is NEVER reached
+@ControllerAdvice CANNOT see this exception</div>
+
+  <h3>Scenario B — Exception in Controller/Service Layer</h3>
+  <div class="flow-box">Controller method throws ResourceNotFoundException or BadCredentialsException
+         ↓
+GlobalExceptionHandler (@RestControllerAdvice) catches it
+         ↓
+Returns standardized JSON: {"message": "User not found", "status": 404}
+         ↓
+Frontend Axios handles the error in a single catch block</div>
+
+  <table>
+    <tr><th>Exception</th><th>HTTP Code</th><th>Where Thrown</th><th>Who Catches</th></tr>
+    <tr><td>ExpiredJwtException</td><td>401</td><td>JwtAuthenticationFilter</td><td>ExceptionTranslationFilter → AuthenticationEntryPoint</td></tr>
+    <tr><td>Invalid/Missing JWT</td><td>401</td><td>JwtAuthenticationFilter</td><td>ExceptionTranslationFilter</td></tr>
+    <tr><td>AccessDeniedException</td><td>403</td><td>FilterSecurityInterceptor</td><td>ExceptionTranslationFilter</td></tr>
+    <tr><td>BadCredentialsException</td><td>401</td><td>DaoAuthenticationProvider</td><td>GlobalExceptionHandler (thrown from service)</td></tr>
+    <tr><td>ResourceNotFoundException</td><td>404</td><td>Service layer</td><td>GlobalExceptionHandler (@RestControllerAdvice)</td></tr>
+    <tr><td>MethodArgumentNotValidException</td><td>400</td><td>Spring MVC validation</td><td>GlobalExceptionHandler</td></tr>
+    <tr><td>PostgreSQL down</td><td>500</td><td>Repository layer</td><td>GlobalExceptionHandler</td></tr>
+  </table>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  SECTION 17 – REDIS                                   -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="redis">17. Redis — Cache, Not Security Blacklist</h2>
+
+  <div class="callout callout-info">
+    <div class="callout-icon">💡</div>
+    <div class="callout-body">
+      <strong>Correction from documents: Redis is used for CACHING, not JWT blacklisting</strong>
+      Some documents mention a Redis-based JWT blacklist. In SkillSync's actual implementation, Redis is used for <strong>user profile caching</strong> — not for blocking tokens. A JWT blacklist with Redis is listed as a future improvement (gap in current architecture).
+    </div>
+  </div>
+
+  <table>
+    <tr><th>Use Case</th><th>Where</th><th>How</th></tr>
+    <tr>
+      <td>User profile caching</td>
+      <td>CacheService</td>
+      <td>When Gateway or Chat-Service requests a user profile, Redis returns it instantly without hitting PostgreSQL</td>
+    </tr>
+    <tr>
+      <td>Cache invalidation on role update</td>
+      <td>AuthService</td>
+      <td>When a user's role changes, <code>cacheService.evict(userId)</code> is called — so the Gateway doesn't serve stale role data</td>
+    </tr>
+    <tr>
+      <td>JWT Blacklist (planned)</td>
+      <td>Not yet implemented</td>
+      <td>On logout, store the access token's JTI (JWT ID) in Redis with a TTL matching the token's remaining life. Any request with that JTI is blocked.</td>
+    </tr>
+  </table>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  SECTION 18 – REFRESH TOKENS                          -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="refresh">18. Refresh Token Rotation</h2>
+
+  <div class="analogy">
+    <div class="icon">🔄</div>
+    <div class="content">
+      <strong>Refresh Token = Library Card</strong>
+      <p>Your access token (concert wristband) expires after 24 hours. Your refresh token is like a library card — you use it to get a new wristband. But here's the trick: every time you use the library card, you get a NEW library card and the old one is destroyed. If someone stole your library card, they can only use it once before it's invalidated.</p>
+    </div>
+  </div>
+
+  <div class="flow-box">Access Token expires (24h)
+         ↓
+Axios Response Interceptor catches 401
+         ↓
+POST /api/auth/refresh (refresh token sent via HttpOnly cookie)
+         ↓
+AuthService.refreshToken():
+  1. Find refresh token in PostgreSQL by token value
+  2. Check: is it expired? (7-day window)
+  3. DELETE old refresh token from DB  ← Rotation step
+  4. Generate new Access Token
+  5. Generate new Refresh Token and save to DB
+  6. Return new Access Token in response + new Refresh Token in cookie
+         ↓
+Axios retries original failed request with new Access Token</div>
+
+  <div class="callout callout-warn">
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-body">
+      <strong>Current Security Gap</strong>
+      SkillSync does NOT implement "sliding window detection." If a refresh token is stolen, the attacker can keep refreshing for up to 7 days. Single-use rotation (deleting on use) limits the window, but does not eliminate it. A future improvement would detect concurrent refresh attempts (detecting that the token was already used once) and force a full logout.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  SECTION 19 – CSRF & CORS                             -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="csrf-cors">19. CSRF & CORS Explained Simply</h2>
+
+  <h3>CSRF — Why It's Disabled in SkillSync</h3>
+  <div class="analogy">
+    <div class="icon">🎭</div>
+    <div class="content">
+      <strong>CSRF = Tricking someone into performing an action</strong>
+      <p>Imagine a malicious website has a hidden button that, when clicked, secretly transfers money from your bank. If your bank uses sessions (stored in cookies), the malicious site can forge requests on your behalf. CSRF protection prevents this.</p>
+      <p style="margin-top:6px"><strong>Why disabled in SkillSync?</strong> JWT is sent in the <code>Authorization</code> header — not in a cookie. Malicious sites cannot access HTTP headers of cross-origin requests (browser blocks this). So CSRF is not a threat when using JWT in headers.</p>
+    </div>
+  </div>
+
+  <h3>CORS — Cross-Origin Resource Sharing</h3>
+  <div class="card card-blue">
+    <p class="card-title blue">CORS Configuration</p>
+    <p>The browser's same-origin policy blocks JavaScript from reading responses from different domains. CORS is how the server tells the browser: "It's okay for <code>skillsync.mraks.dev</code> to read my responses."</p>
+    <p style="margin-top:8px">SkillSync configures CORS at the <strong>Gateway level</strong> — allowing specific origins while blocking others. The <code>CorsFilter</code> handles <em>preflight OPTIONS requests</em> that browsers send before the actual request.</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  SECTION 20 – INTERVIEW Q&A                           -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="interview">20. Interview Q&A — Wh-Questions</h2>
+
+  <h3>Tomcat & Servlet</h3>
+  <div class="qa-block">
+    <details><summary>What is DelegatingFilterProxy and why does it exist?</summary>
+      <div class="qa-answer">It is a standard Servlet Filter that acts as a bridge between Tomcat and Spring Security. Tomcat cannot directly access Spring Beans. DelegatingFilterProxy is a Tomcat-compatible filter that looks up the <code>springSecurityFilterChain</code> bean inside the Spring ApplicationContext and delegates all security work to it. Without it, Spring Security couldn't participate in Tomcat's filter chain.</div>
+    </details>
+    <details><summary>What happens if chain.doFilter() is not called in a filter?</summary>
+      <div class="qa-answer">The request is immediately halted. The response is sent back to the client right there in that filter. The Controller (DispatcherServlet) is never reached. This is how security filters block unauthorized requests — by NOT calling chain.doFilter() when a JWT is invalid or missing.</div>
+    </details>
+    <details><summary>What is the difference between a Filter and an Interceptor?</summary>
+      <div class="qa-answer">Filters are part of the Servlet Container (Tomcat) and run before Spring MVC processes the request. Interceptors are part of Spring MVC and run after the DispatcherServlet routes the request to a controller. Security must use Filters because we want to block access before spending resources on controller logic.</div>
+    </details>
+    <details><summary>Why does Tomcat use a thread pool?</summary>
+      <div class="qa-answer">Creating a new OS thread for every request is expensive (time and memory). A thread pool keeps threads alive and reuses them. When a request arrives, a pre-existing thread is assigned. When done, the thread returns to the pool. This is why ThreadLocal MUST be cleared — otherwise the same thread serving a new user would still carry the previous user's security context.</div>
+    </details>
+  </div>
+
+  <h3>Spring Security</h3>
+  <div class="qa-block">
+    <details><summary>Who clears the SecurityContext after each request?</summary>
+      <div class="qa-answer">The <code>SecurityContextPersistenceFilter</code> (or its modern equivalent) ensures the ThreadLocal is cleared after the response is sent. This prevents thread poisoning — where Thread A's security context bleeds into Thread B's next request.</div>
+    </details>
+    <details><summary>What is the SecurityContextHolder and why use it?</summary>
+      <div class="qa-answer">It is a static utility class that stores the current user's Authentication object in a ThreadLocal variable. Without it, every method in the call stack (Controller → Service → Repository) would need to accept the User object as a parameter — "parameter pumping." SecurityContextHolder makes the current user globally accessible within the current thread without polluting every method signature.</div>
+    </details>
+    <details><summary>What happens when UsernamePasswordAuthenticationFilter is removed?</summary>
+      <div class="qa-answer">Nothing — SkillSync intentionally doesn't use it. This filter handles Spring's default form-based login. SkillSync replaces it with a custom JSON login endpoint in AuthController that gives more control over the login response (returning tokens in both JSON body and HttpOnly cookie).</div>
+    </details>
+    <details><summary>What is DaoAuthenticationProvider and what does it do?</summary>
+      <div class="qa-answer">It is Spring Security's default credential checker. It calls UserDetailsService to load the user from the database, then uses the configured PasswordEncoder (BCrypt) to verify the raw password against the stored hash. On success, it returns a fully populated Authentication object. Spring automatically nulls the password from this object for safety.</div>
+    </details>
+  </div>
+
+  <h3>JWT</h3>
+  <div class="qa-block">
+    <details><summary>What if the JWT secret is leaked?</summary>
+      <div class="qa-answer">Critical impact. Anyone with the JWT secret can forge tokens for any user, including Admin. An attacker could create a token with role=ROLE_ADMIN and bypass all security. Action: immediately rotate the JWT_SECRET environment variable across all services (Gateway, Auth-Service). All existing tokens become invalid because they were signed with the old secret. Users are forced to log in again.</div>
+    </details>
+    <details><summary>Why use stateless JWT but stateful refresh tokens?</summary>
+      <div class="qa-answer">This is the "Stateless Paradox." Access tokens are stateless (fast — no DB check) but cannot be revoked before expiry. Refresh tokens are stateful (stored in DB) so they CAN be revoked (delete the row). This gives us speed for normal operations and revocability for security events like logout or account suspension.</div>
+    </details>
+    <details><summary>Why is HS256 used instead of RS256?</summary>
+      <div class="qa-answer">Because the Auth Service and API Gateway are in the same private infrastructure (same trust boundary). HS256 is symmetric — one shared secret — which is faster and simpler. RS256 (asymmetric) would be needed if external partners needed to verify tokens without knowing our private key. For an internal microservice cluster, HS256 is the correct and more efficient choice.</div>
+    </details>
+    <details><summary>Can a JWT be revoked before it expires?</summary>
+      <div class="qa-answer">Not in the current SkillSync implementation. Once an access token is issued, it is valid until it expires (24 hours) — this is the fundamental weakness of stateless JWT. The planned solution is a Redis blacklist: on logout, store the token's JTI (unique ID) in Redis with a TTL matching the remaining token lifetime. The JwtAuthenticationFilter checks if the JTI is blacklisted on every request.</div>
+    </details>
+  </div>
+
+  <h3>Architecture</h3>
+  <div class="qa-block">
+    <details><summary>Why does the User-Service trust the X-User-Id header?</summary>
+      <div class="qa-answer">Because only the API Gateway can inject that header. The Gateway first strips any X-User-Id the client sends (preventing forgery), then injects the verified X-User-Id extracted from the JWT. Since the User-Service is not directly accessible from the internet (only via Gateway), it can safely trust that any X-User-Id header it receives was verified by the Gateway. This makes User-Service "security-agnostic" — it focuses purely on business logic.</div>
+    </details>
+    <details><summary>What happens if auth-service goes down?</summary>
+      <div class="qa-answer">Eureka detects the missing heartbeat within seconds and marks auth-service as unavailable. The Gateway stops routing traffic to it. New logins would fail. However, existing sessions (valid JWTs) would continue to work for protected routes, since the Gateway validates JWT without contacting auth-service. The system degrades gracefully — only login/refresh would fail.</div>
+    </details>
+    <details><summary>What is Eureka and why is it used?</summary>
+      <div class="qa-answer">Eureka is a Service Discovery registry. Instead of hardcoding IP addresses for each microservice, services register themselves with Eureka on startup with a heartbeat. The Gateway uses Eureka to find the current healthy instances of any service by name. This enables load balancing and automatic failover — if one instance of user-service goes down, the Gateway routes to another healthy instance automatically.</div>
+    </details>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  SECTION 21 – MEMORY TRICKS                           -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="memory">21. Memory Tricks & Quick Analogies</h2>
+
+  <div class="trick-grid">
+    <div class="trick">
+      <span class="emoji">🔐</span>
+      <strong>JWT = Concert Wristband</strong>
+      <span>Show ID once (login), get wristband (JWT). Guards check wristband, not ID, for the rest of the night.</span>
+    </div>
+    <div class="trick">
+      <span class="emoji">✈️</span>
+      <strong>Architecture = Airport</strong>
+      <span>Auth Service = Passport office. API Gateway = Security checkpoint. Microservices = Lounges.</span>
+    </div>
+    <div class="trick">
+      <span class="emoji">🎒</span>
+      <strong>ThreadLocal = Backpack</strong>
+      <span>Each worker thread has an invisible backpack with the user's identity. Must empty it when done.</span>
+    </div>
+    <div class="trick">
+      <span class="emoji">🌉</span>
+      <strong>DelegatingFilterProxy = Bridge</strong>
+      <span>Bridge between Tomcat's world and Spring's world. Tomcat can't talk to Spring Beans — the proxy does it.</span>
+    </div>
+    <div class="trick">
+      <span class="emoji">🔄</span>
+      <strong>Refresh Token = Library Card</strong>
+      <span>Use library card → get new wristband + new library card. Old card destroyed. Stolen card can only be used once.</span>
+    </div>
+    <div class="trick">
+      <span class="emoji">📮</span>
+      <strong>Asymmetric Encryption = Mailbox</strong>
+      <span>Anyone drops letters in (Public Key = slot). Only owner opens the box (Private Key = key).</span>
+    </div>
+    <div class="trick">
+      <span class="emoji">👮</span>
+      <strong>Filters = Guards at gate. Interceptors = Receptionist inside.</strong>
+      <span>Guards block entry (Filters stop at Servlet layer). Receptionist checks once you're inside (Interceptors in Spring MVC).</span>
+    </div>
+    <div class="trick">
+      <span class="emoji">🏥</span>
+      <strong>ETF (ExceptionTranslationFilter) = ER Doctor</strong>
+      <span>Catches all security emergencies (401/403 exceptions) and sends the proper error response. Without it, errors return as 500.</span>
+    </div>
+  </div>
+
+  <h3>The Filter Chain in One Sentence</h3>
+  <div class="card card-blue">
+    <p style="font-size:16px; color:var(--text); line-height:1.6">
+      <strong>CORS → Logout → JWT Validate → Anonymous → Try-Catch → Final Gate</strong><br>
+      <span style="font-size:13px;color:var(--text2)">CorsFilter → LogoutFilter → JwtAuthenticationFilter → AnonymousAuthenticationFilter → ExceptionTranslationFilter → FilterSecurityInterceptor</span>
+    </p>
+  </div>
+
+  <h3>Master Summary — One Paragraph</h3>
+  <div class="card card-purple">
+    <p style="line-height:1.8; font-size:14.5px; color:var(--text)">
+      "SkillSync is a full-stack distributed microservices platform. It uses <strong>stateless JWT-based authentication (HS256)</strong> enforced at the <strong>API Gateway</strong> (Netty), with a centralized <strong>Auth-Service (Tomcat/Spring Security)</strong> managing JWT lifecycle and <strong>Refresh Token Rotation</strong> (database-backed). The <strong>React frontend</strong> is a 'Self-Healing UI' using <strong>Axios interceptors</strong> for silent token refresh and <strong>Redux Toolkit</strong> for real-time state management. Tomcat manages threads via a <strong>thread pool + ThreadLocal (SecurityContext)</strong> pattern — each request carries the authenticated user's identity in an invisible backpack that is cleared after the response. The system is <strong>horizontally scalable</strong> because downstream services (User-Service, Skill-Service) never touch the database for authentication — they simply trust the <code>X-User-Id</code> header injected by the Gateway."
+    </p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  SECTION 22 – GAPS & CORRECTIONS                      -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="gaps">22. Corrections & Gaps Found in Documents</h2>
+
+  <table>
+    <tr><th>Issue</th><th>What Documents Said</th><th>Correction</th></tr>
+    <tr>
+      <td>Redis JWT Blacklist</td>
+      <td>Some documents implied Redis is used for JWT blacklisting (blocking logged-out tokens)</td>
+      <td>Redis is actually used for <em>user profile caching</em> only. JWT blacklisting with Redis is a <strong>planned gap</strong>, not currently implemented. Confirmed in the audit document.</td>
+    </tr>
+    <tr>
+      <td>Access Token validity</td>
+      <td>One document says "best practice is 15-30 min" but SkillSync uses 24h</td>
+      <td>True — 24h is a real weakness. Since there's no blacklist, a stolen access token is valid for 24h. Acknowledged gap.</td>
+    </tr>
+    <tr>
+      <td>Stolen Refresh Token window</td>
+      <td>Documents say refresh tokens are fully secure due to rotation</td>
+      <td>Partial truth. Single-use rotation limits the window but doesn't eliminate the threat. A stolen refresh token can still be used for up to 7 days if the attacker reaches it first. No concurrent-use detection is implemented.</td>
+    </tr>
+    <tr>
+      <td>@ControllerAdvice catching filter errors</td>
+      <td>Not explicitly addressed in some documents</td>
+      <td>@ControllerAdvice / @RestControllerAdvice CANNOT catch exceptions thrown in filters. Filters run before Spring MVC. Filter exceptions go to ExceptionTranslationFilter → AuthenticationEntryPoint.</td>
+    </tr>
+    <tr>
+      <td>Rate Limiting</td>
+      <td>Mentioned as handled at Gateway</td>
+      <td>Documented as a gap — rate limiting should be moved to Nginx/CloudFront in production for better performance and DDoS protection.</td>
+    </tr>
+    <tr>
+      <td>Circuit Breakers</td>
+      <td>Not implemented</td>
+      <td>Resilience4j circuit breakers are recommended to handle cases where auth-service is slow or temporarily unavailable, preventing cascading failures.</td>
+    </tr>
+  </table>
+
+  <div class="callout callout-success">
+    <div class="callout-icon">✅</div>
+    <div class="callout-body">
+      <strong>What SkillSync Does Very Well</strong>
+      Microservice separation with a centralized identity service; Refresh Token Rotation (deletes old token on use); HttpOnly cookies for refresh tokens (XSS-safe); Request Mutation at the Gateway (prevents header spoofing); Standardized error responses from GlobalExceptionHandler; BCrypt with salts for password hashing; Centralized config via Spring Cloud Config.
+    </div>
+  </div>
+
+</main>
+
+</body>
+</html>

@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkillSync — Visual Flow Diagrams Part 3</title>
+<style>
+:root{
+  --bg:#080c10;--bg2:#0e141c;--bg3:#141d28;--bg4:#1a2535;
+  --border:rgba(99,179,237,.1);--text:#e2eaf4;--text2:#8fa3bc;--text3:#5a7494;
+  --acc:#63b3ed;--acc2:#48bb78;--acc3:#f6ad55;--acc4:#fc8181;--acc5:#b794f4;--acc6:#76e4f7;
+  --teal:#4fd1c5;--mono:'Cascadia Code','Fira Code','Consolas',monospace;
+  --font:'Segoe UI',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.7}
+#nav{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;padding:14px 0 40px;z-index:50}
+#nav .logo{padding:0 14px 12px;border-bottom:1px solid var(--border);margin-bottom:8px}
+#nav .logo strong{font-size:11.5px;color:var(--acc);letter-spacing:.06em;text-transform:uppercase;display:block}
+#nav .logo span{font-size:10px;color:var(--text3)}
+#nav .sec{padding:11px 14px 3px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)}
+#nav a{display:block;padding:5px 14px;font-size:11px;color:var(--text2);text-decoration:none;border-left:2px solid transparent;transition:all .15s;line-height:1.4}
+#nav a:hover{color:var(--text);border-left-color:var(--acc);background:rgba(99,179,237,.06)}
+#main{margin-left:220px;padding:32px 46px 80px;max-width:1100px}
+.hero{background:linear-gradient(135deg,rgba(99,179,237,.07),rgba(183,148,244,.05),rgba(79,209,197,.05));border:1px solid rgba(99,179,237,.18);border-radius:12px;padding:26px 30px;margin-bottom:32px}
+.hero h1{font-size:22px;font-weight:700;line-height:1.2;margin-bottom:5px}
+.hero p{color:var(--text2);font-size:13px;margin-bottom:14px}
+.badges{display:flex;flex-wrap:wrap;gap:6px}
+.badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.05em;text-transform:uppercase}
+.bb{background:rgba(99,179,237,.12);color:#90cdf4;border:1px solid rgba(99,179,237,.3)}
+.bg{background:rgba(72,187,120,.1);color:#9ae6b4;border:1px solid rgba(72,187,120,.3)}
+.bp{background:rgba(183,148,244,.1);color:#d6bcfa;border:1px solid rgba(183,148,244,.3)}
+.bo{background:rgba(246,173,85,.1);color:#fbd38d;border:1px solid rgba(246,173,85,.3)}
+.bt{background:rgba(79,209,197,.1);color:#81e6d9;border:1px solid rgba(79,209,197,.3)}
+.br{background:rgba(252,129,129,.1);color:#feb2b2;border:1px solid rgba(252,129,129,.3)}
+h2{font-size:17px;font-weight:600;margin:38px 0 12px;padding-top:38px;border-top:1px solid var(--border);color:var(--text)}
+h2:first-of-type{border-top:none;margin-top:16px;padding-top:0}
+h3{font-size:13.5px;font-weight:600;color:var(--acc6);margin:18px 0 7px}
+h4{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--acc5);margin:14px 0 5px}
+p{color:var(--text);font-size:13px;margin-bottom:9px;line-height:1.75}
+.flow{background:var(--bg3);border:1px solid var(--border);border-radius:10px;margin:12px 0;overflow:hidden}
+.ft{background:var(--bg4);padding:9px 15px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border);color:var(--acc)}
+.fb{padding:14px 18px;font-family:var(--mono);font-size:11.5px;line-height:1.8;color:var(--text2);overflow-x:auto;white-space:pre}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:14px 18px;margin:10px 0}
+.cb{border-left:3px solid var(--acc)}
+.cg{border-left:3px solid var(--acc2)}
+.co{border-left:3px solid var(--acc3)}
+.cr{border-left:3px solid var(--acc4)}
+.cp{border-left:3px solid var(--acc5)}
+.ct{border-left:3px solid var(--teal)}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12px}
+th{text-align:left;padding:7px 11px;background:var(--bg3);color:var(--text2);font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border)}
+td{padding:7px 11px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:top;font-size:12px}
+tr:hover td{background:rgba(99,179,237,.02)}
+code{font-family:var(--mono);font-size:11px;background:rgba(99,179,237,.08);padding:1px 5px;border-radius:4px;color:var(--acc3)}
+.g{color:var(--acc2);font-weight:600}
+.r{color:var(--acc4);font-weight:600}
+.o{color:var(--acc3);font-weight:600}
+.callout{padding:11px 15px;border-radius:8px;margin:10px 0;font-size:12.5px;display:flex;gap:9px;align-items:flex-start}
+.ci{font-size:15px;flex-shrink:0;margin-top:1px}
+.cb2{flex:1;color:var(--text2)}
+.cb2 strong{color:var(--text);display:block;margin-bottom:2px;font-size:12.5px}
+.cw{background:rgba(246,173,85,.07);border:1px solid rgba(246,173,85,.22)}
+.ci2{background:rgba(99,179,237,.06);border:1px solid rgba(99,179,237,.22)}
+.cd{background:rgba(252,129,129,.06);border:1px solid rgba(252,129,129,.22)}
+.cs{background:rgba(72,187,120,.06);border:1px solid rgba(72,187,120,.22)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin:10px 0}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:3px}
+@media(max-width:900px){#nav{display:none}#main{margin-left:0;padding:18px 14px 60px}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<aside id="nav">
+  <div class="logo"><strong>SkillSync — Part 3</strong><span>Final continuation</span></div>
+  <div class="sec">Frontend Architecture</div>
+  <a href="#router">App Router & Route Guards</a>
+  <a href="#tanstack">TanStack Query + Axios</a>
+  <a href="#redux-flow">Redux State Machine</a>
+  <div class="sec">Admin System</div>
+  <a href="#admin-stats">Admin Stats Flow</a>
+  <a href="#admin-delete">Delete User (Cross-Service)</a>
+  <a href="#admin-role">Role Change Flow</a>
+  <div class="sec">Skill Service</div>
+  <a href="#skill-flow">Skill CRUD Flow</a>
+  <a href="#skill-batch">Batch Fetch Pattern</a>
+  <div class="sec">Group System</div>
+  <a href="#group-flow">Group Create/Join Flow</a>
+  <a href="#group-discuss">Discussion Thread Flow</a>
+  <div class="sec">Payment Deep-Dive</div>
+  <a href="#saga-states">Saga State Machine</a>
+  <a href="#saga-recovery">SagaRecoveryScheduler</a>
+  <a href="#idempotency">Idempotency Pattern</a>
+  <div class="sec">Redis Internals</div>
+  <a href="#redis-config">RedisConfig Deep-Dive</a>
+  <a href="#redis-patterns">Cache Key Patterns</a>
+  <a href="#redis-stampede">Stampede Protection</a>
+  <div class="sec">Database Schema</div>
+  <a href="#db-schema">All Tables & Relations</a>
+  <a href="#jpa-auditing">JPA Auditing</a>
+  <div class="sec">Production Features</div>
+  <a href="#observability">Observability & Metrics</a>
+  <a href="#docker">Docker & Deployment</a>
+  <a href="#hidden">Hidden Behaviors</a>
+  <div class="sec">Interview</div>
+  <a href="#interview3">Advanced Q&A Part 3</a>
+  <a href="#final">Complete System Summary</a>
+</aside>
+
+<main id="main">
+
+<div class="hero">
+  <h1>SkillSync Visual Flow Diagrams — Part 3 (Final)</h1>
+  <p>Admin system · Skill service · Group/Discussion system · Saga recovery · Redis internals · Database schema · JPA Auditing · Observability · Docker deployment · All hidden behaviors.</p>
+  <div class="badges">
+    <span class="badge bb">Admin Cross-Service Calls</span>
+    <span class="badge bg">Skill Batch Fetch</span>
+    <span class="badge bp">Group Discussion RBAC</span>
+    <span class="badge bo">Saga Recovery Scheduler</span>
+    <span class="badge bt">Redis Config Internals</span>
+    <span class="badge br">Idempotency Patterns</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- FRONTEND ARCHITECTURE                       -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="router">🧭 App Router Architecture — Complete Route Tree</h2>
+
+<div class="flow">
+<div class="ft">AppRoutes.tsx — Full Route Hierarchy with Guards</div>
+<div class="fb">
+App.tsx
+└── BrowserRouter
+    └── ToastProvider + ActionConfirmProvider
+        └── AuthLoader (restores session on refresh via /api/auth/me)
+            └── AppRoutes
+                │
+                ├── "/"          → LandingPage         (PUBLIC)
+                ├── "/ppt"       → PptLandingPage       (PUBLIC)
+                ├── "/unauthorized" → UnauthorizedPage  (PUBLIC)
+                ├── "/500"       → ServerErrorPage      (PUBLIC)
+                │
+                ├── AuthLayout (shared wrapper for auth pages)
+                │   ├── "/login"           → LoginPage
+                │   ├── "/register"        → RegisterPage
+                │   ├── "/verify-otp"      → VerifyOtpPage
+                │   ├── "/forgot-password" → ForgotPasswordPage
+                │   ├── "/reset-password"  → ResetPasswordPage
+                │   └── "/setup-password"  → SetupPasswordPage (OAuth new users)
+                │
+                └── ProtectedRoute  ← checks isAuthenticated in Redux
+                    │  if false → <Navigate to="/login" replace />
+                    │
+                    ├── "/dashboard"  → DashboardRedirect
+                    │   → reads role from Redux:
+                    │     ROLE_ADMIN  → /admin
+                    │     ROLE_MENTOR → /mentor
+                    │     *           → /learner
+                    │
+                    ├── "/learner"    → LearnerDashboardPage
+                    ├── "/mentor"     → MentorDashboardPage
+                    ├── "/mentor/availability" → MentorAvailabilityPage
+                    ├── "/mentor/earnings"     → EarningsPage
+                    ├── "/mentor/sessions"     → MySessionsPage
+                    │
+                    ├── RoleGuard allowedRoles={['ROLE_ADMIN']}
+                    │   ← checks role from Redux
+                    │   ← if not in allowedRoles → /unauthorized
+                    │   ├── "/admin"                  → AdminDashboardPage
+                    │   ├── "/admin/users"            → UsersCenterPage
+                    │   ├── "/admin/mentor-approvals" → MentorApprovalsPage
+                    │   ├── "/admin/skills"           → AdminSkillsPage
+                    │   └── "/admin/groups"           → AdminGroupsPage
+                    │
+                    ├── "/mentors"     → DiscoverMentorsPage
+                    ├── "/mentors/:id" → MentorDetailPage
+                    ├── "/sessions"    → MySessionsPage
+                    ├── "/groups"      → GroupsPage
+                    ├── "/groups/:id"  → GroupDetailPage
+                    ├── "/notifications" → NotificationsPage
+                    ├── "/profile"     → UserProfilePage
+                    ├── "/settings"    → SettingsPage
+                    ├── "/help"        → HelpCenterPage
+                    └── "/checkout"    → CheckoutPage
+
+TWO GUARD LAYERS:
+  ProtectedRoute  → "Are you logged in?" → checks isAuthenticated
+  RoleGuard       → "Do you have the right role?" → checks role
+  Both read from Redux state (not API) — synchronous, instant check.
+  AuthLoader ensures Redux is populated from cookies before guards run.
+</div></div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- TANSTACK QUERY                              -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="tanstack">⚡ TanStack Query + Axios — Data Fetching Strategy</h2>
+
+<div class="flow">
+<div class="ft">apiHooks.ts — useQuery + useMutation patterns</div>
+<div class="fb">
+PATTERN: useQuery wraps Axios calls and provides:
+  → Automatic caching (client-side, in memory)
+  → Background refetching (stale-while-revalidate)
+  → Loading/error states
+  → Deduplication (same queryKey = one request even if multiple components mount)
+
+EXAMPLE — Admin stats:
+  const { data, isLoading, error } = useAdminStats();
+  → useQuery({ queryKey: ['admin', 'stats'], queryFn: () => api.get('/api/admin/stats') })
+
+  First render: isLoading=true → spinner shown
+  Data arrives: data=AdminStatsResponse → dashboard renders
+  Next mount of same component: cache hit → instant render, background refetch
+
+EXAMPLE — Mutations (write operations):
+  const loginMutation = useMutation({
+    mutationFn: async (data) => api.post('/api/auth/login', data),
+    onSuccess: (data) => {
+      dispatch(setCredentials(...));
+      navigate(roleBasedPath);
+    },
+    onError: (error) => {
+      showToast({ message: error.response?.data?.message, type: 'error' });
+    }
+  });
+  onSubmit = (data) => loginMutation.mutate(data);
+
+CACHE INVALIDATION:
+  After a mutation (e.g., approving a mentor), TanStack Query cache must be invalidated:
+  queryClient.invalidateQueries({ queryKey: ['admin', 'mentors', 'pending'] });
+  → Forces background refetch on next access
+  → No stale data shown to admin
+
+HOW IT LAYERS WITH AXIOS:
+  TanStack Query → manages when to call
+  Axios          → manages how to call (interceptors, auth headers, error handling)
+  Redux          → manages persistent state (auth, role) across component unmounts
+</div></div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- REDUX STATE MACHINE                         -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="redux-flow">🔄 Redux State Machine — Auth Lifecycle</h2>
+
+<div class="flow">
+<div class="ft">authSlice.ts — Complete State Transitions</div>
+<div class="fb">
+INITIAL STATE (on page load):
+  getStoredAuth() called:
+  → localStorage.getItem('ss_user') → parse JSON
+  → localStorage.getItem('ss_access_token')
+  → localStorage.getItem('ss_refresh_token')
+  → if both present: initialState = { user, accessToken, refreshToken,
+                                       isAuthenticated: true, role: user.role }
+  → else:            initialState = { user:null, accessToken:null,
+                                       refreshToken:null, isAuthenticated:false, role:null }
+
+STATE ACTIONS:
+  setCredentials({ user, accessToken, refreshToken }):
+  → state.user = user
+  → state.role = user.role  (e.g., "ROLE_MENTOR")
+  → state.isAuthenticated = true
+  → localStorage.setItem('ss_user', JSON.stringify(user))
+  → localStorage.setItem('ss_access_token', accessToken)
+  → localStorage.setItem('ss_refresh_token', refreshToken)
+  USED BY: Login, OAuth login, Token refresh, AuthLoader restore
+
+  logout():
+  → state.user = null
+  → state.accessToken = null
+  → state.refreshToken = null
+  → state.isAuthenticated = false
+  → state.role = null
+  → localStorage.removeItem × 3
+  USED BY: Logout button, Axios interceptor on refresh failure, 401 on /refresh
+
+  updateUserName({ firstName, lastName }):
+  → state.user = { ...state.user, firstName, lastName }
+  → Note: does NOT update localStorage (in-memory only, lost on refresh)
+  USED BY: Profile update confirmation
+
+STATE FLOW DIAGRAM:
+  App loads
+      ↓
+  getStoredAuth() reads localStorage
+      ↓
+  ┌─────────────────────────────────────────────┐
+  │ isAuthenticated=true?                       │
+  │  YES → AuthLoader skips /me call            │
+  │  NO  → AuthLoader tries GET /api/auth/me    │
+  │         (reads accessToken cookie)          │
+  │         Success → setCredentials()          │
+  │         401 → POST /api/auth/refresh        │
+  │                Success → retry /me          │
+  │                Fail    → stay unauthenticated│
+  └─────────────────────────────────────────────┘
+      ↓
+  ProtectedRoute reads isAuthenticated
+  RoleGuard reads role
+  Axios interceptor reads accessToken
+</div></div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ADMIN STATS FLOW                            -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="admin-stats">📊 Admin Stats Flow — Multi-Service Aggregation</h2>
+
+<div class="flow">
+<div class="ft">GET /api/admin/stats — AdminController.getStats() — Feign calls to 3 services</div>
+<div class="fb">
+Frontend: AdminDashboardPage.tsx
+  → useAdminStats() [TanStack Query]
+  → api.get('/api/admin/stats')  [Axios with Bearer token]
+
+Gateway:
+  Route: routes[15] /api/admin/** → lb://user-service + JwtAuthenticationFilter
+  JWT validated → X-User-Id: 999, X-User-Role: ROLE_ADMIN injected
+  NOTE: No @PreAuthorize on AdminController methods — role check is at Gateway
+        (Gateway routes /api/admin/** only when JWT is valid)
+        Frontend RoleGuard prevents non-admins from even reaching these pages
+
+AdminController.getStats() [user-service]:
+  File: com.skillsync.user.controller.AdminController
+  │
+  ├── 1. authServiceClient.getUserCount(null) [Feign → auth-service]
+  │        → GET http://auth-service/api/auth/internal/users/count
+  │        → AuthController.getUserCount(role=null)
+  │        → authUserRepository.count() → SELECT COUNT(*) FROM auth.users
+  │        → Returns: 1247L
+  │   try-catch: if auth-service down → totalUsers = 0 (graceful degradation)
+  │
+  ├── 2. sessionServiceClient.getSessionCount() [Feign → session-service]
+  │        → GET http://session-service/api/sessions/count
+  │        → SessionController.getSessionCount()
+  │        → sessionQueryService.getSessionCount()
+  │        → sessionRepository.count() → SELECT COUNT(*) FROM sessions.sessions
+  │        → Returns: 384L
+  │   try-catch: if session-service down → totalSessions = 0
+  │
+  ├── 3. mentorProfileRepository.countByStatus(APPROVED)  [local DB]
+  │        → SELECT COUNT(*) FROM user.mentor_profiles WHERE status='APPROVED'
+  │        → Returns: 52L
+  │
+  └── 4. mentorProfileRepository.countByStatus(PENDING)   [local DB]
+           → SELECT COUNT(*) FROM user.mentor_profiles WHERE status='PENDING'
+           → Returns: 7L
+
+Response: AdminStatsResponse { totalUsers=1247, totalMentors=52,
+                                totalSessions=384, pendingApprovals=7 }
+
+WHY FEIGN + TRY-CATCH INSTEAD OF JUST ONE DB?
+  → Data is distributed: users in auth-service DB, sessions in session-service DB
+  → No single DB has all data (microservice pattern)
+  → try-catch: if one service is down, dashboard still shows partial data
+  → Without try-catch: one failed Feign call crashes the whole stats endpoint
+</div></div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ADMIN DELETE USER                           -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="admin-delete">🗑️ Admin Delete User — Cross-Service Cleanup</h2>
+
+<div class="flow">
+<div class="ft">DELETE /api/admin/users/{id} — Two-Phase Cross-Service Delete</div>
+<div class="fb">
+Admin clicks "Delete User" → DELETE /api/admin/users/101
+  → Gateway → user-service AdminController.deleteUser(101)
+
+AdminController.deleteUser(Long id):
+  File: com.skillsync.user.controller.AdminController
+
+  PHASE 1: Clean up user-service data (mentor profile, slots, skills)
+  ─────────────────────────────────────────────────────────────────
+  → mentorProfileRepository.findByUserId(101)
+  → IF EXISTS:
+       mentorProfileRepository.delete(profile)
+       → Cascade deletes: MentorSkill records, AvailabilitySlot records
+       → JPA @OneToMany with CascadeType.ALL handles this
+       → Single DELETE triggers cascade in user-service DB
+  → IF NOT EXISTS: skip (user was a learner, no mentor profile)
+  try-catch: if cleanup fails → log warning, continue anyway
+  (Reason: user-service data cleanup should not block auth user deletion)
+
+  PHASE 2: Delete auth user (primary identity + refresh tokens)
+  ─────────────────────────────────────────────────────────────
+  → authServiceClient.deleteUser(101) [Feign → auth-service]
+       → DELETE http://auth-service/api/auth/internal/users/101
+       → AuthController.deleteUser(101) → authService.deleteUser(101):
+            → AuthUser entity loaded by ID
+            → refreshTokenRepository.deleteByUser(user)
+               → DELETE FROM auth.refresh_tokens WHERE user_id=101
+            → authUserRepository.delete(user)
+               → DELETE FROM auth.users WHERE id=101
+  try-catch: if Feign fails → return 500 (auth deletion is mandatory)
+
+  WHY PHASE 1 BEFORE PHASE 2?
+  → Mentor profile has FK reference to userId (stored as plain Long, not FK)
+  → No cross-DB FK constraints in microservices (distributed data)
+  → If we deleted from auth first, user-service still has orphaned mentor data
+  → Best effort cleanup order: local data first, then the source of truth
+
+  RESULT: User 101 is fully removed from both DBs
+  → Their JWT tokens are now invalid (no user record → loadUserByUsername fails)
+  → Refresh tokens deleted → no refresh possible
+</div></div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ADMIN ROLE CHANGE                           -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="admin-role">🎭 Role Change Flow — Promote/Demote User</h2>
+
+<div class="flow">
+<div class="ft">PUT /api/admin/users/{id}/role — Full Role Transition Logic</div>
+<div class="fb">
+Admin changes role → PUT /api/admin/users/101/role { "role": "ROLE_MENTOR" }
+
+AdminController.updateUserRole(101, { role: "ROLE_MENTOR" }):
+
+  CASE A: Promoting to ROLE_MENTOR
+  ──────────────────────────────────
+  → mentorCommandService.promoteUserToMentor(101)
+       → mentorProfileRepository.findByUserId(101)
+         FOUND + APPROVED? → already mentor, just ensure auth role is synced
+         FOUND + PENDING?  → approve: profile.status = APPROVED
+         NOT FOUND?        → create minimal MentorProfile { userId=101, status=APPROVED }
+       → authServiceClient.updateUserRole(101, "ROLE_MENTOR") [Feign]
+            → auth-service: user.role = ROLE_MENTOR → save → evict Redis cache
+       → rabbitTemplate.convertAndSend("mentor.exchange", "mentor.promoted", event)
+            → Notification: "You have been promoted to Mentor"
+
+  CASE B: Demoting to ROLE_LEARNER
+  ───────────────────────────────────
+  → mentorCommandService.demoteUserToLearner(101, "Role updated by admin")
+       → mentorProfileRepository.findByUserId(101)
+         FOUND → profile.status = REJECTED, rejectionReason = "Role updated by admin"
+         NOT FOUND → skip (was already a learner)
+       → authServiceClient.updateUserRole(101, "ROLE_LEARNER") [Feign]
+       → cacheService.evictByPattern("v1:user:mentor:*")  [all mentor caches]
+       → rabbitTemplate.convertAndSend("mentor.exchange", "mentor.demoted", event)
+            → Notification: "Your mentor status has been updated"
+
+  CASE C: Other roles (ROLE_ADMIN)
+  ──────────────────────────────────
+  → authServiceClient.updateUserRole(id, role) directly [Feign]
+
+  CRITICAL SECURITY IMPLICATION:
+  → The user's CURRENT JWT still has the OLD role
+  → JWT is stateless — cannot be revoked mid-lifetime
+  → Redis cache is evicted so profile reads reflect new role immediately
+  → But the user must LOG OUT and LOG IN to get a JWT with the new role
+  → During the 24h window, their JWT says ROLE_LEARNER but DB says ROLE_MENTOR
+  → For security-critical role changes (especially ROLE_ADMIN), force logout:
+    → Delete all refresh tokens → user can't silently refresh
+    → refreshTokenRepository.deleteByUser(user) would be needed
+    → NOT currently implemented — identified as a gap
+</div></div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SKILL FLOW                                  -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="skill-flow">🎓 Skill Service — CRUD Flow</h2>
+
+<p>The skill-service is the <strong>only microservice with NO JWT filter</strong> on its Gateway route. Skills are public read data — anyone can browse them. Create/Update/Delete is admin-only, enforced by the frontend <code>RoleGuard</code> (not a backend check — a known gap).</p>
+
+<div class="flow">
+<div class="ft">Skill Service — All Endpoints & Internal Logic</div>
+<div class="fb">
+Gateway routes[8]: /api/skills/** → lb://skill-service  (NO JwtAuthenticationFilter)
+→ Skills are PUBLIC: unauthenticated users can browse skills
+→ Admin CRUD has no server-side role check — relies on frontend RoleGuard
+
+SkillController → SkillCommandService + SkillQueryService (CQRS)
+
+GET /api/skills?page=0&size=20:
+  SkillQueryService.getAllSkills(pageable)
+  → skillRepository.findByIsActiveTrue(pageable)
+     → SELECT * FROM skill.skills WHERE is_active=true ORDER BY id LIMIT 20
+  → map to SkillResponse { id, name, category, description, isActive }
+  → Page<SkillResponse> returned (Spring Data Pageable)
+
+GET /api/skills/search?q=java:
+  SkillQueryService.searchSkills("java")
+  → skillRepository.searchByName("java")
+     → Custom @Query: SELECT s FROM Skill s WHERE LOWER(s.name) LIKE LOWER('%java%')
+  → List<SkillResponse>
+
+GET /api/skills/batch?ids=1,3,7:
+  SkillQueryService.getSkillsByIds([1, 3, 7])
+  → skillRepository.findAllById([1, 3, 7])
+  → List<SkillResponse>
+  USED BY: user-service SkillServiceClient to enrich mentor profiles with skill names
+
+POST /api/skills { name, category, description } [Admin only — frontend guard]:
+  SkillCommandService.createSkill(request)
+  → skillRepository.existsByName(name)
+    → EXISTS → throw "Skill already exists: Java" (idempotency)
+    → NOT EXISTS → Skill { name, category, description, isActive=true }
+    → skillRepository.save(skill)
+    → SkillResponse returned
+
+PUT /api/skills/{id}:
+  SkillCommandService.updateSkill(id, request)
+  → find by ID → update name, category, description → save
+
+DELETE /api/skills/{id}:
+  SkillCommandService.deactivateSkill(id)
+  → skill.isActive = false → save  (SOFT DELETE — not physical delete)
+  → Still in DB, just filtered out by findByIsActiveTrue()
+  WHY SOFT DELETE? Mentor profiles reference skillId — hard delete would leave
+  orphaned skill references and break profile displays.
+</div></div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SKILL BATCH FETCH                           -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="skill-batch">📦 Skill Batch Fetch Pattern</h2>
+
+<div class="flow">
+<div class="ft">GET /api/mentors/search → Enriches with skill names via Feign batch call</div>
+<div class="fb">
+MentorQueryService.searchMentors(skill, rating, minPrice, maxPrice, search, pageable):
+
+  1. mentorProfileRepository.findMentorsWithFilters(...) [PostgreSQL]
+     → Returns Page<MentorProfile> with skillIds stored as List<Long>
+
+  2. For each mentor profile, need skill NAMES not just IDs:
+     → skillServiceClient.getSkillsByIds(allSkillIds)
+          File: com.skillsync.user.feign.SkillServiceClient
+          → @FeignClient(name="skill-service")
+          → GET http://skill-service/api/skills/batch?ids=1,3,7,12,15
+          → Returns: List<SkillResponse> [{ id:1, name:"Java" }, { id:3, name:"Spring" }, ...]
+
+  3. Build a Map<Long, String> from id → name
+     → skillIdToName = { 1: "Java", 3: "Spring Boot", 7: "Redis" }
+
+  4. For each MentorProfile:
+     → profile.getSkills().stream()
+          .map(ms -> SkillSummary { id: ms.getSkillId(), name: skillIdToName.get(ms.getSkillId()) })
+          .collect(toList())
+
+  5. Returns enriched MentorProfileResponse { ..., skills: [{ id:1, name:"Java" }, ...] }
+
+WHY A BATCH ENDPOINT INSTEAD OF N+1 FEIGN CALLS?
+  → If 20 mentors each have 5 skills = 100 individual GET /api/skills/{id} calls
+  → With batch: ONE call GET /api/skills/batch?ids=1,2,3...100
+  → N+1 Feign problem solved — same as N+1 SQL problem
+  → Single network round-trip = dramatically lower latency
+</div></div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- GROUP FLOW                                  -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="group-flow">👥 Group Create & Join Flow</h2>
+
+<div class="flow">
+<div class="ft">POST /api/groups — Create Learning Group + Member Role System</div>
+<div class="fb">
+POST /api/groups
+  { name, description, category, maxMembers }
+  X-User-Id: 101, X-User-Role: ROLE_LEARNER
+
+Gateway: routes[11] /api/groups/** → lb://user-service + JwtAuthenticationFilter
+GroupController.createGroup(@RequestHeader("X-User-Id") Long userId=101,
+                             @RequestHeader("X-User-Role") String userRole="ROLE_LEARNER",
+                             @Valid @RequestBody CreateGroupRequest)
+
+GroupCommandService.createGroup(101, "ROLE_LEARNER", request):
+  → LearningGroup { name, description,
+                    category = request.category() or "General" (default),
+                    maxMembers = request.maxMembers() or Integer.MAX_VALUE,
+                    createdBy = 101 }
+  → groupRepository.save(group)
+  → GroupMember { group, userId=101, role=OWNER }  ← Creator is OWNER
+  → memberRepository.save(owner)
+  → Returns GroupResponse
+
+MEMBER ROLES (GroupMember.MemberRole enum):
+  OWNER  → Can edit/delete group, manage members, post discussions
+  ADMIN  → Can manage members, post discussions
+  MEMBER → Can read and post discussions
+
+JOIN GROUP — POST /api/groups/{id}/join:
+  GroupCommandService.joinGroup(groupId, userId):
+  → memberRepository.existsByGroupIdAndUserId(groupId, userId)
+    → EXISTS → throw "Already a member"
+  → group.getMembers().size() >= group.maxMembers → throw "Group is full"
+  → GroupMember { group, userId, role=MEMBER } → memberRepository.save()
+
+LEAVE GROUP — DELETE /api/groups/{id}/leave:
+  GroupCommandService.leaveGroup(groupId, userId):
+  → memberRepository.findByGroupIdAndUserId(groupId, userId)
+    → member.getRole() == OWNER → throw "Owner cannot leave"
+    → memberRepository.delete(member)
+
+GET DISCUSSIONS — requires membership check:
+  GroupController.getDiscussions(@RequestHeader("X-User-Role") String userRole):
+  → groupQueryService.getDiscussions(groupId, userId, userRole, pageable)
+  → Checks: isMember OR userRole == "ROLE_ADMIN"
+  → Returns discussions paginated, newest first
+
+NOTE: X-User-Role is also injected by Gateway as a header (from JWT claims)
+  → GroupController uses BOTH X-User-Id and X-User-Role from Gateway headers
+  → No Spring Security in user-service — role check done in service layer manually
+</div></div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- GROUP DISCUSSION                            -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="group-discuss">💬 Group Discussion Thread Flow</h2>
+
+<div class="flow">
+<div class="ft">POST /api/groups/{id}/discussions — Threaded Discussion with Membership Guard</div>
+<div class="fb">
+POST /api/groups/42/discussions
+  { title, content, parentId: null (or a reply: parentId=15) }
+  X-User-Id: 101
+
+GroupCommandService.postDiscussion(42, 101, request):
+  → memberRepository.existsByGroupIdAndUserId(42, 101)
+    → false → throw "Must be a member to post"
+  → request.parentId() != null?
+       → discussionRepository.findById(parentId) → parent discussion
+    → null → top-level post
+  → Discussion { group, authorId=101, title, content, parent, createdAt=Instant.now() }
+  → discussionRepository.save(discussion)
+  → Returns DiscussionResponse { id, title, content, authorId, parentId, createdAt }
+
+GET /api/groups/42/discussions?page=0&size=20:
+  groupQueryService.getDiscussions(42, userId, userRole, pageable):
+  → isMember = memberRepository.existsByGroupIdAndUserId(42, userId)
+  → if (!isMember && !"ROLE_ADMIN".equals(userRole)) → throw "Not authorized"
+  → discussionRepository.findByGroupIdOrderByCreatedAtDesc(42, pageable)
+  → Page<DiscussionResponse>
+
+THREADED REPLY SYSTEM:
+  Discussion entity has:
+    @ManyToOne parent → Discussion (nullable — null = top-level)
+    Frontend reconstructs thread tree from parent references
+
+ADMIN OVERRIDE:
+  Admin can read any group's discussions without being a member
+  (X-User-Role: "ROLE_ADMIN" injected by Gateway is trusted implicitly)
+</div></div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SAGA STATE MACHINE                          -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="saga-states">⚙️ Payment Saga State Machine</h2>
+
+<div class="flow">
+<div class="ft">PaymentStatus Enum — All States & Transitions (payment-service)</div>
+<div class="fb">
+PAYMENT STATUSES:
+  CREATED          → Razorpay order created, awaiting user payment
+  VERIFIED         → Razorpay signature verified (payment received)
+  SUCCESS_PENDING  → Saga started: business action events queued in outbox
+  SUCCESS          → All saga steps completed successfully
+  FAILED           → Signature invalid / Razorpay error
+  COMPENSATED      → Saga failed and rollback was triggered
+
+STATE FLOW:
+
+  createOrder():
+    CREATED  ──────────────────────────────────────────→ (awaiting payment)
+
+  verifyPayment() — signature check passes:
+    CREATED → VERIFIED → [saga starts] → SUCCESS_PENDING → SUCCESS
+
+  verifyPayment() — signature check fails:
+    CREATED → FAILED → publishPaymentFailedEvent() → outbox → "payment.failed.v1"
+    → session-service: rollbackSessionPayment()
+
+  saga fails mid-execution:
+    SUCCESS_PENDING → COMPENSATED (after max retries exhausted by SagaRecoveryScheduler)
+
+SAGA STATE TABLE (saga_state table):
+  { paymentId, orderId, state=SUCCESS_PENDING, retryCount=0, lastError, createdAt }
+  → Each saga step persists new state to DB
+  → SagaRecoveryScheduler reads this table to find stuck sagas
+
+DUPLICATE PAYMENT PREVENTION:
+  preventDuplicatePayment():
+  → paymentRepository.findByReferenceIdAndReferenceTypeAndStatusIn(
+        referenceId, referenceType, [CREATED, VERIFIED, SUCCESS_PENDING])
+  → IF EXISTS → throw PaymentException("DUPLICATE_PAYMENT", 409 CONFLICT)
+  → "An active payment already exists for this reference"
+  → Forces client to cancel existing payment before creating a new one
+</div></div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SAGA RECOVERY                               -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="saga-recovery">🔁 SagaRecoveryScheduler — Stuck Saga Healing</h2>
+
+<div class="flow">
+<div class="ft">SagaRecoveryScheduler.java — @Scheduled every 5 minutes</div>
+<div class="fb">
+PROBLEM: What if the service crashes AFTER writing SUCCESS_PENDING to the saga table
+but BEFORE the OutboxPublisher publishes the event to RabbitMQ?
+→ Payment is verified, money taken, but session is never confirmed
+→ Saga is STUCK in SUCCESS_PENDING forever
+
+SOLUTION: SagaRecoveryScheduler
+
+@Scheduled(fixedDelayString = "${saga.recovery.interval-ms:300000}")  ← every 5 min
+@Transactional
+public void recoverStaleSagas():
+
+  LocalDateTime threshold = now().minusMinutes(10);  ← saga.recovery.timeout-minutes=10
+  List<SagaState> staleSagas = sagaStateRepository.findStaleSagas(
+      PaymentStatus.SUCCESS_PENDING, threshold)
+  → Finds all sagas stuck in SUCCESS_PENDING for > 10 minutes
+
+  FOR EACH stale saga:
+
+    recoverSaga(saga):
+      → Payment payment = paymentRepository.findById(saga.paymentId)
+
+      IF saga.retryCount >= maxRetries(3):  ← saga.recovery.max-retries=3
+        compensateSaga(saga, payment):
+          → payment.status = COMPENSATED
+          → saga.state = COMPENSATED
+          → outboxEventService.saveEvent("payment.compensated.v1", compensatedEvent)
+          → sagaCompensationCounter.increment()  ← Micrometer metric
+
+      ELSE (retry):
+        → Build PaymentCompletedEvent with new UUID eventId
+        → outboxEventService.saveEvent("payment.business.action.v1", retryEvent)
+        → saga.retryCount++
+        → sagaStateRepository.save(saga)
+        → sagaRecoveryCounter.increment()  ← Micrometer metric
+
+METRICS TRACKED (Micrometer → Prometheus):
+  saga.recovery.attempts    → count of retries attempted
+  saga.recovery.compensations → count of sagas auto-compensated (money kept, session cancelled)
+
+@PostConstruct void initMetrics():
+  → Registers Counter beans with MeterRegistry on startup
+  → Available at /actuator/prometheus for Grafana scraping
+
+OUTCOME:
+  → Max 3 retries over 15+ minutes before auto-compensation
+  → Compensation = payment COMPENSATED + session CANCELLED
+  → User notified via notification-service (payment.compensated.v1 event)
+  → Micrometer metrics allow ops team to detect systematic saga failures
+</div></div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- IDEMPOTENCY PATTERN                         -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="idempotency">🛡️ Idempotency Patterns — Across All Services</h2>
+
+<table>
+<tr><th>Service</th><th>Idempotency Check</th><th>Method/File</th><th>What It Prevents</th></tr>
+<tr>
+  <td>auth-service</td>
+  <td><code>authUserRepository.existsByEmail(email)</code></td>
+  <td>AuthService.register()</td>
+  <td>Duplicate user registration</td>
+</tr>
+<tr>
+  <td>auth-service</td>
+  <td><code>existsByToken(token)</code> check in refreshToken</td>
+  <td>AuthService.refreshToken()</td>
+  <td>Double-use of same refresh token (already deleted on first use)</td>
+</tr>
+<tr>
+  <td>session-service</td>
+  <td><code>existsByMentorIdAndLearnerIdAndSessionDateAndStatusIn()</code></td>
+  <td>SessionCommandService.createSession()</td>
+  <td>Double-booking same slot</td>
+</tr>
+<tr>
+  <td>payment-service</td>
+  <td><code>findByReferenceIdAndReferenceTypeAndStatusIn([CREATED, VERIFIED, SUCCESS_PENDING])</code></td>
+  <td>PaymentService.preventDuplicatePayment()</td>
+  <td>Duplicate payment for same session</td>
+</tr>
+<tr>
+  <td>user-service (event consumer)</td>
+  <td><code>processedEventRepository.existsByEventId(eventId)</code></td>
+  <td>PaymentEventConsumer.handlePaymentBusinessAction()</td>
+  <td>RabbitMQ at-least-once redelivery — prevents processing same event twice</td>
+</tr>
+<tr>
+  <td>skill-service</td>
+  <td><code>skillRepository.existsByName(name)</code></td>
+  <td>SkillCommandService.createSkill()</td>
+  <td>Duplicate skill names</td>
+</tr>
+<tr>
+  <td>user-service (mentor)</td>
+  <td><code>mentorProfileRepository.findByUserId(userId)</code> status check</td>
+  <td>MentorCommandService.apply()</td>
+  <td>Duplicate mentor applications</td>
+</tr>
+<tr>
+  <td>group-service</td>
+  <td><code>memberRepository.existsByGroupIdAndUserId()</code></td>
+  <td>GroupService.joinGroup()</td>
+  <td>Joining same group twice</td>
+</tr>
+</table>
+
+<div class="callout ci2">
+  <div class="ci">💡</div>
+  <div class="cb2">
+    <strong>ProcessedEvent Table — Event Consumer Idempotency</strong>
+    The <code>processed_events</code> table in user-service stores eventIds of all handled RabbitMQ messages. Before processing, <code>processedEventRepository.existsByEventId(eventId)</code> is called. If the event was already processed (RabbitMQ redelivered due to crash before ACK), it's silently skipped. This is the standard pattern for at-least-once message delivery in production systems.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- REDIS CONFIG DEEP-DIVE                      -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="redis-config">🗃️ RedisConfig Deep-Dive — Serialization Choices</h2>
+
+<div class="flow">
+<div class="ft">RedisConfig.java (skillsync-cache-common) — Every Decision Explained</div>
+<div class="fb">
+RedisTemplate<String, Object> configuration:
+
+KEY SERIALIZER: StringRedisSerializer
+  → Keys stored as plain strings: "v1:user:profile:101"
+  → Human-readable in Redis CLI: redis-cli KEYS "v1:*"
+  → Why String not default JDK serialization? Default adds binary prefix,
+    making keys unreadable and SCAN pattern matching unreliable
+
+VALUE SERIALIZER: GenericJackson2JsonRedisSerializer (custom ObjectMapper)
+  Why Jackson over default JDK serialization?
+  → JDK serialization: binary, class-version-sensitive, Java-only
+  → Jackson JSON: human-readable, version-tolerant, cross-language
+
+CUSTOM ObjectMapper settings:
+  → mapper.registerModule(new JavaTimeModule())
+       → Handles Java 8+ time types: LocalDateTime, Instant, Duration
+       → Without this, LocalDateTime fields throw UnsupportedTypeException
+
+  → mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+       → Stores dates as ISO-8601 strings ("2024-01-15T10:30:00") not timestamps (1705316400000)
+       → Human-readable, avoids timezone confusion
+
+  → mapper.activateDefaultTyping(LaissezFaireSubTypeValidator.instance,
+                                  ObjectMapper.DefaultTyping.NON_FINAL)
+       → CRITICAL for deserialization!
+       → Stores the actual Java class name alongside the JSON:
+            ["com.skillsync.user.dto.ProfileResponse", { "userId": 101, ... }]
+       → Without this: Jackson can't know what class to deserialize into
+            → ClassCastException when reading from Redis
+       → LaissezFaireSubTypeValidator: allows any class (less strict, more compatible)
+       → Security note: in production, use a whitelist validator instead
+
+  → mapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY)
+       → Allows Jackson to access private fields directly
+       → Needed for Lombok @Data classes where fields are private
+
+HASH SERIALIZERS:
+  → hashKeySerializer = StringRedisSerializer
+  → hashValueSerializer = GenericJackson2JsonRedisSerializer
+  → Used for HASH type Redis operations (opsForHash)
+  → Not currently used by CacheService (uses STRING type), but configured for extensibility
+
+RESULT: Cache entries look like this in Redis:
+  Key:   "v1:user:profile:101"
+  Value: ["com.skillsync.user.dto.ProfileResponse",
+           {"userId":101,"firstName":"John","lastName":"Doe","bio":"...","skills":[...]}]
+</div></div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- REDIS KEY PATTERNS                          -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="redis-patterns">🔑 Redis Cache Key Patterns — Full Reference</h2>
+
+<table>
+<tr><th>Key Pattern</th><th>Service</th><th>What's Cached</th><th>TTL</th><th>Eviction Trigger</th></tr>
+<tr><td><code>v1:user:profile:{userId}</code></td><td>user-service</td><td>ProfileResponse (bio, avatar, skills)</td><td>10 min</td><td>updateProfile(), updateUserRole(), updateUserName()</td></tr>
+<tr><td><code>v1:user:mentor:{mentorId}</code></td><td>user-service</td><td>MentorProfileResponse (bio, hourlyRate, skills, availability)</td><td>10 min</td><td>apply(), approveMentor(), rejectMentor(), addAvailability(), updateMentorMetrics()</td></tr>
+<tr><td><code>v1:user:mentor:user:{userId}</code></td><td>user-service</td><td>MentorProfile by userId (for /mentors/me endpoint)</td><td>10 min</td><td>Same as mentor cache above</td></tr>
+<tr><td><code>v1:user:mentor:search:*</code></td><td>user-service</td><td>Paginated search results</td><td>varies</td><td>Any mentor profile change (evictByPattern)</td></tr>
+<tr><td><code>v1:user:mentor:pending:*</code></td><td>user-service</td><td>Pending applications list</td><td>varies</td><td>apply(), approveMentor(), rejectMentor()</td></tr>
+<tr><td><code>v1:session:{sessionId}</code></td><td>session-service</td><td>SessionResponse</td><td>varies</td><td>Any session state change</td></tr>
+<tr><td><code>v1:session:learner:{userId}:*</code></td><td>session-service</td><td>Learner's session lists (paginated)</td><td>varies</td><td>createSession(), acceptSession(), etc.</td></tr>
+<tr><td><code>v1:session:mentor:{userId}:*</code></td><td>session-service</td><td>Mentor's session lists (paginated)</td><td>varies</td><td>Any session state change</td></tr>
+<tr><td><code>v1:notification:unread:{userId}</code></td><td>notification-service</td><td>Unread notification count</td><td>varies</td><td>createAndPush(), markAsRead(), markAllAsRead(), deleteNotification()</td></tr>
+<tr><td><code>v1:null_sentinel (key)</code></td><td>all</td><td>"__NULL__" string — marks "we looked but found nothing"</td><td>60s</td><td>Manually evicted or TTL expiry</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- STAMPEDE PROTECTION                         -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="redis-stampede">⚡ Cache Stampede Protection — Deep Explanation</h2>
+
+<div class="flow">
+<div class="ft">CacheService.getOrLoad() — Double-Check Lock Pattern</div>
+<div class="fb">
+PROBLEM: Cache Stampede (aka "Thundering Herd")
+  Scenario: Cache key "v1:user:profile:101" expires at exactly 12:00:00
+  → 500 concurrent requests all miss the cache simultaneously
+  → All 500 call profileRepository.findByUserId(101) at the same time
+  → DB gets hammered with 500 identical queries → could crash or slow to a crawl
+
+SOLUTION: Double-Check Locking with ReentrantLock (CacheService.java)
+
+  private final ConcurrentHashMap<String, ReentrantLock> keyLocks = new ConcurrentHashMap<>();
+
+  public <T> T getOrLoad(String key, Class<T> type, Duration ttl, Supplier<T> dbFallback):
+
+    STEP 1: Try cache (no lock — fast path)
+    ──────────────────────────────────────────
+    T cached = get(key, type);
+    if (cached != null) return cached;            ← 499 of 500 requests return here
+    if (isNullSentinel(key)) return null;         ← "we know it doesn't exist"
+
+    STEP 2: Acquire per-key lock
+    ──────────────────────────────────────────
+    ReentrantLock lock = keyLocks.computeIfAbsent(key, k -> new ReentrantLock());
+    lock.lock();  ← All 500 threads compete. ONE wins. 499 block here.
+
+    STEP 3: Double-check inside lock
+    ──────────────────────────────────────────
+    try {
+      cached = get(key, type);                    ← The winner checks AGAIN
+      if (cached != null) return cached;          ← 499 losing threads return here
+      if (isNullSentinel(key)) return null;       ← after winner populates cache
+
+      STEP 4: DB query (only ONE thread reaches here)
+      T value = dbFallback.get();                 ← profileRepository.findByUserId(101)
+      if (value != null) put(key, value, ttl);    ← Cache populated by winner
+      else putNull(key);                          ← Null-sentinel: prevents cache penetration
+      return value;
+    } finally {
+      lock.unlock();
+      keyLocks.remove(key, lock);                 ← Cleanup to prevent memory leak
+    }
+
+NULL SENTINEL PATTERN:
+  If a user profile genuinely doesn't exist → DB returns null
+  Without null-sentinel: every request misses cache → every request hits DB
+  With null-sentinel: cache stores "__NULL__" with 60s TTL
+  → Next 60s of requests see null-sentinel → return null immediately, no DB hit
+  → Prevents "cache penetration" (requests for non-existent data always hit DB)
+
+METRICS:
+  cacheHitCounter  → "cache.operations" tag result=hit,  service=user-service
+  cacheMissCounter → "cache.operations" tag result=miss, service=user-service
+  cacheEvictCounter → "cache.operations" tag result=evict
+  cacheErrorCounter → "cache.operations" tag result=error (Redis connection failure)
+  → All available at /actuator/prometheus → Grafana dashboard
+</div></div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- DATABASE SCHEMA                             -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="db-schema">🗄️ Database Schema — All Tables & Relationships</h2>
+
+<div class="flow">
+<div class="ft">PostgreSQL Schema — Distributed Across 5 Services (separate schemas)</div>
+<div class="fb">
+SCHEMA: auth  (auth-service)
+  users {
+    id BIGSERIAL PK, email VARCHAR UNIQUE NOT NULL,
+    password_hash VARCHAR NOT NULL, first_name VARCHAR,
+    last_name VARCHAR, role VARCHAR NOT NULL,  ← "ROLE_LEARNER"|"ROLE_MENTOR"|"ROLE_ADMIN"
+    is_active BOOLEAN, is_verified BOOLEAN,
+    provider VARCHAR,    ← "google" for OAuth users
+    provider_id VARCHAR, ← "google-{sub}" for OAuth users
+    password_set BOOLEAN DEFAULT true,  ← false for new OAuth users
+    created_at TIMESTAMP, last_modified_at TIMESTAMP
+  }
+  refresh_tokens {
+    id BIGSERIAL PK, user_id BIGINT FK → users.id,
+    token VARCHAR UNIQUE NOT NULL,  ← random UUID string
+    expires_at TIMESTAMP NOT NULL, created_at TIMESTAMP
+    CONSTRAINT max 5 per user enforced in application layer
+  }
+  otp_tokens {
+    id BIGSERIAL PK, user_id BIGINT, email VARCHAR,
+    otp VARCHAR(6) NOT NULL, expires_at TIMESTAMP,
+    used BOOLEAN DEFAULT false, attempts INT DEFAULT 0,
+    type VARCHAR NOT NULL  ← "REGISTRATION"|"PASSWORD_RESET"
+  }
+
+SCHEMA: user  (user-service)
+  profiles {
+    id BIGSERIAL PK, user_id BIGINT UNIQUE NOT NULL,  ← matches auth.users.id
+    first_name, last_name, bio, avatar_url, phone,
+    location, profile_complete_pct INT,
+    created_at, last_modified_at
+  }
+  mentor_profiles {
+    id BIGSERIAL PK, user_id BIGINT UNIQUE NOT NULL,
+    bio, experience_years INT, hourly_rate DECIMAL,
+    avg_rating DOUBLE, total_reviews INT, total_sessions INT,
+    status VARCHAR  ← "PENDING"|"APPROVED"|"REJECTED"
+    rejection_reason VARCHAR,
+    created_at, last_modified_at
+  }
+  mentor_skills { id PK, mentor_id FK → mentor_profiles.id, skill_id BIGINT }
+  availability_slots {
+    id PK, mentor_id FK → mentor_profiles.id,
+    day_of_week INT (0=Sunday), start_time TIME, end_time TIME,
+    is_active BOOLEAN, is_booked BOOLEAN
+  }
+  user_skills { id PK, user_id BIGINT, skill_id BIGINT }
+  learning_groups {
+    id PK, name, description, category,
+    max_members INT, created_by BIGINT
+  }
+  group_members {
+    id PK, group_id FK, user_id BIGINT,
+    role VARCHAR  ← "OWNER"|"ADMIN"|"MEMBER"
+  }
+  discussions {
+    id PK, group_id FK, author_id BIGINT,
+    title, content TEXT, parent_id FK → discussions.id (nullable),
+    created_at TIMESTAMP
+  }
+  processed_events {
+    id PK, event_id VARCHAR UNIQUE,  ← RabbitMQ message idempotency
+    event_type VARCHAR, processed_at TIMESTAMP
+  }
+
+SCHEMA: sessions  (session-service)
+  sessions {
+    id PK, mentor_id BIGINT, learner_id BIGINT,
+    topic, description TEXT, session_date TIMESTAMP,
+    duration_minutes INT, meeting_link VARCHAR,
+    default_rating_applied BOOLEAN,
+    status VARCHAR  ← "REQUESTED"|"ACCEPTED"|"REJECTED"|"COMPLETED"|"CANCELLED"
+    cancel_reason VARCHAR,
+    created_at, updated_at
+  }
+  reviews {
+    id PK, session_id BIGINT FK → sessions.id,
+    mentor_id BIGINT, learner_id BIGINT,
+    rating INT (1-5), comment TEXT,
+    created_at, updated_at
+  }
+
+SCHEMA: payment  (payment-service)
+  payments {
+    id PK, user_id BIGINT, razorpay_order_id VARCHAR UNIQUE,
+    razorpay_payment_id VARCHAR, amount DECIMAL,
+    type VARCHAR  ← "SESSION_BOOKING"
+    status VARCHAR ← "CREATED|VERIFIED|SUCCESS_PENDING|SUCCESS|FAILED|COMPENSATED"
+    reference_id BIGINT,  ← sessionId for SESSION_BOOKING
+    reference_type VARCHAR,
+    compensation_reason VARCHAR, completed_at TIMESTAMP,
+    created_at, updated_at
+  }
+  outbox_events {
+    id PK, event_id VARCHAR UNIQUE, exchange VARCHAR,
+    routing_key VARCHAR, event_type VARCHAR, payload TEXT (JSON),
+    published BOOLEAN DEFAULT false,
+    created_at TIMESTAMP, published_at TIMESTAMP
+  }
+  saga_states {
+    id PK, payment_id BIGINT FK → payments.id,
+    order_id VARCHAR, state VARCHAR (PaymentStatus),
+    retry_count INT DEFAULT 0, last_error VARCHAR,
+    created_at TIMESTAMP, updated_at TIMESTAMP
+  }
+  failed_events { id PK, event_id, routing_key, payload, failure_reason, created_at }
+
+SCHEMA: notification  (notification-service)
+  notifications {
+    id PK, user_id BIGINT, type VARCHAR,
+    title VARCHAR, message TEXT,
+    is_read BOOLEAN DEFAULT false,
+    created_at TIMESTAMP
+  }
+</div></div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- JPA AUDITING                                -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="jpa-auditing">📅 JPA Auditing — Auto-Timestamps</h2>
+
+<div class="flow">
+<div class="ft">JpaAuditingConfig.java + @EnableJpaAuditing — How created_at/updated_at Work</div>
+<div class="fb">
+EVERY MICROSERVICE has:
+  JpaAuditingConfig.java:
+    @Configuration
+    @EnableJpaAuditing
+    public class JpaAuditingConfig {}  ← Just this annotation, no extra code needed
+
+ENTITY FIELDS (e.g., AuthUser.java):
+  @CreatedDate
+  @Column(updatable = false)
+  private LocalDateTime createdAt;
+  → Set automatically on first INSERT → never updated again (updatable=false)
+
+  @LastModifiedDate
+  private LocalDateTime lastModifiedAt;
+  → Updated automatically on every UPDATE
+
+  @EntityListeners(AuditingEntityListener.class)  ← required on the entity class
+  → Spring Data JPA hooks: beforeInsert(), beforeUpdate()
+  → Calls AuditingEntityListener which reads the CurrentAuditor
+
+WHAT HAPPENS UNDER THE HOOD:
+  1. Repository.save(entity) called
+  2. Spring Data's SimpleJpaRepository.save() delegates to JPA EntityManager
+  3. Before persist/merge, AuditingEntityListener fires
+  4. For @CreatedDate: sets field to LocalDateTime.now() (on new entities)
+  5. For @LastModifiedDate: sets field to LocalDateTime.now() (on every save)
+  6. Entity is persisted with timestamps populated — zero developer effort
+
+WHY NOT JUST SET TIMESTAMPS MANUALLY?
+  → Developers forget → inconsistent data
+  → Clock differences between services → different formats
+  → @EnableJpaAuditing centralizes and standardizes all timestamp management
+  → createdAt is immutable (updatable=false) → can never be accidentally overwritten
+</div></div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- OBSERVABILITY                               -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="observability">📈 Observability — Metrics, Tracing, Logging</h2>
+
+<div class="flow">
+<div class="ft">Production Observability Stack — From application.properties</div>
+<div class="fb">
+METRICS (Micrometer → Prometheus → Grafana):
+  Each service exposes:
+  → GET /actuator/metrics          ← all metrics
+  → GET /actuator/prometheus       ← Prometheus scrape endpoint
+
+  application.properties (gateway):
+    management.endpoints.web.exposure.include=health,info,metrics,prometheus
+    management.endpoint.prometheus.enabled=true
+    management.metrics.tags.application=api-gateway
+
+  Custom metrics in CacheService:
+    Counter.builder("cache.operations").tag("result","hit").tag("service","user-service")
+    → Tracks: cache hits, misses, evictions, errors per service
+    → Grafana: cache hit ratio, miss rate trends
+
+  Custom metrics in SagaRecoveryScheduler:
+    Counter.builder("saga.recovery.attempts")
+    Counter.builder("saga.recovery.compensations")
+    → Alerts on high compensation rate → payment processing issues
+
+DISTRIBUTED TRACING (Micrometer Tracing → Zipkin):
+  application.properties:
+    management.tracing.sampling.probability=1.0   ← trace 100% of requests
+    management.zipkin.tracing.endpoint=http://${ZIPKIN_HOST:localhost}:9411/api/v2/spans
+
+  Every request gets a traceId + spanId injected into MDC (Mapped Diagnostic Context)
+  → Spans exported to Zipkin: trace follows request across Gateway → auth-service → DB
+  → Zipkin UI: see full request timeline, identify bottlenecks
+
+STRUCTURED LOGGING (Logback):
+  logback-spring.xml per service — JSON or pattern-based logs
+
+  gateway application.properties:
+    logging.pattern.level=%5p [${spring.application.name},%X{traceId:-},%X{spanId:-}]
+    logging.file.name=logs/api-gateway.log
+
+  Log output:
+    INFO  [api-gateway,64b3f7a2b9d1e4c3,4e2f1a3b5c7d9e0f] - Request routed to auth-service
+    ↑ service name ↑ traceId ↑ spanId
+    → Correlate logs across services using traceId in Kibana / CloudWatch
+
+HEALTH CHECKS:
+  GET /actuator/health → { "status": "UP", "components": { "db": "UP", "redis": "UP" } }
+  → Eureka uses healthCheckUrl to verify instance health before routing traffic
+  → DB and Redis connectivity automatically checked by Spring Boot Actuator
+
+SERVICE LOG FILES:
+  logs/api-gateway.log
+  logs/auth-service.log  (implied from logback-spring.xml pattern)
+  → In production: shipped to ELK stack or CloudWatch Logs
+</div></div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- DOCKER & DEPLOYMENT                         -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="docker">🐳 Docker & Deployment</h2>
+
+<div class="flow">
+<div class="ft">Dockerfile Pattern — Each Service (Multi-Stage Build)</div>
+<div class="fb">
+Each service has its own Dockerfile (e.g., auth-service/Dockerfile):
+
+  FROM eclipse-temurin:21-jdk-alpine AS build
+  WORKDIR /app
+  COPY . .
+  RUN ./mvnw clean package -DskipTests
+
+  FROM eclipse-temurin:21-jre-alpine
+  WORKDIR /app
+  COPY --from=build /app/target/*.jar app.jar
+  EXPOSE 8081
+  ENTRYPOINT ["java", "-jar", "app.jar"]
+
+  STAGE 1 (build): Full JDK + Maven → compiles code → produces JAR
+  STAGE 2 (runtime): Slim JRE only → no build tools → smaller image
+  Result: ~200MB image instead of ~700MB with full JDK
+
+ENVIRONMENT VARIABLES (injected at runtime):
+  JWT_SECRET          → HS256 signing key (Base64-encoded, 256+ bits)
+  CONFIG_SERVER_HOST  → skillsync-config (Docker network DNS)
+  EUREKA_HOST         → skillsync-eureka
+  ALLOWED_ORIGINS     → comma-separated CORS origins
+  SERVER_PORT         → 8080 (gateway), 8081 (auth), etc.
+
+EACH SERVICE HAS .dockerignore:
+  → Excludes: target/, .git/, *.md, test/ → faster Docker build context
+
+DEPLOYMENT TOPOLOGY:
+  EC2 Instance (AWS):
+    → docker-compose.yml orchestrates all services
+    → Docker network: skillsync-net (all services communicate by container name)
+    → Volumes: PostgreSQL data, Redis persistence, log files
+
+  Vercel (Frontend):
+    → React app deployed as static site
+    → VITE_API_URL=https://api.skillsync.mraks.dev (API Gateway on EC2)
+    → axios.ts handles URL normalization if misconfigured
+
+  Nginx (Reverse Proxy, on EC2):
+    → Terminates SSL/TLS → forwards to Gateway port 8080
+    → Handles Let's Encrypt certificate renewal
+    → SameSite=None cookies require HTTPS → Nginx provides it
+
+  Subdomains:
+    skillsync.mraks.dev      → Vercel frontend
+    api.skillsync.mraks.dev  → EC2 API Gateway
+    skillsync.udayasri.dev   → alternate frontend domain (CORS allowed)
+</div></div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- HIDDEN BEHAVIORS                            -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="hidden">🔮 Hidden & Implicit Behaviors — Complete List</h2>
+
+<table>
+<tr><th>Behavior</th><th>Source</th><th>Effect</th></tr>
+<tr><td>Spring Boot Auto-configures DaoAuthenticationProvider</td><td>Spring Security autoconfiguration detects UserDetailsService + PasswordEncoder beans</td><td>Zero manual wiring needed — ProviderManager gets DaoAuthenticationProvider automatically</td></tr>
+<tr><td>Password nulled after authentication</td><td>DaoAuthenticationProvider.createSuccessAuthentication()</td><td>Calls <code>eraseCredentials()</code> — credentials field becomes null. Prevents accidental password logging.</td></tr>
+<tr><td>@Transactional propagation</td><td>@Transactional on service methods</td><td>If generateAuthResponse() fails (e.g., refreshTokenRepository.save() throws), the entire login transaction rolls back — no orphaned access tokens issued.</td></tr>
+<tr><td>JPA Lazy Loading on RefreshToken.user</td><td><code>@ManyToOne(fetch=FetchType.LAZY)</code></td><td>RefreshToken.getUser() does NOT load AuthUser until accessed. Prevents N+1 queries in refresh token lists.</td></tr>
+<tr><td>OncePerRequestFilter guarantee</td><td>JwtAuthenticationFilter extends OncePerRequestFilter</td><td>In Servlet API, forward dispatching re-calls filters. OncePerRequestFilter tracks calls in request attribute to ensure doFilterInternal() runs exactly once.</td></tr>
+<tr><td>Feign auto-retry on 5xx</td><td>Spring Cloud OpenFeign default</td><td>Feign retries failed requests (5xx) by default. Can cause duplicate RabbitMQ publishes if not idempotent — mitigated by processedEventId check.</td></tr>
+<tr><td>RabbitTemplate Jackson2JsonMessageConverter</td><td>@Bean MessageConverter in RabbitMQConfig</td><td>Both publisher and consumer MUST have identical MessageConverter. Jackson2Json ensures type-safe deserialization via @class metadata.</td></tr>
+<tr><td>ConcurrentHashMap.computeIfAbsent atomicity</td><td>CacheService.getOrLoad() keyLocks</td><td>computeIfAbsent is atomic — no two threads can create the same lock entry simultaneously. Safe for multi-threaded Tomcat thread pool.</td></tr>
+<tr><td>@Scheduled cleanup in RateLimitingFilter</td><td><code>@Scheduled(fixedRate=120_000)</code> cleanExpiredBuckets()</td><td>Runs every 2 minutes to remove expired rate limit buckets from the ConcurrentHashMap — prevents memory leak in long-running Gateway process.</td></tr>
+<tr><td>SameSite=None requires Secure=true</td><td>AuthController.resolveCookieOptions()</td><td>Browsers reject SameSite=None cookies without Secure. CookieOptions.resolveCookieOptions() auto-detects localhost (→ Secure=false, SameSite=Lax) vs production (→ Secure=true, SameSite=None).</td></tr>
+<tr><td>Eureka prefer-ip-address=true</td><td>application.properties</td><td>Services register with IP not hostname. Critical in Docker — container hostnames may not be resolvable across networks. IP is always routable.</td></tr>
+<tr><td>Config Server fail-fast + retry</td><td>spring.cloud.config.fail-fast=true + retry config</td><td>If Config Server is unreachable at startup, service fails (not starts with wrong config). Retry attempts 6 times with exponential backoff before giving up.</td></tr>
+<tr><td>normalizeEmail in initiateRegistration</td><td>AuthService.initiateRegistration()</td><td><code>email.trim().toLowerCase()</code> — prevents "User@Test.COM" and "user@test.com" creating two accounts. Not applied in legacy register() — a known inconsistency.</td></tr>
+<tr><td>@Scheduled OTP cleanup in OtpService</td><td>OtpService.java @Scheduled method</td><td>Periodically deletes expired OTP tokens from DB — prevents table bloat from abandoned registrations.</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- INTERVIEW PART 3                            -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="interview3">❓ Advanced Interview Q&A — Part 3</h2>
+
+<h3>Redis & Caching</h3>
+<table>
+<tr><th>Question</th><th>Answer (from actual code)</th></tr>
+<tr><td>Why does RedisConfig use <code>activateDefaultTyping()</code>?</td><td>Without it, <code>redisTemplate.opsForValue().get(key)</code> returns a <code>LinkedHashMap</code> (raw JSON), not the typed <code>ProfileResponse</code>. Jackson needs the <code>@class</code> metadata embedded in JSON to reconstruct the correct Java class during deserialization. The alternative is using <code>RedisTemplate&lt;String, ProfileResponse&gt;</code> — one template per type — which is unscalable.</td></tr>
+<tr><td>What is the Null Sentinel pattern?</td><td>When <code>dbFallback.get()</code> returns null (entity not found), <code>putNull(key)</code> stores <code>"__NULL__"</code> with 60s TTL. Next 60 seconds of requests for that key return null immediately without hitting DB. Without this, every request for a non-existent entity would be a cache miss → DB query → still null. Called "cache penetration" prevention.</td></tr>
+<tr><td>Why use <code>ConcurrentHashMap</code> for key locks instead of a single global lock?</td><td>A single lock would serialize ALL cache misses across ALL keys — catastrophic for throughput. ConcurrentHashMap gives per-key locks — threads for key A are not blocked by threads for key B. The stampede protection is scoped to each cache key independently.</td></tr>
+</table>
+
+<h3>Saga & Payment</h3>
+<table>
+<tr><th>Question</th><th>Answer (from actual code)</th></tr>
+<tr><td>What happens if the OutboxPublisher crashes after writing to the outbox table but before publishing to RabbitMQ?</td><td>The outbox event stays with <code>published=false</code>. On restart, <code>OutboxPublisher</code> polls <code>SELECT * FROM outbox_events WHERE published=false</code> and republishes. This guarantees at-least-once delivery. The consumer's <code>processedEventRepository.existsByEventId(eventId)</code> check handles the duplicate delivery case.</td></tr>
+<tr><td>Why does SagaRecoveryScheduler use <code>@PostConstruct</code> for metrics?</td><td>MeterRegistry beans are available after the ApplicationContext is fully initialized. <code>@PostConstruct</code> runs after all dependency injection is complete — safe to call <code>Counter.builder(...).register(meterRegistry)</code>. Doing this in the constructor risks NullPointerException if the MeterRegistry isn't injected yet.</td></tr>
+<tr><td>What is the difference between <code>payment.failed.v1</code> and <code>payment.compensated.v1</code> routing keys?</td><td><code>payment.failed.v1</code>: Signature verification failed at payment time — immediate failure, no saga started. <code>payment.compensated.v1</code>: Saga started but failed after max retries — compensation triggered by SagaRecoveryScheduler. Both cancel the session, but compensated means money may have been taken (Razorpay verification passed) while failed means the payment was rejected by Razorpay itself.</td></tr>
+</table>
+
+<h3>Architecture Gaps & Improvements</h3>
+<table>
+<tr><th>Gap Identified</th><th>Current Behavior</th><th>Ideal Solution</th></tr>
+<tr><td class="o">JWT not invalidated after role change</td><td>User's JWT retains old role for up to 24h after admin changes it</td><td>Delete all refresh tokens on role change → force re-login. Or implement JWT blacklist in Redis with jti claim.</td></tr>
+<tr><td class="o">Skill service has no server-side role check</td><td>CRUD relies on frontend RoleGuard — any authenticated user with crafted HTTP request can create/delete skills</td><td>Add <code>@PreAuthorize("hasRole('ADMIN')")</code> on POST/PUT/DELETE endpoints in SkillController</td></tr>
+<tr><td class="o">Rate limiting is in-memory (single Gateway instance)</td><td>ConcurrentHashMap reset on Gateway restart; doesn't work across multiple Gateway instances</td><td>Replace with Redis-backed rate limiting (Bucket4j + Redis or Spring Cloud Gateway Redis RateLimiter)</td></tr>
+<tr><td class="o">normalizeEmail inconsistency</td><td><code>initiateRegistration()</code> normalizes email; legacy <code>register()</code> does not</td><td>Extract normalization to a shared <code>normalizeEmail()</code> method called from all auth methods</td></tr>
+<tr><td class="o">No WebSocket authentication</td><td>WebSocket connections at <code>/ws/**</code> have no JWT filter on Gateway</td><td>Implement STOMP <code>ChannelInterceptor</code> in notification-service to validate JWT from CONNECT frame headers</td></tr>
+<tr><td class="o">No circuit breaker on Feign calls</td><td>If auth-service is slow, Feign calls block threads → cascading failure</td><td>Add Resilience4j <code>@CircuitBreaker</code> on AuthServiceClient methods with fallback values</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- FINAL SUMMARY                              -->
+<!-- ═══════════════════════════════════════════ -->
+<h2 id="final">🏁 Complete Three-Part System Summary</h2>
+
+<div class="flow">
+<div class="ft">Everything SkillSync Does — In One View</div>
+<div class="fb">
+AUTHENTICATION (auth-service — Tomcat + Spring Security)
+  OTP Registration: initiate → verify OTP (SecureRandom, 5min, 5 attempts) → complete
+  Login: BCrypt-12 comparison → JWT (HS256, 24h) + Refresh Token (7d, max 5 per user, FIFO)
+  Google OAuth: implicit flow → userinfo endpoint → link or create account
+  Refresh: single-use rotation, delete old → generate new → update cookies
+  JWT dual-delivery: JSON body + HttpOnly cookie (XSS-safe)
+
+GATEWAY (api-gateway — Spring Cloud Gateway + Netty)
+  CsrfOriginFilter (-3): blocks cross-origin POST/PUT/DELETE from unknown domains
+  RateLimitingFilter (-2): sliding window, per-path limits (5/10/60/100 req/min)
+  SecurityHeadersFilter (-1): HSTS, X-Frame-Options, X-XSS-Protection
+  JwtAuthenticationFilter (route): validate HS256, strip+inject X-User-* headers
+  22+ routes: /api/auth/** (no JWT), /api/users|mentors|sessions|payments|** (+ JWT)
+  Internal block: /api/auth/internal/** → 403 for external callers
+
+USER DATA (user-service)
+  CQRS: CommandService (write + cache evict + RabbitMQ) vs QueryService (Redis-first)
+  Mentor lifecycle: apply → PENDING → APPROVED/REJECTED → role update via Feign
+  Groups: OWNER/ADMIN/MEMBER roles, threaded discussions, max member limit
+  Batch skill enrichment: GET /api/skills/batch → N+1 avoidance
+  Feign clients: auth-service (role update, user lookup), skill-service (batch names)
+
+SESSION LIFECYCLE (session-service)
+  State machine: REQUESTED → ACCEPTED/REJECTED/CANCELLED, ACCEPTED → COMPLETED/CANCELLED
+  Each transition: validateTransition() → save → invalidateCaches → publishEvent
+  Booking guard: self-booking check + duplicate slot check (idempotency)
+  Meeting link: Jitsi (auto-generated on payment confirmation)
+  Metrics update on complete: mentor avgRating recalculated → user-service event
+
+PAYMENT SAGA (payment-service — Razorpay + Outbox + Saga)
+  createOrder → Razorpay API → CREATED status
+  verifyPayment → HMAC-SHA256 verification → saga starts
+  Outbox Pattern: payment + outbox event in SAME DB transaction (atomicity)
+  SagaRecoveryScheduler: @Scheduled every 5min, retries stuck sagas, auto-compensates at max retries
+  Idempotency: duplicate payment blocked by CREATED|VERIFIED|SUCCESS_PENDING status check
+  ProcessedEvent table: consumer-side idempotency for RabbitMQ at-least-once delivery
+
+NOTIFICATIONS (notification-service — RabbitMQ + WebSocket + Email)
+  5 session events × 2 emails each (mentor + learner) + WebSocket push
+  STOMP WebSocket: SimpMessagingTemplate.convertAndSendToUser(userId, "/queue/notifications")
+  Email retry: email.retry.queue → DLQ after exhausting retries
+  CQRS: createAndPush() = save to DB + WebSocket push + cache evict (atomic but not transactional)
+
+REDIS CACHE (skillsync-cache-common — all services)
+  Cache-aside with stampede protection (ReentrantLock per key)
+  Null sentinel (prevents cache penetration)
+  Versioned keys (v1:) for schema migrations without flush
+  evictByPattern using SCAN (not KEYS — non-blocking)
+  Micrometer counters: hit/miss/evict/error per service
+
+RABBITMQ EVENTS (5 TopicExchanges)
+  session.exchange, payment.exchange, mentor.exchange, review.exchange, email.retry.exchange
+  All queues durable=true → survive RabbitMQ restart
+  Jackson2JsonMessageConverter → JSON messages, language-agnostic
+
+INFRASTRUCTURE
+  Eureka (8761): service registry, heartbeat every 30s, IP-based instance registration
+  Config Server (8888): centralized properties, fail-fast startup with exponential retry
+  JPA Auditing: @CreatedDate, @LastModifiedDate auto-populated via AuditingEntityListener
+  Observability: Micrometer → Prometheus → Grafana, Zipkin distributed tracing, structured logs
+  Docker: multi-stage builds per service, environment-variable injection, EC2 deployment
+</div></div>
+
+<div class="card cg">
+  <h4 style="color:var(--acc2);margin-top:0">The One-Paragraph Answer for Any Interview</h4>
+  <p style="font-size:13px;line-height:1.85;color:var(--text)">
+    "SkillSync is a full-stack distributed SaaS platform built on Spring Cloud microservices with a React/Redux frontend. The API Gateway uses Netty with four filter layers — CSRF origin validation, sliding-window rate limiting, security headers, and JWT authentication — routing to six microservices via Eureka. The Auth-Service implements the full Spring Security filter chain with HS256 JWT generation, BCrypt-12 password hashing, 6-digit OTP email verification, Google OAuth implicit flow with account linking, and stateful refresh token rotation with FIFO eviction up to five tokens per user. All business services follow CQRS — command services handle transactional writes with Redis cache eviction and RabbitMQ event publishing via the Outbox Pattern, while query services use a cache-aside strategy with stampede protection via per-key ReentrantLock and null-sentinel penetration prevention. Payment uses a Saga Orchestrator with a SagaRecoveryScheduler that retries stuck sagas on a five-minute schedule and auto-compensates after three failed retries, all tracked via Micrometer counters exported to Prometheus. Real-time notifications are pushed via STOMP WebSocket through a SimpMessagingTemplate, while email notifications use a retry queue with dead-letter fallback. Every consumer uses a ProcessedEvent idempotency table to safely handle RabbitMQ's at-least-once delivery. Cross-service calls use Feign clients targeting internal endpoints blocked at the Gateway, with batch requests used to eliminate N+1 fan-out. The Redis cache uses GenericJackson2JsonRedisSerializer with DefaultTyping for polymorphic deserialization, versioned key prefixes for zero-downtime schema migration, and SCAN-based pattern eviction. Infrastructure uses Spring Cloud Config Server with fail-fast startup, Eureka IP-based registration, multi-stage Docker builds, Zipkin distributed tracing, and structured logging with traceId/spanId correlation."
+  </p>
+</div>
+
+</main>
+</body>
+</html>
