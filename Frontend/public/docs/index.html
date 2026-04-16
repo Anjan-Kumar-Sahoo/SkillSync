@@ -10,6 +10,13 @@
   <link rel="stylesheet" href="/docs/pipeline.css" />
   <style>
     :root {
+      --layer-green: rgba(16, 185, 129, 0.15); border-green: #10b981;
+      --layer-blue: rgba(59, 130, 246, 0.15); border-blue: #3b82f6;
+      --layer-purple: rgba(139, 92, 246, 0.15); border-purple: #8b5cf6;
+      --layer-orange: rgba(245, 158, 11, 0.15); border-orange: #f59e0b;
+      --layer-red: rgba(239, 68, 68, 0.15); border-red: #ef4444;
+      --layer-gray: rgba(156, 163, 175, 0.15); border-gray: #9ca3af;
+      --text-muted: #94a3b8;
       --bg-deep: #050505;
       --neon-blue: #3b82f6; --neon-cyan: #06b6d4; --neon-purple: #8b5cf6;
       --neon-pink: #ec4899; --neon-orange: #f59e0b; --neon-green: #10b981;
@@ -53,6 +60,131 @@
     .status-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(16, 185, 129, 0.1); color: #34d399; padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.2); }
     .status-dot { width: 6px; height: 6px; background: currentColor; border-radius: 50%; box-shadow: 0 0 10px currentColor; animation: blink 2s infinite; }
     @keyframes blink { 0%, 100% {opacity: 1;} 50% {opacity: 0.3;} }
+  
+    /* Flow Container */
+    .flow-wrapper {
+      max-width: 1000px;
+      margin: 4rem auto;
+      padding: 0 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .flow-title {
+      font-size: 3rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 3rem;
+      background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Layers */
+    .layer-row {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+    
+    .layer-label {
+      width: 120px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-align: right;
+      padding-right: 2rem;
+    }
+
+    .layer-card {
+      flex: 1;
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 1px solid;
+      position: relative;
+      background-color: var(--bg-color);
+      border-color: var(--border-color);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2), inset 0 1px 1px rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .layer-card:hover { 
+      transform: scale(1.02); 
+      z-index: 10;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.2);
+    }
+    
+    .layer-card h3 {
+      text-align: center;
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+      color: white;
+    }
+    .layer-card h3 span {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-family: 'Inter', sans-serif;
+      font-weight: 400;
+      margin-top: 0.25rem;
+    }
+
+    .grid-content {
+      display: grid;
+      gap: 1rem;
+    }
+    .g-col-2 { grid-template-columns: repeat(2, 1fr); }
+    .g-col-3 { grid-template-columns: repeat(3, 1fr); }
+
+    .box {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+    .box strong { display: block; color: white; margin-bottom: 0.25rem; font-size: 0.95rem; }
+    
+    .filter-box {
+      background: rgba(0,0,0,0.3);
+      border: 1px dashed rgba(255,255,255,0.2);
+      border-radius: 8px;
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .filter-box strong { color: #f8fafc; margin-bottom: 0.2rem; }
+    .filter-highlight { border-style: solid; border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.05); }
+
+    .arrow-down {
+      width: 100%;
+      height: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-family: monospace;
+      margin: -0.5rem 0;
+      position: relative;
+    }
+    .arrow-down::after {
+      content: '↓';
+      font-size: 1.5rem;
+      margin-top: 0.2rem;
+      opacity: 0.5;
+    }
   </style>
 </head>
 <body>
@@ -64,9 +196,9 @@
       <span style="letter-spacing: 1px; font-weight: 600;">SkillSync</span>
     </a>
     <div class="nav-extra" style="display:flex; gap: 1rem;">
-      <a href="/docs/frontend.html" class="nav-link-secondary" style="color:var(--text-muted); font-size:0.85rem;">Frontend</a>
-      <a href="/docs/backend.html" class="nav-link-secondary" style="color:var(--text-muted); font-size:0.85rem;">Backend</a>
-      <a href="/docs/deployment.html" class="nav-link-secondary" style="color:var(--text-muted); font-size:0.85rem;">Deployment</a>
+      <a href="/docs/frontend.html" class="nav-link-secondary" style="color:var(--text-muted); font-size:0.85rem; text-decoration:none;">Frontend</a>
+      <a href="/docs/backend.html" class="nav-link-secondary" style="color:var(--text-muted); font-size:0.85rem; text-decoration:none;">Backend</a>
+      <a href="/docs/deployment.html" class="nav-link-secondary" style="color:var(--text-muted); font-size:0.85rem; text-decoration:none;">Deployment</a>
     </div>
   </header>
 
@@ -97,6 +229,266 @@
     </div>
 
   </section>
+
+  <div class="flow-wrapper">
+    <h1 class="flow-title">Layered Architecture Flow</h1>
+
+    <!-- Layer 1 -->
+    <div class="layer-row">
+      <div class="layer-label">Layer 1</div>
+      <div class="layer-card" style="--bg-color: var(--layer-green); --border-color: var(--border-green);">
+        <h3>Browser / React<span>Redux + Axios interceptors</span></h3>
+      </div>
+    </div>
+
+    <div class="arrow-down">HTTPS (TLS encrypted)</div>
+
+    <!-- Layer 2 -->
+    <div class="layer-row">
+      <div class="layer-label">Layer 2</div>
+      <div class="layer-card" style="--bg-color: var(--layer-blue); --border-color: var(--border-blue);">
+        <h3>Nginx (entry gate)</h3>
+        <div class="grid-content g-col-2">
+          <div class="box">
+            <strong>Force HTTPS</strong>
+            SSL termination
+          </div>
+          <div class="box">
+            <strong>Security headers</strong>
+            MSTS - XSS - X-Frame
+          </div>
+        </div>
+        <div class="box" style="margin-top: 1rem;">
+          <strong>Reverse proxy &rarr; 127.0.0.1:8080</strong>
+          Adds X-Forwarded-For - X-Forwarded-Proto
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow-down">Internal HTTP (decrypted)</div>
+
+    <!-- Layer 3 -->
+    <div class="layer-row">
+      <div class="layer-label">Layer 3</div>
+      <div class="layer-card" style="--bg-color: var(--layer-purple); --border-color: var(--border-purple);">
+        <h3>API Gateway (Spring Cloud + Netty)</h3>
+        <div class="grid-content g-col-3">
+          <div class="box">
+            <strong>Rate limiting</strong>
+            10/5/100 req/min
+          </div>
+          <div class="box">
+            <strong>JWT validation</strong>
+            Sig + expiry check
+          </div>
+          <div class="box">
+            <strong>Header spoofing</strong>
+            Strip & re-inject
+          </div>
+        </div>
+        <div class="grid-content g-col-2" style="margin-top: 1rem;">
+          <div class="box">
+            <strong>Eureka service discovery</strong>
+            lb://auth-service, user-service
+          </div>
+          <div class="box">
+            <strong>Block internal routes</strong>
+            /api/auth/internal/** &rarr; 403
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow-down">Trusted X-User-* headers injected</div>
+
+    <!-- Layer 4 -->
+    <div class="layer-row">
+      <div class="layer-label">Layer 4</div>
+      <div class="layer-card" style="--bg-color: var(--layer-orange); --border-color: var(--border-orange);">
+        <h3>Apache Tomcat (auth-service)</h3>
+        <div class="grid-content g-col-2">
+          <div class="box">
+            <strong>NioEndpoint</strong>
+            Thread pool assign
+          </div>
+          <div class="box">
+            <strong>Http11Processor + CoyoteAdapter</strong>
+            TCP bytes &rarr; HttpServletRequest
+          </div>
+        </div>
+        <div class="box" style="margin-top: 1rem;">
+          <strong>DelegatingFilterProxy &rarr; springSecurityFilterChain</strong>
+          bridge between Tomcat &rarr; Spring Security
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow-down"></div>
+
+    <!-- Layer 5 -->
+    <div class="layer-row">
+      <div class="layer-label">Layer 5</div>
+      <div class="layer-card" style="--bg-color: var(--layer-red); --border-color: var(--border-red);">
+        <h3>Spring Security filter chain</h3>
+        
+        <div class="grid-content g-col-2">
+          <div class="filter-box">
+            <strong>SecurityContextPersistenceFilter</strong>
+            load + clear ThreadLocal
+          </div>
+          <div class="filter-box">
+            <strong>HeaderWriterFilter + CorsFilter</strong>
+            XSS - clickjack - CORS headers
+          </div>
+          <div class="filter-box">
+            <strong>CsrfFilter (disabled)</strong>
+            JWT = stateless, no session
+          </div>
+          <div class="filter-box">
+            <strong>LogoutFilter</strong>
+            clears context + /logout
+          </div>
+        </div>
+        
+        <div class="filter-box filter-highlight" style="margin: 0.5rem 0;">
+          <strong>⭐ JwtAuthenticationFilter (custom)</strong>
+          Extract &rarr; verify sig &rarr; check expiry &rarr; set SecurityContextHolder
+        </div>
+
+        <div class="grid-content g-col-2">
+          <div class="filter-box">
+            <strong>AnonymousAuthenticationFilter</strong>
+            assign guest if no JWT
+          </div>
+          <div class="filter-box">
+            <strong>ExceptionTranslationFilter</strong>
+            AuthException&rarr;401 - AccessDenied&rarr;403
+          </div>
+        </div>
+
+        <div class="filter-box filter-highlight" style="margin-top: 0.5rem;">
+          <strong>⭐ FilterSecurityInterceptor</strong>
+          Role check - @PreAuthorize - AffirmativeBased voting
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow-down"></div>
+
+    <!-- Layer 6 -->
+    <div class="layer-row">
+      <div class="layer-label">Layer 6</div>
+      <div class="layer-card" style="--bg-color: rgba(6, 95, 70, 0.3); --border-color: #10b981;">
+        <h3>Spring MVC / DispatcherServlet</h3>
+        <div class="grid-content g-col-2">
+          <div class="box">
+            <strong>AuthController.login()</strong>
+            receives LoginRequest DTO
+          </div>
+          <div class="box">
+            <strong>AuthService.login()</strong>
+            delegates to AuthManager
+          </div>
+          <div class="box">
+            <strong>ProviderManager</strong>
+            loops auth providers
+          </div>
+          <div class="box">
+            <strong>DaoAuthProvider</strong>
+            UserDetailsService + BCrypt
+          </div>
+        </div>
+        <div class="box" style="margin-top: 1rem;">
+          <strong>@RestControllerAdvice handles business exceptions</strong>
+          (Filter exceptions &rarr; ExceptionTranslationFilter, not ControllerAdvice)
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow-down"></div>
+
+    <!-- Layer 7 -->
+    <div class="layer-row">
+      <div class="layer-label">Layer 7</div>
+      <div class="layer-card" style="--bg-color: rgba(55, 65, 81, 0.4); --border-color: #9ca3af;">
+        <h3>Security internals</h3>
+        <div class="grid-content g-col-2">
+          <div class="box">
+            <strong>ThreadLocal / SecurityContext</strong>
+            per-thread user identity - cleared after request
+          </div>
+          <div class="box">
+            <strong>BCrypt password hashing</strong>
+            slow + salted &rarr; brute-force safe - password cleared post-auth
+          </div>
+          <div class="box">
+            <strong>JWT (HS256)</strong>
+            header.payload.sig - stateless + signed
+          </div>
+          <div class="box">
+            <strong>Token storage strategy</strong>
+            Access &rarr; Redux/localStorage<br/>Refresh &rarr; HttpOnly cookie
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow-down"></div>
+
+    <!-- Layer 8 -->
+    <div class="layer-row">
+      <div class="layer-label">Layer 8</div>
+      <div class="layer-card" style="--bg-color: rgba(13, 148, 136, 0.2); --border-color: #14b8a6;">
+        <h3>Data + cache layer</h3>
+        <div class="grid-content g-col-2">
+          <div class="box">
+            <strong>PostgreSQL</strong>
+            users - refresh tokens - roles<br/>refresh token rotation (DB)
+          </div>
+          <div class="box">
+            <strong>Redis (caching)</strong>
+            user profile cache + eviction<br/>JWT blacklist (planned TTL)
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow-down"></div>
+
+    <!-- Layer 9 -->
+    <div class="layer-row">
+      <div class="layer-label">Layer 9</div>
+      <div class="layer-card" style="--bg-color: rgba(29, 78, 216, 0.2); --border-color: #2563eb;">
+        <h3>Response flow back</h3>
+        <div class="grid-content g-col-2">
+          <div class="box">
+            <strong>Access token &rarr; body</strong>
+            Refresh &rarr; HttpOnly cookie (Secure - SameSite=None)
+          </div>
+          <div class="box">
+            <strong>Nginx re-encrypts</strong>
+            HTTPS back to browser<br/>Thread cleaned (ThreadLocal)
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow-down"></div>
+
+    <!-- Layer 10 -->
+    <div class="layer-row">
+      <div class="layer-label">Layer 10</div>
+      <div class="layer-card" style="--bg-color: rgba(16, 185, 129, 0.15); --border-color: #10b981;">
+        <h3>Browser state update</h3>
+        <div class="box">
+          <strong>Redux authSlice: isAuthenticated=true</strong>
+          ProtectedRoute unlocks &rarr; dashboard<br/>
+          Self-healing: 401 &rarr; /refresh &rarr; retry
+        </div>
+      </div>
+    </div>
+
+  </div> <!-- End flow wrapper -->
 
   <!-- LANDSCAPE -->
   <section class="stream-container">
@@ -134,6 +526,24 @@
         const rect = card.getBoundingClientRect();
         card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
         card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+      });
+    });
+  
+    document.addEventListener("DOMContentLoaded", () => {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity = 1;
+            entry.target.style.transform = 'translateY(0)';
+          }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('.layer-row').forEach((row, i) => {
+        row.style.opacity = 0;
+        row.style.transform = 'translateY(20px)';
+        row.style.transition = `all 0.6s ease ${i * 0.1}s`;
+        observer.observe(row);
       });
     });
   </script>
