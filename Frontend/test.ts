@@ -444,7 +444,7 @@ describe('axios service', () => {
       response: { status: 401 },
     };
     
-    try { await loaded.responseErrorHandler?.(error); } catch (e) {}
+    try { await loaded.responseErrorHandler?.(error); } catch (_e) { /* expected rejection */ }
     
     global.window = originalWindow;
     expect(mockAssign).toHaveBeenCalledWith('/login');

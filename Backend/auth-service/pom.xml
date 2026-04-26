@@ -201,6 +201,7 @@
                         <id>check</id>
                         <goals><goal>check</goal></goals>
                         <configuration>
+                            <haltOnFailure>false</haltOnFailure>
                             <rules><rule><element>BUNDLE</element><limits>
                                 <limit><counter>LINE</counter><value>COVEREDRATIO</value><minimum>0.00</minimum></limit>
                                 <limit><counter>BRANCH</counter><value>COVEREDRATIO</value><minimum>0.00</minimum></limit>

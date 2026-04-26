@@ -84,9 +84,8 @@ describe('AuthLoader', () => {
   });
 
   it('logs error if user not authenticated on load (catch block)', async () => {
-    const api = require('../../services/axios').default;
-    api.get.mockRejectedValueOnce({ response: { status: 403 } });
-    api.post.mockRejectedValueOnce({});
+    mockedApi.get.mockRejectedValueOnce({ response: { status: 403 } });
+    mockedApi.post.mockRejectedValueOnce({});
     const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
     renderWithProviders(

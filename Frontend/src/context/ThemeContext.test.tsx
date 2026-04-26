@@ -61,12 +61,12 @@ describe('ThemeContext', () => {
 
   it('returns light theme if window is undefined', () => {
     const originalWindow = global.window;
-    // @ts-ignore
+    // @ts-expect-error -- intentionally deleting window for SSR test
     delete global.window;
     const { ThemeProvider: RealThemeProvider } = jest.requireActual('./ThemeContext');
     let themeValue = undefined;
     function TestComponent() {
-      // @ts-ignore
+      // @ts-expect-error -- calling useTheme outside normal context for coverage
       const { theme } = jest.requireActual('./ThemeContext').useTheme();
       themeValue = theme;
       return null;
