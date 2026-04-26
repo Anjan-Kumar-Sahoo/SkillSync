@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -29,6 +31,18 @@ class SkillControllerTest {
     @MockitoBean private SkillQueryService skillQueryService;
 
     @Test
+    @DisplayName("GET /api/skills - returns paged results")
+    void getAllSkills_shouldReturnPage() throws Exception {
+        when(skillQueryService.getAllSkills(any())).thenReturn(new PageImpl<>(List.of(
+                new SkillResponse(1L, "Java", "Programming", "Java lang", true)
+        ), PageRequest.of(0, 20), 1));
+
+        mockMvc.perform(get("/api/skills").param("page", "0").param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].name").value("Java"));
+    }
+
+    @Test
     @DisplayName("GET /api/skills/{id} - returns skill")
     void getSkillById_shouldReturn200() throws Exception {
         SkillResponse response = new SkillResponse(1L, "Java", "Programming", "Java lang", true);
@@ -37,6 +51,19 @@ class SkillControllerTest {
         mockMvc.perform(get("/api/skills/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Java"));
+    }
+
+    @Test
+    @DisplayName("GET /api/skills/batch - returns results for ids")
+    void getSkillsByIds_shouldReturn200() throws Exception {
+        when(skillQueryService.getSkillsByIds(List.of(1L, 2L))).thenReturn(List.of(
+                new SkillResponse(1L, "Java", "Programming", "Java lang", true),
+                new SkillResponse(2L, "Spring", "Programming", "Spring framework", true)
+        ));
+
+        mockMvc.perform(get("/api/skills/batch").param("ids", "1", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[1].name").value("Spring"));
     }
 
     @Test
@@ -51,6 +78,31 @@ class SkillControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Java"));
+    }
+
+    @Test
+    @DisplayName("POST /api/skills - invalid payload returns 400")
+    void createSkill_shouldReturn400ForInvalidPayload() throws Exception {
+        CreateSkillRequest request = new CreateSkillRequest("", "Programming", "Java lang");
+
+        mockMvc.perform(post("/api/skills")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("PUT /api/skills/{id} - updates skill")
+    void updateSkill_shouldReturn200() throws Exception {
+        CreateSkillRequest request = new CreateSkillRequest("Java 21", "Programming", "Java lang");
+        SkillResponse response = new SkillResponse(1L, "Java 21", "Programming", "Java lang", true);
+        when(skillCommandService.updateSkill(eq(1L), any())).thenReturn(response);
+
+        mockMvc.perform(put("/api/skills/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Java 21"));
     }
 
     @Test

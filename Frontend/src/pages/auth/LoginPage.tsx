@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, type SyntheticEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
@@ -8,10 +8,125 @@ import { setCredentials } from '../../store/slices/authSlice';
 import api from '../../services/axios';
 import { useToast } from '../../components/ui/Toast';
 import logo from '../../assets/skillsync-logo.png';
+import type { UserSummary } from '../../types';
+
+type LoginFormValues = {
+  email: string;
+  password: string;
+};
+
+type OAuthProfile = {
+  provider: string;
+  providerId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+};
+
+type ApiError = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+};
+
+type NormalizedAuthPayload = {
+  user?: UserSummary;
+  accessToken?: string;
+  refreshToken?: string;
+  passwordSetupRequired?: boolean;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const toUserSummary = (value: unknown): UserSummary | null => {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const id = Number(value.id);
+  if (!Number.isFinite(id)) {
+    return null;
+  }
+
+  const email = value.email;
+  const role = value.role;
+  const firstName = value.firstName;
+  const lastName = value.lastName;
+
+  if (
+    typeof email !== 'string' ||
+    typeof role !== 'string' ||
+    typeof firstName !== 'string' ||
+    typeof lastName !== 'string'
+  ) {
+    return null;
+  }
+
+  return {
+    id,
+    email,
+    role,
+    firstName,
+    lastName,
+  };
+};
+
+const parseJsonSafely = (value: unknown) => {
+  if (typeof value !== 'string') return value;
+
+  const trimmed = value.trim();
+  if (!trimmed) return value;
+
+  if (!(trimmed.startsWith('{') || trimmed.startsWith('['))) {
+    return value;
+  }
+
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    return value;
+  }
+};
+
+const normalizeAuthPayload = (payload: unknown): NormalizedAuthPayload => {
+  const parsed = parseJsonSafely(payload);
+  const parsedRecord = isRecord(parsed) ? parsed : {};
+  const candidate = parseJsonSafely(parsedRecord.data);
+  const normalized = isRecord(candidate) ? candidate : parsedRecord;
+
+  const nestedUser = toUserSummary(parseJsonSafely(normalized.user));
+  if (nestedUser) {
+    return {
+      user: nestedUser,
+      accessToken: typeof normalized.accessToken === 'string' ? normalized.accessToken : undefined,
+      refreshToken: typeof normalized.refreshToken === 'string' ? normalized.refreshToken : undefined,
+      passwordSetupRequired: normalized.passwordSetupRequired === true,
+    };
+  }
+
+  const directUser = toUserSummary(normalized);
+  if (directUser) {
+    return {
+      user: directUser,
+      accessToken: typeof normalized.accessToken === 'string' ? normalized.accessToken : undefined,
+      refreshToken: typeof normalized.refreshToken === 'string' ? normalized.refreshToken : undefined,
+      passwordSetupRequired: normalized.passwordSetupRequired === true,
+    };
+  }
+
+  return {
+    accessToken: typeof normalized.accessToken === 'string' ? normalized.accessToken : undefined,
+    refreshToken: typeof normalized.refreshToken === 'string' ? normalized.refreshToken : undefined,
+    passwordSetupRequired: normalized.passwordSetupRequired === true,
+  };
+};
 
 const LoginPage = () => {
   // ... existing form hooks ...
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { showToast } = useToast();
@@ -27,55 +142,70 @@ const LoginPage = () => {
   }, [searchParams, setSearchParams, showToast]);
 
   const loginMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: LoginFormValues) => {
       const response = await api.post('/api/auth/login', data);
       return response.data;
     },
     onSuccess: (data) => {
+      const normalized = normalizeAuthPayload(data);
+      const authenticatedUser = normalized?.user;
+
+      if (!authenticatedUser) {
+        throw new Error('Invalid login response payload');
+      }
+
       dispatch(setCredentials({
-        user: data.user,
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
+        user: authenticatedUser,
+        accessToken: normalized.accessToken,
+        refreshToken: normalized.refreshToken,
       }));
       
-      const role = data.user.role;
+      const role = authenticatedUser.role;
       if (role === 'ROLE_ADMIN') navigate('/admin');
       else if (role === 'ROLE_MENTOR') navigate('/mentor');
       else navigate('/learner');
     },
-    onError: (error: any) => {
-      const message = error.response?.data?.message || 'Invalid credentials. Please try again.';
+    onError: (error: unknown) => {
+      const message = (error as ApiError)?.response?.data?.message || 'Invalid credentials. Please try again.';
       showToast({ message, type: 'error' });
     }
   });
 
   const oauthMutation = useMutation({
-    mutationFn: async (profile: any) => {
+    mutationFn: async (profile: OAuthProfile) => {
       const response = await api.post('/api/auth/oauth-login', profile);
       return response.data;
     },
     onSuccess: (data, variables) => {
-      if (data.passwordSetupRequired) {
+      const normalized = normalizeAuthPayload(data);
+
+      if (normalized?.passwordSetupRequired) {
         navigate('/setup-password', { state: { email: variables.email } });
       } else {
+        const authenticatedUser = normalized?.user;
+
+        if (!authenticatedUser) {
+          throw new Error('Invalid OAuth response payload');
+        }
+
         dispatch(setCredentials({
-          user: data.user,
-          accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
+          user: authenticatedUser,
+          accessToken: normalized.accessToken,
+          refreshToken: normalized.refreshToken,
         }));
-        const role = data.user.role;
+        const role = authenticatedUser.role;
         if (role === 'ROLE_ADMIN') navigate('/admin');
         else if (role === 'ROLE_MENTOR') navigate('/mentor');
         else navigate('/learner');
       }
     },
-    onError: (error: any) => {
-      const message = error.response?.data?.message || 'OAuth login failed.';
+    onError: (error: unknown) => {
+      const message = (error as ApiError)?.response?.data?.message || 'OAuth login failed.';
       showToast({ message, type: 'error' });
     }
   });
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: LoginFormValues) => {
     loginMutation.mutate(data);
   };
 
@@ -115,7 +245,9 @@ const LoginPage = () => {
           src={logo} 
           alt="SkillSync Logo" 
           className="w-12 h-12 object-contain hover:scale-110 transition duration-500" 
-          onError={(e: any) => { e.target.src = 'https://via.placeholder.com/48?text=S'; }} 
+          onError={(event: SyntheticEvent<HTMLImageElement>) => {
+            event.currentTarget.src = 'https://via.placeholder.com/48?text=S';
+          }} 
         />
         <h1 className="text-4xl font-black tracking-tighter text-on-surface">SkillSync</h1>
       </div>
@@ -126,8 +258,9 @@ const LoginPage = () => {
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label className="text-sm font-semibold text-on-surface-variant block mb-1">Email</label>
+            <label htmlFor="login-email" className="text-sm font-semibold text-on-surface-variant block mb-1">Email</label>
             <input 
+              id="login-email"
               type="email" 
               {...register('email', { required: 'Email is required' })} 
               className="w-full h-12 px-4 bg-surface-container-low border border-outline-variant/30 rounded-xl focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all duration-200" 
@@ -138,10 +271,11 @@ const LoginPage = () => {
 
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="text-sm font-semibold text-on-surface-variant">Password</label>
+              <label htmlFor="login-password" className="text-sm font-semibold text-on-surface-variant">Password</label>
               <Link to="/forgot-password" className="text-sm font-bold text-primary hover:underline">Forgot password?</Link>
             </div>
             <input 
+              id="login-password"
               type="password" 
               {...register('password', { required: 'Password is required' })} 
               className="w-full h-12 px-4 bg-surface-container-low border border-outline-variant/30 rounded-xl focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all duration-200" 

@@ -109,4 +109,25 @@ class NotificationServiceTest {
         verify(notificationRepository).delete(testNotification);
         verify(cacheService).evict(CacheService.vKey("notification:unread:100"));
     }
+
+    @Test
+    @DisplayName("Mark all as read - updates repository and evicts unread cache")
+    void markAllAsRead_shouldInvalidateUnreadCache() {
+        notificationCommandService.markAllAsRead(100L);
+
+        verify(notificationRepository).markAllAsRead(100L);
+        verify(cacheService).evict(CacheService.vKey("notification:unread:100"));
+    }
+
+    @Test
+    @DisplayName("Delete all notifications - returns count and evicts cache")
+    void deleteAllNotifications_shouldReturnDeletedCount() {
+        when(notificationRepository.deleteAllByUserId(100L)).thenReturn(7);
+
+        int deleted = notificationCommandService.deleteAllNotifications(100L);
+
+        assertEquals(7, deleted);
+        verify(notificationRepository).deleteAllByUserId(100L);
+        verify(cacheService).evict(CacheService.vKey("notification:unread:100"));
+    }
 }

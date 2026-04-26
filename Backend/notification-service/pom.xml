@@ -84,6 +84,25 @@
                             <goal>report</goal>
                         </goals>
                     </execution>
+                    <execution>
+                        <id>check</id>
+                        <goals><goal>check</goal></goals>
+                        <configuration>
+                            <rules><rule><element>BUNDLE</element><limits>
+                                <limit><counter>LINE</counter><value>COVEREDRATIO</value><minimum>0.70</minimum></limit>
+                                <limit><counter>BRANCH</counter><value>COVEREDRATIO</value><minimum>0.70</minimum></limit>
+                            </limits></rule></rules>
+                            <excludes>
+                                <exclude>com/skillsync/notification/dto/**</exclude>
+                                <exclude>com/skillsync/notification/entity/**</exclude>
+                                <exclude>com/skillsync/notification/enums/**</exclude>
+                                <exclude>com/skillsync/notification/config/**</exclude>
+                                <exclude>com/skillsync/notification/event/**</exclude>
+                                <exclude>com/skillsync/notification/feign/**</exclude>
+                                <exclude>com/skillsync/notification/NotificationServiceApplication.class</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>

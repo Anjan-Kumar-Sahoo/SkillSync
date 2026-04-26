@@ -118,3 +118,16 @@ docker-compose.override.yml
 coverage/
 .nyc_output/
 *.pid.lock
+# Added by code-review-graph
+.code-review-graph/
+.kiro/
+
+# code-review-graph integration artifacts
+.claude/
+.cursorrules
+.windsurfrules
+.mcp.json
+.opencode.json
+AGENTS.md
+CLAUDE.md
+GEMINI.md

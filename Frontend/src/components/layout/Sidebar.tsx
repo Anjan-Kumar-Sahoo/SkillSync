@@ -1,3 +1,4 @@
+import type { SyntheticEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { logout } from '../../store/slices/authSlice';
@@ -56,7 +57,14 @@ const Sidebar = ({ role }: SidebarProps) => {
       <div className="flex flex-col flex-1 overflow-y-auto w-full scrollbar-hide">
         {/* LOGO SECTION */}
         <div className="flex items-center justify-center lg:justify-start lg:px-6 h-20 shrink-0 border-b border-outline-variant/10">
-          <img src={logo} alt="SkillSync logo" className="w-10 h-10 object-contain hover:scale-105 transition duration-300" onError={(e: any) => { e.target.src = 'https://via.placeholder.com/40'; }} />
+          <img
+            src={logo}
+            alt="SkillSync logo"
+            className="w-10 h-10 object-contain hover:scale-105 transition duration-300"
+            onError={(event: SyntheticEvent<HTMLImageElement>) => {
+              event.currentTarget.src = 'https://via.placeholder.com/40';
+            }}
+          />
           <div className="hidden lg:flex flex-col ml-3">
             <span className="text-lg font-black text-primary tracking-tight leading-tight">SkillSync</span>
             <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">{role.replace('ROLE_', '')}</span>

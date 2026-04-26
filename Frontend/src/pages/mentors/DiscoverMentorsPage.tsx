@@ -1,8 +1,44 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/axios';
 import PageLayout from '../../components/layout/PageLayout';
+
+type MentorSkill =
+  | string
+  | {
+      id?: number;
+      skillId?: number;
+      name?: string;
+    };
+
+type MentorCard = {
+  id: number;
+  firstName?: string;
+  lastName?: string;
+  headline?: string;
+  avgRating?: number;
+  rating?: number;
+  totalSessions?: number;
+  skills?: MentorSkill[];
+  hourlyRate?: number;
+};
+
+type MentorSearchResponse = {
+  content?: MentorCard[];
+  totalElements?: number;
+  last?: boolean;
+};
+
+type SkillOption = string | { id?: number; name?: string };
+
+const hasSameMentorIds = (previous: MentorCard[], next: MentorCard[]): boolean => {
+  if (previous.length !== next.length) {
+    return false;
+  }
+
+  return previous.every((mentor, index) => mentor?.id === next[index]?.id);
+};
 
 const DiscoverMentorsPage = () => {
   const navigate = useNavigate();
@@ -12,28 +48,36 @@ const DiscoverMentorsPage = () => {
 
   const [page, setPage] = useState(0);
   
-  const [mentorsList, setMentorsList] = useState<any[]>([]);
+  const [mentorsList, setMentorsList] = useState<MentorCard[]>([]);
   const [totalElements, setTotalElements] = useState(0);
   const [isLast, setIsLast] = useState(true);
 
   // Fetch Skills for dropdown
   const { data: skillsData } = useQuery({
     queryKey: ['skills', 'catalog'],
-    queryFn: async () => {
+    queryFn: async (): Promise<SkillOption[]> => {
       try {
         const size = 200;
         const pagesToFetch = 10;
-        const collected: any[] = [];
+        const collected: SkillOption[] = [];
 
         for (let page = 0; page < pagesToFetch; page += 1) {
           const res = await api.get(`/api/skills?page=${page}&size=${size}`, { _skipErrorRedirect: true } as any);
-          const content = Array.isArray(res.data?.content) ? res.data.content : [];
+          const content = Array.isArray(res.data?.content) ? (res.data.content as SkillOption[]) : [];
           if (content.length === 0) break;
           collected.push(...content);
           if (res.data?.last !== false) break;
         }
 
-        const uniqueById = new Map(collected.map((skill) => [skill.id, skill]));
+        const uniqueById = new Map(
+          collected.map((skill) => {
+            if (typeof skill === 'string') {
+              return [`skill:${skill}`, skill] as const;
+            }
+
+            return [`skill:${skill.id ?? skill.name ?? 'unknown'}`, skill] as const;
+          }),
+        );
         return Array.from(uniqueById.values());
       } catch {
         return [];
@@ -44,7 +88,7 @@ const DiscoverMentorsPage = () => {
   const skills = Array.isArray(skillsData) ? skillsData : [];
 
   // Fetch Mentors
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<MentorSearchResponse>({
     queryKey: ['mentors', 'search', page, appliedFilters.skill, appliedFilters.rating, appliedFilters.priceRange],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -69,24 +113,27 @@ const DiscoverMentorsPage = () => {
       }
 
       const res = await api.get(`/api/mentors/search?${params.toString()}`);
-      return res.data;
-    }
-  });
+      return res.data as MentorSearchResponse;
+    },
+    onSuccess: (nextData) => {
+      const incomingMentors = Array.isArray(nextData.content) ? nextData.content : [];
 
-  useEffect(() => {
-    if (data) {
       if (page === 0) {
-        setMentorsList(data.content || []);
+        setMentorsList((prev) => (hasSameMentorIds(prev, incomingMentors) ? prev : incomingMentors));
       } else {
-        setMentorsList(prev => {
-          const newItems = (data.content || []).filter((item: any) => !prev.some(p => p.id === item.id));
-          return [...prev, ...newItems];
+        setMentorsList((prev) => {
+          const newItems = incomingMentors.filter((item) => !prev.some((current) => current.id === item.id));
+          return newItems.length === 0 ? prev : [...prev, ...newItems];
         });
       }
-      setTotalElements(data.totalElements || 0);
-      setIsLast(data.last ?? true);
-    }
-  }, [data, page]);
+
+      const nextTotalElements = Number.isFinite(Number(nextData.totalElements)) ? Number(nextData.totalElements) : 0;
+      setTotalElements((prev) => (prev === nextTotalElements ? prev : nextTotalElements));
+
+      const nextIsLast = nextData.last ?? true;
+      setIsLast((prev) => (prev === nextIsLast ? prev : nextIsLast));
+    },
+  });
 
   const applyFilters = () => {
     setPage(0);
@@ -133,7 +180,7 @@ const DiscoverMentorsPage = () => {
             className="w-full h-10 bg-surface-container px-3 rounded-lg text-sm font-semibold outline-none focus:ring-1 focus:ring-primary border border-transparent"
           >
             <option value="">All Skills</option>
-            {skills.map((s: any) => (
+            {skills.map((s) => (
               <option key={typeof s === 'string' ? s : (s.id ?? s.name)} value={typeof s === 'string' ? s : s.name}>
                 {typeof s === 'string' ? s : s.name}
               </option>
@@ -232,7 +279,7 @@ const DiscoverMentorsPage = () => {
                     </div>
                   
                     <div className="flex flex-wrap gap-1.5 mb-6 mt-auto">
-                      {(mentor.skills || []).slice(0, 3).map((skill: any, i: number) => (
+                      {(mentor.skills || []).slice(0, 3).map((skill, i: number) => (
                         <span key={i} className="bg-surface-container-low text-on-surface-variant text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider border border-outline-variant/10">
                           {typeof skill === 'string' ? skill : (skill.name || `Skill #${skill.skillId}`)}
                         </span>

@@ -5,11 +5,78 @@ import api from '../../services/axios';
 import { useToast } from '../../components/ui/Toast';
 import { formatDateTimeIST } from '../../utils/dateTime';
 
+type RazorpayPaymentResponse = {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+};
+
+type VerifyPaymentRequestPayload = {
+  razorpayOrderId: string;
+  razorpayPaymentId: string;
+  razorpaySignature: string;
+};
+
+type RazorpayOptions = {
+  key: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  order_id: string;
+  handler: (response: RazorpayPaymentResponse) => void;
+  modal: {
+    ondismiss: () => Promise<void>;
+  };
+  theme: {
+    color: string;
+  };
+};
+
+type ApiError = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
 declare global {
   interface Window {
-    Razorpay: any;
+    Razorpay: new (options: RazorpayOptions) => { open: () => void };
   }
 }
+
+const parseJsonSafely = (value: unknown) => {
+  if (typeof value !== 'string') return value;
+
+  const trimmed = value.trim();
+  if (!trimmed) return value;
+
+  if (!(trimmed.startsWith('{') || trimmed.startsWith('['))) {
+    return value;
+  }
+
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    return value;
+  }
+};
+
+const extractSessionId = (payload: unknown): number | null => {
+  const parsed = parseJsonSafely(payload);
+  const parsedRecord = isRecord(parsed) ? parsed : {};
+  const candidate = parseJsonSafely(parsedRecord.data);
+  const sessionData = isRecord(candidate) ? candidate : parsedRecord;
+
+  const rawId = sessionData?.id ?? sessionData?.sessionId ?? sessionData?.referenceId;
+  const normalizedId = Number(rawId);
+  return Number.isFinite(normalizedId) ? normalizedId : null;
+};
 
 const CheckoutPage = () => {
   const { state } = useLocation();
@@ -34,32 +101,11 @@ const CheckoutPage = () => {
     };
   }, [state, navigate]);
 
-  if (!state) return null;
-
-  const { mentorId, mentorName, startTime, hourlyRate } = state;
-  const platformFee = hourlyRate * 0.05;
-  const totalAmount = hourlyRate + platformFee;
-
-  const formatTime = (iso: string) => {
-    return `${formatDateTimeIST(iso)} (60 min)`;
-  };
-
-  const rollbackPendingSession = async () => {
-    const sessionId = pendingSessionIdRef.current;
-    if (!sessionId) return;
-
-    try {
-      await api.put(`/api/sessions/${sessionId}/cancel`, undefined, { _skipErrorRedirect: true } as any);
-    } catch {
-      // Best-effort rollback to avoid stale REQUESTED sessions after payment interruption.
-    } finally {
-      pendingSessionIdRef.current = null;
-    }
-  };
-
   const verifyPaymentMutation = useMutation({
-    mutationFn: async (paymentDetails: any) => {
-      return api.post('/api/payments/verify', paymentDetails);
+    mutationFn: async (paymentDetails: VerifyPaymentRequestPayload) => {
+      return api.post('/api/payments/verify', paymentDetails, {
+        _skipErrorRedirect: true,
+      } as unknown as Record<string, unknown>);
     },
     onSuccess: () => {
       pendingSessionIdRef.current = null;
@@ -72,6 +118,31 @@ const CheckoutPage = () => {
       setLoadingStep('');
     }
   });
+
+  const rollbackPendingSession = async () => {
+    const sessionId = pendingSessionIdRef.current;
+    if (!sessionId) return;
+
+    try {
+      await api.put(`/api/sessions/${sessionId}/cancel`, undefined, {
+        _skipErrorRedirect: true,
+      } as unknown as Record<string, unknown>);
+    } catch {
+      // Best-effort rollback to avoid stale REQUESTED sessions after payment interruption.
+    } finally {
+      pendingSessionIdRef.current = null;
+    }
+  };
+
+  if (!state) return null;
+
+  const { mentorId, mentorName, startTime, hourlyRate } = state;
+  const platformFee = hourlyRate * 0.05;
+  const totalAmount = hourlyRate + platformFee;
+
+  const formatTime = (iso: string) => {
+    return `${formatDateTimeIST(iso)} (60 min)`;
+  };
 
   const handleConfirm = async () => {
     const normalizedMentorId = Number(mentorId);
@@ -88,8 +159,15 @@ const CheckoutPage = () => {
         description: `Checkout booking with ${mentorName}`,
         sessionDate: startTime,
         durationMinutes: 60,
-      });
-      const sessionId = sessionRes.data.id;
+      }, {
+        _skipErrorRedirect: true,
+      } as unknown as Record<string, unknown>);
+
+      const sessionId = extractSessionId(sessionRes.data);
+      if (!sessionId) {
+        throw new Error('Failed to reserve session. Missing session identifier.');
+      }
+
       pendingSessionIdRef.current = sessionId;
 
       setLoadingStep('order');
@@ -97,7 +175,9 @@ const CheckoutPage = () => {
         type: 'SESSION_BOOKING',
         referenceId: sessionId,
         referenceType: 'SESSION_BOOKING'
-      });
+      }, {
+        _skipErrorRedirect: true,
+      } as unknown as Record<string, unknown>);
       const { orderId, amount, currency, keyId } = orderRes.data;
 
       if (!window.Razorpay) {
@@ -114,7 +194,7 @@ const CheckoutPage = () => {
         name: 'SkillSync',
         description: `Mentoring Session with ${mentorName}`,
         order_id: orderId,
-        handler: async function (response: any) {
+        handler: async function (response: RazorpayPaymentResponse) {
           setLoadingStep('verify');
           verifyPaymentMutation.mutate({
             razorpayOrderId: response.razorpay_order_id,
@@ -137,10 +217,13 @@ const CheckoutPage = () => {
       const rzp = new window.Razorpay(options);
       rzp.open();
 
-    } catch (e: any) {
-      console.error(e);
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV !== 'test') {
+        console.error(error);
+      }
       await rollbackPendingSession();
-      showToast({ message: e.response?.data?.message || 'Failed to initialize checkout.', type: 'error' });
+      const message = (error as ApiError)?.response?.data?.message || 'Failed to initialize checkout.';
+      showToast({ message, type: 'error' });
       setLoadingStep('');
     }
   };
@@ -240,24 +323,24 @@ const CheckoutPage = () => {
         {paymentMethod === 'card' && (
           <div className="mb-8 space-y-4 animate-in slide-in-from-top-2 duration-300">
             <div>
-              <label className="text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest block mb-2 pl-1">Cardholder Name</label>
-              <input type="text" placeholder="John Doe" disabled={isProcessing} className="w-full h-12 bg-surface-container-low border border-outline-variant/20 rounded-xl px-4 text-sm font-semibold text-on-surface outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all disabled:opacity-50" />
+              <label htmlFor="checkout-cardholder-name" className="text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest block mb-2 pl-1">Cardholder Name</label>
+              <input id="checkout-cardholder-name" type="text" placeholder="John Doe" disabled={isProcessing} className="w-full h-12 bg-surface-container-low border border-outline-variant/20 rounded-xl px-4 text-sm font-semibold text-on-surface outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all disabled:opacity-50" />
             </div>
             <div>
-              <label className="text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest block mb-2 pl-1">Card Number</label>
+              <label htmlFor="checkout-card-number" className="text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest block mb-2 pl-1">Card Number</label>
               <div className="relative">
-                <input type="text" placeholder="**** **** **** 4452" disabled={isProcessing} className="w-full h-12 bg-surface-container-low border border-outline-variant/20 rounded-xl pl-4 pr-10 text-sm font-semibold text-on-surface outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all disabled:opacity-50 placeholder:text-on-surface-variant/60" />
+                <input id="checkout-card-number" type="text" placeholder="**** **** **** 4452" disabled={isProcessing} className="w-full h-12 bg-surface-container-low border border-outline-variant/20 rounded-xl pl-4 pr-10 text-sm font-semibold text-on-surface outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all disabled:opacity-50 placeholder:text-on-surface-variant/60" />
                 <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant/70 text-[20px]">lock</span>
               </div>
             </div>
             <div className="flex gap-4">
               <div className="flex-1">
-                <label className="text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest block mb-2 pl-1">Expiry (MM/YY)</label>
-                <input type="text" placeholder="12/26" disabled={isProcessing} className="w-full h-12 bg-surface-container-low border border-outline-variant/20 rounded-xl px-4 text-sm font-semibold text-on-surface outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all text-center disabled:opacity-50" />
+                <label htmlFor="checkout-expiry" className="text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest block mb-2 pl-1">Expiry (MM/YY)</label>
+                <input id="checkout-expiry" type="text" placeholder="12/26" disabled={isProcessing} className="w-full h-12 bg-surface-container-low border border-outline-variant/20 rounded-xl px-4 text-sm font-semibold text-on-surface outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all text-center disabled:opacity-50" />
               </div>
               <div className="flex-1">
-                <label className="text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest block mb-2 pl-1">CVV</label>
-                <input type="password" placeholder="123" disabled={isProcessing} className="w-full h-12 bg-surface-container-low border border-outline-variant/20 rounded-xl px-4 text-sm font-semibold text-on-surface outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all text-center placeholder:text-2xl pt-2 disabled:opacity-50" />
+                <label htmlFor="checkout-cvv" className="text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest block mb-2 pl-1">CVV</label>
+                <input id="checkout-cvv" type="password" placeholder="123" disabled={isProcessing} className="w-full h-12 bg-surface-container-low border border-outline-variant/20 rounded-xl px-4 text-sm font-semibold text-on-surface outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all text-center placeholder:text-2xl pt-2 disabled:opacity-50" />
               </div>
             </div>
           </div>

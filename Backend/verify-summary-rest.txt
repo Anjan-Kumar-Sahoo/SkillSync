@@ -1,0 +1,9 @@
+eureka-server,0
+config-server,0
+api-gateway,0
+auth-service,0
+user-service,0
+skill-service,0
+session-service,0
+notification-service,0
+payment-service,0

@@ -134,4 +134,34 @@ class PaymentSagaOrchestratorTest {
         verify(paymentRepository, atLeast(2)).save(verifiedPayment);
         verify(outboxEventService, times(2)).saveEvent(anyString(), anyString(), anyString(), any());
     }
+
+    @Test
+    @DisplayName("markPaymentSuccessWithEvents: invalid transition is ignored")
+    void markPaymentSuccess_invalidTransition_noSideEffects() {
+        verifiedPayment.setStatus(PaymentStatus.VERIFIED);
+
+        orchestrator.markPaymentSuccessWithEvents(verifiedPayment);
+
+        assertEquals(PaymentStatus.VERIFIED, verifiedPayment.getStatus());
+        verify(outboxEventService, never()).saveEvent(anyString(), anyString(), anyString(), any());
+        verify(paymentRepository, never()).save(any(Payment.class));
+    }
+
+    @Test
+    @DisplayName("executeSaga: outbox failure triggers compensation flow")
+    void executeSaga_whenBusinessActionFails_shouldCompensate() {
+        doThrow(new RuntimeException("Outbox unavailable"))
+                .when(outboxEventService)
+                .saveEvent(anyString(), eq("payment.business.action.v1"), anyString(), any());
+
+        when(sagaStateRepository.findByPaymentId(1L)).thenReturn(Optional.of(
+                SagaState.builder().paymentId(1L).state(PaymentStatus.SUCCESS_PENDING).retryCount(2).build()
+        ));
+
+        orchestrator.executeSaga(verifiedPayment);
+
+        assertEquals(PaymentStatus.COMPENSATED, verifiedPayment.getStatus());
+        verify(outboxEventService).saveEvent(anyString(), eq("payment.compensated.v1"), eq("payment.compensated"), any());
+        verify(sagaStateRepository, atLeastOnce()).save(any(SagaState.class));
+    }
 }

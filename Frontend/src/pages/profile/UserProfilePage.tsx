@@ -1,13 +1,34 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useDispatch } from 'react-redux';
-import userService from '../../services/userService';
+import type { AxiosError } from 'axios';
+import userService, { type UserProfile } from '../../services/userService';
 import PageLayout from '../../components/layout/PageLayout';
 import { useToast } from '../../components/ui/Toast';
 import type { RootState } from '../../store';
 import { updateUserName } from '../../store/slices/authSlice';
+
+type ProfileFormData = {
+  firstName: string;
+  lastName: string;
+  bio: string;
+  phone: string;
+  location: string;
+};
+
+type ApiErrorResponse = {
+  message?: string;
+};
+
+const toFormData = (profile?: UserProfile): ProfileFormData => ({
+  firstName: profile?.firstName || '',
+  lastName: profile?.lastName || '',
+  bio: profile?.bio || '',
+  phone: profile?.phone || '',
+  location: profile?.location || '',
+});
 
 const UserProfilePage = () => {
   const navigate = useNavigate();
@@ -17,43 +38,18 @@ const UserProfilePage = () => {
   const role = useSelector((state: RootState) => state.auth.role);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    bio: '',
-    phone: '',
-    location: '',
-  });
-  const [canSaveEdits, setCanSaveEdits] = useState(false);
+  const [formData, setFormData] = useState<ProfileFormData>(toFormData());
 
   // Fetch user profile
-  const { data: profile, isLoading } = useQuery({
+  const { data: profile, isLoading } = useQuery<UserProfile>({
     queryKey: ['user', 'profile'],
     queryFn: () => userService.getMyProfile(),
+    onSuccess: (nextProfile) => {
+      if (!isEditing) {
+        setFormData(toFormData(nextProfile));
+      }
+    },
   });
-
-  useEffect(() => {
-    if (!profile) return;
-
-    setFormData({
-      firstName: profile.firstName || '',
-      lastName: profile.lastName || '',
-      bio: profile.bio || '',
-      phone: profile.phone || '',
-      location: profile.location || '',
-    });
-  }, [profile]);
-
-  useEffect(() => {
-    if (!isEditing) {
-      setCanSaveEdits(false);
-      return;
-    }
-
-    // Prevent accidental immediate submit when switching from Edit button to Save button.
-    const timer = window.setTimeout(() => setCanSaveEdits(true), 600);
-    return () => window.clearTimeout(timer);
-  }, [isEditing]);
 
   // Update profile mutation
   const updateProfileMutation = useMutation({
@@ -77,15 +73,15 @@ const UserProfilePage = () => {
       }));
       queryClient.invalidateQueries({ queryKey: ['user', 'profile'] });
     },
-    onError: (error: any) => {
-      const msg = error?.response?.data?.message || 'Failed to update profile';
+    onError: (error: unknown) => {
+      const msg = (error as AxiosError<ApiErrorResponse>)?.response?.data?.message || 'Failed to update profile';
       showToast({ message: msg, type: 'error' });
     },
   });
 
 
   const handleSubmit = () => {
-    if (!isEditing || !canSaveEdits) {
+    if (!isEditing) {
       return;
     }
 
@@ -206,7 +202,10 @@ const UserProfilePage = () => {
                   {!isEditing ? (
                     <button
                       type="button"
-                      onClick={() => setIsEditing(true)}
+                      onClick={() => {
+                        setFormData(toFormData(profile));
+                        setIsEditing(true);
+                      }}
                       className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
                     >
                       Edit Profile
@@ -216,14 +215,17 @@ const UserProfilePage = () => {
                       <button
                         type="button"
                         onClick={handleSubmit}
-                        disabled={updateProfileMutation.isPending || !canSaveEdits}
+                        disabled={updateProfileMutation.isPending}
                         className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition disabled:opacity-50"
                       >
                         Save Changes
                       </button>
                       <button
                         type="button"
-                        onClick={() => setIsEditing(false)}
+                        onClick={() => {
+                          setFormData(toFormData(profile));
+                          setIsEditing(false);
+                        }}
                         className="flex-1 bg-gray-400 text-white py-2 rounded-lg hover:bg-gray-500 transition"
                       >
                         Cancel
@@ -246,6 +248,7 @@ const UserProfilePage = () => {
           )}
           <div className="space-y-3">
             <button
+              type="button"
               onClick={() => navigate('/settings/password')}
               className="w-full text-left p-4 rounded bg-gray-50 hover:bg-gray-100 transition border border-gray-200"
             >

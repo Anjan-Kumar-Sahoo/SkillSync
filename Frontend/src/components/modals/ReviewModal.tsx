@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import type { AxiosError } from 'axios';
 import api from '../../services/axios';
 import { useToast } from '../ui/Toast';
 
@@ -10,6 +11,10 @@ interface ReviewModalProps {
   sessionId: number;
   onSuccess: () => void;
 }
+
+type ReviewErrorResponse = {
+  message?: string;
+};
 
 const ReviewModal = ({ isOpen, onClose, mentorId, sessionId, onSuccess }: ReviewModalProps) => {
   const [rating, setRating] = useState(0);
@@ -37,8 +42,8 @@ const ReviewModal = ({ isOpen, onClose, mentorId, sessionId, onSuccess }: Review
       onSuccess();
       onClose();
     },
-    onError: (error: any) => {
-      const message = error?.response?.data?.message || 'Failed to submit review. Please try again.';
+    onError: (error: AxiosError<ReviewErrorResponse>) => {
+      const message = error.response?.data?.message || 'Failed to submit review. Please try again.';
       showToast({ message, type: 'error' });
     }
   });

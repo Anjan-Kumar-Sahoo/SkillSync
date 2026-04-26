@@ -23,6 +23,7 @@ import java.util.Optional;
 
 
 import static org.mockito.ArgumentMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.*;
 
 /**
@@ -124,5 +125,71 @@ class SagaRecoverySchedulerTest {
         // Verify saga state updated to COMPENSATED
         verify(sagaStateRepository).save(argThat(s ->
                 s.getState() == PaymentStatus.COMPENSATED));
+    }
+
+    @Test
+    @DisplayName("recoverStaleSagas: stale saga with missing payment is skipped safely")
+    void recoverStaleSagas_missingPayment_shouldSkip() {
+        SagaState staleSaga = SagaState.builder()
+                .id(11L).paymentId(404L).orderId("order_missing")
+                .state(PaymentStatus.SUCCESS_PENDING).retryCount(1)
+                .build();
+
+        when(sagaStateRepository.findStaleSagas(eq(PaymentStatus.SUCCESS_PENDING), any()))
+                .thenReturn(List.of(staleSaga));
+        when(paymentRepository.findById(404L)).thenReturn(Optional.empty());
+
+        assertDoesNotThrow(() -> scheduler.recoverStaleSagas());
+
+        verify(outboxEventService, never()).saveEvent(anyString(), anyString(), anyString(), any());
+        verify(sagaStateRepository, never()).save(argThat(s -> s.getPaymentId().equals(404L)));
+    }
+
+    @Test
+    @DisplayName("recoverStaleSagas: one failing saga does not block others")
+    void recoverStaleSagas_failureIsolation_shouldContinue() {
+        SagaState firstSaga = SagaState.builder()
+                .id(21L).paymentId(100L).orderId("order_first")
+                .state(PaymentStatus.SUCCESS_PENDING).retryCount(0)
+                .build();
+        SagaState secondSaga = SagaState.builder()
+                .id(22L).paymentId(200L).orderId("order_second")
+                .state(PaymentStatus.SUCCESS_PENDING).retryCount(0)
+                .build();
+
+        Payment firstPayment = Payment.builder()
+                .id(100L).userId(1L).type(PaymentType.SESSION_BOOKING)
+                .amount(900).razorpayOrderId("order_first")
+                .status(PaymentStatus.SUCCESS_PENDING)
+                .referenceId(10L).referenceType(ReferenceType.SESSION_BOOKING)
+                .build();
+        Payment secondPayment = Payment.builder()
+                .id(200L).userId(2L).type(PaymentType.SESSION_BOOKING)
+                .amount(900).razorpayOrderId("order_second")
+                .status(PaymentStatus.SUCCESS_PENDING)
+                .referenceId(20L).referenceType(ReferenceType.SESSION_BOOKING)
+                .build();
+
+        when(sagaStateRepository.findStaleSagas(eq(PaymentStatus.SUCCESS_PENDING), any()))
+                .thenReturn(List.of(firstSaga, secondSaga));
+        when(paymentRepository.findById(100L)).thenReturn(Optional.of(firstPayment));
+        when(paymentRepository.findById(200L)).thenReturn(Optional.of(secondPayment));
+
+        when(outboxEventService.saveEvent(
+                anyString(),
+                eq("payment.business.action.v1"),
+                eq("payment.business.action.retry"),
+                any()
+        )).thenThrow(new RuntimeException("outbox failure"))
+          .thenReturn("evt-retry-2");
+
+        assertDoesNotThrow(() -> scheduler.recoverStaleSagas());
+
+        verify(outboxEventService, times(2)).saveEvent(
+                anyString(),
+                eq("payment.business.action.v1"),
+                eq("payment.business.action.retry"),
+                any()
+        );
     }
 }

@@ -35,6 +35,7 @@ class SessionServiceTest {
     @Mock private CacheService cacheService;
     @Mock private AuthServiceClient authServiceClient;
     @Mock private MentorProfileClient mentorProfileClient;
+    @Mock private MentorMetricsService mentorMetricsService;
 
     @InjectMocks private SessionCommandService sessionCommandService;
     @InjectMocks private SessionQueryService sessionQueryService;
@@ -186,5 +187,57 @@ class SessionServiceTest {
         eq("session.cancelled"),
         any(com.skillsync.session.event.SessionEvent.class)
     );
+    }
+
+    @Test
+    @DisplayName("Create session - resolves mentor profile id to user id fallback")
+    void createSession_shouldResolveMentorProfileFallback() {
+        CreateSessionRequest request = new CreateSessionRequest(99L, "System Design", "Mentor fallback flow",
+                LocalDateTime.now().plusDays(3), 60);
+
+        Session resolvedSession = Session.builder()
+                .id(99L).mentorId(22L).learnerId(3L)
+                .topic("System Design").description("Mentor fallback flow")
+                .sessionDate(request.sessionDate())
+                .durationMinutes(60).status(SessionStatus.REQUESTED)
+                .build();
+
+        when(authServiceClient.getUserById(99L)).thenReturn(Map.of("role", "ROLE_LEARNER"));
+        when(mentorProfileClient.getMentorById(99L)).thenReturn(Map.of("userId", 22L));
+        when(authServiceClient.getUserById(22L)).thenThrow(new RuntimeException("auth temporarily unavailable"));
+        when(sessionRepository.existsByMentorIdAndLearnerIdAndSessionDateAndStatusIn(eq(22L), eq(3L), any(), anyList()))
+                .thenReturn(false);
+        when(sessionRepository.save(any(Session.class))).thenReturn(resolvedSession);
+
+        SessionResponse response = sessionCommandService.createSession(3L, request);
+
+        assertEquals(22L, response.mentorId());
+        verify(rabbitTemplate).convertAndSend(
+            eq("session.exchange"),
+            eq("session.requested"),
+            any(com.skillsync.session.event.SessionEvent.class)
+        );
+    }
+
+    @Test
+    @DisplayName("Rollback payment - already completed session is skipped")
+    void rollbackSessionPayment_completed_shouldSkipWithoutMutation() {
+        Session completed = Session.builder()
+                .id(44L).mentorId(2L).learnerId(3L)
+                .topic("Java Basics").description("done")
+                .sessionDate(LocalDateTime.now().minusDays(1))
+                .durationMinutes(60).status(SessionStatus.COMPLETED)
+                .build();
+
+        when(sessionRepository.findById(44L)).thenReturn(Optional.of(completed));
+
+        sessionCommandService.rollbackSessionPayment(44L, 3L, "ignored");
+
+        verify(sessionRepository, never()).save(any(Session.class));
+        verify(rabbitTemplate, never()).convertAndSend(
+            eq("session.exchange"),
+            eq("session.cancelled"),
+            any(com.skillsync.session.event.SessionEvent.class)
+        );
     }
 }

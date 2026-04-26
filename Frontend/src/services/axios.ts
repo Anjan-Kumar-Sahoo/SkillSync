@@ -21,10 +21,39 @@ if (isProd && configuredUrl && new URL(configuredUrl).hostname === 'skillsync.mr
 
 export const API_BASE_URL = configuredUrl || (isProd ? 'https://api.skillsync.mraks.dev' : 'http://localhost:8080');
 
+const parseJsonSafely = (value: unknown) => {
+  if (typeof value !== 'string') return value;
+
+  const trimmed = value.trim();
+  if (!trimmed) return value;
+
+  if (!(trimmed.startsWith('{') || trimmed.startsWith('['))) {
+    return value;
+  }
+
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    return value;
+  }
+};
+
+const redirectTo = (path: string) => {
+  if (typeof window === 'undefined') return;
+
+  if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
+    window.history.replaceState({}, '', path);
+    return;
+  }
+
+  window.location.assign(path);
+};
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
+  adapter: ['fetch', 'xhr', 'http'],
 });
 
 // REQUEST INTERCEPTOR — we no longer manually attach the token.
@@ -48,7 +77,10 @@ const processQueue = (error: any) => {
 };
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    response.data = parseJsonSafely(response.data);
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config || {};
     const requestUrl = originalRequest.url || '';
@@ -140,7 +172,7 @@ api.interceptors.response.use(
           }
 
           store.dispatch(logout());
-          window.location.href = '/login?reason=session_expired';
+          redirectTo('/login?reason=session_expired');
         }
 
         return Promise.reject(refreshError);
@@ -151,12 +183,12 @@ api.interceptors.response.use(
 
     // 403 — role forbidden
     if (error.response?.status === 403) {
-      window.location.href = '/unauthorized';
+      redirectTo('/unauthorized');
     }
 
     // 500 — server error fallback message (skip if caller opted out)
     if (error.response?.status >= 500 && error.response?.status !== 503 && !originalRequest._skipErrorRedirect) {
-      window.location.href = '/500';
+      redirectTo('/500');
     }
 
     // 429 / 503 — exponential backoff retry (max 3 times)

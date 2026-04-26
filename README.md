@@ -1,59 +1,121 @@
-﻿# SkillSync
+<div align="center">
+  <img src="./SkillSync_LOGO.png" alt="SkillSync Logo" width="200" />
+  <h1>SkillSync - Mentor Learning Platform</h1>
+  <p><i>A production-grade, highly scalable platform for mentorship programming and session management.</i></p>
+</div>
 
-SkillSync is a production-focused mentor-learning platform with role-based workflows, microservices architecture, and a React frontend.
+---
 
-## What this project demonstrates
-- End-to-end product flow: authentication, mentor discovery, session lifecycle, profile, payments
-- Microservices patterns: gateway-based auth, service discovery, config server, event-driven messaging
-- Reliability patterns: CQRS read/write split, Redis cache, resilient fallbacks, observability stack
-- Production deployment practice: Dockerized services and environment-driven configuration
+## 📖 Table of Contents
+- [About the Project](#about-the-project)
+- [Key Features](#key-features)
+- [System Architecture](#system-architecture)
+  - [Frontend Layer](#frontend-layer)
+  - [Backend Microservices Layer](#backend-microservices-layer)
+  - [Infrastructure & Data](#infrastructure--data)
+- [Technology Stack](#technology-stack)
+- [Deployment & DevOps](#deployment--devops)
+- [Observability & Monitoring](#observability--monitoring)
+- [Getting Started](#getting-started)
 
-## Architecture at a glance
-- Frontend: React + TypeScript + Redux Toolkit + React Query
-- Backend: API Gateway + 8 domain/infra services (Spring Boot)
-- Infrastructure: PostgreSQL, Redis, RabbitMQ, Zipkin, Prometheus, Grafana, Loki
-- Deployment: Docker Compose on EC2
+---
 
-## Roles
-- Learner: discover mentors, request sessions, join groups, review completed sessions
-- Mentor: manage availability, accept/reject requests, track sessions and profile
-- Admin: manage users and platform governance features
+## 🚀 About the Project
+**SkillSync** is a comprehensive, production-ready platform designed to bridge the gap between eager learners and experienced mentors. It features a robust role-based ecosystem supporting Learners, Mentors, and Administrators.
 
-## Core flows
-- Registration with OTP verification
-- Forgot password with OTP reset flow
-- Mentor onboarding and payment-linked workflows
-- Session request -> accept/reject -> complete -> review
+The system is built to demonstrate enterprise-level architecture: handling everything from secure end-to-end product flows (authentication, mentor discovery, session lifecycle, profile management, and payments) to resilient back-end operations (microservices, event-driven messaging, distributed caching, and container orchestration).
 
-## Current docs map
-- Project presentation guide: docs/00_Presentation_Playbook.md
-- Project overview: docs/01_Project_Overview_and_Viva_Prep.md
-- System and DB architecture: docs/02_System_and_Database_Architecture.md
-- Frontend architecture and API contract: docs/03_Frontend_Design_and_API_Contract.md
-- Security and auth: docs/04_Security_Auth_and_OAuth.md
-- CQRS and Redis: docs/05_CQRS_and_Redis_Caching.md
-- Deployment and infra: docs/06_Deployment_DevOps_and_Infrastructure.md
-- Testing strategy: docs/07_Testing_and_QA_Strategy.md
-- Observability: docs/08_Observability_and_Monitoring.md
-- Payment architecture: docs/09_Payment_Implementation_Guide.md
-- Production incidents and fixes: docs/10_Production_Readiness_and_Incident_Reports.md
-- Frontend implementation details: docs/11_Frontend_Complete_Implementation.md
+---
 
-## UI documentation for presentation
-- Frontend/public/docs/backend.html
-- Frontend/public/docs/frontend.html
-- Frontend/public/docs/deployment.html
+## ✨ Key Features
+- **Role-Based Workflows**: Distinct functionalities separated cleanly across Learners, Mentors, and Admins.
+- **Session Lifecycle Management**: Complete handling of request workflows, scheduling, real-time accept/reject capabilities, and post-session review systems.
+- **Advanced Security**: JWT-based authentication via an API Gateway, OTP verification workflows, and secure password-reset mechanisms.
+- **High-Performance Caching**: Incorporates CQRS (Command Query Responsibility Segregation) design alongside Redis distributed caching strategies.
+- **Fully Asynchronous**: Employs RabbitMQ for decoupled event-driven data streaming (e.g., mail processing, audit logging).
 
-## Manual deployment workflow (current)
-1. Push code to GitHub
-2. Build and push changed Docker image(s) to Docker Hub
-3. SSH into EC2 and run:
-   - git pull
-   - docker compose pull
-   - docker compose up -d --remove-orphans
+---
 
-## Recent implementation highlights
-- Added dedicated reset-password page for OTP + new password
-- Upgraded password setup UX with visibility toggle and live constraints
-- Removed learner-only mentor search action from mentor context
-- Updated profile avatar editing path via avatarUrl persistence
+## 🏛 System Architecture
+
+### Frontend Layer
+Engineered for scale and performance, the client-side uses a modern Single Page Application (SPA) approach.
+- **State Management**: Redux Toolkit is utilized for global client state (auth tokens, themes, profiles), while React Query gracefully handles complex server state, automatic retries, and API caching.
+- **Security Intercepts**: Axios interceptors ensure secure communications, automatically injecting and refreshing JWTs without interrupting UX.
+- **Componentized Routing**: Route guards rigorously enforce user roles avoiding unauthorized access to specialized zones.
+
+### Backend Microservices Layer
+The backend is composed of **8 independent domain & infrastructure services** built with Java and Spring Boot.
+- **API Gateway**: Acts as a reverse-proxy and the sole entry point to the system, facilitating edge-level security, auth validation, and load balancing.
+- **Service Discovery** (Eureka Server): Enables dynamic auto-registration and discovery of individual microservices.
+- **Centralized Configuration** (Spring Cloud Config): Supplies runtime configurations directly from a centralized, secure repository.
+
+### Infrastructure & Data
+- **Event-Driven Messaging**: RabbitMQ broker allows services to communicate asynchronously without hard dependencies.
+- **Data Stores**:
+  - **PostgreSQL**: Implemented for durable, relation-based data with strict ACID compliance.
+  - **Redis**: Functions to store ephemeral session data, frequent lookup tables, and caching layers to minimize database loads.
+
+---
+
+## 🛠 Technology Stack
+
+| Category            | Technologies |
+| :---                | :--- |
+| **Frontend**        | React 18, TypeScript, Redux Toolkit, React Query, TailwindCSS ( assumed ) |
+| **Backend Core**    | Java 17+, Spring Boot, Spring Cloud (Gateway, Eureka, Config) |
+| **Databases**       | PostgreSQL, Redis |
+| **Message Broker**  | RabbitMQ |
+| **Security**        | JWT (JSON Web Tokens), OAuth2 |
+| **DevOps / Infra**  | Docker, Docker Compose, AWS EC2 |
+| **Observability**   | Zipkin, Prometheus, Grafana, Loki |
+
+---
+
+## ☁️ Deployment & DevOps
+The application is purely cloud-native and environment-agnostic via robust containerization practices.
+- **Dockerization**: Every service (including React builds, Spring jars, and databases) possesses its own isolated `Dockerfile`.
+- **Orchestration**: System lifecycle is maintained entirely through `docker-compose`, simplifying the multi-service build/up pipeline. 
+- **Production CI/CD**: Standardized build flows push immutable images to the Docker Hub registry, followed by secure remote scripts that deploy rolling updates onto the AWS EC2 instance.
+
+---
+
+## 🔍 Observability & Monitoring
+Keeping a distributed architecture healthy requires top-tier observability. SkillSync implements a modern observability triad:
+- **Metrics (Prometheus & Grafana)**: Tracks system vitals, JVM performance, connection pools, and real-time response latency through comprehensive dashboards.
+- **Distributed Tracing (Zipkin)**: Traces every unique HTTP request across the API Gateway down to exactly which microservices handled it, making bottleneck identification effortless.
+- **Logging (Loki)**: Aggregates logs from all containerized services into a central hub, allowing operators to run queries spanning the entire cluster instantly.
+
+---
+
+## 💻 Getting Started
+
+### Prerequisites
+- [Docker & Docker Compose](https://www.docker.com/products/docker-desktop)
+- Java 17+ (Local development)
+- Node.js 18+ (Local frontend development)
+
+### Local Deployment using Docker Compose
+The easiest way to spin up the entire ecosystem is through the root Docker Compose file.
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/Anjan-Kumar-Sahoo/SkillSync.git
+cd SkillSync
+
+# 2. Pull the latest images from Docker Hub (if using pre-built images)
+docker compose pull
+
+# 3. Spin up the infrastructure and services in detached mode
+docker compose up -d
+
+# 4. Verify everything is running
+docker compose ps
+```
+
+*Note: Once running, the frontend is typically accessible at `http://localhost:3000` (or `http://localhost:80` for prod), and the backend Gateway is accessible at its mapped port.*
+
+---
+<div align="center">
+  <i>Built with ❤️ for scalable education.</i>
+</div>

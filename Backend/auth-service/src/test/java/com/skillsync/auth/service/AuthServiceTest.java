@@ -2,6 +2,7 @@ package com.skillsync.auth.service;
 
 import com.skillsync.auth.dto.*;
 import com.skillsync.auth.entity.AuthUser;
+import com.skillsync.auth.entity.RefreshToken;
 import com.skillsync.auth.enums.OtpType;
 import com.skillsync.auth.enums.Role;
 import com.skillsync.auth.repository.AuthUserRepository;
@@ -20,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -36,6 +38,7 @@ class AuthServiceTest {
     @Mock private JwtTokenProvider jwtTokenProvider;
     @Mock private AuthenticationManager authenticationManager;
     @Mock private OtpService otpService;
+    @Mock private EmailService emailService;
     @Mock private CacheService cacheService;
 
     @InjectMocks private AuthService authService;
@@ -155,6 +158,24 @@ class AuthServiceTest {
     }
 
     @Test
+    @DisplayName("Refresh token - expired token is deleted and rejected")
+    void refreshToken_expired_shouldDeleteAndThrow() {
+        RefreshToken expired = RefreshToken.builder()
+                .token("expired-token")
+                .user(verifiedUser)
+                .expiresAt(LocalDateTime.now().minusMinutes(1))
+                .build();
+
+        when(refreshTokenRepository.findByToken("expired-token")).thenReturn(Optional.of(expired));
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> authService.refreshToken(new RefreshTokenRequest("expired-token")));
+
+        assertTrue(ex.getMessage().contains("expired"));
+        verify(refreshTokenRepository).delete(expired);
+    }
+
+    @Test
     @DisplayName("Update user role - success")
     void updateUserRole_shouldUpdateRole() {
         when(authUserRepository.findById(1L)).thenReturn(Optional.of(testUser));
@@ -164,6 +185,38 @@ class AuthServiceTest {
 
         assertEquals(Role.ROLE_MENTOR, testUser.getRole());
         verify(authUserRepository).save(testUser);
+    }
+
+    @Test
+    @DisplayName("Update user name - blank values are rejected")
+    void updateUserName_blankValues_shouldThrow() {
+        when(authUserRepository.findById(1L)).thenReturn(Optional.of(testUser));
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> authService.updateUserName(1L, " ", "Doe"));
+
+        assertTrue(ex.getMessage().contains("required"));
+        verify(authUserRepository, never()).save(any(AuthUser.class));
+        verify(cacheService, never()).evict(anyString());
+    }
+
+    @Test
+    @DisplayName("Reset password - cannot reuse current password")
+    void resetPassword_sameAsCurrent_shouldThrow() {
+        ResetPasswordRequest request = new ResetPasswordRequest(
+                "verified@example.com",
+                "123456",
+                "ValidPassword123!"
+        );
+
+        when(authUserRepository.findByEmail("verified@example.com")).thenReturn(Optional.of(verifiedUser));
+        when(passwordEncoder.matches("ValidPassword123!", verifiedUser.getPasswordHash())).thenReturn(true);
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> authService.resetPassword(request));
+
+        assertTrue(ex.getMessage().contains("different from current password"));
+        verify(otpService).verifyOtp("verified@example.com", "123456", OtpType.PASSWORD_RESET);
+        verify(refreshTokenRepository, never()).deleteByUser(any(AuthUser.class));
     }
 
     // =========================================================================
