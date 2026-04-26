@@ -17,21 +17,6 @@ type VerifyPaymentRequestPayload = {
   razorpaySignature: string;
 };
 
-type RazorpayOptions = {
-  key: string;
-  amount: number;
-  currency: string;
-  name: string;
-  description: string;
-  order_id: string;
-  handler: (response: RazorpayPaymentResponse) => void;
-  modal: {
-    ondismiss: () => Promise<void>;
-  };
-  theme: {
-    color: string;
-  };
-};
 
 type ApiError = {
   response?: {
@@ -46,7 +31,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 declare global {
   interface Window {
-    Razorpay: new (options: RazorpayOptions) => { open: () => void };
+    Razorpay: any;
   }
 }
 

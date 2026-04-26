@@ -209,8 +209,7 @@ const RegisterPage = () => {
       return response.data as OAuthResponse;
     },
     onSuccess: (data, variables) => {
-      const normalized = normalizeAuthPayload(data);
-
+      const normalized = normalizeAuthPayload(data) as any;
       if (normalized?.passwordSetupRequired) {
         navigate('/setup-password', { state: { email: variables.email } });
       } else {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/axios';
@@ -69,7 +69,7 @@ const DiscoverMentorsPage = () => {
           if (res.data?.last !== false) break;
         }
 
-        const uniqueById = new Map(
+        const uniqueById = new Map<string, SkillOption>(
           collected.map((skill) => {
             if (typeof skill === 'string') {
               return [`skill:${skill}`, skill] as const;
@@ -114,9 +114,12 @@ const DiscoverMentorsPage = () => {
 
       const res = await api.get(`/api/mentors/search?${params.toString()}`);
       return res.data as MentorSearchResponse;
-    },
-    onSuccess: (nextData) => {
-      const incomingMentors = Array.isArray(nextData.content) ? nextData.content : [];
+    }
+  });
+
+  useEffect(() => {
+    if (data) {
+      const incomingMentors = Array.isArray(data.content) ? data.content : [];
 
       if (page === 0) {
         setMentorsList((prev) => (hasSameMentorIds(prev, incomingMentors) ? prev : incomingMentors));
@@ -127,13 +130,13 @@ const DiscoverMentorsPage = () => {
         });
       }
 
-      const nextTotalElements = Number.isFinite(Number(nextData.totalElements)) ? Number(nextData.totalElements) : 0;
+      const nextTotalElements = Number.isFinite(Number(data.totalElements)) ? Number(data.totalElements) : 0;
       setTotalElements((prev) => (prev === nextTotalElements ? prev : nextTotalElements));
 
-      const nextIsLast = nextData.last ?? true;
+      const nextIsLast = data.last ?? true;
       setIsLast((prev) => (prev === nextIsLast ? prev : nextIsLast));
-    },
-  });
+    }
+  }, [data, page]);
 
   const applyFilters = () => {
     setPage(0);
@@ -284,9 +287,9 @@ const DiscoverMentorsPage = () => {
                           {typeof skill === 'string' ? skill : (skill.name || `Skill #${skill.skillId}`)}
                         </span>
                       ))}
-                      {(mentor.skills?.length > 3) && (
+                      {((mentor.skills?.length ?? 0) > 3) && (
                         <span className="bg-surface-container-low text-on-surface-variant text-[10px] font-bold px-2 py-1 rounded-md border border-outline-variant/10">
-                          +{mentor.skills.length - 3}
+                          +{(mentor.skills?.length ?? 0) - 3}
                         </span>
                       )}
                     </div>
