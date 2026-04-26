@@ -384,7 +384,7 @@ class AuthServiceTest {
 
             assertFalse((Boolean) response.get("exists"));
             assertTrue((Boolean) response.get("otpSent"));
-            verify(otpService).generateAndSendOtp(testUser, eq(OtpType.REGISTRATION));
+            verify(otpService).generateAndSendOtp(eq(testUser), eq(OtpType.REGISTRATION));
         }
 
         @Test
