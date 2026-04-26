@@ -58,7 +58,7 @@ const MentorAvailabilityPage = () => {
     },
   });
 
-  const sortedSlots = [...slots].sort((a: any, b: any) => {
+  const sortedSlots = [...(Array.isArray(slots) ? slots : [])].sort((a: any, b: any) => {
     if (a.dayOfWeek !== b.dayOfWeek) return a.dayOfWeek - b.dayOfWeek;
     return String(a.startTime).localeCompare(String(b.startTime));
   });

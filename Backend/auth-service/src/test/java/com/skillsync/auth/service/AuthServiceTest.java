@@ -23,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,16 +33,25 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
 
-    @Mock private AuthUserRepository authUserRepository;
-    @Mock private RefreshTokenRepository refreshTokenRepository;
-    @Mock private PasswordEncoder passwordEncoder;
-    @Mock private JwtTokenProvider jwtTokenProvider;
-    @Mock private AuthenticationManager authenticationManager;
-    @Mock private OtpService otpService;
-    @Mock private EmailService emailService;
-    @Mock private CacheService cacheService;
+    @Mock
+    private AuthUserRepository authUserRepository;
+    @Mock
+    private RefreshTokenRepository refreshTokenRepository;
+    @Mock
+    private PasswordEncoder passwordEncoder;
+    @Mock
+    private JwtTokenProvider jwtTokenProvider;
+    @Mock
+    private AuthenticationManager authenticationManager;
+    @Mock
+    private OtpService otpService;
+    @Mock
+    private EmailService emailService;
+    @Mock
+    private CacheService cacheService;
 
-    @InjectMocks private AuthService authService;
+    @InjectMocks
+    private AuthService authService;
 
     private AuthUser testUser;
     private AuthUser verifiedUser;
@@ -206,8 +216,7 @@ class AuthServiceTest {
         ResetPasswordRequest request = new ResetPasswordRequest(
                 "verified@example.com",
                 "123456",
-                "ValidPassword123!"
-        );
+                "ValidPassword123!");
 
         when(authUserRepository.findByEmail("verified@example.com")).thenReturn(Optional.of(verifiedUser));
         when(passwordEncoder.matches("ValidPassword123!", verifiedUser.getPasswordHash())).thenReturn(true);
@@ -298,7 +307,7 @@ class AuthServiceTest {
                     .thenReturn(Optional.empty());
             when(authUserRepository.findByEmail("unverified@example.com"))
                     .thenReturn(Optional.of(unverifiedUser));
-            
+
             // Mock token generation for successful login
             when(jwtTokenProvider.generateAccessToken(anyLong(), anyString(), anyString())).thenReturn("accessToken");
             when(jwtTokenProvider.generateRefreshToken(anyLong())).thenReturn("refreshToken");
@@ -344,6 +353,109 @@ class AuthServiceTest {
             RuntimeException ex = assertThrows(RuntimeException.class,
                     () -> authService.setupPassword(request));
             assertTrue(ex.getMessage().contains("already set"));
+        }
+    }
+
+    @Nested
+    @DisplayName("Registration Flow Improvements")
+    class RegistrationFlowTests {
+
+        @Test
+        @DisplayName("Initiate Registration - New User")
+        void initiateRegistration_newUser_shouldCreateAndSendOtp() {
+            InitiateRegistrationRequest request = new InitiateRegistrationRequest("new@example.com");
+            when(authUserRepository.findByEmail(anyString())).thenReturn(Optional.empty());
+            when(authUserRepository.save(any())).thenReturn(testUser);
+
+            Map<String, Object> response = authService.initiateRegistration(request);
+
+            assertFalse((Boolean) response.get("exists"));
+            assertTrue((Boolean) response.get("otpSent"));
+            verify(otpService).generateAndSendOtp(any(), eq(OtpType.REGISTRATION));
+        }
+
+        @Test
+        @DisplayName("Initiate Registration - Unverified Existing User")
+        void initiateRegistration_unverifiedExisting_shouldResendOtp() {
+            InitiateRegistrationRequest request = new InitiateRegistrationRequest("test@example.com");
+            when(authUserRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+
+            Map<String, Object> response = authService.initiateRegistration(request);
+
+            assertFalse((Boolean) response.get("exists"));
+            assertTrue((Boolean) response.get("otpSent"));
+            verify(otpService).generateAndSendOtp(testUser, eq(OtpType.REGISTRATION));
+        }
+
+        @Test
+        @DisplayName("Complete Registration - Success")
+        void completeRegistration_success_shouldUpdateUser() {
+            testUser.setVerified(true);
+            testUser.setPasswordSet(false);
+            testUser.setPasswordHash("PENDING");
+            CompleteRegistrationRequest request = new CompleteRegistrationRequest(
+                    "test@example.com", "Password123!", "John", "Doe");
+
+            when(authUserRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+            when(passwordEncoder.encode(anyString())).thenReturn("encodedNewPassword");
+            when(authUserRepository.save(any())).thenReturn(testUser);
+
+            AuthResponse response = authService.completeRegistration(request);
+
+            assertNotNull(response);
+            assertTrue(testUser.isPasswordSet());
+            assertEquals("encodedNewPassword", testUser.getPasswordHash());
+            verify(emailService).sendWelcomeEmail(anyString(), anyString());
+        }
+
+        @Test
+        @DisplayName("Complete Registration - Fails if not verified")
+        void completeRegistration_unverified_shouldThrow() {
+            CompleteRegistrationRequest request = new CompleteRegistrationRequest(
+                    "test@example.com", "Pass123!", "J", "D");
+            when(authUserRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+
+            assertThrows(RuntimeException.class, () -> authService.completeRegistration(request));
+        }
+    }
+
+    @Nested
+    @DisplayName("Password Management Tests")
+    class PasswordManagementTests {
+        @Test
+        @DisplayName("Forgot Password - Success")
+        void forgotPassword_shouldSendOtp() {
+            when(authUserRepository.findByEmail("verified@example.com")).thenReturn(Optional.of(verifiedUser));
+            authService.forgotPassword(new ForgotPasswordRequest("verified@example.com"));
+            verify(otpService).generateAndSendOtp(verifiedUser, OtpType.PASSWORD_RESET);
+        }
+
+        @Test
+        @DisplayName("Verify Password Reset OTP - Success")
+        void verifyPasswordResetOtp_shouldCallOtpService() {
+            authService.verifyPasswordResetOtp("test@example.com", "123456");
+            verify(otpService).validateOtp("test@example.com", "123456", OtpType.PASSWORD_RESET);
+        }
+    }
+
+    @Nested
+    @DisplayName("User Management Tests")
+    class UserManagementTests {
+        @Test
+        @DisplayName("Get User By ID - Success")
+        void getUserById_shouldReturnSummary() {
+            when(authUserRepository.findById(1L)).thenReturn(Optional.of(testUser));
+            UserSummary summary = authService.getUserById(1L);
+            assertEquals("test@example.com", summary.email());
+        }
+
+        @Test
+        @DisplayName("Delete User - Success")
+        void deleteUser_shouldInvokeRepository() {
+            when(authUserRepository.findById(1L)).thenReturn(Optional.of(testUser));
+            authService.deleteUser(1L);
+            verify(refreshTokenRepository).deleteByUser(testUser);
+            verify(authUserRepository).delete(testUser);
         }
     }
 }

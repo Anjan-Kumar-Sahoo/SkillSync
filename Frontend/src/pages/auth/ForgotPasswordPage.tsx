@@ -52,7 +52,7 @@ const ForgotPasswordPage = () => {
             type="email"
             {...register('email', {
               required: 'Email is required',
-              pattern: { value: /^\S+@\S+\.\S+$/, message: 'Enter a valid email' },
+              pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Enter a valid email' },
             })}
             className="w-full h-12 px-4 bg-surface-container-low border border-outline-variant/30 rounded-xl focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all"
             placeholder="name@example.com"

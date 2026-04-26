@@ -20,7 +20,7 @@ const VerifyOtpPage = () => {
   
   const email = location.state?.email || '';
 
-  const hasValidEmail = /^\S+@\S+\.\S+$/.test(email);
+  const hasValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   useEffect(() => {
     if (hasValidEmail) return;
