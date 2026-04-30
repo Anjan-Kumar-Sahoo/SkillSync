@@ -543,16 +543,10 @@ jobs:
             exit 1
           fi
 
-      - name: Build & Test all services (for JaCoCo reports)
+      - name: Build & Test Backend (for Aggregate JaCoCo report)
+        working-directory: ./Backend
         run: |
-          SERVICES="skillsync-cache-common eureka-server config-server api-gateway auth-service user-service skill-service session-service notification-service payment-service"
-          for svc in $SERVICES; do
-            echo "======= Building & Testing: $svc ======="
-            cd Backend/$svc
-            mvn -B clean verify
-            mvn -B dependency:copy-dependencies -DincludeScope=runtime
-            cd ../..
-          done
+          mvn -B clean verify dependency:copy-dependencies -DincludeScope=runtime -DskipTests=false
 
       - name: Install Frontend Dependencies & Build Coverage
         run: |
