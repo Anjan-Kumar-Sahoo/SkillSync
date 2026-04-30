@@ -6,6 +6,7 @@ import com.skillsync.session.enums.SessionStatus;
 import com.skillsync.session.repository.ReviewRepository;
 import com.skillsync.session.repository.SessionRepository;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -13,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -22,71 +24,64 @@ class MentorMetricsServiceTest {
 
     @Mock private SessionRepository sessionRepository;
     @Mock private ReviewRepository reviewRepository;
+    @InjectMocks private MentorMetricsService service;
 
-    @InjectMocks private MentorMetricsService mentorMetricsService;
+    @Nested @DisplayName("calculateMentorMetrics")
+    class CalculateMetricsTests {
+        @Test @DisplayName("No completed sessions - new mentor")
+        void noSessions() {
+            when(sessionRepository.countByMentorIdAndStatus(10L, SessionStatus.COMPLETED)).thenReturn(0L);
+            when(sessionRepository.countByMentorIdAndStatusAndDefaultRatingAppliedTrue(10L, SessionStatus.COMPLETED)).thenReturn(0L);
+            when(reviewRepository.countByMentorId(10L)).thenReturn(0L);
 
-    @Test
-    @DisplayName("calculateMentorMetrics — computes blended average rating")
-    void shouldCalculateMetrics() {
-        when(sessionRepository.countByMentorIdAndStatus(100L, SessionStatus.COMPLETED)).thenReturn(10L);
-        when(sessionRepository.countByMentorIdAndStatusAndDefaultRatingAppliedTrue(100L, SessionStatus.COMPLETED)).thenReturn(2L);
-        when(reviewRepository.countByMentorId(100L)).thenReturn(8L);
-        when(reviewRepository.calculateTotalRating(100L)).thenReturn(36.0);
+            MentorMetricsResponse resp = service.calculateMentorMetrics(10L);
+            assertEquals(0.0, resp.averageRating());
+            assertTrue(resp.newMentor());
+            assertEquals(0, resp.completedSessions());
+        }
 
-        MentorMetricsResponse result = mentorMetricsService.calculateMentorMetrics(100L);
+        @Test @DisplayName("With sessions and reviews - computed average")
+        void withSessions() {
+            when(sessionRepository.countByMentorIdAndStatus(10L, SessionStatus.COMPLETED)).thenReturn(10L);
+            when(sessionRepository.countByMentorIdAndStatusAndDefaultRatingAppliedTrue(10L, SessionStatus.COMPLETED)).thenReturn(2L);
+            when(reviewRepository.countByMentorId(10L)).thenReturn(8L);
+            when(reviewRepository.calculateTotalRating(10L)).thenReturn(32.0);
 
-        assertEquals(100L, result.mentorId());
-        assertEquals(10L, result.completedSessions());
-        assertEquals(8, result.totalReviews());
-        assertEquals(2L, result.defaultRatedSessions());
-        assertFalse(result.newMentor());
-        // (36.0 + 2*2.5) / 10 = 41.0 / 10 = 4.10
-        assertEquals(4.10, result.averageRating());
+            MentorMetricsResponse resp = service.calculateMentorMetrics(10L);
+            assertFalse(resp.newMentor());
+            assertEquals(10, resp.completedSessions());
+            assertEquals(8, resp.totalReviews());
+            // (32.0 + 2*2.5) / 10 = 37/10 = 3.7
+            assertEquals(3.7, resp.averageRating());
+        }
     }
 
-    @Test
-    @DisplayName("calculateMentorMetrics — new mentor with zero sessions")
-    void shouldHandleZeroSessions() {
-        when(sessionRepository.countByMentorIdAndStatus(100L, SessionStatus.COMPLETED)).thenReturn(0L);
-        when(sessionRepository.countByMentorIdAndStatusAndDefaultRatingAppliedTrue(100L, SessionStatus.COMPLETED)).thenReturn(0L);
-        when(reviewRepository.countByMentorId(100L)).thenReturn(0L);
+    @Nested @DisplayName("calculateMentorRatingSummary")
+    class CalculateSummaryTests {
+        @Test @DisplayName("Includes rating distribution")
+        void withDistribution() {
+            when(sessionRepository.countByMentorIdAndStatus(10L, SessionStatus.COMPLETED)).thenReturn(5L);
+            when(sessionRepository.countByMentorIdAndStatusAndDefaultRatingAppliedTrue(10L, SessionStatus.COMPLETED)).thenReturn(0L);
+            when(reviewRepository.countByMentorId(10L)).thenReturn(5L);
+            when(reviewRepository.calculateTotalRating(10L)).thenReturn(20.0);
+            when(reviewRepository.getRatingDistribution(10L)).thenReturn(
+                    List.of(new Object[]{5, 3L}, new Object[]{4, 2L}));
 
-        MentorMetricsResponse result = mentorMetricsService.calculateMentorMetrics(100L);
+            MentorRatingSummary summary = service.calculateMentorRatingSummary(10L);
+            assertEquals(2, summary.ratingDistribution().size());
+            assertEquals(3, summary.ratingDistribution().get(5));
+            assertEquals(2, summary.ratingDistribution().get(4));
+        }
 
-        assertEquals(0.0, result.averageRating());
-        assertTrue(result.newMentor());
-    }
+        @Test @DisplayName("Empty distribution")
+        void emptyDistribution() {
+            when(sessionRepository.countByMentorIdAndStatus(10L, SessionStatus.COMPLETED)).thenReturn(0L);
+            when(sessionRepository.countByMentorIdAndStatusAndDefaultRatingAppliedTrue(10L, SessionStatus.COMPLETED)).thenReturn(0L);
+            when(reviewRepository.countByMentorId(10L)).thenReturn(0L);
+            when(reviewRepository.getRatingDistribution(10L)).thenReturn(List.of());
 
-    @Test
-    @DisplayName("calculateMentorMetrics — all sessions have explicit reviews")
-    void shouldHandleAllExplicitReviews() {
-        when(sessionRepository.countByMentorIdAndStatus(100L, SessionStatus.COMPLETED)).thenReturn(5L);
-        when(sessionRepository.countByMentorIdAndStatusAndDefaultRatingAppliedTrue(100L, SessionStatus.COMPLETED)).thenReturn(0L);
-        when(reviewRepository.countByMentorId(100L)).thenReturn(5L);
-        when(reviewRepository.calculateTotalRating(100L)).thenReturn(22.5);
-
-        MentorMetricsResponse result = mentorMetricsService.calculateMentorMetrics(100L);
-
-        // 22.5 / 5 = 4.50
-        assertEquals(4.50, result.averageRating());
-    }
-
-    @Test
-    @DisplayName("calculateMentorRatingSummary — includes distribution")
-    void shouldCalculateRatingSummary() {
-        when(sessionRepository.countByMentorIdAndStatus(100L, SessionStatus.COMPLETED)).thenReturn(5L);
-        when(sessionRepository.countByMentorIdAndStatusAndDefaultRatingAppliedTrue(100L, SessionStatus.COMPLETED)).thenReturn(0L);
-        when(reviewRepository.countByMentorId(100L)).thenReturn(5L);
-        when(reviewRepository.calculateTotalRating(100L)).thenReturn(22.5);
-        when(reviewRepository.getRatingDistribution(100L)).thenReturn(List.of(
-                new Object[]{5, 3L},
-                new Object[]{4, 2L}
-        ));
-
-        MentorRatingSummary result = mentorMetricsService.calculateMentorRatingSummary(100L);
-
-        assertEquals(4.50, result.averageRating());
-        assertEquals(3, result.ratingDistribution().get(5));
-        assertEquals(2, result.ratingDistribution().get(4));
+            MentorRatingSummary summary = service.calculateMentorRatingSummary(10L);
+            assertTrue(summary.ratingDistribution().isEmpty());
+        }
     }
 }

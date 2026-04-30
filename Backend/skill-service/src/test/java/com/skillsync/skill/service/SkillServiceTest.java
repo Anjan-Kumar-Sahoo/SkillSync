@@ -1,12 +1,8 @@
 package com.skillsync.skill.service;
 
-import com.skillsync.cache.CacheService;
-import com.skillsync.skill.dto.CreateSkillRequest;
-import com.skillsync.skill.dto.SkillResponse;
+import com.skillsync.skill.dto.*;
 import com.skillsync.skill.entity.Skill;
 import com.skillsync.skill.repository.SkillRepository;
-import com.skillsync.skill.service.command.SkillCommandService;
-import com.skillsync.skill.service.query.SkillQueryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,7 +10,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,112 +25,83 @@ import static org.mockito.Mockito.*;
 class SkillServiceTest {
 
     @Mock private SkillRepository skillRepository;
-    @Mock private CacheService cacheService;
-    @Mock private RabbitTemplate rabbitTemplate;
-
-    @InjectMocks private SkillCommandService skillCommandService;
-    @InjectMocks private SkillQueryService skillQueryService;
+    @InjectMocks private SkillService service;
 
     private Skill testSkill;
 
     @BeforeEach
     void setUp() {
         testSkill = Skill.builder().id(1L).name("Java").category("Programming")
-                .description("Java programming language").isActive(true).build();
+                .description("Java language").isActive(true).build();
     }
 
-    @Test
-    @DisplayName("Get skill by ID - cache miss → DB fetch")
-    void getSkillById_shouldReturnSkill() {
-        when(cacheService.getOrLoad(eq(CacheService.vKey("skill:1")), eq(SkillResponse.class), any(), any()))
-                .thenAnswer(inv -> {
-                    java.util.function.Supplier<SkillResponse> fallback = inv.getArgument(3);
-                    return fallback.get(); // DB execute
-                });
+    @Test @DisplayName("getAllSkills")
+    void getAllSkills() {
+        Page<Skill> page = new PageImpl<>(List.of(testSkill));
+        when(skillRepository.findByIsActiveTrue(PageRequest.of(0, 10))).thenReturn(page);
+        assertEquals(1, service.getAllSkills(PageRequest.of(0, 10)).getTotalElements());
+    }
+
+    @Test @DisplayName("getSkillById - found")
+    void getSkillById() {
         when(skillRepository.findById(1L)).thenReturn(Optional.of(testSkill));
-
-        SkillResponse response = skillQueryService.getSkillById(1L);
-
-        assertEquals("Java", response.name());
+        SkillResponse resp = service.getSkillById(1L);
+        assertEquals("Java", resp.name());
     }
 
-    @Test
-    @DisplayName("Get skill by ID - cache HIT → NO DB fetch")
-    void getSkillById_shouldReturnFromCache() {
-        SkillResponse cached = new SkillResponse(1L, "Java", "Programming", "Java lang", true);
-        when(cacheService.getOrLoad(eq(CacheService.vKey("skill:1")), eq(SkillResponse.class), any(), any()))
-                .thenReturn(cached);
-
-        SkillResponse response = skillQueryService.getSkillById(1L);
-
-        assertEquals("Java", response.name());
-        verify(skillRepository, never()).findById(anyLong()); // bypass DB
+    @Test @DisplayName("getSkillById - not found")
+    void getSkillById_notFound() {
+        when(skillRepository.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(RuntimeException.class, () -> service.getSkillById(1L));
     }
 
-    @Test
-    @DisplayName("Get skill by ID - not found throws exception")
-    void getSkillById_shouldThrowWhenNotFound() {
-        when(cacheService.getOrLoad(eq(CacheService.vKey("skill:999")), eq(SkillResponse.class), any(), any()))
-                .thenAnswer(inv -> {
-                    java.util.function.Supplier<SkillResponse> fallback = inv.getArgument(3);
-                    return fallback.get(); // returns null when db is empty
-                });
-        when(skillRepository.findById(999L)).thenReturn(Optional.empty());
-
-        assertThrows(RuntimeException.class, () -> {
-            SkillResponse result = skillQueryService.getSkillById(999L);
-            if (result == null) throw new RuntimeException("Skill not found");
-        });
-    }
-
-    @Test
-    @DisplayName("Create skill - invalidates cache and publishes event")
-    void createSkill_shouldSaveAndInvalidateCache() {
-        CreateSkillRequest request = new CreateSkillRequest("Java", "Programming", "Java lang");
-        when(skillRepository.existsByName("Java")).thenReturn(false);
-        when(skillRepository.save(any(Skill.class))).thenReturn(testSkill);
-
-        SkillResponse response = skillCommandService.createSkill(request);
-
-        assertNotNull(response);
-        assertNotNull(response);
-        assertEquals("Java", response.name());
-        verify(skillRepository).save(any(Skill.class));
-        verify(cacheService).evictByPattern(CacheService.vKey("skill:all:*"));
-        verify(cacheService).evictByPattern(CacheService.vKey("skill:search:*"));
-    }
-
-    @Test
-    @DisplayName("Create skill - duplicate throws exception")
-    void createSkill_shouldThrowForDuplicate() {
-        CreateSkillRequest request = new CreateSkillRequest("Java", "Programming", "Java lang");
-        when(skillRepository.existsByName("Java")).thenReturn(true);
-
-        assertThrows(RuntimeException.class, () -> skillCommandService.createSkill(request));
-        verify(skillRepository, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("Search skills - returns results")
-    void searchSkills_shouldReturnMatchingSkills() {
+    @Test @DisplayName("searchSkills")
+    void searchSkills() {
         when(skillRepository.searchByName("Java")).thenReturn(List.of(testSkill));
-
-        List<SkillResponse> results = skillQueryService.searchSkills("Java");
-
-        assertEquals(1, results.size());
-        assertEquals("Java", results.get(0).name());
+        assertEquals(1, service.searchSkills("Java").size());
     }
 
-    @Test
-    @DisplayName("Deactivate skill - invalidates cache")
-    void deactivateSkill_shouldSetInactiveAndInvalidate() {
+    @Test @DisplayName("createSkill - success")
+    void createSkill() {
+        when(skillRepository.existsByName("Python")).thenReturn(false);
+        Skill saved = Skill.builder().id(2L).name("Python").category("Programming")
+                .description("Python lang").isActive(true).build();
+        when(skillRepository.save(any())).thenReturn(saved);
+        SkillResponse resp = service.createSkill(new CreateSkillRequest("Python", "Programming", "Python lang"));
+        assertEquals("Python", resp.name());
+    }
+
+    @Test @DisplayName("createSkill - duplicate throws")
+    void createSkill_duplicate() {
+        when(skillRepository.existsByName("Java")).thenReturn(true);
+        assertThrows(RuntimeException.class, () -> service.createSkill(new CreateSkillRequest("Java", "Programming", "x")));
+    }
+
+    @Test @DisplayName("updateSkill - success")
+    void updateSkill() {
         when(skillRepository.findById(1L)).thenReturn(Optional.of(testSkill));
         when(skillRepository.save(any())).thenReturn(testSkill);
+        SkillResponse resp = service.updateSkill(1L, new CreateSkillRequest("Java Updated", "Lang", "Updated"));
+        assertNotNull(resp);
+    }
 
-        skillCommandService.deactivateSkill(1L);
+    @Test @DisplayName("updateSkill - not found")
+    void updateSkill_notFound() {
+        when(skillRepository.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(RuntimeException.class, () -> service.updateSkill(1L, new CreateSkillRequest("x", "x", "x")));
+    }
 
+    @Test @DisplayName("deactivateSkill - success")
+    void deactivateSkill() {
+        when(skillRepository.findById(1L)).thenReturn(Optional.of(testSkill));
+        service.deactivateSkill(1L);
         assertFalse(testSkill.isActive());
         verify(skillRepository).save(testSkill);
-        verify(cacheService).evict(CacheService.vKey("skill:1"));
+    }
+
+    @Test @DisplayName("deactivateSkill - not found")
+    void deactivateSkill_notFound() {
+        when(skillRepository.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(RuntimeException.class, () -> service.deactivateSkill(1L));
     }
 }

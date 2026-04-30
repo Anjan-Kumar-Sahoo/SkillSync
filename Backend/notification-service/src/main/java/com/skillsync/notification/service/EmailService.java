@@ -23,7 +23,7 @@ import java.util.Map;
 public class EmailService {
 
     private final JavaMailSender mailSender;
-    private final TemplateEngine templateEngine;
+    private final org.thymeleaf.ITemplateEngine templateEngine;
     private final RabbitTemplate rabbitTemplate;
 
     @Value("${spring.mail.username:no-reply@skillsync.local}")

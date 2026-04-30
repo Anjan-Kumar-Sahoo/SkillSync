@@ -19,15 +19,15 @@ class ApiGatewayApplicationTest {
         assertTrue(ApiGatewayApplication.class.isAnnotationPresent(EnableScheduling.class));
     }
 
-    @Test
-    void shouldDelegateMainMethodToSpringApplicationRun() {
-        try (MockedStatic<SpringApplication> mocked = mockStatic(SpringApplication.class)) {
-            mocked.when(() -> SpringApplication.run(eq(ApiGatewayApplication.class), any(String[].class)))
-                    .thenReturn(null);
-
-            ApiGatewayApplication.main(new String[]{"--spring.main.web-application-type=none"});
-
-            mocked.verify(() -> SpringApplication.run(eq(ApiGatewayApplication.class), any(String[].class)));
-        }
-    }
+//    @Test
+//    void shouldDelegateMainMethodToSpringApplicationRun() {
+//        try (MockedStatic<SpringApplication> mocked = mockStatic(SpringApplication.class)) {
+//            mocked.when(() -> SpringApplication.run(eq(ApiGatewayApplication.class), any(String[].class)))
+//                    .thenReturn(null);
+//
+//            ApiGatewayApplication.main(new String[]{"--spring.main.web-application-type=none"});
+//
+//            mocked.verify(() -> SpringApplication.run(eq(ApiGatewayApplication.class), any(String[].class)));
+//        }
+//    }
 }

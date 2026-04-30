@@ -1,11 +1,8 @@
 package com.skillsync.notification.service;
 
-import com.skillsync.cache.CacheService;
 import com.skillsync.notification.dto.NotificationResponse;
 import com.skillsync.notification.entity.Notification;
 import com.skillsync.notification.repository.NotificationRepository;
-import com.skillsync.notification.service.command.NotificationCommandService;
-import com.skillsync.notification.service.query.NotificationQueryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,7 +10,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,10 +27,7 @@ class NotificationServiceTest {
 
     @Mock private NotificationRepository notificationRepository;
     @Mock private WebSocketService webSocketService;
-    @Mock private CacheService cacheService;
-
-    @InjectMocks private NotificationCommandService notificationCommandService;
-    @InjectMocks private NotificationQueryService notificationQueryService;
+    @InjectMocks private NotificationService service;
 
     private Notification testNotification;
 
@@ -36,98 +35,54 @@ class NotificationServiceTest {
     void setUp() {
         testNotification = Notification.builder()
                 .id(1L).userId(100L).type("SESSION").title("New Session")
-                .message("You have a new session request").isRead(false).build();
+                .message("You have a new session").isRead(false)
+                .createdAt(Instant.now()).build();
     }
 
-    @Test
-    @DisplayName("Create and push notification - saves and invalidates unread cache")
-    void createAndPush_shouldSaveAndInvalidateCache() {
-        when(notificationRepository.save(any(Notification.class))).thenReturn(testNotification);
-
-        Notification result = notificationCommandService.createAndPush(100L, "SESSION", "New Session", "You have a new session request");
-
-        assertNotNull(result);
-        assertEquals("SESSION", result.getType());
-        verify(notificationRepository).save(any(Notification.class));
-        verify(webSocketService).pushToUser(eq(100L), any(NotificationResponse.class));
-        verify(cacheService).evict(CacheService.vKey("notification:unread:100"));
-    }
-
-    @Test
-    @DisplayName("Get unread count - cache miss → DB fetch")
-    void getUnreadCount_shouldReturnCountFromDB() {
-        when(cacheService.getOrLoad(eq(CacheService.vKey("notification:unread:100")), eq(Long.class), any(), any()))
-                .thenAnswer(inv -> {
-                    java.util.function.Supplier<Long> fallback = inv.getArgument(3);
-                    return fallback.get();
-                });
-        when(notificationRepository.countByUserIdAndIsReadFalse(100L)).thenReturn(5L);
-
-        long count = notificationQueryService.getUnreadCount(100L);
-
-        assertEquals(5L, count);
-    }
-
-    @Test
-    @DisplayName("Get unread count - cache HIT → NO DB fetch")
-    void getUnreadCount_shouldReturnFromCache() {
-        when(cacheService.getOrLoad(eq(CacheService.vKey("notification:unread:100")), eq(Long.class), any(), any()))
-                .thenReturn(5L);
-
-        long count = notificationQueryService.getUnreadCount(100L);
-
-        assertEquals(5L, count);
-        verify(notificationRepository, never()).countByUserIdAndIsReadFalse(anyLong()); // bypass DB
-    }
-
-    @Test
-    @DisplayName("Mark as read - invalidates unread cache")
-    void markAsRead_shouldSetReadTrueAndInvalidateCache() {
-        when(notificationRepository.findById(1L)).thenReturn(Optional.of(testNotification));
+    @Test @DisplayName("createAndPush - saves and pushes via WebSocket")
+    void createAndPush() {
         when(notificationRepository.save(any())).thenReturn(testNotification);
+        Notification result = service.createAndPush(100L, "SESSION", "New Session", "msg");
+        assertNotNull(result);
+        verify(webSocketService).pushToUser(eq(100L), any(NotificationResponse.class));
+    }
 
-        notificationCommandService.markAsRead(1L);
+    @Test @DisplayName("getNotifications")
+    void getNotifications() {
+        Page<Notification> page = new PageImpl<>(List.of(testNotification));
+        when(notificationRepository.findByUserIdOrderByCreatedAtDesc(100L, PageRequest.of(0, 10))).thenReturn(page);
+        assertEquals(1, service.getNotifications(100L, PageRequest.of(0, 10)).getTotalElements());
+    }
 
+    @Test @DisplayName("getUnreadCount")
+    void getUnreadCount() {
+        when(notificationRepository.countByUserIdAndIsReadFalse(100L)).thenReturn(5L);
+        assertEquals(5L, service.getUnreadCount(100L));
+    }
+
+    @Test @DisplayName("markAsRead - success")
+    void markAsRead() {
+        when(notificationRepository.findById(1L)).thenReturn(Optional.of(testNotification));
+        service.markAsRead(1L);
         assertTrue(testNotification.isRead());
         verify(notificationRepository).save(testNotification);
-        verify(cacheService).evict(CacheService.vKey("notification:unread:100"));
     }
 
-    @Test
-    @DisplayName("Mark as read - not found throws exception")
-    void markAsRead_shouldThrowWhenNotFound() {
-        when(notificationRepository.findById(999L)).thenReturn(Optional.empty());
-
-        assertThrows(RuntimeException.class, () -> notificationCommandService.markAsRead(999L));
+    @Test @DisplayName("markAsRead - not found throws")
+    void markAsRead_notFound() {
+        when(notificationRepository.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(RuntimeException.class, () -> service.markAsRead(1L));
     }
 
-    @Test
-    @DisplayName("Delete notification - invalidates cache")
-    void deleteNotification_shouldCallRepositoryAndInvalidateCache() {
-        when(notificationRepository.findByIdAndUserId(1L, 100L)).thenReturn(Optional.of(testNotification));
-        notificationCommandService.deleteNotification(100L, 1L);
-        verify(notificationRepository).delete(testNotification);
-        verify(cacheService).evict(CacheService.vKey("notification:unread:100"));
-    }
-
-    @Test
-    @DisplayName("Mark all as read - updates repository and evicts unread cache")
-    void markAllAsRead_shouldInvalidateUnreadCache() {
-        notificationCommandService.markAllAsRead(100L);
-
+    @Test @DisplayName("markAllAsRead")
+    void markAllAsRead() {
+        service.markAllAsRead(100L);
         verify(notificationRepository).markAllAsRead(100L);
-        verify(cacheService).evict(CacheService.vKey("notification:unread:100"));
     }
 
-    @Test
-    @DisplayName("Delete all notifications - returns count and evicts cache")
-    void deleteAllNotifications_shouldReturnDeletedCount() {
-        when(notificationRepository.deleteAllByUserId(100L)).thenReturn(7);
-
-        int deleted = notificationCommandService.deleteAllNotifications(100L);
-
-        assertEquals(7, deleted);
-        verify(notificationRepository).deleteAllByUserId(100L);
-        verify(cacheService).evict(CacheService.vKey("notification:unread:100"));
+    @Test @DisplayName("deleteNotification")
+    void deleteNotification() {
+        service.deleteNotification(1L);
+        verify(notificationRepository).deleteById(1L);
     }
 }

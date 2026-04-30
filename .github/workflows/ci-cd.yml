@@ -550,6 +550,7 @@ jobs:
             echo "======= Building & Testing: $svc ======="
             cd Backend/$svc
             mvn -B clean verify
+            mvn -B dependency:copy-dependencies -DincludeScope=runtime
             cd ../..
           done
 

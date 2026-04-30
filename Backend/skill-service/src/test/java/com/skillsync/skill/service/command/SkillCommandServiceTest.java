@@ -1,11 +1,10 @@
 package com.skillsync.skill.service.command;
 
 import com.skillsync.cache.CacheService;
-import com.skillsync.skill.config.RabbitMQConfig;
-import com.skillsync.skill.dto.CreateSkillRequest;
-import com.skillsync.skill.dto.SkillResponse;
+import com.skillsync.skill.dto.*;
 import com.skillsync.skill.entity.Skill;
 import com.skillsync.skill.repository.SkillRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,108 +25,77 @@ class SkillCommandServiceTest {
     @Mock private SkillRepository skillRepository;
     @Mock private CacheService cacheService;
     @Mock private RabbitTemplate rabbitTemplate;
+    @InjectMocks private SkillCommandService service;
 
-    @InjectMocks private SkillCommandService skillCommandService;
+    private Skill testSkill;
 
-    @Test
-    @DisplayName("createSkill — persists, invalidates cache, and publishes event")
-    void createSkill_shouldPersistInvalidateAndPublish() {
-        when(skillRepository.existsByName("Java")).thenReturn(false);
-        when(skillRepository.save(any(Skill.class))).thenAnswer(invocation -> {
-            Skill toSave = invocation.getArgument(0);
-            toSave.setId(1L);
-            return toSave;
-        });
-
-        CreateSkillRequest request = new CreateSkillRequest("Java", "Programming", "Java programming language");
-        SkillResponse result = skillCommandService.createSkill(request);
-
-        assertNotNull(result);
-        assertEquals("Java", result.name());
-        assertEquals("Programming", result.category());
-        verify(skillRepository).save(any(Skill.class));
-        verify(cacheService).evictByPattern(CacheService.vKey("skill:all:*"));
-        verify(cacheService).evictByPattern(CacheService.vKey("skill:search:*"));
-        verify(rabbitTemplate).convertAndSend(eq(RabbitMQConfig.SKILL_EXCHANGE), eq("skill.created"), any(com.skillsync.skill.event.SkillEvent.class));
+    @BeforeEach
+    void setUp() {
+        testSkill = Skill.builder().id(1L).name("Java").category("Programming")
+                .description("Java lang").isActive(true).build();
     }
 
-    @Test
-    @DisplayName("createSkill — duplicate name throws and skips side effects")
-    void createSkill_shouldRejectDuplicateSkillName() {
+    @Test @DisplayName("createSkill - success with cache invalidation and event")
+    void createSkill_success() {
+        when(skillRepository.existsByName("Python")).thenReturn(false);
+        Skill saved = Skill.builder().id(2L).name("Python").category("Programming")
+                .description("Python lang").isActive(true).build();
+        when(skillRepository.save(any())).thenReturn(saved);
+
+        SkillResponse resp = service.createSkill(new CreateSkillRequest("Python", "Programming", "Python lang"));
+        assertEquals("Python", resp.name());
+        verify(cacheService).evictByPattern(CacheService.vKey("skill:all:*"));
+        verify(cacheService).evictByPattern(CacheService.vKey("skill:search:*"));
+        verify(rabbitTemplate).convertAndSend(anyString(), eq("skill.created"), (Object) any());
+    }
+
+    @Test @DisplayName("createSkill - duplicate throws")
+    void createSkill_duplicate() {
         when(skillRepository.existsByName("Java")).thenReturn(true);
-
-        RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> skillCommandService.createSkill(new CreateSkillRequest("Java", "Programming", "desc")));
-
-        assertTrue(ex.getMessage().contains("Skill already exists"));
-        verify(skillRepository, never()).save(any(Skill.class));
-        verify(cacheService, never()).evictByPattern(anyString());
-        verify(rabbitTemplate, never()).convertAndSend(anyString(), anyString(), any(com.skillsync.skill.event.SkillEvent.class));
+        assertThrows(RuntimeException.class, () -> service.createSkill(new CreateSkillRequest("Java", "x", "x")));
     }
 
-    @Test
-    @DisplayName("updateSkill — updates fields, invalidates cache, and publishes event")
-    void updateSkill_shouldUpdateInvalidateAndPublish() {
-        Skill existing = Skill.builder()
-                .id(10L)
-                .name("Old")
-                .category("Legacy")
-                .description("old")
-                .isActive(true)
-                .build();
-        when(skillRepository.findById(10L)).thenReturn(Optional.of(existing));
-        when(skillRepository.save(any(Skill.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    @Test @DisplayName("updateSkill - success")
+    void updateSkill_success() {
+        when(skillRepository.findById(1L)).thenReturn(Optional.of(testSkill));
+        when(skillRepository.save(any())).thenReturn(testSkill);
 
-        SkillResponse result = skillCommandService.updateSkill(10L,
-                new CreateSkillRequest("New", "Programming", "updated"));
-
-        assertEquals("New", result.name());
-        assertEquals("Programming", result.category());
-        verify(cacheService).evict(CacheService.vKey("skill:10"));
-        verify(cacheService).evictByPattern(CacheService.vKey("skill:all:*"));
-        verify(cacheService).evictByPattern(CacheService.vKey("skill:search:*"));
-        verify(rabbitTemplate).convertAndSend(eq(RabbitMQConfig.SKILL_EXCHANGE), eq("skill.updated"), any(com.skillsync.skill.event.SkillEvent.class));
+        SkillResponse resp = service.updateSkill(1L, new CreateSkillRequest("Java Updated", "Lang", "Updated"));
+        assertNotNull(resp);
+        verify(cacheService).evict(CacheService.vKey("skill:1"));
+        verify(rabbitTemplate).convertAndSend(anyString(), eq("skill.updated"), (Object) any());
     }
 
-    @Test
-    @DisplayName("updateSkill — missing entity throws")
-    void updateSkill_shouldThrowWhenMissing() {
-        when(skillRepository.findById(999L)).thenReturn(Optional.empty());
-
-        assertThrows(RuntimeException.class,
-                () -> skillCommandService.updateSkill(999L, new CreateSkillRequest("X", "Y", "Z")));
-        verify(skillRepository, never()).save(any(Skill.class));
+    @Test @DisplayName("updateSkill - not found")
+    void updateSkill_notFound() {
+        when(skillRepository.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(RuntimeException.class, () -> service.updateSkill(1L, new CreateSkillRequest("x", "x", "x")));
     }
 
-    @Test
-    @DisplayName("deactivateSkill — marks inactive, invalidates cache, and publishes event")
-    void deactivateSkill_shouldMarkInactiveInvalidateAndPublish() {
-        Skill existing = Skill.builder()
-                .id(11L)
-                .name("Java")
-                .category("Programming")
-                .description("desc")
-                .isActive(true)
-                .build();
-        when(skillRepository.findById(11L)).thenReturn(Optional.of(existing));
-        when(skillRepository.save(any(Skill.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    @Test @DisplayName("deactivateSkill - success")
+    void deactivateSkill_success() {
+        when(skillRepository.findById(1L)).thenReturn(Optional.of(testSkill));
 
-        skillCommandService.deactivateSkill(11L);
-
-        assertFalse(existing.isActive());
-        verify(skillRepository).save(existing);
-        verify(cacheService).evict(CacheService.vKey("skill:11"));
-        verify(cacheService).evictByPattern(CacheService.vKey("skill:all:*"));
-        verify(cacheService).evictByPattern(CacheService.vKey("skill:search:*"));
-        verify(rabbitTemplate).convertAndSend(eq(RabbitMQConfig.SKILL_EXCHANGE), eq("skill.updated"), any(com.skillsync.skill.event.SkillEvent.class));
+        service.deactivateSkill(1L);
+        assertFalse(testSkill.isActive());
+        verify(skillRepository).save(testSkill);
+        verify(cacheService).evict(CacheService.vKey("skill:1"));
+        verify(rabbitTemplate).convertAndSend(anyString(), eq("skill.updated"), (Object) any());
     }
 
-    @Test
-    @DisplayName("deactivateSkill — missing entity throws")
-    void deactivateSkill_shouldThrowWhenMissing() {
-        when(skillRepository.findById(404L)).thenReturn(Optional.empty());
+    @Test @DisplayName("deactivateSkill - not found")
+    void deactivateSkill_notFound() {
+        when(skillRepository.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(RuntimeException.class, () -> service.deactivateSkill(1L));
+    }
 
-        assertThrows(RuntimeException.class, () -> skillCommandService.deactivateSkill(404L));
-        verify(skillRepository, never()).save(any(Skill.class));
+    @Test @DisplayName("publishEvent swallows exceptions")
+    void publishEvent_swallows() {
+        when(skillRepository.existsByName("New")).thenReturn(false);
+        Skill saved = Skill.builder().id(3L).name("New").category("C").description("D").isActive(true).build();
+        when(skillRepository.save(any())).thenReturn(saved);
+        doThrow(new RuntimeException("down")).when(rabbitTemplate).convertAndSend(anyString(), anyString(), (Object) any());
+
+        assertDoesNotThrow(() -> service.createSkill(new CreateSkillRequest("New", "C", "D")));
     }
 }

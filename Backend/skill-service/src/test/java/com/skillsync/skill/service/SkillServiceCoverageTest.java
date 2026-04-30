@@ -26,6 +26,54 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class SkillServiceCoverageTest {
+    @Test
+    @DisplayName("createSkill throws NPE for null request")
+    void createSkill_shouldThrowForNullRequest() {
+        assertThrows(NullPointerException.class, () -> skillService.createSkill(null));
+    }
+
+    @Test
+    @DisplayName("updateSkill throws NPE for null request")
+    void updateSkill_shouldThrowForNullRequest() {
+        when(skillRepository.findById(1L)).thenReturn(Optional.of(activeSkill));
+        assertThrows(NullPointerException.class, () -> skillService.updateSkill(1L, null));
+    }
+
+    @Test
+    @DisplayName("getSkillById throws RuntimeException for null id")
+    void getSkillById_shouldThrowForNullId() {
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> skillService.getSkillById(null));
+        assertEquals("Skill not found: null", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("deactivateSkill throws RuntimeException for null id")
+    void deactivateSkill_shouldThrowForNullId() {
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> skillService.deactivateSkill(null));
+        assertEquals("Skill not found: null", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("searchSkills with null query returns empty list")
+    void searchSkills_shouldReturnEmptyForNullQuery() {
+        when(skillRepository.searchByName(null)).thenReturn(List.of());
+        List<SkillResponse> result = skillService.searchSkills(null);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("searchSkills with empty query returns empty list")
+    void searchSkills_shouldReturnEmptyForEmptyQuery() {
+        when(skillRepository.searchByName("")).thenReturn(List.of());
+        List<SkillResponse> result = skillService.searchSkills("");
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("getAllSkills with null pageable throws NPE")
+    void getAllSkills_shouldThrowForNullPageable() {
+        assertThrows(NullPointerException.class, () -> skillService.getAllSkills(null));
+    }
 
     @Mock
     private SkillRepository skillRepository;

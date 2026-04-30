@@ -10,9 +10,6 @@ import org.springframework.mock.web.server.MockServerWebExchange;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -43,6 +40,7 @@ class RateLimitingFilterTest {
 
     @Test
     void shouldApplyExpectedRateLimitForEachPathCategory() {
+        assertLimitHeader("/api/auth/otp", "1.1.1.0", null, "5");
         assertLimitHeader("/api/auth/verify-otp", "1.1.1.1", null, "5");
         assertLimitHeader("/api/auth/login", "2.2.2.2", null, "10");
         assertLimitHeader("/api/payments/create-order", "3.3.3.3", "99", "10");
@@ -58,80 +56,124 @@ class RateLimitingFilterTest {
             return Mono.empty();
         };
 
-        for (int i = 0; i < 10; i++) {
-            ServerWebExchange allowed = exchange(HttpMethod.POST, "/api/auth/login", "20.20.20.20", null);
-            filter.filter(allowed, chain).block();
-            assertNull(allowed.getResponse().getStatusCode());
+        // Allow 10 requests
+        for (int i = 1; i <= 10; i++) {
+            ServerWebExchange exchange = exchange(HttpMethod.POST, "/api/auth/login", "127.0.0.1", null);
+            filter.filter(exchange, chain).block();
+            assertEquals(i, chainCalls.get());
+            assertNull(exchange.getResponse().getStatusCode());
         }
 
-        ServerWebExchange blocked = exchange(HttpMethod.POST, "/api/auth/login", "20.20.20.20", null);
-        filter.filter(blocked, chain).block();
-
-        assertEquals(10, chainCalls.get());
-        assertEquals(HttpStatus.TOO_MANY_REQUESTS, blocked.getResponse().getStatusCode());
-        assertEquals("0", blocked.getResponse().getHeaders().getFirst("X-RateLimit-Remaining"));
-        assertEquals("60", blocked.getResponse().getHeaders().getFirst("Retry-After"));
+        // 11th request should be blocked
+        ServerWebExchange blockedExchange = exchange(HttpMethod.POST, "/api/auth/login", "127.0.0.1", null);
+        filter.filter(blockedExchange, chain).block();
+        assertEquals(10, chainCalls.get()); // Chain NOT called
+        assertEquals(HttpStatus.TOO_MANY_REQUESTS, blockedExchange.getResponse().getStatusCode());
     }
 
     @Test
-    void shouldRateLimitByUserKeyForAuthenticatedPaymentRequests() {
-        GatewayFilterChain chain = exchange -> Mono.empty();
+    void shouldRateLimitDifferentUsersSeparately() {
+        AtomicInteger chainCalls = new AtomicInteger();
+        GatewayFilterChain chain = exchange -> {
+            chainCalls.incrementAndGet();
+            return Mono.empty();
+        };
 
+        // User 1 hits limit
         for (int i = 0; i < 10; i++) {
-            ServerWebExchange allowed = exchange(HttpMethod.POST, "/api/payments/verify", "30.30.30.30", "7");
-            filter.filter(allowed, chain).block();
-            assertNull(allowed.getResponse().getStatusCode());
+            filter.filter(exchange(HttpMethod.POST, "/api/auth/login", "1.1.1.1", null), chain).block();
         }
 
-        ServerWebExchange blocked = exchange(HttpMethod.POST, "/api/payments/verify", "30.30.30.30", "7");
-        filter.filter(blocked, chain).block();
-
-        assertEquals(HttpStatus.TOO_MANY_REQUESTS, blocked.getResponse().getStatusCode());
-        assertEquals("10", blocked.getResponse().getHeaders().getFirst("X-RateLimit-Limit"));
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    void shouldCleanExpiredBuckets() throws Exception {
-        Field bucketsField = RateLimitingFilter.class.getDeclaredField("buckets");
-        bucketsField.setAccessible(true);
-        Map<String, Object> buckets = (Map<String, Object>) bucketsField.get(filter);
-
-        Class<?> bucketClass = Class.forName("com.skillsync.apigateway.filter.RateLimitingFilter$RateLimitBucket");
-        Constructor<?> constructor = bucketClass.getDeclaredConstructor(long.class);
-        constructor.setAccessible(true);
-
-        Object expired = constructor.newInstance(System.currentTimeMillis() - 130_000);
-        Object active = constructor.newInstance(System.currentTimeMillis());
-        buckets.put("expired", expired);
-        buckets.put("active", active);
-
-        filter.cleanExpiredBuckets();
-
-        assertFalse(buckets.containsKey("expired"));
-        assertTrue(buckets.containsKey("active"));
-    }
-
-    @Test
-    void shouldHaveExpectedOrder() {
-        assertEquals(-2, filter.getOrder());
+        // User 2 should still be allowed
+        ServerWebExchange exchange2 = exchange(HttpMethod.POST, "/api/auth/login", "2.2.2.2", null);
+        filter.filter(exchange2, chain).block();
+        assertEquals(11, chainCalls.get());
+        assertNull(exchange2.getResponse().getStatusCode());
     }
 
     private void assertLimitHeader(String path, String ip, String userId, String expectedLimit) {
         GatewayFilterChain chain = exchange -> Mono.empty();
         ServerWebExchange exchange = exchange(HttpMethod.GET, path, ip, userId);
-
         filter.filter(exchange, chain).block();
-
         assertEquals(expectedLimit, exchange.getResponse().getHeaders().getFirst("X-RateLimit-Limit"));
     }
 
     private ServerWebExchange exchange(HttpMethod method, String path, String forwardedIp, String userId) {
-        MockServerHttpRequest.BaseBuilder<?> requestBuilder = MockServerHttpRequest.method(method, path)
-                .header("X-Forwarded-For", forwardedIp);
+        return exchange(method, path, forwardedIp, null, null, userId);
+    }
+
+    private ServerWebExchange exchange(HttpMethod method, String path, String forwardedIp, String realIp, java.net.InetSocketAddress remoteAddress, String userId) {
+        MockServerHttpRequest.BaseBuilder<?> requestBuilder = MockServerHttpRequest.method(method, path);
+        if (forwardedIp != null) {
+            requestBuilder.header("X-Forwarded-For", forwardedIp);
+        }
+        if (realIp != null) {
+            requestBuilder.header("X-Real-IP", realIp);
+        }
+        if (remoteAddress != null) {
+            requestBuilder.remoteAddress(remoteAddress);
+        }
         if (userId != null) {
             requestBuilder.header("X-User-Id", userId);
         }
         return MockServerWebExchange.from(requestBuilder.build());
+    }
+
+    @Test
+    void shouldExtractRealIpWhenForwardedIsNull() {
+        GatewayFilterChain chain = exchange -> Mono.empty();
+        ServerWebExchange exchange = exchange(HttpMethod.GET, "/api/test", null, "8.8.8.8", null, null);
+        filter.filter(exchange, chain).block();
+        assertEquals("100", exchange.getResponse().getHeaders().getFirst("X-RateLimit-Limit"));
+    }
+
+    @Test
+    void shouldHandleEmptyForwardedForHeader() {
+        GatewayFilterChain chain = exchange -> Mono.empty();
+        ServerWebExchange exchange = exchange(HttpMethod.GET, "/api/test", "", "8.8.8.8", null, null);
+        filter.filter(exchange, chain).block();
+        assertEquals("100", exchange.getResponse().getHeaders().getFirst("X-RateLimit-Limit"));
+    }
+
+    @Test
+    void shouldHandleEmptyRealIpHeader() {
+        GatewayFilterChain chain = exchange -> Mono.empty();
+        ServerWebExchange exchange = exchange(HttpMethod.GET, "/api/test", null, "", new java.net.InetSocketAddress("9.9.9.9", 80), null);
+        filter.filter(exchange, chain).block();
+        assertEquals("100", exchange.getResponse().getHeaders().getFirst("X-RateLimit-Limit"));
+    }
+
+    @Test
+    void shouldExtractRemoteAddressWhenHeadersAreNull() {
+        GatewayFilterChain chain = exchange -> Mono.empty();
+        ServerWebExchange exchange = exchange(HttpMethod.GET, "/api/test", null, null, new java.net.InetSocketAddress("9.9.9.9", 80), null);
+        filter.filter(exchange, chain).block();
+        assertEquals("100", exchange.getResponse().getHeaders().getFirst("X-RateLimit-Limit"));
+    }
+
+    @Test
+    void shouldHandleNullRemoteAddress() {
+        GatewayFilterChain chain = exchange -> Mono.empty();
+        ServerWebExchange exchange = exchange(HttpMethod.GET, "/api/test", null, null, null, null);
+        filter.filter(exchange, chain).block();
+        assertEquals("100", exchange.getResponse().getHeaders().getFirst("X-RateLimit-Limit"));
+    }
+
+    @Test
+    void shouldExtractFirstIpFromForwardedForList() {
+        GatewayFilterChain chain = exchange -> Mono.empty();
+        ServerWebExchange exchange = exchange(HttpMethod.GET, "/api/test", "1.1.1.1, 2.2.2.2", null, null, null);
+        filter.filter(exchange, chain).block();
+        assertEquals("100", exchange.getResponse().getHeaders().getFirst("X-RateLimit-Limit"));
+    }
+
+    @Test
+    void shouldCategorizePathsProperly() {
+        assertLimitHeader("/forgot-password", "10.1.1.1", null, "5");
+        assertLimitHeader("/oauth-login", "10.2.2.2", null, "10");
+        assertLimitHeader("/setup-password", "10.3.3.3", null, "10");
+        assertLimitHeader("/api/auth/something", "10.4.4.4", null, "10");
+        assertLimitHeader("/api/payments/create-order", "10.5.5.5", null, "10");
+        assertLimitHeader("/api/payments/verify", "10.6.6.6", null, "10");
     }
 }

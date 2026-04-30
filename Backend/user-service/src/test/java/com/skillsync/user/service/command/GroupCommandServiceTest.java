@@ -319,4 +319,104 @@ class GroupCommandServiceTest {
         assertThrows(RuntimeException.class,
                 () -> groupCommandService.deleteDiscussion(1L, 5L, 100L, "ROLE_ADMIN"));
     }
+
+    @Test
+    @DisplayName("deleteDiscussionById — hit the wrapper")
+    void deleteDiscussionById_shouldHitWrapper() {
+        Discussion discussion = Discussion.builder().id(5L).group(testGroup).authorId(100L).build();
+        when(discussionRepository.findById(5L)).thenReturn(Optional.of(discussion));
+        when(discussionRepository.countByParentId(5L)).thenReturn(0L);
+
+        groupCommandService.deleteDiscussionById(5L, 100L, "ROLE_ADMIN");
+
+        verify(discussionRepository).delete(discussion);
+    }
+
+    @Test
+    @DisplayName("postDiscussion — with parent")
+    void postDiscussion_WithParent() {
+        when(groupRepository.findById(1L)).thenReturn(Optional.of(testGroup));
+        when(memberRepository.existsByGroupIdAndUserId(1L, 200L)).thenReturn(true);
+        Discussion parent = Discussion.builder().id(10L).group(testGroup).build();
+        when(discussionRepository.findById(10L)).thenReturn(Optional.of(parent));
+        
+        when(discussionRepository.save(any(Discussion.class))).thenAnswer(i -> i.getArgument(0));
+        when(authServiceClient.getUserById(200L)).thenReturn(Map.of("email", "j@t.com"));
+
+        PostDiscussionRequest request = new PostDiscussionRequest("Title", "Content", 10L);
+        groupCommandService.postDiscussion(1L, 200L, "ROLE_LEARNER", request);
+
+        verify(discussionRepository).save(argThat(d -> d.getParent() != null));
+    }
+
+    @Test
+    @DisplayName("postDiscussion — parent wrong group")
+    void postDiscussion_ParentWrongGroup() {
+        when(groupRepository.findById(1L)).thenReturn(Optional.of(testGroup));
+        when(memberRepository.existsByGroupIdAndUserId(1L, 200L)).thenReturn(true);
+        LearningGroup otherGroup = LearningGroup.builder().id(2L).build();
+        Discussion parent = Discussion.builder().id(10L).group(otherGroup).build();
+        when(discussionRepository.findById(10L)).thenReturn(Optional.of(parent));
+
+        PostDiscussionRequest request = new PostDiscussionRequest("Title", "Content", 10L);
+        assertThrows(RuntimeException.class, () -> groupCommandService.postDiscussion(1L, 200L, "ROLE_LEARNER", request));
+    }
+
+    @Test
+    @DisplayName("canDeleteDiscussion — mentor can delete learner msg")
+    void canDeleteDiscussion_MentorDeletesLearner() {
+        Discussion discussion = Discussion.builder().id(5L).group(testGroup).authorId(200L).build();
+        when(discussionRepository.findById(5L)).thenReturn(Optional.of(discussion));
+        when(memberRepository.existsByGroupIdAndUserId(1L, 101L)).thenReturn(true);
+        when(discussionRepository.countByParentId(5L)).thenReturn(0L);
+        // Author is learner
+        when(authServiceClient.getUserById(200L)).thenReturn(Map.of("role", "ROLE_LEARNER"));
+
+        groupCommandService.deleteDiscussion(1L, 5L, 101L, "ROLE_MENTOR");
+
+        verify(discussionRepository).delete(discussion);
+    }
+
+    @Test
+    @DisplayName("canDeleteDiscussion — learner cannot delete others")
+    void canDeleteDiscussion_LearnerCannotDeleteOthers() {
+        Discussion discussion = Discussion.builder().id(5L).group(testGroup).authorId(200L).build();
+        when(discussionRepository.findById(5L)).thenReturn(Optional.of(discussion));
+        when(memberRepository.existsByGroupIdAndUserId(1L, 101L)).thenReturn(true);
+
+        assertThrows(RuntimeException.class, () -> groupCommandService.deleteDiscussion(1L, 5L, 101L, "ROLE_LEARNER"));
+    }
+
+    @Test
+    @DisplayName("resolveUserByEmail — handles invalid list content")
+    void resolveUserByEmail_InvalidContent() {
+        when(groupRepository.findById(1L)).thenReturn(Optional.of(testGroup));
+        // auth service returns something that is not a list of maps
+        when(authServiceClient.getAllUsers(anyInt(), anyInt(), any(), anyString()))
+                .thenReturn(Map.of("content", List.of("string-not-map")));
+
+        assertThrows(RuntimeException.class, () -> groupCommandService.addMember(1L, 100L, "ROLE_ADMIN", new AddGroupMemberRequest("j@t.com")));
+    }
+
+    @Test
+    @DisplayName("toLong — handles parsing error")
+    void toLong_ParsingError() {
+        when(groupRepository.findById(1L)).thenReturn(Optional.of(testGroup));
+        when(authServiceClient.getAllUsers(anyInt(), anyInt(), any(), anyString()))
+                .thenReturn(Map.of("content", List.of(Map.of("id", "invalid", "email", "j@t.com"))));
+
+        assertThrows(RuntimeException.class, () -> groupCommandService.addMember(1L, 100L, "ROLE_ADMIN", new AddGroupMemberRequest("j@t.com")));
+    }
+
+    @Test
+    @DisplayName("updateGroup — partial fields")
+    void updateGroup_PartialFields() {
+        UpdateGroupRequest request = new UpdateGroupRequest(" ", null, "  ", null);
+        when(groupRepository.findById(1L)).thenReturn(Optional.of(testGroup));
+        when(groupRepository.save(any(LearningGroup.class))).thenReturn(testGroup);
+        
+        groupCommandService.updateGroup(1L, 100L, "ROLE_ADMIN", request);
+        
+        verify(groupRepository).save(testGroup);
+    }
 }

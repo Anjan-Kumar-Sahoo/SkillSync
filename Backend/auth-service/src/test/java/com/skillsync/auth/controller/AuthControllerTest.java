@@ -2,6 +2,7 @@ package com.skillsync.auth.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skillsync.auth.dto.*;
+import com.skillsync.auth.enums.OtpType;
 import com.skillsync.auth.service.AuthService;
 import com.skillsync.auth.service.OtpService;
 import org.junit.jupiter.api.DisplayName;
@@ -14,10 +15,13 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import com.skillsync.auth.security.JwtTokenProvider;
 import com.skillsync.auth.security.UserDetailsServiceImpl;
+import jakarta.servlet.http.Cookie;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AuthController.class)
@@ -66,16 +70,82 @@ class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/auth/register - 400 for invalid email")
-    void register_shouldReturn400ForInvalidInput() throws Exception {
-        String invalidJson = """
-                {"email":"invalid","password":"short","firstName":"","lastName":""}
-                """;
+    @DisplayName("POST /api/auth/refresh - OK with Cookie")
+    void refreshToken_withCookie() throws Exception {
+        AuthResponse response = new AuthResponse("token", "refresh2", 3600, "Bearer",
+                new UserSummary(1L, "test@example.com", "ROLE_LEARNER", "John", "Doe"));
+        when(authService.refreshToken(any(RefreshTokenRequest.class))).thenReturn(response);
 
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post("/api/auth/refresh")
+                        .cookie(new Cookie("refreshToken", "valid-refresh-token")))
+                .andExpect(status().isOk())
+                .andExpect(header().exists("Set-Cookie"))
+                .andExpect(jsonPath("$.accessToken").value("token"));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/refresh - Unauthorized if no token")
+    void refreshToken_noToken() throws Exception {
+        mockMvc.perform(post("/api/auth/refresh"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/logout - OK")
+    void logout_OK() throws Exception {
+        mockMvc.perform(post("/api/auth/logout")
+                        .cookie(new Cookie("refreshToken", "valid-refresh-token")))
+                .andExpect(status().isOk())
+                .andExpect(header().exists("Set-Cookie")); // Clears cookies
+        verify(authService).logout("valid-refresh-token");
+    }
+
+    @Test
+    @DisplayName("GET /api/auth/me - OK with Bearer Token")
+    void getCurrentUser_BearerToken() throws Exception {
+        when(jwtTokenProvider.isTokenValid("valid-token")).thenReturn(true);
+        when(jwtTokenProvider.extractUserId("valid-token")).thenReturn(1L);
+        when(authService.getUserById(1L)).thenReturn(new UserSummary(1L, "test@example.com", "ROLE_LEARNER", "John", "Doe"));
+
+        mockMvc.perform(get("/api/auth/me")
+                        .header("Authorization", "Bearer valid-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("test@example.com"));
+    }
+
+    @Test
+    @DisplayName("GET /api/auth/me - OK with Cookie Token")
+    void getCurrentUser_CookieToken() throws Exception {
+        when(jwtTokenProvider.isTokenValid("valid-token")).thenReturn(true);
+        when(jwtTokenProvider.extractUserId("valid-token")).thenReturn(1L);
+        when(authService.getUserById(1L)).thenReturn(new UserSummary(1L, "test@example.com", "ROLE_LEARNER", "John", "Doe"));
+
+        mockMvc.perform(get("/api/auth/me")
+                        .cookie(new Cookie("accessToken", "valid-token")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("test@example.com"));
+    }
+
+    @Test
+    @DisplayName("GET /api/auth/me - Unauthorized")
+    void getCurrentUser_Unauthorized() throws Exception {
+        mockMvc.perform(get("/api/auth/me"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/setup-password - OK")
+    void setupPassword_OK() throws Exception {
+        SetupPasswordRequest request = new SetupPasswordRequest("test@example.com", "newpass123");
+        when(jwtTokenProvider.extractEmail("valid-token")).thenReturn("test@example.com");
+
+        mockMvc.perform(post("/api/auth/setup-password")
+                        .header("Authorization", "Bearer valid-token")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(invalidJson))
-                .andExpect(status().isBadRequest());
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        verify(authService).setupPassword(any(SetupPasswordRequest.class));
     }
 
     @Test

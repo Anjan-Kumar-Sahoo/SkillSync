@@ -1,8 +1,9 @@
 package com.skillsync.payment.service;
 
-import com.skillsync.payment.config.RabbitMQConfig;
 import com.skillsync.payment.entity.FailedEvent;
 import com.skillsync.payment.repository.FailedEventRepository;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -10,99 +11,86 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.amqp.core.MessagePostProcessor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-/**
- * Tests for DlqReplayService:
- * - Replay re-publishes with original eventId
- * - Replay skipped if already replayed
- * - Skip marks as SKIPPED
- */
 @ExtendWith(MockitoExtension.class)
+@DisplayName("DlqReplayService Unit Tests")
 class DlqReplayServiceTest {
 
-    @Mock
-    private FailedEventRepository failedEventRepository;
-
-    @Mock
-    private RabbitTemplate rabbitTemplate;
-
-    private DlqReplayService replayService;
+    @Mock private FailedEventRepository failedEventRepository;
+    @Mock private RabbitTemplate rabbitTemplate;
+    private MeterRegistry meterRegistry;
+    
+    private DlqReplayService dlqReplayService;
 
     @BeforeEach
     void setUp() {
-        replayService = new DlqReplayService(failedEventRepository, rabbitTemplate, new SimpleMeterRegistry());
-        replayService.initMetrics();
+        meterRegistry = new SimpleMeterRegistry();
+        dlqReplayService = new DlqReplayService(failedEventRepository, rabbitTemplate, meterRegistry);
+        dlqReplayService.initMetrics();
     }
 
     @Test
-    @DisplayName("replayEvent: PENDING_REVIEW → re-publishes and marks REPLAYED")
-    void replayEvent_pendingReview_replaysAndMarks() {
+    @DisplayName("replayEvent: Success path")
+    void replayEvent_Success() {
         FailedEvent event = FailedEvent.builder()
-                .eventId("evt-fail-1")
-                .sourceQueue("payment.business.action.dlq")
-                .routingKey("payment.business.action.v1")
-                .payload("{\"userId\":42}")
+                .eventId("evt-1")
+                .routingKey("rk")
+                .payload("payload")
                 .replayStatus(FailedEvent.ReplayStatus.PENDING_REVIEW)
-                .failedAt(LocalDateTime.now())
                 .build();
+        when(failedEventRepository.findByEventId("evt-1")).thenReturn(Optional.of(event));
 
-        when(failedEventRepository.findByEventId("evt-fail-1")).thenReturn(Optional.of(event));
+        Map<String, String> result = dlqReplayService.replayEvent("evt-1");
 
-        Map<String, String> result = replayService.replayEvent("evt-fail-1");
-
-        assertEquals("REPLAYED", result.get("status"));
-        verify(rabbitTemplate).convertAndSend(eq(RabbitMQConfig.PAYMENT_EXCHANGE),
-                eq("payment.business.action.v1"), eq("{\"userId\":42}"), any(org.springframework.amqp.core.MessagePostProcessor.class));
-        verify(failedEventRepository).save(argThat(e ->
-                e.getReplayStatus() == FailedEvent.ReplayStatus.REPLAYED));
+        assertThat(result.get("status")).isEqualTo("REPLAYED");
+        verify(rabbitTemplate).convertAndSend(anyString(), eq("rk"), eq("payload"), any(MessagePostProcessor.class));
+        assertThat(event.getReplayStatus()).isEqualTo(FailedEvent.ReplayStatus.REPLAYED);
     }
 
     @Test
-    @DisplayName("replayEvent: already REPLAYED → skipped")
-    void replayEvent_alreadyReplayed_skipped() {
+    @DisplayName("replayEvent: Already replayed skips")
+    void replayEvent_Skipped() {
         FailedEvent event = FailedEvent.builder()
-                .eventId("evt-fail-2")
+                .eventId("evt-2")
                 .replayStatus(FailedEvent.ReplayStatus.REPLAYED)
                 .build();
+        when(failedEventRepository.findByEventId("evt-2")).thenReturn(Optional.of(event));
 
-        when(failedEventRepository.findByEventId("evt-fail-2")).thenReturn(Optional.of(event));
+        Map<String, String> result = dlqReplayService.replayEvent("evt-2");
 
-        Map<String, String> result = replayService.replayEvent("evt-fail-2");
-
-        assertEquals("SKIPPED", result.get("status"));
-        verify(rabbitTemplate, never()).convertAndSend(anyString(), anyString(), any(), any(org.springframework.amqp.core.MessagePostProcessor.class));
+        assertThat(result.get("status")).isEqualTo("SKIPPED");
+        verifyNoInteractions(rabbitTemplate);
     }
 
     @Test
-    @DisplayName("skipEvent: marks as SKIPPED")
-    void skipEvent_marksSkipped() {
-        FailedEvent event = FailedEvent.builder()
-                .eventId("evt-fail-3")
-                .replayStatus(FailedEvent.ReplayStatus.PENDING_REVIEW)
-                .build();
+    @DisplayName("replayEvent: Not found throws exception")
+    void replayEvent_NotFound() {
+        when(failedEventRepository.findByEventId("none")).thenReturn(Optional.empty());
 
-        when(failedEventRepository.findByEventId("evt-fail-3")).thenReturn(Optional.of(event));
-
-        Map<String, String> result = replayService.skipEvent("evt-fail-3");
-
-        assertEquals("SKIPPED", result.get("status"));
-        verify(failedEventRepository).save(argThat(e ->
-                e.getReplayStatus() == FailedEvent.ReplayStatus.SKIPPED));
+        assertThatThrownBy(() -> dlqReplayService.replayEvent("none"))
+                .isInstanceOf(RuntimeException.class);
     }
 
     @Test
-    @DisplayName("replayEvent: not found → throws")
-    void replayEvent_notFound_throws() {
-        when(failedEventRepository.findByEventId("missing")).thenReturn(Optional.empty());
+    @DisplayName("skipEvent: Success path")
+    void skipEvent_Success() {
+        FailedEvent event = FailedEvent.builder().eventId("evt-3").build();
+        when(failedEventRepository.findByEventId("evt-3")).thenReturn(Optional.of(event));
 
-        assertThrows(RuntimeException.class, () -> replayService.replayEvent("missing"));
+        Map<String, String> result = dlqReplayService.skipEvent("evt-3");
+
+        assertThat(result.get("status")).isEqualTo("SKIPPED");
+        assertThat(event.getReplayStatus()).isEqualTo(FailedEvent.ReplayStatus.SKIPPED);
     }
 }

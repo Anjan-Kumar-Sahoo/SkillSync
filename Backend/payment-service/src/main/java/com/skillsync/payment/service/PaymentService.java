@@ -200,12 +200,21 @@ public class PaymentService {
                                 request.razorpayOrderId(), request.razorpayPaymentId(),
                                 userId, payment.getType());
 
-                // 9. Trigger Saga Orchestration (outside the verification transaction)
-                sagaOrchestrator.executeSaga(payment);
-
-                // 10. Re-fetch to get latest status after saga
-                payment = paymentRepository.findByRazorpayOrderId(request.razorpayOrderId())
-                                .orElse(payment);
+                // 9. Trigger Saga Orchestration AFTER verification transaction commits
+                // This prevents a DEADLOCK between the verification transaction and the saga's REQUIRES_NEW transactions
+                if (org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive()) {
+                    org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                        new org.springframework.transaction.support.TransactionSynchronization() {
+                            @Override
+                            public void afterCommit() {
+                                sagaOrchestrator.executeSaga(payment);
+                            }
+                        }
+                    );
+                } else {
+                    // Fallback for non-transactional contexts (e.g. unit tests)
+                    sagaOrchestrator.executeSaga(payment);
+                }
 
                 return PaymentMapper.toResponse(payment);
         }

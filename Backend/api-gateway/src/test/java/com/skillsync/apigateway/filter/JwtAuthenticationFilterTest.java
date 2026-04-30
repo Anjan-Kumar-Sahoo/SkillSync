@@ -117,6 +117,47 @@ class JwtAuthenticationFilterTest {
         assertEquals(HttpStatus.UNAUTHORIZED, exchange.getResponse().getStatusCode());
     }
 
+    @Test
+    void shouldFallbackToCookieWhenAuthorizationHeaderIsNotBearer() {
+        String token = createAccessToken("7", "mentor@skillsync.dev", "ROLE_MENTOR");
+        ServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.get("/api/mentors/profile")
+                        .header(HttpHeaders.AUTHORIZATION, "Basic dXNlcjpwYXNz")
+                        .cookie(new HttpCookie("accessToken", token))
+                        .build()
+        );
+
+        AtomicBoolean chainCalled = new AtomicBoolean(false);
+        GatewayFilterChain chain = ex -> {
+            chainCalled.set(true);
+            return Mono.empty();
+        };
+
+        filter.apply(new JwtAuthenticationFilter.Config()).filter(exchange, chain).block();
+
+        assertTrue(chainCalled.get());
+        assertNull(exchange.getResponse().getStatusCode());
+    }
+
+    @Test
+    void shouldReturnUnauthorizedWhenAuthorizationHeaderIsNotBearerAndNoCookie() {
+        ServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.get("/api/users/me")
+                        .header(HttpHeaders.AUTHORIZATION, "Basic dXNlcjpwYXNz")
+                        .build()
+        );
+        AtomicBoolean chainCalled = new AtomicBoolean(false);
+        GatewayFilterChain chain = ex -> {
+            chainCalled.set(true);
+            return Mono.empty();
+        };
+
+        filter.apply(new JwtAuthenticationFilter.Config()).filter(exchange, chain).block();
+
+        assertFalse(chainCalled.get());
+        assertEquals(HttpStatus.UNAUTHORIZED, exchange.getResponse().getStatusCode());
+    }
+
     private String createAccessToken(String userId, String email, String role) {
         SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(JWT_SECRET));
         return Jwts.builder()

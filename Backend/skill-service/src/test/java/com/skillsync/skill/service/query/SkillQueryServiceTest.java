@@ -1,18 +1,19 @@
 package com.skillsync.skill.service.query;
 
 import com.skillsync.cache.CacheService;
-import com.skillsync.skill.dto.SkillResponse;
+import com.skillsync.skill.dto.*;
 import com.skillsync.skill.entity.Skill;
 import com.skillsync.skill.repository.SkillRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,91 +27,66 @@ class SkillQueryServiceTest {
 
     @Mock private SkillRepository skillRepository;
     @Mock private CacheService cacheService;
+    @InjectMocks private SkillQueryService service;
 
-    @InjectMocks private SkillQueryService skillQueryService;
+    private Skill testSkill;
 
-    private Skill buildSkill() {
-        return Skill.builder()
-                .id(1L)
-                .name("Java")
-                .category("Programming")
-                .description("Java lang")
-                .isActive(true)
-                .build();
+    @BeforeEach
+    void setUp() {
+        testSkill = Skill.builder().id(1L).name("Java").category("Programming")
+                .description("Java lang").isActive(true).build();
     }
 
-    @Test
-    @DisplayName("getAllSkills — returns paginated skills")
-    void shouldReturnAllSkills() {
-        Pageable pageable = PageRequest.of(0, 10);
-        when(skillRepository.findByIsActiveTrue(pageable)).thenReturn(new PageImpl<>(List.of(buildSkill())));
-
-        var result = skillQueryService.getAllSkills(pageable);
-
-        assertEquals(1, result.getTotalElements());
-        assertEquals("Java", result.getContent().get(0).name());
-    }
-
-    @Test
-    @DisplayName("getSkillById — cache miss loads from DB")
-    void shouldGetSkillById() {
-        Skill skill = buildSkill();
+    @Test @DisplayName("getSkillById - cache miss loads from DB")
+    void getSkillById_cacheMiss() {
         when(cacheService.getOrLoad(anyString(), eq(SkillResponse.class), any(), any()))
                 .thenAnswer(inv -> {
                     java.util.function.Supplier<SkillResponse> loader = inv.getArgument(3);
                     return loader.get();
                 });
-        when(skillRepository.findById(1L)).thenReturn(Optional.of(skill));
-
-        SkillResponse result = skillQueryService.getSkillById(1L);
-
-        assertNotNull(result);
-        assertEquals("Java", result.name());
+        when(skillRepository.findById(1L)).thenReturn(Optional.of(testSkill));
+        SkillResponse resp = service.getSkillById(1L);
+        assertNotNull(resp);
+        assertEquals("Java", resp.name());
     }
 
-    @Test
-    @DisplayName("getSkillById — returns null for non-existent")
-    void shouldReturnNullForMissing() {
+    @Test @DisplayName("getSkillById - not found returns null")
+    void getSkillById_notFound() {
         when(cacheService.getOrLoad(anyString(), eq(SkillResponse.class), any(), any()))
                 .thenAnswer(inv -> {
                     java.util.function.Supplier<SkillResponse> loader = inv.getArgument(3);
                     return loader.get();
                 });
-        when(skillRepository.findById(999L)).thenReturn(Optional.empty());
-
-        SkillResponse result = skillQueryService.getSkillById(999L);
-
-        assertNull(result);
+        when(skillRepository.findById(1L)).thenReturn(Optional.empty());
+        assertNull(service.getSkillById(1L));
     }
 
-    @Test
-    @DisplayName("searchSkills — returns matching skills")
-    void shouldSearchSkills() {
-        when(skillRepository.searchByName("java"))
-                .thenReturn(List.of(buildSkill()));
-
-        var result = skillQueryService.searchSkills("java");
-
-        assertEquals(1, result.size());
+    @Test @DisplayName("getAllSkills")
+    void getAllSkills() {
+        Page<Skill> page = new PageImpl<>(List.of(testSkill));
+        when(skillRepository.findByIsActiveTrue(PageRequest.of(0, 10))).thenReturn(page);
+        assertEquals(1, service.getAllSkills(PageRequest.of(0, 10)).getTotalElements());
     }
 
-    @Test
-    @DisplayName("getSkillsByIds — returns skills by IDs")
-    void shouldGetSkillsByIds() {
-        when(skillRepository.findAllById(List.of(1L, 2L)))
-                .thenReturn(List.of(buildSkill()));
-
-        var result = skillQueryService.getSkillsByIds(List.of(1L, 2L));
-
-        assertEquals(1, result.size());
+    @Test @DisplayName("searchSkills")
+    void searchSkills() {
+        when(skillRepository.searchByName("Java")).thenReturn(List.of(testSkill));
+        assertEquals(1, service.searchSkills("Java").size());
     }
 
-    @Test
-    @DisplayName("getSkillsByIds — empty input returns empty list without hitting repository")
-    void shouldReturnEmptyForMissingIds() {
-        var result = skillQueryService.getSkillsByIds(List.of());
+    @Test @DisplayName("getSkillsByIds - with ids")
+    void getSkillsByIds() {
+        when(skillRepository.findAllById(List.of(1L, 2L))).thenReturn(List.of(testSkill));
+        assertEquals(1, service.getSkillsByIds(List.of(1L, 2L)).size());
+    }
 
-        assertTrue(result.isEmpty());
-        verify(skillRepository, never()).findAllById(anyList());
+    @Test @DisplayName("getSkillsByIds - null ids returns empty")
+    void getSkillsByIds_null() {
+        assertEquals(0, service.getSkillsByIds(null).size());
+    }
+
+    @Test @DisplayName("getSkillsByIds - empty ids returns empty")
+    void getSkillsByIds_empty() {
+        assertEquals(0, service.getSkillsByIds(List.of()).size());
     }
 }

@@ -54,9 +54,12 @@ class CsrfOriginFilterTest {
             return Mono.empty();
         };
 
+        // Test with spaces and redundant commas in config
+        ReflectionTestUtils.setField(filter, "allowedOrigins", "https://app.skillsync.dev, , https://skillsync.dev");
+
         ServerWebExchange exchange = MockServerWebExchange.from(
                 MockServerHttpRequest.post("/api/users")
-                        .header("Origin", "https://app.skillsync.dev")
+                        .header("Origin", " https://app.skillsync.dev ")
                         .build()
         );
 
@@ -98,6 +101,25 @@ class CsrfOriginFilterTest {
                 MockServerHttpRequest.get("/api/users")
                         .header("Origin", "https://evil.dev")
                         .build()
+        );
+
+        filter.filter(exchange, chain).block();
+
+        assertEquals(1, chainCalls.get());
+        assertNull(exchange.getResponse().getStatusCode());
+    }
+
+    @Test
+    void shouldAllowMutatingRequestWithoutOriginHeader() {
+        AtomicInteger chainCalls = new AtomicInteger();
+        GatewayFilterChain chain = exchange -> {
+            chainCalls.incrementAndGet();
+            return Mono.empty();
+        };
+
+        ServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.post("/api/users")
+                        .build() // No Origin header
         );
 
         filter.filter(exchange, chain).block();
