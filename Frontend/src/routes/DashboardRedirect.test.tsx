@@ -11,7 +11,7 @@ const renderRedirect = (role: AuthRole) => {
   const store = configureStore({
     reducer: {
       auth: authReducer,
-    },
+    } as any,
     preloadedState: {
       auth: {
         user: role

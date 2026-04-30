@@ -48,7 +48,7 @@ const renderAppRoutes = ({ route, authState = unauthenticatedAuthState }: { rout
   const store = configureStore({
     reducer: {
       auth: authReducer,
-    },
+    } as any,
     preloadedState: {
       auth: authState,
     } as any,
