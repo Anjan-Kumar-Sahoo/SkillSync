@@ -32,7 +32,7 @@ export const createTestStore = (preloadedState?: Record<string, unknown>) =>
       groups: groupsReducer,
       notifications: notificationsReducer,
       reviews: reviewsReducer,
-    },
+    } as any,
     preloadedState: preloadedState as any,
   });
 

@@ -26,7 +26,6 @@ describe('dateTime utilities', () => {
   });
 
   it.skip('returns null for toDate with invalid input', () => {
-    // @ts-expect-error -- intentionally testing runtime behavior with bad input
     const { toDate } = jest.requireActual('./dateTime');
     expect(toDate('not-a-date')).toBeNull();
     expect(toDate({})).toBeNull();
