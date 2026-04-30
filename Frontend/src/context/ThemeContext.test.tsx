@@ -61,7 +61,7 @@ describe('ThemeContext', () => {
 
   it('returns light theme if window is undefined', () => {
     const originalWindow = global.window;
-    delete global.window;
+    delete (global as any).window;
     const { ThemeProvider: RealThemeProvider } = jest.requireActual('./ThemeContext');
     let themeValue = undefined;
     function TestComponent() {

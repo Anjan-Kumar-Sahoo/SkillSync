@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 declare module "*.png" {
   const value: string;
   export default value;
@@ -27,12 +29,17 @@ declare module 'mammoth/mammoth.browser' {
   export default mammoth;
 }
 
-interface ImportMeta {
-  readonly env: ImportMetaEnv;
+interface ImportMetaEnv {
+  readonly VITE_API_URL: string;
+  readonly VITE_AUTH_GOOGLE_CLIENT_ID: string;
+  readonly VITE_LEARNER_DASHBOARD_URL: string;
+  readonly VITE_MENTOR_DASHBOARD_URL: string;
+  readonly VITE_ADMIN_DASHBOARD_URL: string;
+  readonly VITE_SUPPORT_EMAIL: string;
+  readonly VITE_PLATFORM_NAME: string;
+  // Add other env variables as needed
 }
 
-interface ImportMetaEnv {
-  readonly PROD: boolean;
-  readonly VITE_API_URL: string;
-  // Add other env variables as needed
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
 }
