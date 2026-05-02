@@ -25,6 +25,8 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -104,6 +106,20 @@ class PaymentServiceTest {
         }
 
         @Test
+        @DisplayName("Success: Amount 0 falls back to default")
+        void createOrder_ZeroAmount_Fallback() throws RazorpayException {
+            CreateOrderRequest request = new CreateOrderRequest(PaymentType.SESSION_BOOKING, 101L, ReferenceType.SESSION_BOOKING, 0);
+            
+            when(paymentRepository.findByReferenceIdAndReferenceTypeAndStatusIn(anyLong(), any(), any())).thenReturn(Collections.emptyList());
+            when(orderClient.create(any(JSONObject.class))).thenReturn(razorpayOrder);
+            when(razorpayOrder.get("id")).thenReturn(ORDER_ID);
+
+            CreateOrderResponse response = paymentService.createOrder(USER_ID, request);
+
+            assertThat(response.amount()).isEqualTo(900); // DEFAULT_AMOUNT_PAISE
+        }
+
+        @Test
         @DisplayName("Failure: Razorpay exception")
         void createOrder_RazorpayException() throws RazorpayException {
             CreateOrderRequest request = new CreateOrderRequest(PaymentType.SESSION_BOOKING, 101L, ReferenceType.SESSION_BOOKING, 500);
@@ -149,7 +165,7 @@ class PaymentServiceTest {
         }
 
         @Test
-        @DisplayName("Success: Happy path")
+        @DisplayName("Success: Happy path (non-transactional)")
         void verify_Success() {
             when(paymentRepository.findByRazorpayOrderId(ORDER_ID)).thenReturn(Optional.of(payment));
             
@@ -161,6 +177,39 @@ class PaymentServiceTest {
                 assertThat(response.status()).isEqualTo(PaymentStatus.VERIFIED.name());
                 verify(sagaOrchestrator).executeSaga(any(Payment.class));
             }
+        }
+
+        @Test
+        @DisplayName("Success: Happy path (transactional afterCommit)")
+        void verify_Success_Transactional() {
+            when(paymentRepository.findByRazorpayOrderId(ORDER_ID)).thenReturn(Optional.of(payment));
+            
+            try (MockedStatic<TransactionSynchronizationManager> mockedTx = mockStatic(TransactionSynchronizationManager.class);
+                 MockedStatic<Utils> mockedUtils = mockStatic(Utils.class)) {
+                
+                mockedTx.when(TransactionSynchronizationManager::isActualTransactionActive).thenReturn(true);
+                mockedUtils.when(() -> Utils.verifyPaymentSignature(any(JSONObject.class), anyString())).thenReturn(true);
+                
+                paymentService.verifyPayment(USER_ID, request);
+                
+                ArgumentCaptor<TransactionSynchronization> syncCaptor = ArgumentCaptor.forClass(TransactionSynchronization.class);
+                mockedTx.verify(() -> TransactionSynchronizationManager.registerSynchronization(syncCaptor.capture()));
+                
+                syncCaptor.getValue().afterCommit();
+                verify(sagaOrchestrator).executeSaga(any(Payment.class));
+            }
+        }
+
+        @Test
+        @DisplayName("Idempotency: COMPENSATED returns immediately")
+        void verify_Compensated() {
+            payment.setStatus(PaymentStatus.COMPENSATED);
+            when(paymentRepository.findByRazorpayOrderId(ORDER_ID)).thenReturn(Optional.of(payment));
+
+            PaymentResponse response = paymentService.verifyPayment(USER_ID, request);
+
+            assertThat(response.status()).isEqualTo(PaymentStatus.COMPENSATED.name());
+            verifyNoInteractions(sagaOrchestrator);
         }
 
         @Test
@@ -255,11 +304,64 @@ class PaymentServiceTest {
                 assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
             }
         }
+
+        @Test
+        @DisplayName("Failure: publishPaymentFailedEvent exception path")
+        void verify_FailedEventException() {
+            payment.setAmount(0);
+            when(paymentRepository.findByRazorpayOrderId(ORDER_ID)).thenReturn(Optional.of(payment));
+            doThrow(new RuntimeException("Outbox fail")).when(outboxEventService).saveEvent(anyString(), anyString(), anyString(), any());
+            
+            try (MockedStatic<Utils> mockedUtils = mockStatic(Utils.class)) {
+                mockedUtils.when(() -> Utils.verifyPaymentSignature(any(JSONObject.class), anyString())).thenReturn(true);
+                
+                // Should not throw exception from event publishing
+                assertThatThrownBy(() -> paymentService.verifyPayment(USER_ID, request))
+                        .isInstanceOf(PaymentException.class);
+            }
+        }
     }
 
     @Nested
     @DisplayName("Query methods tests")
     class QueryTests {
+
+        @Test
+        @DisplayName("getUserPayments: Success")
+        void getUserPayments_Success() {
+            Payment p = Payment.builder()
+                    .userId(USER_ID)
+                    .type(PaymentType.SESSION_BOOKING)
+                    .status(PaymentStatus.SUCCESS)
+                    .amount(50000)
+                    .build();
+            when(paymentRepository.findByUserIdOrderByCreatedAtDesc(USER_ID)).thenReturn(List.of(p));
+            
+            List<PaymentResponse> results = paymentService.getUserPayments(USER_ID);
+            assertThat(results).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("hasSuccessfulPayment: True path")
+        void hasSuccessful_True() {
+            when(paymentRepository.findByUserIdAndTypeAndStatus(USER_ID, PaymentType.SESSION_BOOKING, PaymentStatus.SUCCESS))
+                    .thenReturn(List.of(new Payment()));
+
+            boolean result = paymentService.hasSuccessfulPayment(USER_ID, PaymentType.SESSION_BOOKING);
+
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        @DisplayName("hasSuccessfulPayment: False path")
+        void hasSuccessful_False() {
+            when(paymentRepository.findByUserIdAndTypeAndStatus(USER_ID, PaymentType.SESSION_BOOKING, PaymentStatus.SUCCESS))
+                    .thenReturn(Collections.emptyList());
+
+            boolean result = paymentService.hasSuccessfulPayment(USER_ID, PaymentType.SESSION_BOOKING);
+
+            assertThat(result).isFalse();
+        }
 
         @Test
         @DisplayName("getPaymentByOrderId: Success")
@@ -287,28 +389,6 @@ class PaymentServiceTest {
             assertThatThrownBy(() -> paymentService.getPaymentByOrderId(USER_ID, ORDER_ID))
                     .isInstanceOf(PaymentException.class)
                     .hasFieldOrPropertyWithValue("errorCode", "UNAUTHORIZED_ACCESS");
-        }
-
-        @Test
-        @DisplayName("hasSuccessfulPayment: True path")
-        void hasSuccessful_True() {
-            when(paymentRepository.findByUserIdAndTypeAndStatus(USER_ID, PaymentType.SESSION_BOOKING, PaymentStatus.SUCCESS))
-                    .thenReturn(List.of(new Payment()));
-
-            boolean result = paymentService.hasSuccessfulPayment(USER_ID, PaymentType.SESSION_BOOKING);
-
-            assertThat(result).isTrue();
-        }
-
-        @Test
-        @DisplayName("hasSuccessfulPayment: False path")
-        void hasSuccessful_False() {
-            when(paymentRepository.findByUserIdAndTypeAndStatus(USER_ID, PaymentType.SESSION_BOOKING, PaymentStatus.SUCCESS))
-                    .thenReturn(Collections.emptyList());
-
-            boolean result = paymentService.hasSuccessfulPayment(USER_ID, PaymentType.SESSION_BOOKING);
-
-            assertThat(result).isFalse();
         }
     }
 }

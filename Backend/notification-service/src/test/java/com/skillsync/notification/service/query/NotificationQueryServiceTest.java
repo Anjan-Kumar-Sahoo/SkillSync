@@ -59,4 +59,12 @@ class NotificationQueryServiceTest {
         when(notificationRepository.countByUserIdAndIsReadFalse(100L)).thenReturn(3L);
         assertEquals(3L, service.getUnreadCount(100L));
     }
+    @Test @DisplayName("mapToResponse - deprecated")
+    void mapToResponse() {
+        Notification n = Notification.builder().id(1L).userId(100L).type("SESSION")
+                .title("t").message("m").isRead(false).createdAt(Instant.now()).build();
+        NotificationResponse resp = NotificationQueryService.mapToResponse(n);
+        assertNotNull(resp);
+        assertEquals(n.getId(), resp.id());
+    }
 }

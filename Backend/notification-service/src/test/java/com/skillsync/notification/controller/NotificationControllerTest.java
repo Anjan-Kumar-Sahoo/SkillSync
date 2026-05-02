@@ -50,4 +50,22 @@ class NotificationControllerTest {
         mockMvc.perform(delete("/api/notifications/1").header("X-User-Id", "100"))
                 .andExpect(status().isOk());
     }
+
+    @Test @DisplayName("GET /api/notifications - 200 OK")
+    void getNotifications_OK() throws Exception {
+        mockMvc.perform(get("/api/notifications").header("X-User-Id", "100"))
+                .andExpect(status().isOk());
+    }
+
+    @Test @DisplayName("POST /api/notifications/read/{id} - 200 OK")
+    void markAsReadPost_OK() throws Exception {
+        mockMvc.perform(post("/api/notifications/read/1"))
+                .andExpect(status().isOk());
+    }
+
+    @Test @DisplayName("DELETE /api/notifications/all - 200 OK")
+    void deleteAllNotifications_OK() throws Exception {
+        mockMvc.perform(delete("/api/notifications/all").header("X-User-Id", "100"))
+                .andExpect(status().isOk());
+    }
 }

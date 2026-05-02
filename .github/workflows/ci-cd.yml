@@ -546,7 +546,7 @@ jobs:
       - name: Build & Test Backend (for Aggregate JaCoCo report)
         working-directory: ./Backend
         run: |
-          mvn -B clean verify dependency:copy-dependencies -DincludeScope=runtime -DskipTests=false
+          mvn -B clean verify -DskipTests=false
 
       - name: Install Frontend Dependencies & Build Coverage
         run: |

@@ -101,6 +101,20 @@ class MentorEventConsumerTest {
         consumer.handleMentorApproved(event);
 
         verify(notificationCommandService).createAndPush(eq(1L), eq("MENTOR_APPROVED"), anyString(), anyString());
-        // Verify that it doesn't throw and logs error (indirectly verified by test not failing)
+    }
+
+    @Test @DisplayName("Edge cases: toLong(String), null reason, empty display name")
+    void edgeCases() {
+        Map<String, Object> event = new HashMap<>();
+        event.put("userId", "123"); // String instead of Long
+        event.put("reason", null);
+        
+        UserSummary emptyUser = new UserSummary(123L, "empty@test.com", "LEARNER", null, "");
+        when(authServiceClient.getUserById(123L)).thenReturn(emptyUser);
+
+        consumer.handleMentorRejected(event);
+
+        verify(notificationCommandService).createAndPush(eq(123L), eq("MENTOR_REJECTED"), anyString(), contains("Not specified"));
+        verify(emailService).sendEmail(eq("empty@test.com"), anyString(), anyString(), anyMap());
     }
 }

@@ -80,4 +80,35 @@ class ReviewEventConsumerTest {
 
         verify(notificationCommandService).createAndPush(eq(1L), eq("REVIEW_SUBMITTED"), anyString(), anyString());
     }
+
+    @Test @DisplayName("displayName - Fallback to email when names are null")
+    void displayNameFallback() {
+        Map<String, Object> event = new HashMap<>();
+        event.put("mentorId", 1L);
+        event.put("rating", 5);
+        UserSummary user = new UserSummary(1L, "mentor@test.com", "MENTOR", null, null);
+        when(authServiceClient.getUserById(1L)).thenReturn(user);
+
+        consumer.handleReviewSubmitted(event);
+
+        verify(emailService).sendEmail(eq("mentor@test.com"), anyString(), anyString(), 
+            argThat(map -> ((String) map.get("recipientName")).equals("mentor@test.com")));
+    }
+
+    @Test @DisplayName("normalizeComment - Empty and null-string cases")
+    void normalizeCommentEdgeCases() {
+        Map<String, Object> event = new HashMap<>();
+        event.put("mentorId", 1L);
+        event.put("rating", 5);
+        event.put("comment", "  "); // Empty after trim
+        when(authServiceClient.getUserById(1L)).thenReturn(testUser);
+
+        consumer.handleReviewSubmitted(event);
+
+        verify(emailService).buildDetailsHtml(argThat(map -> map.get("Comment").equals("No comment provided.")));
+
+        event.put("comment", "null"); // "null" string
+        consumer.handleReviewSubmitted(event);
+        verify(emailService, times(2)).buildDetailsHtml(argThat(map -> map.get("Comment").equals("No comment provided.")));
+    }
 }

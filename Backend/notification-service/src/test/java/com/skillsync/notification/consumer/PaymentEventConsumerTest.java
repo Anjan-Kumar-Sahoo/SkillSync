@@ -101,4 +101,20 @@ class PaymentEventConsumerTest {
 
         verify(notificationCommandService).createAndPush(eq(1L), eq("PAYMENT_SUCCESS"), anyString(), anyString());
     }
+
+    @Test @DisplayName("Edge cases: formatAmount(non-Number), normalizeReason(null/empty), toLong(String)")
+    void edgeCases() {
+        Map<String, Object> event = new HashMap<>();
+        event.put("userId", "456");
+        event.put("paymentType", "UNKNOWN");
+        event.put("orderId", "ORD-X");
+        event.put("amount", "invalid"); // non-Number
+        event.put("compensationReason", "  "); // blank
+        
+        when(authServiceClient.getUserById(456L)).thenReturn(testUser);
+
+        consumer.handlePaymentFailed(event);
+
+        verify(notificationCommandService).createAndPush(eq(456L), eq("PAYMENT_FAILED"), anyString(), contains("ORD-X"));
+    }
 }

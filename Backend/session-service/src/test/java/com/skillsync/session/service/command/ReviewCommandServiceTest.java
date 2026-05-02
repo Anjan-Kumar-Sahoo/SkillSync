@@ -157,11 +157,12 @@ class ReviewCommandServiceTest {
             assertDoesNotThrow(() -> service.submitReview(20L, new ReviewRequest(1L, 10L, 5, "  ")));
         }
 
-        @Test @DisplayName("Mentor resolved via profile lookup")
-        void mentorViaProfile() {
+        @Test @DisplayName("Mentor resolved via profile lookup (String userId)")
+        void mentorViaProfileString() {
+            completedSession.setMentorId(10L);
             when(sessionRepository.findById(1L)).thenReturn(Optional.of(completedSession));
             when(authServiceClient.getUserById(50L)).thenReturn(Map.of("role", "ROLE_LEARNER"));
-            when(mentorProfileClient.getMentorById(50L)).thenReturn(Map.of("userId", 10L));
+            when(mentorProfileClient.getMentorById(50L)).thenReturn(Map.of("userId", "10")); // String userId
             when(authServiceClient.getUserById(10L)).thenReturn(Map.of("role", "ROLE_MENTOR"));
             when(reviewRepository.existsBySessionId(1L)).thenReturn(false);
             when(reviewRepository.saveAndFlush(any())).thenReturn(testReview);
@@ -171,18 +172,23 @@ class ReviewCommandServiceTest {
             assertDoesNotThrow(() -> service.submitReview(20L, new ReviewRequest(1L, 50L, 5, "ok")));
         }
 
-        @Test @DisplayName("No default rating to clear")
-        void noDefaultRating() {
-            completedSession.setDefaultRatingApplied(false);
+        @Test @DisplayName("Mentor profile exists but user not mentor role")
+        void mentorViaProfileNotMentor() {
             when(sessionRepository.findById(1L)).thenReturn(Optional.of(completedSession));
-            when(authServiceClient.getUserById(10L)).thenReturn(Map.of("role", "ROLE_MENTOR"));
-            when(reviewRepository.existsBySessionId(1L)).thenReturn(false);
-            when(reviewRepository.saveAndFlush(any())).thenReturn(testReview);
-            when(mentorMetricsService.calculateMentorMetrics(10L))
-                    .thenReturn(new MentorMetricsResponse(10L, 5, 4.5, 3, 0, false));
+            when(authServiceClient.getUserById(50L)).thenReturn(Map.of("role", "ROLE_LEARNER"));
+            when(mentorProfileClient.getMentorById(50L)).thenReturn(Map.of("userId", 30L));
+            when(authServiceClient.getUserById(30L)).thenReturn(Map.of("role", "ROLE_LEARNER"));
+            
+            assertThrows(RuntimeException.class, () -> service.submitReview(20L, new ReviewRequest(1L, 50L, 5, "ok")));
+        }
 
-            service.submitReview(20L, new ReviewRequest(1L, 10L, 5, "x"));
-            verify(sessionRepository, never()).save(any());
+        @Test @DisplayName("Auth service down returns null")
+        void authServiceDown() {
+            when(sessionRepository.findById(1L)).thenReturn(Optional.of(completedSession));
+            when(authServiceClient.getUserById(10L)).thenThrow(new RuntimeException("timeout"));
+            when(mentorProfileClient.getMentorById(10L)).thenThrow(new RuntimeException("timeout"));
+            
+            assertThrows(RuntimeException.class, () -> service.submitReview(20L, new ReviewRequest(1L, 10L, 5, "x")));
         }
     }
 

@@ -73,4 +73,19 @@ class EmailRetryConsumerTest {
 
         verify(rabbitTemplate, never()).convertAndSend(anyString(), anyString(), (Object) any());
     }
+    @Test @DisplayName("Interrupted during backoff")
+    void interruptedDuringBackoff() throws Exception {
+        EmailRetryEvent secondRetryEvent = new EmailRetryEvent("to@test.com", "Subject", "welcome", Map.of("name", "John"), 1, "second failure");
+        
+        Thread testThread = new Thread(() -> {
+            consumer.handleEmailRetry(secondRetryEvent);
+        });
+        testThread.start();
+        Thread.sleep(100); // Give it a moment to start sleeping
+        testThread.interrupt();
+        testThread.join(5000); // Wait for it to finish
+        
+        // Even if interrupted, it continues to try sending
+        verify(emailService, timeout(1000)).doSendEmail(anyString(), anyString(), anyString(), anyMap());
+    }
 }

@@ -18,6 +18,8 @@ import com.skillsync.auth.security.UserDetailsServiceImpl;
 import jakarta.servlet.http.Cookie;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -158,5 +160,111 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Email verified successfully"));
+    }
+
+    @Test @DisplayName("POST /api/auth/initiate-registration - 200 OK")
+    void initiateRegistration_OK() throws Exception {
+        InitiateRegistrationRequest request = new InitiateRegistrationRequest("test@example.com");
+        when(authService.initiateRegistration(any())).thenReturn(java.util.Map.of("otpSent", true));
+
+        mockMvc.perform(post("/api/auth/initiate-registration")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+    }
+
+    @Test @DisplayName("POST /api/auth/complete-registration - 200 OK")
+    void completeRegistration_OK() throws Exception {
+        CompleteRegistrationRequest request = new CompleteRegistrationRequest("test@example.com", "Password123", "John", "Doe");
+        AuthResponse response = new AuthResponse("token", "refresh", 3600, "Bearer", new UserSummary(1L, "test@example.com", "ROLE_LEARNER", "John", "Doe"));
+        when(authService.completeRegistration(any())).thenReturn(response);
+
+        mockMvc.perform(post("/api/auth/complete-registration")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+    }
+
+    @Test @DisplayName("POST /api/auth/forgot-password - 200 OK")
+    void forgotPassword_OK() throws Exception {
+        ForgotPasswordRequest request = new ForgotPasswordRequest("test@example.com");
+        mockMvc.perform(post("/api/auth/forgot-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+    }
+
+    @Test @DisplayName("POST /api/auth/verify-password-reset-otp - 200 OK")
+    void verifyPasswordResetOtp_OK() throws Exception {
+        VerifyPasswordResetOtpRequest request = new VerifyPasswordResetOtpRequest("test@example.com", "123456");
+        mockMvc.perform(post("/api/auth/verify-password-reset-otp")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+    }
+
+    @Test @DisplayName("POST /api/auth/reset-password - 200 OK")
+    void resetPassword_OK() throws Exception {
+        ResetPasswordRequest request = new ResetPasswordRequest("test@example.com", "123456", "New@Pass123");
+        mockMvc.perform(post("/api/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+    }
+
+    @Test @DisplayName("POST /api/auth/oauth-login - 200 OK")
+    void oauthLogin_OK() throws Exception {
+        OAuthRequest request = new OAuthRequest("o@e.com", "J", "D", "g", "1");
+        OAuthResponse response = new OAuthResponse("t", "r", 3600, "B", new UserSummary(1L, "o@e.com", "R", "J", "D"), false);
+        when(authService.loginWithOAuth(any())).thenReturn(response);
+
+        mockMvc.perform(post("/api/auth/oauth-login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+    }
+
+    @Test @DisplayName("POST /api/auth/resend-otp - 200 OK")
+    void resendOtp_OK() throws Exception {
+        ResendOtpRequest request = new ResendOtpRequest("test@example.com");
+        mockMvc.perform(post("/api/auth/resend-otp")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+    }
+
+    @Test @DisplayName("GET /api/auth/internal/users/count - 200 OK")
+    void getUserCount_OK() throws Exception {
+        when(authService.getUserCount(anyString())).thenReturn(10L);
+        mockMvc.perform(get("/api/auth/internal/users/count").param("role", "ROLE_MENTOR"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("10"));
+    }
+
+    @Test @DisplayName("GET /api/auth/internal/users - 200 OK")
+    void getAllUsers_OK() throws Exception {
+        when(authService.getAllUsersFiltered(anyInt(), anyInt(), any(), any())).thenReturn(java.util.Map.of("users", java.util.Collections.emptyList()));
+        mockMvc.perform(get("/api/auth/internal/users"))
+                .andExpect(status().isOk());
+    }
+
+    @Test @DisplayName("PUT /api/auth/internal/users/{userId}/role - 200 OK")
+    void updateUserRole_OK() throws Exception {
+        mockMvc.perform(put("/api/auth/internal/users/1/role").param("role", "ROLE_MENTOR"))
+                .andExpect(status().isOk());
+    }
+
+    @Test @DisplayName("PUT /api/auth/internal/users/{userId}/name - 200 OK")
+    void updateUserName_OK() throws Exception {
+        mockMvc.perform(put("/api/auth/internal/users/1/name")
+                        .param("firstName", "Jane")
+                        .param("lastName", "Doe"))
+                .andExpect(status().isOk());
+    }
+
+    @Test @DisplayName("DELETE /api/auth/internal/users/{userId} - 200 OK")
+    void deleteUser_OK() throws Exception {
+        mockMvc.perform(delete("/api/auth/internal/users/1"))
+                .andExpect(status().isOk());
     }
 }

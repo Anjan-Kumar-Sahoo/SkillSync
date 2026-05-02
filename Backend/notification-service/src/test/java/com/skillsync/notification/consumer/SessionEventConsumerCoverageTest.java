@@ -92,4 +92,22 @@ class SessionEventConsumerCoverageTest {
         verify(authServiceClient).getUserById(100L);
         verify(authServiceClient).getUserById(200L);
     }
+
+    @Test
+    @DisplayName("Edge Cases: null user, null dateTime, sendSystemEmail null recipient")
+    void edgeCases() {
+        // Test handleSessionCompleted with one null user to trigger displayName(null) and sendSystemEmail null check
+        Map<String, Object> event = new HashMap<>();
+        event.put("mentorId", 1L);
+        event.put("learnerId", 2L);
+        event.put("sessionDateTime", null); // triggers TBD branch
+
+        when(authServiceClient.getUserById(1L)).thenReturn(null); // recipient will be null
+        when(authServiceClient.getUserById(2L)).thenReturn(new UserSummary(2L, "l@l.com", "L", "First", "Last"));
+
+        consumer.handleSessionCompleted(event);
+
+        // Should call email service for learner but not for mentor (null)
+        verify(emailService, times(1)).sendEmail(eq("l@l.com"), anyString(), anyString(), anyMap());
+    }
 }
