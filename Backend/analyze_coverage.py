@@ -14,11 +14,18 @@ exclusions = [
     '**/dto/**',
     '**/entity/**',
     '**/enums/**',
-    '**/config/**',
     '**/mapper/**',
     '**/repository/**',
+    '**/*Exception.java',
+    '**/config/**',
     '**/*Application.java',
-    '**/*Exception.java'
+    '**/*Config.java',
+    '**/eureka/**',
+    '**/discovery/**',
+    '**/gateway/config/**',
+    '**/websocket/config/**',
+    '**/*Properties.java',
+    '**/*Constants.java'
 ]
 
 # Convert java path pattern to package/class pattern
@@ -26,11 +33,18 @@ xml_exclusions = [
     '*/dto/*', '**/dto/*', '*dto*',
     '*/entity/*', '**/entity/*', '*entity*',
     '*/enums/*', '**/enums/*', '*enums*',
-    '*/config/*', '**/config/*', '*config*',
     '*/mapper/*', '**/mapper/*', '*mapper*',
     '*/repository/*', '**/repository/*', '*repository*',
+    '*Exception',
+    '*/config/*', '**/config/*', '*config*',
     '*Application',
-    '*Exception'
+    '*Config',
+    '*/eureka/*', '**/eureka/*', '*eureka*',
+    '*/discovery/*', '**/discovery/*', '*discovery*',
+    '*/gateway/config/*', '**/gateway/config/*',
+    '*/websocket/config/*', '**/websocket/config/*',
+    '*Properties',
+    '*Constants'
 ]
 
 def is_excluded(class_name):

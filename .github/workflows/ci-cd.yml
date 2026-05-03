@@ -543,10 +543,44 @@ jobs:
             exit 1
           fi
 
-      - name: Build & Test Backend (for Aggregate JaCoCo report)
+      - name: Build & Test Backend (per-module JaCoCo reports)
         working-directory: ./Backend
         run: |
           mvn -B clean verify -DskipTests=false
+
+      - name: Verify Per-Module JaCoCo Reports Exist
+        run: |
+          echo "──── JaCoCo Per-Module Report Verification ────"
+          MODULES="auth-service user-service skill-service session-service notification-service payment-service api-gateway config-server eureka-server skillsync-cache-common"
+          MISSING=0
+          for MODULE in $MODULES; do
+            REPORT="Backend/${MODULE}/target/site/jacoco/jacoco.xml"
+            if [ -f "$REPORT" ]; then
+              python3 - "$REPORT" "$MODULE" <<'PYEOF'
+import sys, xml.etree.ElementTree as ET
+report, module = sys.argv[1], sys.argv[2]
+root = ET.parse(report).getroot()
+for c in root.findall('counter'):
+    if c.attrib['type'] == 'LINE':
+        covered = int(c.attrib.get('covered', 0))
+        missed  = int(c.attrib.get('missed', 0))
+        total   = covered + missed
+        pct     = (covered / total * 100) if total > 0 else 0
+        print(f'   ✅ {module}: LINE {covered}/{total} ({pct:.1f}%)')
+PYEOF
+            else
+              echo "   ❌ MISSING: $REPORT"
+              MISSING=$((MISSING + 1))
+            fi
+          done
+
+          if [ "$MISSING" -gt 0 ]; then
+            echo "❌ FATAL: $MISSING module report(s) missing"
+            exit 1
+          fi
+          echo ""
+          echo "──── All per-module reports verified ────"
+          echo "   SonarCloud will merge these reports for accurate coverage."
 
       - name: Install Frontend Dependencies & Build Coverage
         run: |
