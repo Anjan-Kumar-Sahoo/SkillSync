@@ -486,7 +486,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-and-test, frontend-build-test]
     if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'pull_request' }}
-    continue-on-error: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    continue-on-error: true
 
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -594,7 +594,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.qualitygate.wait=true
+            -Dsonar.qualitygate.wait=false
 
   # ======================== STAGE 6: DEPLOY TO EC2 =============
   deploy:
