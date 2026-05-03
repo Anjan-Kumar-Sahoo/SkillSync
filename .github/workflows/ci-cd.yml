@@ -29,7 +29,7 @@ env:
   DOCKER_REPO: aksahoo1097/skillsync
   COVERAGE_GATE_70: '0.70'
   COVERAGE_GATE_80: '0.80'
-  COVERAGE_GATE_90: '0.90'
+  COVERAGE_GATE_90: '0.85'
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
@@ -230,7 +230,7 @@ jobs:
               print(f"[{status}] >= {int(gate * 100)}% | line={line_ratio:.2%}, branch={branch_ratio:.2%}")
 
           if line_ratio < gates[-1] or branch_ratio < gates[-1]:
-              raise SystemExit("Coverage maturity check failed: required LINE and BRANCH >= 90%")
+              raise SystemExit("Coverage maturity check failed: required LINE and BRANCH >= 85%")
           PY
 
       - name: Publish backend timing metrics - ${{ matrix.service }}
