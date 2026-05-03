@@ -82,6 +82,7 @@ class SessionCommandServiceCoverageTest {
     void publishEventException() {
         Session session = Session.builder().id(1L).mentorId(2L).learnerId(3L).status(SessionStatus.REQUESTED).build();
         when(sessionRepository.findById(1L)).thenReturn(Optional.of(session));
+        when(sessionRepository.save(any(Session.class))).thenReturn(session);
         doThrow(new RuntimeException("Rabbit down")).when(rabbitTemplate).convertAndSend(anyString(), anyString(), any(Object.class));
         
         sessionCommandService.confirmSessionPayment(1L); 
