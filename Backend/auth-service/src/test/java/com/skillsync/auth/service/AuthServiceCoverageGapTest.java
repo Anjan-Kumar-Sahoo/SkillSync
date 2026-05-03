@@ -151,4 +151,67 @@ class AuthServiceCoverageGapTest {
         var result = authService.getAllUsersFiltered(0, 10, "   ", "search");
         assertThat(result.get("totalElements")).isEqualTo(1L);
     }
+
+    @Test
+    @DisplayName("completeRegistration - Not Verified")
+    void completeRegistration_NotVerified() {
+        user.setVerified(false);
+        when(authUserRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        
+        com.skillsync.auth.dto.CompleteRegistrationRequest request = new com.skillsync.auth.dto.CompleteRegistrationRequest("test@example.com", "Password@123", "John", "Doe");
+        assertThatThrownBy(() -> authService.completeRegistration(request))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Email not verified");
+    }
+
+    @Test
+    @DisplayName("completeRegistration - Already Completed")
+    void completeRegistration_AlreadyCompleted() {
+        user.setVerified(true);
+        user.setPasswordSet(true);
+        user.setPasswordHash("encoded_pwd");
+        when(authUserRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        
+        com.skillsync.auth.dto.CompleteRegistrationRequest request = new com.skillsync.auth.dto.CompleteRegistrationRequest("test@example.com", "Password@123", "John", "Doe");
+        assertThatThrownBy(() -> authService.completeRegistration(request))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Registration already completed");
+    }
+
+    @Test
+    @DisplayName("loginWithOAuth - New User")
+    void loginWithOAuth_NewUser() {
+        when(authUserRepository.findByProviderAndProviderId("google", "g-123")).thenReturn(Optional.empty());
+        when(authUserRepository.findByEmail("new@example.com")).thenReturn(Optional.empty());
+        
+        AuthUser newUser = AuthUser.builder().id(2L).email("new@example.com").role(Role.ROLE_LEARNER).build();
+        when(authUserRepository.save(any(AuthUser.class))).thenReturn(newUser);
+        when(jwtTokenProvider.generateAccessToken(anyLong(), anyString(), anyString())).thenReturn("token");
+        when(jwtTokenProvider.generateRefreshToken(anyLong())).thenReturn("refresh");
+        
+        OAuthRequest request = new OAuthRequest("new@example.com", "Jane", "Doe", "google", "g-123");
+        var response = authService.loginWithOAuth(request);
+        
+        assertThat(response.passwordSetupRequired()).isTrue();
+    }
+
+    @Test
+    @DisplayName("loginWithOAuth - Existing User Unverified")
+    void loginWithOAuth_ExistingUserUnverified() {
+        user.setVerified(false);
+        user.setProvider(null);
+        when(authUserRepository.findByProviderAndProviderId("google", "g-123")).thenReturn(Optional.empty());
+        when(authUserRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        
+        when(jwtTokenProvider.generateAccessToken(anyLong(), anyString(), anyString())).thenReturn("token");
+        when(jwtTokenProvider.generateRefreshToken(anyLong())).thenReturn("refresh");
+        
+        OAuthRequest request = new OAuthRequest("test@example.com", "John", "Doe", "google", "g-123");
+        var response = authService.loginWithOAuth(request);
+        
+        assertThat(response.passwordSetupRequired()).isFalse();
+        assertThat(user.isVerified()).isTrue();
+        verify(authUserRepository).save(user);
+    }
+
 }

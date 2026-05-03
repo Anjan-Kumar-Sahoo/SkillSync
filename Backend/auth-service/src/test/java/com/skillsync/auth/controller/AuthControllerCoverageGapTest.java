@@ -90,4 +90,14 @@ class AuthControllerCoverageGapTest {
                         .header("X-Forwarded-Host", "localhost, proxy.com"))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    @DisplayName("Cookie Helper - Secure options")
+    void cookieHelper_SecureOptions() throws Exception {
+        // Not localhost, so secure = true
+        mockMvc.perform(post("/api/auth/logout")
+                        .header("X-Forwarded-Host", "example.com")
+                        .header("Origin", "https://example.com"))
+                .andExpect(status().isOk());
+    }
 }

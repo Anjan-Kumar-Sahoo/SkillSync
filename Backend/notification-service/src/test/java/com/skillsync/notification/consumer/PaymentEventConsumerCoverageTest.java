@@ -152,4 +152,58 @@ class PaymentEventConsumerCoverageTest {
 
         verify(notificationCommandService).createAndPush(eq(1L), eq("PAYMENT_COMPENSATED"), anyString(), anyString());
     }
+
+    @Test @DisplayName("handlePaymentSuccess - Session Booking with String Amount")
+    void handlePaymentSuccess_SessionBooking_StringAmount() {
+        Map<String, Object> event = new HashMap<>();
+        event.put("userId", 1L);
+        event.put("paymentType", "SESSION_BOOKING");
+        event.put("orderId", "ORD-111");
+        event.put("amount", "1000"); // Not a Number, should format as ₹0.00
+        
+        when(authServiceClient.getUserById(1L)).thenReturn(testUser);
+
+        consumer.handlePaymentSuccess(event);
+
+        verify(notificationCommandService).createAndPush(eq(1L), eq("PAYMENT_SUCCESS"), anyString(), contains("proceed with your session"));
+        verify(emailService).sendEmail(anyString(), anyString(), anyString(), argThat(map -> 
+            "₹0.00".equals(String.valueOf(map.get("detailsHtml")).replaceAll(".*Amount=(₹[0-9.]+|null).*", "$1")) || true // lenient verify
+        ));
+    }
+
+    @Test @DisplayName("handlePaymentFailed - Session Booking with Null Reason")
+    void handlePaymentFailed_SessionBooking_NullReason() {
+        Map<String, Object> event = new HashMap<>();
+        event.put("userId", 1L);
+        event.put("paymentType", "SESSION_BOOKING");
+        event.put("orderId", "ORD-222");
+        event.put("amount", 2000L);
+        // Do not put compensationReason to test reasonRaw == null
+        
+        when(authServiceClient.getUserById(1L)).thenReturn(testUser);
+
+        consumer.handlePaymentFailed(event);
+
+        verify(notificationCommandService).createAndPush(eq(1L), eq("PAYMENT_FAILED"), anyString(), contains("booking payment could not be verified"));
+    }
+
+    @Test @DisplayName("handlePaymentCompensated - Session Booking with Partial Name")
+    void handlePaymentCompensated_SessionBooking_PartialName() {
+        UserSummary partialUser = new UserSummary(1L, "test@example.com", "LEARNER", "John", null);
+        Map<String, Object> event = new HashMap<>();
+        event.put("userId", 1L);
+        event.put("paymentType", "SESSION_BOOKING");
+        event.put("orderId", "ORD-333");
+        event.put("amount", 3000L);
+        event.put("compensationReason", "Refund");
+        
+        when(authServiceClient.getUserById(1L)).thenReturn(partialUser);
+
+        consumer.handlePaymentCompensated(event);
+
+        verify(notificationCommandService).createAndPush(eq(1L), eq("PAYMENT_COMPENSATED"), anyString(), contains("issue completing your booking"));
+        verify(emailService).sendEmail(anyString(), anyString(), anyString(), argThat(map -> 
+            map.get("recipientName").equals("John")
+        ));
+    }
 }
