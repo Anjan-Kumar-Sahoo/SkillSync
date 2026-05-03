@@ -88,6 +88,21 @@ Keeping a distributed architecture healthy requires top-tier observability. Skil
 
 ---
 
+## 🧪 Code Quality & Testing
+
+SkillSync maintains rigorous quality standards enforced through automated CI/CD:
+
+| Module | Test Framework | Coverage Tool | Coverage Target |
+| :--- | :--- | :--- | :--- |
+| **Backend** | JUnit 5 + Mockito | JaCoCo (per-module XML) | ≥90% line + branch |
+| **Frontend** | Jest + React Testing Library | LCOV | ≥90% line |
+
+- **SonarCloud**: Both Backend and Frontend are analyzed in a unified SonarCloud scan. Backend coverage is reported via per-module JaCoCo XML reports, and Frontend coverage via Jest-generated LCOV.
+- **CI Enforcement**: Coverage thresholds are enforced at both the JaCoCo plugin level (per service) and via a custom coverage ratchet script in GitHub Actions.
+- **Quality Gate**: SonarCloud Quality Gate runs in non-blocking mode — results are reported but do not block deployments.
+
+---
+
 ## 💻 Getting Started
 
 ### Prerequisites

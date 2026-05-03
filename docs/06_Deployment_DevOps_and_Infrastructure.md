@@ -1,4 +1,4 @@
-﻿# Presentation Sync Note
+# Presentation Sync Note
 
 Updated for final presentation on 2026-04-06. Start with docs/00_Presentation_Playbook.md for the guided narrative, then use this document for deep details.
 
@@ -613,7 +613,7 @@ The SkillSync pipeline (`.github/workflows/ci-cd.yml`) automates the full build 
 - **Matrix Parallelism:** Builds and tests all 9 services concurrently using GitHub Actions matrix strategy.
 - **Docker Hub Push:** Uses a bash loop to build all images in a single job with dual tagging.
 - **EC2 Auto-Deploy:** Copies compose files via SCP, then pulls/restarts via SSH.
-- **SonarCloud Integration:** Conditional code quality analysis (safe when token is not configured).
+- **SonarCloud Integration:** Analyzes both Backend (JaCoCo) and Frontend (LCOV) code. Quality Gate runs in non-blocking mode.
 - **Secrets Safety:** All `secrets.*` references are wrapped in `${{ }}` expressions to avoid GitHub Actions parse errors.
 
 ### 5.3.2 Trigger Configuration (Path-Filtered)

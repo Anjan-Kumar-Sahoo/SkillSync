@@ -587,6 +587,22 @@ jobs:
           npm run test:ci
           cd ..
 
+      - name: Verify Frontend Coverage Report Exists
+        run: |
+          echo "──── Frontend Coverage Report Verification ────"
+          if [ -f "Frontend/coverage/lcov.info" ]; then
+            LINES=$(wc -l < Frontend/coverage/lcov.info)
+            echo "   ✅ Frontend LCOV report found ($LINES lines)"
+            echo "   📁 Coverage files:"
+            ls -la Frontend/coverage/
+          else
+            echo "   ❌ MISSING: Frontend/coverage/lcov.info"
+            echo "   Sonar will not report Frontend coverage."
+            exit 1
+          fi
+          echo ""
+          echo "──── Frontend coverage report verified ────"
+
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2.3.0
         env:

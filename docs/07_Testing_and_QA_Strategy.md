@@ -1,4 +1,4 @@
-﻿# Presentation Sync Note
+# Presentation Sync Note
 
 Updated for final presentation on 2026-04-06. Start with docs/00_Presentation_Playbook.md for the guided narrative, then use this document for deep details.
 
@@ -69,11 +69,15 @@ Updated for final presentation on 2026-04-06. Start with docs/00_Presentation_Pl
 
 | Layer | Tool | Scope | Target Coverage |
 |---|---|---|---|
-| Backend Unit | JUnit 5 + Mockito | Service & utility logic | 80% line coverage |
+| Backend Unit | JUnit 5 + Mockito | Service & utility logic | ≥90% line + branch |
 | Backend Integration | @SpringBootTest + Testcontainers | REST APIs, DB, RabbitMQ | 70% of endpoints |
-| Frontend Unit | Jest + React Testing Library | Components, hooks, utilities | 75% line coverage |
+| Frontend Unit | Jest + React Testing Library | Components, hooks, utilities | ≥90% line coverage |
 | Frontend Component | Jest + RTL | Molecule/organism rendering | All user-facing components |
 | E2E | Playwright | Critical user journeys | 5 core flows |
+| **Code Quality** | **SonarCloud** | **Backend (JaCoCo) + Frontend (LCOV)** | **≥90% overall** |
+
+> [!IMPORTANT]
+> **SonarCloud Coverage (May 2026):** SonarCloud now analyzes **both Backend and Frontend** code. Backend coverage is ingested via per-module JaCoCo XML reports, and Frontend coverage via Jest-generated LCOV (`Frontend/coverage/lcov.info`). The CI pipeline verifies that both report types exist before running the Sonar scan. The Quality Gate runs in non-blocking mode (`sonar.qualitygate.wait=false`) — results are reported on the SonarCloud dashboard but do not block deployments.
 
 > [!IMPORTANT]
 > **Implementation Status:** 16 base unit test classes (Service & Controller layers) have been implemented across all 8 business microservices using JUnit 5 and Mockito. All service tests have been updated to test CQRS `CommandService` and `QueryService` classes separately, including cache hit/miss/invalidation verification via mocked `CacheService`.
