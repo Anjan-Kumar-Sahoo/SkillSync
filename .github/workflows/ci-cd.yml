@@ -557,17 +557,17 @@ jobs:
             REPORT="Backend/${MODULE}/target/site/jacoco/jacoco.xml"
             if [ -f "$REPORT" ]; then
               python3 - "$REPORT" "$MODULE" <<'PYEOF'
-import sys, xml.etree.ElementTree as ET
-report, module = sys.argv[1], sys.argv[2]
-root = ET.parse(report).getroot()
-for c in root.findall('counter'):
-    if c.attrib['type'] == 'LINE':
-        covered = int(c.attrib.get('covered', 0))
-        missed  = int(c.attrib.get('missed', 0))
-        total   = covered + missed
-        pct     = (covered / total * 100) if total > 0 else 0
-        print(f'   ✅ {module}: LINE {covered}/{total} ({pct:.1f}%)')
-PYEOF
+          import sys, xml.etree.ElementTree as ET
+          report, module = sys.argv[1], sys.argv[2]
+          root = ET.parse(report).getroot()
+          for c in root.findall('counter'):
+              if c.attrib['type'] == 'LINE':
+                  covered = int(c.attrib.get('covered', 0))
+                  missed  = int(c.attrib.get('missed', 0))
+                  total   = covered + missed
+                  pct     = (covered / total * 100) if total > 0 else 0
+                  print(f'   ✅ {module}: LINE {covered}/{total} ({pct:.1f}%)')
+          PYEOF
             else
               echo "   ❌ MISSING: $REPORT"
               MISSING=$((MISSING + 1))
