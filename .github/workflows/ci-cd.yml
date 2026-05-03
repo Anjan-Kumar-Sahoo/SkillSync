@@ -581,23 +581,33 @@ jobs:
           echo "   SonarCloud will merge these reports for accurate coverage."
 
       - name: Install Frontend Dependencies & Build Coverage
+        working-directory: ./Frontend
         run: |
-          cd Frontend
           npm ci
           npm run test:ci
-          cd ..
 
-      - name: Verify Frontend Coverage Report Exists
+      - name: Verify Frontend Coverage Report
         run: |
           echo "──── Frontend Coverage Report Verification ────"
+          echo "Working directory: $(pwd)"
+          
           if [ -f "Frontend/coverage/lcov.info" ]; then
             LINES=$(wc -l < Frontend/coverage/lcov.info)
             echo "   ✅ Frontend LCOV report found ($LINES lines)"
-            echo "   📁 Coverage files:"
+            echo ""
+            echo "   📁 Coverage directory contents:"
             ls -la Frontend/coverage/
+            echo ""
+            echo "   📄 LCOV file header (first 30 lines):"
+            head -30 Frontend/coverage/lcov.info
+            echo ""
+            echo "   📊 Source files in LCOV report:"
+            grep "^SF:" Frontend/coverage/lcov.info | head -20
+            echo "   ... ($(grep -c '^SF:' Frontend/coverage/lcov.info) total source files)"
           else
             echo "   ❌ MISSING: Frontend/coverage/lcov.info"
-            echo "   Sonar will not report Frontend coverage."
+            echo "   Available files in Frontend/:"
+            ls -R Frontend/coverage/ 2>/dev/null || echo "   (coverage directory does not exist)"
             exit 1
           fi
           echo ""
@@ -611,6 +621,7 @@ jobs:
         with:
           args: >
             -Dsonar.qualitygate.wait=false
+            -Dsonar.verbose=true
 
   # ======================== STAGE 6: DEPLOY TO EC2 =============
   deploy:
