@@ -2,7 +2,7 @@
 #  SkillSync CI/CD Pipeline
 #  - Build shared library (skillsync-cache-common)
 #  - Build & test all microservices in parallel (matrix)
-#  - Code quality analysis (SonarCloud) — conditional
+#  - Code quality analysis (SonarCloud) — blocking quality gate
 #  - Docker build + push to Docker Hub (latest + SHA tags)
 #  - Deploy to AWS EC2 via SSH
 # ============================================================
@@ -15,12 +15,14 @@ on:
       - 'Backend/**'
       - 'Frontend/**'
       - '.github/workflows/**'
+      - 'sonar-project.properties'
   pull_request:
     branches: [main]
     paths:
       - 'Backend/**'
       - 'Frontend/**'
       - '.github/workflows/**'
+      - 'sonar-project.properties'
   workflow_dispatch:
 
 env:
@@ -29,7 +31,6 @@ env:
   DOCKER_REPO: aksahoo1097/skillsync
   COVERAGE_GATE_70: '0.70'
   COVERAGE_GATE_80: '0.80'
-  COVERAGE_GATE_90: '0.80'
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
@@ -230,7 +231,7 @@ jobs:
               print(f"[{status}] >= {int(gate * 100)}% | line={line_ratio:.2%}, branch={branch_ratio:.2%}")
 
           if line_ratio < gates[-1] or branch_ratio < gates[-1]:
-              raise SystemExit("Coverage maturity check failed: required LINE and BRANCH >= 80%")
+              raise SystemExit("Coverage maturity check failed: required LINE and BRANCH >= 90%")
           PY
 
       - name: Publish backend timing metrics - ${{ matrix.service }}
@@ -348,6 +349,22 @@ jobs:
           END_TS=$(date +%s)
           echo "wall_seconds=$((END_TS - START_TS))" >> "$GITHUB_OUTPUT"
 
+      - name: Verify Frontend Coverage Report
+        run: |
+          echo "──── Frontend Coverage Report Verification ────"
+          if [ -f "Frontend/coverage/lcov.info" ]; then
+            LINES=$(wc -l < Frontend/coverage/lcov.info)
+            echo "   ✅ Frontend LCOV report found ($LINES lines)"
+            echo ""
+            echo "   📊 Source files in LCOV report:"
+            grep "^SF:" Frontend/coverage/lcov.info | head -20
+            echo "   ... ($(grep -c '^SF:' Frontend/coverage/lcov.info) total source files)"
+          else
+            echo "   ❌ MISSING: Frontend/coverage/lcov.info"
+            ls -R Frontend/coverage/ 2>/dev/null || echo "   (coverage directory does not exist)"
+            exit 1
+          fi
+
       - name: Publish frontend timing metrics
         if: always()
         working-directory: ./Frontend
@@ -398,7 +415,7 @@ jobs:
   docker:
     name: Docker Build & Push
     runs-on: ubuntu-latest
-    needs: [build-and-test, frontend-build-test]
+    needs: [build-and-test, frontend-build-test, code-quality]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
@@ -486,7 +503,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-and-test, frontend-build-test]
     if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'pull_request' }}
-    continue-on-error: true
 
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -516,17 +532,9 @@ jobs:
 
       - name: Sonar mode banner
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "Running Sonar in STRICT PR mode (build-blocking)."
-            echo "### Sonar Mode" >> "$GITHUB_STEP_SUMMARY"
-            echo "- Mode: STRICT (PR)" >> "$GITHUB_STEP_SUMMARY"
-            echo "- Behavior: Quality Gate failure blocks pipeline" >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "Running Sonar in NON-BLOCKING MAIN mode."
-            echo "### Sonar Mode" >> "$GITHUB_STEP_SUMMARY"
-            echo "- Mode: NON-BLOCKING (main)" >> "$GITHUB_STEP_SUMMARY"
-            echo "- Behavior: Quality Gate reported but does not block deploy path" >> "$GITHUB_STEP_SUMMARY"
-          fi
+          echo "### SonarCloud Analysis" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Quality Gate: **BLOCKING** (≥90% coverage enforced)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Analysis mode: CI-based (automatic analysis OFF)" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Download cache-common
         uses: actions/download-artifact@v4
@@ -541,11 +549,13 @@ jobs:
             exit 1
           fi
 
+      # ── STEP 1: Build & Test Backend (generates JaCoCo reports) ──
       - name: Build & Test Backend (per-module JaCoCo reports)
         working-directory: ./Backend
         run: |
           mvn -B clean verify -DskipTests=false
 
+      # ── STEP 2: Verify Backend JaCoCo reports exist ──
       - name: Verify Per-Module JaCoCo Reports Exist
         run: |
           echo "──── JaCoCo Per-Module Report Verification ────"
@@ -578,19 +588,24 @@ jobs:
           fi
           echo ""
           echo "──── All per-module reports verified ────"
-          echo "   SonarCloud will merge these reports for accurate coverage."
 
-      - name: Install Frontend Dependencies & Build Coverage
+      # ── STEP 3: Install Frontend dependencies & generate LCOV ──
+      - name: Install Frontend Dependencies
         working-directory: ./Frontend
         run: |
           npm ci
-          npm run test:ci
 
+      - name: Run Frontend Tests with Coverage
+        working-directory: ./Frontend
+        run: |
+          npm run test:coverage
+
+      # ── STEP 4: Verify Frontend coverage report ──
       - name: Verify Frontend Coverage Report
         run: |
           echo "──── Frontend Coverage Report Verification ────"
           echo "Working directory: $(pwd)"
-          
+
           if [ -f "Frontend/coverage/lcov.info" ]; then
             LINES=$(wc -l < Frontend/coverage/lcov.info)
             echo "   ✅ Frontend LCOV report found ($LINES lines)"
@@ -598,21 +613,39 @@ jobs:
             echo "   📁 Coverage directory contents:"
             ls -la Frontend/coverage/
             echo ""
-            echo "   📄 LCOV file header (first 30 lines):"
-            head -30 Frontend/coverage/lcov.info
-            echo ""
             echo "   📊 Source files in LCOV report:"
             grep "^SF:" Frontend/coverage/lcov.info | head -20
             echo "   ... ($(grep -c '^SF:' Frontend/coverage/lcov.info) total source files)"
           else
             echo "   ❌ MISSING: Frontend/coverage/lcov.info"
-            echo "   Available files in Frontend/:"
             ls -R Frontend/coverage/ 2>/dev/null || echo "   (coverage directory does not exist)"
             exit 1
           fi
           echo ""
           echo "──── Frontend coverage report verified ────"
 
+      # ── DEBUG: Dump report paths for Sonar diagnosis ──
+      - name: Debug - Dump coverage report paths
+        run: |
+          echo "══════════════════════════════════════════════"
+          echo "  DEBUG: Coverage Report Paths for SonarCloud"
+          echo "══════════════════════════════════════════════"
+          echo ""
+          echo "=== Working Directory ==="
+          pwd
+          echo ""
+          echo "=== Frontend LCOV ==="
+          ls -R Frontend/coverage/ 2>/dev/null || echo "(not found)"
+          echo ""
+          echo "=== LCOV Header (first 20 lines) ==="
+          head -20 Frontend/coverage/lcov.info 2>/dev/null || echo "(not found)"
+          echo ""
+          echo "=== Backend JaCoCo Reports ==="
+          ls -R Backend/*/target/site/jacoco/jacoco.xml 2>/dev/null || echo "(not found)"
+          echo ""
+          echo "══════════════════════════════════════════════"
+
+      # ── STEP 5: SonarCloud Scan (MUST run AFTER all coverage generation) ──
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2.3.0
         env:
@@ -620,7 +653,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.qualitygate.wait=false
+            -Dsonar.qualitygate.wait=true
             -Dsonar.verbose=true
 
   # ======================== STAGE 6: DEPLOY TO EC2 =============

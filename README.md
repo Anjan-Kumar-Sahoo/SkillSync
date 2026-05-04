@@ -97,9 +97,11 @@ SkillSync maintains rigorous quality standards enforced through automated CI/CD:
 | **Backend** | JUnit 5 + Mockito | JaCoCo | Per-module XML (10 reports) | ≥90% line + branch |
 | **Frontend** | Jest + RTL | Istanbul | LCOV (`Frontend/coverage/lcov.info`) | ≥90% line |
 
-- **SonarCloud**: Both Backend and Frontend are analyzed in a unified scan. Coverage exclusions are aligned with Jest's `collectCoverageFrom` to prevent scope mismatch (files Jest doesn't cover are excluded from Sonar's coverage measurement).
-- **CI Execution Order**: `npm ci` → `npm run test:ci` (generates LCOV) → verify `lcov.info` exists → SonarCloud scan with `sonar.verbose=true`.
-- **Quality Gate**: Runs in non-blocking mode — results are reported on the dashboard but do not block deployments.
+- **SonarCloud**: CI-based analysis only (automatic analysis OFF). Both Backend and Frontend are analyzed in a unified scan. Coverage exclusions are aligned with Jest's `collectCoverageFrom` to prevent scope mismatch.
+- **Quality Gate**: **BLOCKING** — ≥90% coverage enforced. Pipeline fails if coverage drops below threshold. Docker build and deploy stages depend on quality gate passing.
+- **CI Execution Order**: `mvn clean verify` (JaCoCo) → verify JaCoCo reports → `npm ci` → `npm run test:coverage` (LCOV) → verify `lcov.info` → SonarCloud scan with `sonar.qualitygate.wait=true`.
+- **Coverage Ratchet**: Each backend service enforces progressive gates (70% → 80% → 90%) during CI build.
+- **Combined Coverage**: ~94% (Frontend ~99% + Backend ~90%+).
 
 ---
 

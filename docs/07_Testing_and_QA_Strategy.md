@@ -77,12 +77,14 @@ Updated for final presentation on 2026-04-06. Start with docs/00_Presentation_Pl
 | **Code Quality** | **SonarCloud** | **Backend (JaCoCo) + Frontend (LCOV)** | **≥90% overall** |
 
 > [!IMPORTANT]
-> **SonarCloud Coverage (May 2026):** SonarCloud analyzes **both Backend and Frontend** code.
+> **SonarCloud Coverage (May 2026):** SonarCloud analyzes **both Backend and Frontend** code using **CI-based analysis only** (automatic analysis OFF).
 > - **Backend:** Coverage via per-module JaCoCo XML reports (10 modules).
 > - **Frontend:** Coverage via Jest-generated LCOV (`Frontend/coverage/lcov.info`).
 > - **Coverage Scope Alignment (Critical Fix):** Jest's `collectCoverageFrom` only covers `App.tsx`, `components/**`, `context/**`, `hooks/**`, `routes/**`, `services/**`, `store/**`, and `utils/**`. Files outside this scope (e.g., `pages/**`, `features/**`, `main.tsx`) must be excluded from Sonar's coverage measurement via `sonar.coverage.exclusions` — otherwise Sonar reports 0% for those files, dragging down the overall score.
-> - **Quality Gate:** Runs in non-blocking mode (`sonar.qualitygate.wait=false`) with `sonar.verbose=true` for debug logging.
+> - **Quality Gate:** **BLOCKING** mode (`sonar.qualitygate.wait=true`) with ≥90% coverage enforced. Pipeline fails if coverage drops below threshold.
+> - **Coverage Ratchet:** Each backend service enforces progressive gates (70% → 80% → 90%) during CI build.
 > - **CI Verification:** The pipeline verifies both JaCoCo XMLs and `lcov.info` exist before running the Sonar scan.
+> - **Combined Coverage Target:** ~94% (Frontend ~99% + Backend ~90%+).
 
 > [!IMPORTANT]
 > **Implementation Status:** 16 base unit test classes (Service & Controller layers) have been implemented across all 8 business microservices using JUnit 5 and Mockito. All service tests have been updated to test CQRS `CommandService` and `QueryService` classes separately, including cache hit/miss/invalidation verification via mocked `CacheService`.

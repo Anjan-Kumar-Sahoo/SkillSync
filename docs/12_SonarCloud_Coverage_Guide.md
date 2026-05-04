@@ -1,12 +1,22 @@
 # 12 — SonarCloud Configuration & Coverage Guide
 
-> Version: 1.0 | Date: 2026-05-03 | Status: Active
+> Version: 2.0 | Date: 2026-05-04 | Status: Active
 
 ---
 
 ## 1. Overview
 
-SonarCloud is configured to analyze **both Backend (Java) and Frontend (TypeScript/React)** in a unified scan. This document explains the configuration, common pitfalls, and how to debug coverage discrepancies.
+SonarCloud is configured to analyze **both Backend (Java) and Frontend (TypeScript/React)** in a unified CI-based scan. Automatic analysis is **OFF** — all analysis runs exclusively through GitHub Actions.
+
+### Key Configuration
+
+| Setting | Value |
+|---|---|
+| **Project Key** | `Anjan-Kumar-Sahoo_SkillSync` |
+| **Organization** | `anjan-kumar-sahoo` |
+| **Analysis Mode** | CI-based only (automatic analysis OFF) |
+| **Quality Gate** | **BLOCKING** — ≥90% coverage enforced |
+| **Coverage Target** | ~94% combined (Frontend ~99% + Backend ~90%) |
 
 ### Key Files
 
@@ -22,24 +32,33 @@ SonarCloud is configured to analyze **both Backend (Java) and Frontend (TypeScri
 ## 2. Architecture
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│  CI Pipeline (GitHub Actions)                            │
-│                                                          │
-│  1. Build & Test Backend (mvn clean verify)              │
-│     → Generates: Backend/<svc>/target/site/jacoco/*.xml  │
-│                                                          │
-│  2. Build & Test Frontend (npm run test:ci)              │
-│     → Generates: Frontend/coverage/lcov.info             │
-│                                                          │
-│  3. Verify Reports Exist                                 │
-│     → JaCoCo XMLs for all 10 modules                     │
-│     → LCOV file with source file paths                   │
-│                                                          │
-│  4. SonarCloud Scan                                      │
-│     → Reads sonar-project.properties                     │
-│     → Ingests JaCoCo + LCOV                              │
-│     → Reports combined coverage on dashboard             │
-└──────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  CI Pipeline (GitHub Actions)                                │
+│                                                              │
+│  1. Build & Test Backend (mvn clean verify)                  │
+│     → Generates: Backend/<svc>/target/site/jacoco/*.xml      │
+│                                                              │
+│  2. Verify Per-Module JaCoCo Reports Exist                   │
+│     → Fail fast if any of 10 module reports missing          │
+│                                                              │
+│  3. Install Frontend Dependencies (npm ci)                   │
+│     → Fresh, reproducible install                            │
+│                                                              │
+│  4. Run Frontend Tests with Coverage (npm run test:coverage) │
+│     → Generates: Frontend/coverage/lcov.info                 │
+│                                                              │
+│  5. Verify lcov.info Exists                                  │
+│     → Fail fast if missing + dump SF paths for debug         │
+│                                                              │
+│  6. Debug Dump (TEMPORARY)                                   │
+│     → pwd, ls coverage dirs, head lcov.info                  │
+│                                                              │
+│  7. SonarCloud Scan                                          │
+│     → Reads sonar-project.properties                         │
+│     → Ingests JaCoCo + LCOV                                  │
+│     → Waits for Quality Gate (BLOCKING)                      │
+│     → Fails pipeline if coverage < 90%                       │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -76,10 +95,14 @@ collectCoverageFrom: [
 sonar.coverage.exclusions=\
   Frontend/src/main.tsx,\
   Frontend/src/vite-env.d.ts,\
+  Frontend/src/index.tsx,\
   Frontend/src/types/**,\
   Frontend/src/pages/**,\
   Frontend/src/features/**,\
   Frontend/src/assets/**,\
+  Frontend/src/constants/**,\
+  Frontend/src/routes/**,\
+  Frontend/src/store/**,\
   ...
 ```
 
@@ -134,7 +157,14 @@ SonarCloud reads **per-module** reports (NOT the aggregate):
 sonar.coverage.jacoco.xmlReportPaths=\
   Backend/auth-service/target/site/jacoco/jacoco.xml,\
   Backend/user-service/target/site/jacoco/jacoco.xml,\
-  ...
+  Backend/skill-service/target/site/jacoco/jacoco.xml,\
+  Backend/session-service/target/site/jacoco/jacoco.xml,\
+  Backend/notification-service/target/site/jacoco/jacoco.xml,\
+  Backend/payment-service/target/site/jacoco/jacoco.xml,\
+  Backend/api-gateway/target/site/jacoco/jacoco.xml,\
+  Backend/config-server/target/site/jacoco/jacoco.xml,\
+  Backend/eureka-server/target/site/jacoco/jacoco.xml,\
+  Backend/skillsync-cache-common/target/site/jacoco/jacoco.xml
 ```
 
 > [!CAUTION]
@@ -142,18 +172,24 @@ sonar.coverage.jacoco.xmlReportPaths=\
 
 ---
 
-## 6. CI Execution Order
+## 6. CI Execution Order (MANDATORY)
 
-The strict execution order in `.github/workflows/ci-cd.yml` is:
+The strict execution order in `.github/workflows/ci-cd.yml` `code-quality` job is:
 
 ```
 1. mvn -B clean verify          → Backend JaCoCo reports generated
 2. Verify JaCoCo reports exist  → Fail fast if missing
-3. npm ci && npm run test:ci    → Frontend LCOV generated
-4. Verify lcov.info exists      → Fail fast if missing
-5. Debug log LCOV contents      → First 30 lines + SF paths
-6. SonarCloud scan              → Ingests both report types
+3. npm ci                       → Install frontend dependencies
+4. npm run test:coverage        → Frontend LCOV generated
+5. Verify lcov.info exists      → Fail fast if missing
+6. Debug dump report paths      → pwd, ls, head (TEMPORARY)
+7. SonarCloud scan              → Ingests both report types
+   → sonar.qualitygate.wait=true (BLOCKING)
+   → sonar.verbose=true (detailed logging)
 ```
+
+> [!IMPORTANT]
+> SonarCloud scan MUST run AFTER all coverage reports are generated. If the order is wrong, Sonar will report 0% coverage.
 
 ---
 
@@ -166,6 +202,7 @@ Look for these in the SonarCloud scan output:
 | Log Message | Meaning |
 |---|---|
 | `Analysing LCOV file: Frontend/coverage/lcov.info` | ✅ Sonar found the LCOV file |
+| `Analysing JaCoCo XML` | ✅ Sonar found JaCoCo reports |
 | `Coverage report loaded successfully` | ✅ Coverage data ingested |
 | `Skipping file ... not in sources` | ⚠️ Path mismatch — file in LCOV doesn't match `sonar.sources` |
 | `No coverage data for ...` | ⚠️ File is in sources but not in LCOV or coverage.exclusions |
@@ -192,7 +229,7 @@ grep "^SF:" Frontend/coverage/lcov.info | sed 's/SF://' | sort
 
 ### Step 4: Enable Verbose Logging
 
-Set in `sonar-project.properties` or as a CLI arg:
+Already enabled in the CI pipeline via:
 
 ```
 -Dsonar.verbose=true
@@ -215,20 +252,65 @@ When adding a new source directory (e.g., `Frontend/src/newModule/**`):
 
 ## 9. Quality Gate Configuration
 
-The Quality Gate runs in **non-blocking mode**:
+### Current Settings
 
-```properties
-sonar.qualitygate.wait=false
-```
-
-Combined with `continue-on-error: true` on the `code-quality` job, this ensures:
-
-- ✅ SonarCloud results are always reported
-- ✅ CI pipeline never fails due to Sonar issues
-- ✅ Deployments proceed regardless of Quality Gate status
-
-To make the gate blocking (e.g., for PRs), change to:
+The Quality Gate runs in **BLOCKING mode**:
 
 ```properties
 sonar.qualitygate.wait=true
 ```
+
+The `code-quality` job does **NOT** use `continue-on-error`, meaning:
+
+- ✅ SonarCloud results are always reported
+- ✅ CI pipeline **FAILS** if Quality Gate is not passed
+- ✅ Docker build & deploy depend on code-quality passing
+- ❌ Deployments are blocked if coverage drops below 90%
+
+### Required Quality Gate Rules (SonarCloud UI)
+
+Set the following in the SonarCloud project Quality Gate:
+
+| Metric | Condition | Threshold |
+|---|---|---|
+| Coverage on New Code | is less than | 90.0% |
+| New Bugs | is greater than | 0 |
+| New Vulnerabilities | is greater than | 0 |
+
+### Coverage Ratchet (Per-Service)
+
+Each backend service enforces a progressive coverage gate during build:
+
+| Gate | Line Coverage | Branch Coverage |
+|---|---|---|
+| Gate 1 | ≥70% | ≥70% |
+| Gate 2 | ≥80% | ≥80% |
+| Gate 3 | ≥90% | ≥90% |
+
+---
+
+## 10. Validation Checklist
+
+After a pipeline run, verify the following in SonarCloud logs:
+
+- [ ] `Analysing LCOV file: Frontend/coverage/lcov.info` appears
+- [ ] `Analysing JaCoCo XML` appears for each module
+- [ ] Coverage imported successfully (no `0%` anomalies)
+- [ ] Frontend coverage ~99% reflected on dashboard
+- [ ] Backend coverage ~90%+ reflected on dashboard
+- [ ] Combined coverage ≥90% (target ~94%)
+- [ ] Quality Gate: ✅ PASSED
+- [ ] CI pipeline: ✅ SUCCESS
+
+---
+
+## 11. Strict Rules
+
+| Rule | Detail |
+|---|---|
+| **Case sensitivity** | Use `Frontend/` not `frontend/`, `Backend/` not `backend/` — Linux CI is case-sensitive |
+| **Execution order** | Sonar must run AFTER all coverage generation steps |
+| **Path accuracy** | Report paths in `sonar-project.properties` must match exactly |
+| **No exclusion conflicts** | Frontend files in `collectCoverageFrom` must NOT be in `sonar.coverage.exclusions` |
+| **No partial LCOV reads** | Verify full LCOV file is generated before Sonar scan |
+| **Per-module reports only** | Never use the aggregate JaCoCo report |
