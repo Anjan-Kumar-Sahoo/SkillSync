@@ -157,22 +157,22 @@ const LearnerDashboardPage = () => {
 
   const rightPanel = (
     <>
-      <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/15">
+      <div className="glass-panel-lowest p-6 rounded-2xl shadow-sm hover-glow-cyan transition-all duration-300">
         <h3 className="font-bold text-lg text-on-surface mb-2">Apply As Mentor</h3>
         {mentorApplied ? (
           <div className={`rounded-xl border p-4 ${
-            mentorStatus === 'APPROVED' ? 'border-green-300 bg-green-50' :
-            mentorStatus === 'REJECTED' ? 'border-red-300 bg-red-50' :
-            'border-amber-300 bg-amber-50'
+            mentorStatus === 'APPROVED' ? 'border-green-300 bg-green-500/10' :
+            mentorStatus === 'REJECTED' ? 'border-red-300 bg-red-500/10' :
+            'border-amber-300 bg-amber-500/10'
           }`}>
             <p className="text-sm font-semibold text-on-surface">
-              Application Status: <span className={`font-bold ${
-                mentorStatus === 'APPROVED' ? 'text-green-600' :
-                mentorStatus === 'REJECTED' ? 'text-red-600' :
-                'text-amber-600'
+              Application Status: <span className={`font-black uppercase tracking-wider ${
+                mentorStatus === 'APPROVED' ? 'text-green-600 font-black' :
+                mentorStatus === 'REJECTED' ? 'text-red-600 font-black' :
+                'text-amber-600 font-black'
               }`}>{mentorStatus || 'PENDING'}</span>
             </p>
-            <p className="text-xs text-on-surface-variant mt-2">
+            <p className="text-xs text-on-surface-variant mt-2 font-medium">
               {mentorStatus === 'APPROVED' ? 'Congratulations! You are now a mentor. Log out and back in to access your mentor dashboard.' :
                mentorStatus === 'REJECTED' ? 'Your application was not approved. You may contact support for more details.' :
                'Your application is under review by an admin. You will be notified once it is approved.'}
@@ -180,14 +180,14 @@ const LearnerDashboardPage = () => {
           </div>
         ) : (
           <>
-            <p className="text-sm text-on-surface-variant mb-4">
+            <p className="text-sm text-on-surface-variant mb-4 font-medium">
               {canReapply
                 ? 'Your mentor role was demoted/rejected. You can submit a fresh mentor application now.'
                 : 'Share your expertise and start mentoring learners.'}
             </p>
             <button
               onClick={() => setShowApplyForm(true)}
-              className="w-full gradient-btn text-white py-2.5 rounded-xl font-bold"
+              className="w-full gradient-btn text-white py-2.5 rounded-xl font-bold hover:scale-[1.02] active:scale-[0.98] hover:shadow-md transition-all duration-300"
             >
               {canReapply ? 'Re-apply as Mentor' : 'Start Mentor Application'}
             </button>
@@ -195,17 +195,25 @@ const LearnerDashboardPage = () => {
         )}
       </div>
 
-      <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/15">
-        <h3 className="font-bold text-lg text-on-surface mb-4">Practice Links</h3>
-        <div className="space-y-2 text-sm font-semibold">
-          <a href="https://leetcode.com" target="_blank" rel="noreferrer" className="block text-primary hover:underline">LeetCode</a>
-          <a href="https://www.hackerrank.com" target="_blank" rel="noreferrer" className="block text-primary hover:underline">HackerRank</a>
-          <a href="https://www.geeksforgeeks.org" target="_blank" rel="noreferrer" className="block text-primary hover:underline">GeeksforGeeks</a>
-          <a href="https://www.codechef.com" target="_blank" rel="noreferrer" className="block text-primary hover:underline">CodeChef</a>
+      <div className="glass-panel-lowest p-6 rounded-2xl shadow-sm hover-glow-cyan transition-all duration-300">
+        <h3 className="font-bold text-lg text-on-surface mb-4">Practice Hub</h3>
+        <div className="grid grid-cols-2 gap-2.5 text-sm font-semibold">
+          <a href="https://leetcode.com" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 p-2 rounded-lg bg-surface-container hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all duration-200">
+            <span className="material-symbols-outlined text-[16px]">code</span> LeetCode
+          </a>
+          <a href="https://www.hackerrank.com" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 p-2 rounded-lg bg-surface-container hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all duration-200">
+            <span className="material-symbols-outlined text-[16px]">terminal</span> HackerRank
+          </a>
+          <a href="https://www.geeksforgeeks.org" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 p-2 rounded-lg bg-surface-container hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all duration-200">
+            <span className="material-symbols-outlined text-[16px]">school</span> GFG
+          </a>
+          <a href="https://www.codechef.com" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 p-2 rounded-lg bg-surface-container hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all duration-200">
+            <span className="material-symbols-outlined text-[16px]">psychology</span> CodeChef
+          </a>
         </div>
       </div>
 
-      <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/15">
+      <div className="glass-panel-lowest p-6 rounded-2xl shadow-sm hover-glow-cyan transition-all duration-300">
         <h3 className="font-bold text-lg text-on-surface mb-4">My Groups</h3>
         {groups.length === 0 ? (
           <div className="flex flex-col items-center py-6 text-center">
@@ -218,16 +226,14 @@ const LearnerDashboardPage = () => {
         ) : (
           <div className="space-y-3">
             {groups.map((g: any, i: number) => (
-              <div key={i} className="flex justify-between items-center text-sm font-semibold p-2 rounded-lg hover:bg-surface-container-low transition-colors">
+              <div key={i} className="flex justify-between items-center text-sm font-bold p-2.5 rounded-xl bg-surface-container hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all cursor-pointer" onClick={() => navigate(`/groups/${g.id}`)}>
                 <span>{g.name}</span>
-                <span className="text-on-surface-variant text-xs">{g.memberCount || 1} members</span>
+                <span className="text-on-surface-variant text-xs font-semibold">{g.memberCount || 1} members</span>
               </div>
             ))}
           </div>
         )}
       </div>
-
-
     </>
   );
 
@@ -350,9 +356,9 @@ const LearnerDashboardPage = () => {
             ))
           ) : upSessions?.content?.length > 0 ? (
             upSessions.content.map((session: any) => (
-              <div key={session.id} className="bg-surface-container-lowest rounded-xl p-4 flex flex-col md:flex-row md:items-center gap-4 shadow-sm border border-outline-variant/10 hover:shadow-md transition-shadow">
+              <div key={session.id} className="glass-panel-lowest hover-glow-cyan rounded-xl p-4 flex flex-col md:flex-row md:items-center gap-4 shadow-sm transition-all duration-300 fade-slide-entry">
                 <div className="flex items-center gap-4 flex-1">
-                  <div className={`w-10 h-10 rounded-full text-white flex items-center justify-center font-bold shadow-sm shrink-0 ${getAvatarColor(getSessionMentorName(session))}`}>
+                  <div className={`w-10 h-10 rounded-full text-white flex items-center justify-center font-black shadow-sm shrink-0 ring-2 ring-cyan-500/10 ${getAvatarColor(getSessionMentorName(session))}`}>
                     {getInitials(getSessionMentorName(session))}
                   </div>
                   <div>
@@ -362,14 +368,14 @@ const LearnerDashboardPage = () => {
                 </div>
                 <div className="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto">
                   <p className="text-sm font-semibold text-on-surface-variant text-right">{formatDateTime(getSessionDateTime(session))}</p>
-                  <span className="bg-primary-container/20 text-primary-container px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider">
+                  <span className="bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 px-3 py-1 rounded-md text-xs font-black tracking-wider uppercase">
                     {session.status}
                   </span>
                 </div>
               </div>
             ))
           ) : (
-            <div className="bg-surface-container-lowest rounded-xl p-8 flex flex-col items-center text-center shadow-sm border border-outline-variant/10">
+            <div className="glass-panel-lowest rounded-xl p-8 flex flex-col items-center text-center shadow-sm">
               <span className="material-symbols-outlined text-4xl text-outline-variant mb-2">calendar_today</span>
               <p className="text-sm font-semibold text-on-surface-variant mb-4">No upcoming sessions</p>
               <button onClick={() => navigate('/mentors')} className="gradient-btn text-white px-6 py-2.5 rounded-xl font-bold hover:shadow-lg transition-all text-sm">
@@ -401,10 +407,10 @@ const LearnerDashboardPage = () => {
             const isNewMentor = sessionsHeld === 0;
 
             return (
-              <div key={mnt.id} className="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-transparent hover:border-primary/20 hover:-translate-y-1 transition-all duration-300 flex flex-col">
+              <div key={mnt.id} className="glass-panel-lowest p-6 rounded-xl shadow-sm hover-glow-cyan transition-all duration-300 flex flex-col fade-slide-entry">
               <div className="flex items-start gap-4 mb-4">
                 <div className="relative">
-                  <div className={`w-14 h-14 rounded-xl text-white flex items-center justify-center font-bold text-lg shadow-sm ${getAvatarColor(mnt.firstName)}`}>
+                  <div className={`w-14 h-14 rounded-xl text-white flex items-center justify-center font-black text-lg shadow-md ring-2 ring-cyan-500/10 ${getAvatarColor(mnt.firstName)}`}>
                     {getInitials(`${mnt.firstName} ${mnt.lastName}`)}
                   </div>
                   <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
@@ -412,7 +418,7 @@ const LearnerDashboardPage = () => {
                 <div className="flex-1">
                   <div className="flex justify-between items-start">
                     <h3 className="font-bold text-on-surface leading-tight">{mnt.firstName} {mnt.lastName}</h3>
-                    <div className="flex items-center gap-1 bg-secondary-container/30 px-2 py-0.5 rounded text-xs font-bold text-on-secondary-container">
+                    <div className="flex items-center gap-1 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded text-xs font-black text-cyan-600 dark:text-cyan-400">
                       <span className="material-symbols-outlined text-[14px]">star</span>
                       {isNewMentor ? 'NEW' : avgRating.toFixed(1)}
                     </div>
@@ -423,23 +429,23 @@ const LearnerDashboardPage = () => {
               
               <div className="flex flex-wrap gap-1.5 mb-6">
                 {(mnt.skills || []).slice(0, 3).map((skill: any, i: number) => (
-                  <span key={i} className="bg-surface-container-low text-on-surface-variant text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">
+                  <span key={i} className="bg-surface-container text-on-surface-variant text-[10px] font-bold px-2 py-1 rounded border border-outline-variant/10 uppercase tracking-wider">
                     {typeof skill === 'string' ? skill : (skill.name || `Skill #${skill.id}`)}
                   </span>
                 ))}
                 {(mnt.skills?.length > 3) && (
-                  <span className="bg-surface-container-low text-on-surface-variant text-[10px] font-bold px-2 py-1 rounded">+{mnt.skills.length - 3}</span>
+                  <span className="bg-surface-container text-on-surface-variant text-[10px] font-bold px-2 py-1 rounded">+{mnt.skills.length - 3}</span>
                 )}
               </div>
 
               <div className="flex justify-between items-end mt-auto pt-4 border-t border-outline-variant/10">
                 <div>
                   <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-0.5">Starting at</p>
-                  <p className="text-lg font-black text-primary">₹{mnt.hourlyRate}/<span className="text-sm font-semibold text-on-surface-variant">hr</span></p>
+                  <p className="text-lg font-black text-gradient">₹{mnt.hourlyRate}/<span className="text-xs font-bold text-on-surface-variant">hr</span></p>
                 </div>
                 <button 
                   onClick={() => navigate(`/mentors/${mnt.id}`)}
-                  className="bg-surface-container-high hover:bg-primary hover:text-white px-5 py-2 rounded-lg text-sm font-bold transition-all duration-300"
+                  className="bg-surface-container-high hover:bg-cyan-500 hover:text-white px-5 py-2 rounded-lg text-sm font-bold transition-all duration-300"
                 >
                   Book Session
                 </button>

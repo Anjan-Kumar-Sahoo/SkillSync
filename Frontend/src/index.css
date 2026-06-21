@@ -182,3 +182,107 @@ html.theme-dark .hover\:text-gray-700:hover {
 html.theme-dark .disabled\:bg-gray-100:disabled {
   background-color: #1f2a3f !important;
 }
+
+/* ─── Premium Glassmorphic & Animation Utilities ─── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes pulse-glow {
+  0% { transform: scale(0.96); opacity: 0.6; box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+  50% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
+  100% { transform: scale(0.96); opacity: 0.6; box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+}
+
+@keyframes fade-slide-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.float-slow {
+  animation: float 5s ease-in-out infinite;
+}
+
+.pulse-glow-badge {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.fade-slide-entry {
+  animation: fade-slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.glass-panel {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.glass-panel-lowest {
+  background-color: rgba(255, 255, 255, 0.72) !important;
+  border: 1px solid rgba(115, 118, 134, 0.12) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+html.theme-dark .glass-panel-lowest {
+  background-color: rgba(17, 26, 42, 0.65) !important;
+  border: 1px solid rgba(53, 73, 105, 0.25) !important;
+}
+
+.glass-panel-low {
+  background-color: rgba(242, 244, 246, 0.72) !important;
+  border: 1px solid rgba(115, 118, 134, 0.12) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+html.theme-dark .glass-panel-low {
+  background-color: rgba(22, 34, 53, 0.65) !important;
+  border: 1px solid rgba(53, 73, 105, 0.25) !important;
+}
+
+/* Hover Accent Borders */
+.hover-glow-cyan:hover {
+  box-shadow: 0 0 16px rgba(6, 182, 212, 0.25);
+  border-color: rgba(6, 182, 212, 0.5) !important;
+  transform: translateY(-2px);
+}
+
+.hover-glow-orange:hover {
+  box-shadow: 0 0 16px rgba(249, 115, 22, 0.25);
+  border-color: rgba(249, 115, 22, 0.5) !important;
+  transform: translateY(-2px);
+}
+
+.hover-glow-primary:hover {
+  box-shadow: 0 0 16px rgba(37, 99, 235, 0.25);
+  border-color: rgba(37, 99, 235, 0.5) !important;
+  transform: translateY(-2px);
+}
+
+.glow-card-stage {
+  position: relative;
+}
+
+.glow-card-stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(800px circle at var(--mouse-x, 0) var(--mouse-y, 0), rgba(255,255,255,0.06), transparent 40%);
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.glow-card-stage:hover::after {
+  opacity: 1;
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--gradient-btn-start), var(--gradient-btn-end));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+

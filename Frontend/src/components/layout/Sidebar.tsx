@@ -52,38 +52,45 @@ const Sidebar = ({ role }: SidebarProps) => {
     }
   };
 
+  const activeColor = role === 'ROLE_LEARNER' ? 'text-cyan-600 dark:text-cyan-400 font-extrabold' : role === 'ROLE_MENTOR' ? 'text-orange-600 dark:text-orange-400 font-extrabold' : 'text-primary font-extrabold';
+  const activeBg = role === 'ROLE_LEARNER' ? 'bg-cyan-500/10 shadow-sm ring-1 ring-cyan-500/20' : role === 'ROLE_MENTOR' ? 'bg-orange-500/10 shadow-sm ring-1 ring-orange-500/20' : 'bg-primary/10 shadow-sm ring-1 ring-primary/20';
+  const hoverGlow = role === 'ROLE_LEARNER' ? 'hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-500/5' : role === 'ROLE_MENTOR' ? 'hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-500/5' : 'hover:text-primary hover:bg-primary/5';
+
   return (
-    <aside className="fixed left-0 top-0 h-screen w-20 lg:w-64 bg-surface-container-lowest/95 border-r border-outline-variant/20 flex flex-col justify-between z-40 transition-all duration-300 shadow-sm backdrop-blur-xl">
+    <aside className="fixed left-0 top-0 h-screen w-20 lg:w-64 glass-panel-lowest border-r border-outline-variant/20 flex flex-col justify-between z-40 transition-all duration-300 shadow-md">
       <div className="flex flex-col flex-1 overflow-y-auto w-full scrollbar-hide">
         {/* LOGO SECTION */}
         <div className="flex items-center justify-center lg:justify-start lg:px-6 h-20 shrink-0 border-b border-outline-variant/10">
           <img
             src={logo}
             alt="SkillSync logo"
-            className="w-10 h-10 object-contain hover:scale-105 transition duration-300"
+            className="w-10 h-10 object-contain hover:scale-105 transition-all duration-300"
             onError={(event: SyntheticEvent<HTMLImageElement>) => {
               event.currentTarget.src = 'https://via.placeholder.com/40';
             }}
           />
           <div className="hidden lg:flex flex-col ml-3">
-            <span className="text-lg font-black text-primary tracking-tight leading-tight">SkillSync</span>
-            <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">{role.replace('ROLE_', '')}</span>
+            <span className="text-lg font-black text-gradient tracking-tight leading-tight">SkillSync</span>
+            <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest leading-none mt-0.5">{role.replace('ROLE_', '')}</span>
           </div>
         </div>
 
-        {/* NAVIGATION LIKS */}
-        <nav className="flex-1 w-full px-2 lg:px-4 py-8 space-y-2">
+        {/* NAVIGATION LINKS */}
+        <nav className="flex-1 w-full px-2 lg:px-4 py-8 space-y-2.5">
           {activeNav.map((item) => {
             const isActive = location.pathname === item.path;
-            const linkClasses = `flex items-center justify-center lg:justify-start px-2 lg:px-4 py-3 rounded-xl transition-all duration-200 group ${
+            const linkClasses = `flex items-center justify-center lg:justify-start px-2 lg:px-4 py-3 rounded-xl transition-all duration-250 group relative overflow-hidden ${
               isActive 
-                ? 'bg-surface-container-high text-primary shadow-sm font-extrabold' 
-                : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-semibold'
+                ? `${activeBg} ${activeColor}` 
+                : `text-on-surface-variant hover:text-on-surface font-semibold ${hoverGlow}`
             }`;
 
             return (
               <Link key={item.name} to={item.path} className={linkClasses}>
-                <span className={`material-symbols-outlined text-2xl transition-transform duration-200 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>
+                {isActive && (
+                  <span className={`hidden lg:block absolute left-0 w-1 h-5 rounded-r-md ${role === 'ROLE_LEARNER' ? 'bg-cyan-500' : role === 'ROLE_MENTOR' ? 'bg-orange-500' : 'bg-primary'}`} />
+                )}
+                <span className={`material-symbols-outlined text-2xl transition-all duration-250 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>
                   {item.icon}
                 </span>
                 <span className="hidden lg:inline ml-4 text-sm whitespace-nowrap">{item.name}</span>
@@ -94,7 +101,7 @@ const Sidebar = ({ role }: SidebarProps) => {
       </div>
 
       {/* BOTTOM SECTION */}
-      <div className="w-full shrink-0 p-2 lg:p-4 border-t border-outline-variant/10 flex flex-col gap-2">
+      <div className="w-full shrink-0 p-2 lg:p-4 border-t border-outline-variant/10 flex flex-col gap-2.5">
         {role === 'ROLE_LEARNER' && (
           <button 
             onClick={() => navigate('/mentors')}

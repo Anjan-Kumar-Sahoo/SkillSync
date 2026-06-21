@@ -165,22 +165,23 @@ const DiscoverMentorsPage = () => {
   return (
     <PageLayout>
       {/* Header */}
-      <div className="mb-2">
-        <h1 className="text-4xl font-extrabold text-on-surface tracking-tight mb-2">Discover Mentors</h1>
-        <p className="text-on-surface-variant text-lg">Learn from industry experts and accelerate your career path.</p>
-        <p className="text-sm font-bold text-primary mt-4 bg-primary/10 inline-block px-3 py-1 rounded-full">
+      <div className="mb-6 fade-slide-entry">
+        <h1 className="text-4xl font-black text-on-surface tracking-tight mb-2">Discover Mentors</h1>
+        <p className="text-on-surface-variant text-lg font-medium">Learn from industry experts and accelerate your career path.</p>
+        <p className="text-xs font-black text-cyan-600 dark:text-cyan-400 mt-4 bg-cyan-500/10 border border-cyan-500/20 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full uppercase tracking-wider">
+          <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse-slow"></span>
           {totalElements} experts available
         </p>
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-surface-container-lowest p-4 rounded-xl shadow-sm border border-outline-variant/15 flex flex-col md:flex-row gap-4 items-end mb-6">
+      <div className="glass-panel-lowest p-5 rounded-2xl shadow-sm flex flex-col md:flex-row gap-4 items-end mb-8 hover-glow-cyan transition-all duration-300">
         <div className="flex-1 w-full">
           <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1">Filter by Skills</label>
           <select 
             value={draftFilters.skill} 
             onChange={(e) => setDraftFilters(prev => ({ ...prev, skill: e.target.value }))}
-            className="w-full h-10 bg-surface-container px-3 rounded-lg text-sm font-semibold outline-none focus:ring-1 focus:ring-primary border border-transparent"
+            className="w-full h-11 bg-surface-container px-3.5 rounded-xl text-sm font-bold text-on-surface outline-none focus:ring-2 focus:ring-cyan-500/40 border border-outline-variant/20 hover:border-outline-variant/50 transition-colors"
           >
             <option value="">All Skills</option>
             {skills.map((s) => (
@@ -196,7 +197,7 @@ const DiscoverMentorsPage = () => {
           <select 
             value={draftFilters.rating} 
             onChange={(e) => setDraftFilters(prev => ({ ...prev, rating: e.target.value }))}
-            className="w-full h-10 bg-surface-container px-3 rounded-lg text-sm font-semibold outline-none focus:ring-1 focus:ring-primary border border-transparent"
+            className="w-full h-11 bg-surface-container px-3.5 rounded-xl text-sm font-bold text-on-surface outline-none focus:ring-2 focus:ring-cyan-500/40 border border-outline-variant/20 hover:border-outline-variant/50 transition-colors"
           >
             <option value="">Any Rating</option>
             <option value="4">4+ Stars</option>
@@ -210,7 +211,7 @@ const DiscoverMentorsPage = () => {
           <select 
             value={draftFilters.priceRange} 
             onChange={(e) => setDraftFilters(prev => ({ ...prev, priceRange: e.target.value }))}
-            className="w-full h-10 bg-surface-container px-3 rounded-lg text-sm font-semibold outline-none focus:ring-1 focus:ring-primary border border-transparent"
+            className="w-full h-11 bg-surface-container px-3.5 rounded-xl text-sm font-bold text-on-surface outline-none focus:ring-2 focus:ring-cyan-500/40 border border-outline-variant/20 hover:border-outline-variant/50 transition-colors"
           >
             <option value="">Any Price</option>
             <option value="under50">Under ₹50</option>
@@ -221,9 +222,9 @@ const DiscoverMentorsPage = () => {
 
         <button 
           onClick={applyFilters}
-          className="w-full md:w-auto px-6 h-10 gradient-btn text-white font-bold rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95 shrink-0"
+          className="w-full md:w-auto px-8 h-11 gradient-btn text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shrink-0"
         >
-          Apply
+          Apply Filters
         </button>
       </div>
 
@@ -231,15 +232,15 @@ const DiscoverMentorsPage = () => {
       {isLoading && page === 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array(6).fill(0).map((_, i) => (
-            <div key={i} className="h-80 bg-surface-container rounded-xl animate-pulse"></div>
+            <div key={i} className="h-80 bg-surface-container rounded-2xl animate-pulse"></div>
           ))}
         </div>
       ) : mentorsList.length === 0 ? (
-        <div className="bg-surface-container-lowest rounded-xl p-12 flex flex-col items-center justify-center text-center shadow-sm border border-outline-variant/15">
-          <span className="material-symbols-outlined text-6xl text-outline-variant mb-4">person_search</span>
+        <div className="glass-panel-lowest rounded-2xl p-12 flex flex-col items-center justify-center text-center shadow-sm border border-outline-variant/15 fade-slide-entry">
+          <span className="material-symbols-outlined text-6xl text-outline-variant mb-4 pulse-glow-badge">person_search</span>
           <h3 className="text-xl font-bold text-on-surface mb-2">No mentors found matching your criteria</h3>
-          <p className="text-sm text-on-surface-variant mb-6">Try adjusting your filters to find the perfect expert.</p>
-          <button onClick={clearFilters} className="bg-surface-container-high hover:bg-outline-variant/30 text-on-surface font-bold px-6 py-2 rounded-xl transition-colors">
+          <p className="text-sm text-on-surface-variant mb-6 font-medium">Try adjusting your filters to find the perfect expert.</p>
+          <button onClick={clearFilters} className="bg-surface-container-high hover:bg-outline-variant/30 text-on-surface font-bold px-6 py-2.5 rounded-xl transition-colors">
             Clear Filters
           </button>
         </div>
@@ -252,10 +253,10 @@ const DiscoverMentorsPage = () => {
               const isNewMentor = sessionsHeld === 0;
 
               return (
-                <div key={mentor.id} className="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm border border-outline-variant/10 hover:-translate-y-1 hover:shadow-xl hover:border-primary/20 transition-all duration-300 group flex flex-col">
-                  <div className="h-48 bg-gradient-to-br from-surface-container to-surface-container-high relative flex items-center justify-center p-4 overflow-hidden">
-                    <div className="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors"></div>
-                    <div className={`w-20 h-20 rounded-full bg-gradient-to-tr ${getAvatarColor(mentor.firstName)} text-white flex items-center justify-center text-2xl font-black shadow-lg z-10 ring-4 ring-white`}>
+                <div key={mentor.id} className="glass-panel-lowest rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group flex flex-col fade-slide-entry hover-glow-cyan">
+                  <div className="h-44 bg-gradient-to-br from-surface-container-low to-surface-container relative flex items-center justify-center p-4 overflow-hidden">
+                    <div className="absolute inset-0 bg-cyan-500/5 group-hover:bg-cyan-500/10 transition-all duration-350"></div>
+                    <div className={`w-20 h-20 rounded-full bg-gradient-to-tr ${getAvatarColor(mentor.firstName)} text-white flex items-center justify-center text-2xl font-black shadow-lg z-10 ring-4 ring-white/25 dark:ring-surface-container-lowest/30 group-hover:scale-105 transition-transform duration-300`}>
                       {getInitials(mentor.firstName, mentor.lastName)}
                     </div>
                   </div>
@@ -263,32 +264,32 @@ const DiscoverMentorsPage = () => {
                   <div className="p-5 flex flex-col flex-1">
                     <div className="flex items-start justify-between gap-3 mb-4">
                       <div className="min-w-0">
-                        <h3 className="text-xl font-extrabold text-on-surface leading-tight mb-1 group-hover:text-primary transition-colors">
+                        <h3 className="text-lg font-extrabold text-on-surface leading-tight mb-1 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
                           {mentor.firstName} {mentor.lastName}
                         </h3>
-                        <p className="text-sm font-medium text-on-surface-variant truncate" title={mentor.headline}>
+                        <p className="text-xs font-semibold text-on-surface-variant truncate" title={mentor.headline}>
                           {mentor.headline || 'Industry Expert'}
                         </p>
                       </div>
 
                       <div className="text-right shrink-0">
-                        <p className="text-xs font-black text-on-surface">
-                          {isNewMentor ? '★ NEW' : `★ ${avgRating.toFixed(1)}`}
-                        </p>
-                        <p className="text-[11px] font-semibold text-on-surface-variant">
-                          {sessionsHeld} session{sessionsHeld === 1 ? '' : 's'} held
+                        <span className="inline-flex items-center gap-1 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded text-xs font-black text-cyan-600 dark:text-cyan-400">
+                          ★ {isNewMentor ? 'NEW' : avgRating.toFixed(1)}
+                        </span>
+                        <p className="text-[10px] font-bold text-on-surface-variant mt-1.5 uppercase tracking-wide">
+                          {sessionsHeld} session{sessionsHeld === 1 ? '' : 's'}
                         </p>
                       </div>
                     </div>
                   
                     <div className="flex flex-wrap gap-1.5 mb-6 mt-auto">
                       {(mentor.skills || []).slice(0, 3).map((skill, i: number) => (
-                        <span key={i} className="bg-surface-container-low text-on-surface-variant text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider border border-outline-variant/10">
+                        <span key={i} className="bg-surface-container text-on-surface-variant text-[10px] font-bold px-2.5 py-1 rounded-md border border-outline-variant/10 uppercase tracking-wider">
                           {typeof skill === 'string' ? skill : (skill.name || `Skill #${skill.skillId}`)}
                         </span>
                       ))}
                       {((mentor.skills?.length ?? 0) > 3) && (
-                        <span className="bg-surface-container-low text-on-surface-variant text-[10px] font-bold px-2 py-1 rounded-md border border-outline-variant/10">
+                        <span className="bg-surface-container text-on-surface-variant text-[10px] font-bold px-2.5 py-1 rounded-md border border-outline-variant/10">
                           +{(mentor.skills?.length ?? 0) - 3}
                         </span>
                       )}
@@ -296,8 +297,8 @@ const DiscoverMentorsPage = () => {
 
                     <div className="flex justify-between items-end mb-4 border-t border-outline-variant/10 pt-4">
                       <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest flex flex-col">
-                        Price
-                        <span className="text-lg font-black text-primary lowercase tracking-normal -mt-0.5">
+                        Hourly Rate
+                        <span className="text-xl font-black text-gradient lowercase tracking-normal -mt-0.5">
                           ₹{mentor.hourlyRate}<span className="text-xs text-on-surface-variant font-semibold">/hr</span>
                         </span>
                       </span>
@@ -305,7 +306,7 @@ const DiscoverMentorsPage = () => {
 
                     <button 
                       onClick={() => navigate(`/mentors/${mentor.id}`)}
-                      className="w-full flex items-center justify-center gap-2 h-10 gradient-btn text-white text-sm font-bold rounded-lg shadow-sm group-hover:shadow-md transition-all active:scale-95"
+                      className="w-full flex items-center justify-center gap-2 h-11 gradient-btn text-white text-sm font-bold rounded-xl shadow-md group-hover:shadow-lg transition-all duration-300 active:scale-95"
                     >
                       Book Session <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
                     </button>
@@ -320,7 +321,7 @@ const DiscoverMentorsPage = () => {
               <button 
                 onClick={() => setPage(p => p + 1)} 
                 disabled={isLoading}
-                className="flex items-center gap-2 bg-white hover:bg-surface-container-low text-primary font-bold px-6 py-2.5 rounded-full shadow-sm border border-outline-variant/20 hover:border-primary/30 transition-all disabled:opacity-50"
+                className="flex items-center gap-2 bg-white dark:bg-surface-container-lowest hover:bg-surface-container-low text-primary font-bold px-6 py-2.5 rounded-full shadow-sm border border-outline-variant/20 hover:border-primary/30 transition-all disabled:opacity-50 hover:scale-105 active:scale-95"
               >
                 {isLoading ? 'Loading...' : 'See More Mentors'} 
                 <span className="material-symbols-outlined text-[20px]">{isLoading ? 'hourglass_empty' : 'expand_more'}</span>
