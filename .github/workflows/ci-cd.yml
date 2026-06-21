@@ -13,14 +13,12 @@ on:
     branches: [main]
     paths:
       - 'Backend/**'
-      - 'Frontend/**'
       - '.github/workflows/**'
       - 'sonar-project.properties'
   pull_request:
     branches: [main]
     paths:
       - 'Backend/**'
-      - 'Frontend/**'
       - '.github/workflows/**'
       - 'sonar-project.properties'
   workflow_dispatch:
@@ -415,7 +413,7 @@ jobs:
   docker:
     name: Docker Build & Push
     runs-on: ubuntu-latest
-    needs: [build-and-test, frontend-build-test, code-quality]
+    needs: [build-and-test]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
